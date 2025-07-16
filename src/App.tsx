@@ -5,6 +5,7 @@ import LoadingSpinner from './components/ui/LoadingSpinner';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardLayout from './components/layout/DashboardLayout';
 import AdminDashboard from './pages/dashboards/AdminDashboard';
 import PrincipalDashboard from './pages/dashboards/PrincipalDashboard';
@@ -33,6 +34,9 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Routes>
+        {/* Reset password route - always accessible regardless of auth status */}
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        
         {/* Public routes */}
         {!user ? (
           <>
@@ -147,6 +151,7 @@ function App() {
             <Route path="/login" element={<Navigate to="/dashboard" replace />} />
             <Route path="/register" element={<Navigate to="/dashboard" replace />} />
             <Route path="/forgot-password" element={<Navigate to="/dashboard" replace />} />
+            {/* Note: /reset-password is handled separately above */}
           </>
         )}
       </Routes>

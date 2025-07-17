@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database';
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database";
 
 // Get environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -7,7 +7,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.');
+  throw new Error(
+    "Missing Supabase environment variables. Please check your .env file."
+  );
 }
 
 // Create Supabase client with TypeScript types
@@ -15,11 +17,14 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
+    detectSessionInUrl: false, // Disable automatic session detection from URL
+    storage: window.localStorage,
+    storageKey: "sb-auth-token",
+    flowType: "pkce",
   },
   global: {
     headers: {
-      'X-Client-Info': 'iems-web-app',
+      "X-Client-Info": "iems-web-app",
     },
   },
 });
@@ -32,13 +37,17 @@ export const auth = {
       email,
       password,
     });
-    
+
     if (error) throw error;
     return data;
   },
 
   // Sign up with email and password
-  signUp: async (email: string, password: string, metadata?: Record<string, any>) => {
+  signUp: async (
+    email: string,
+    password: string,
+    metadata?: Record<string, any>
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -46,7 +55,7 @@ export const auth = {
         data: metadata,
       },
     });
-    
+
     if (error) throw error;
     return data;
   },
@@ -62,7 +71,7 @@ export const auth = {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    
+
     if (error) throw error;
   },
 
@@ -71,30 +80,40 @@ export const auth = {
     const { error } = await supabase.auth.updateUser({
       password,
     });
-    
+
     if (error) throw error;
   },
 
   // Update user metadata
-  updateUser: async (attributes: { email?: string; password?: string; data?: Record<string, any> }) => {
+  updateUser: async (attributes: {
+    email?: string;
+    password?: string;
+    data?: Record<string, any>;
+  }) => {
     const { data, error } = await supabase.auth.updateUser(attributes);
-    
+
     if (error) throw error;
     return data;
   },
 
   // Get current session
   getSession: async () => {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
     if (error) throw error;
     return session;
   },
 
   // Get current user
   getUser: async () => {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
     if (error) throw error;
     return user;
   },
@@ -112,51 +131,59 @@ export const db = {
     // Get user profile by ID with enhanced error handling
     getById: async (userId: string) => {
       try {
-        console.log('🔍 Fetching profile for user ID:', userId);
-        
+        console.log("🔍 Fetching profile for user ID:", userId);
+
         const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', userId)
+          .from("profiles")
+          .select("*")
+          .eq("user_id", userId)
           .single();
-        
+
         if (error) {
-          console.error('❌ Profile fetch error:', error);
-          
+          console.error("❌ Profile fetch error:", error);
+
           // Handle specific error codes
-          if (error.code === 'PGRST116') {
-            console.log('📭 No profile found for user - this will trigger profile creation');
+          if (error.code === "PGRST116") {
+            console.log(
+              "📭 No profile found for user - this will trigger profile creation"
+            );
             return null;
           }
-          
+
           // Handle 406 Not Acceptable errors (likely RLS issues)
-          if (error.message?.includes('406') || error.message?.includes('Not Acceptable')) {
-            console.log('🔐 RLS or permission issue, trying alternative query...');
-            
+          if (
+            error.message?.includes("406") ||
+            error.message?.includes("Not Acceptable")
+          ) {
+            console.log(
+              "🔐 RLS or permission issue, trying alternative query..."
+            );
+
             // Try with RLS bypassed for debugging
             const { data: altData, error: altError } = await supabase
-              .from('profiles')
-              .select('user_id, full_name, first_name, last_name, email, role, package, phone, created_at, updated_at, last_login, cv_url, cv_file_name, specializations, hourly_rate, availability, bio, certifications, languages, profile_completed')
-              .eq('user_id', userId)
+              .from("profiles")
+              .select(
+                "user_id, full_name, first_name, last_name, email, role, package, phone, created_at, updated_at, last_login, cv_url, cv_file_name, specializations, hourly_rate, availability, bio, certifications, languages, profile_completed"
+              )
+              .eq("user_id", userId)
               .maybeSingle();
-            
+
             if (altError) {
-              console.error('❌ Alternative query also failed:', altError);
+              console.error("❌ Alternative query also failed:", altError);
               throw new Error(`Database access denied: ${altError.message}`);
             }
-            
-            console.log('✅ Alternative query succeeded:', !!altData);
+
+            console.log("✅ Alternative query succeeded:", !!altData);
             return altData;
           }
-          
+
           throw error;
         }
-        
-        console.log('✅ Profile found:', data?.full_name, 'role:', data?.role);
+
+        console.log("✅ Profile found:", data?.full_name, "role:", data?.role);
         return data;
-        
       } catch (error: any) {
-        console.error('❌ Profile fetch failed:', error);
+        console.error("❌ Profile fetch failed:", error);
         throw error;
       }
     },
@@ -164,11 +191,11 @@ export const db = {
     // Create user profile
     create: async (profile: any) => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .insert([profile])
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -176,12 +203,12 @@ export const db = {
     // Update user profile
     update: async (userId: string, updates: any) => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update(updates)
-        .eq('user_id', userId)
+        .eq("user_id", userId)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -189,25 +216,25 @@ export const db = {
     // Delete user profile
     delete: async (userId: string) => {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .delete()
-        .eq('user_id', userId);
-      
+        .eq("user_id", userId);
+
       if (error) throw error;
     },
 
     // Get all profiles with optional filters
     getAll: async (filters?: Record<string, any>) => {
-      let query = supabase.from('profiles').select('*');
-      
+      let query = supabase.from("profiles").select("*");
+
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
           query = query.eq(key, value);
         });
       }
-      
+
       const { data, error } = await query;
-      
+
       if (error) throw error;
       return data;
     },
@@ -215,7 +242,7 @@ export const db = {
 
   // Generic database operations
   from: (table: string) => supabase.from(table),
-  
+
   // Storage operations
   storage: {
     // Upload file
@@ -223,7 +250,7 @@ export const db = {
       const { data, error } = await supabase.storage
         .from(bucket)
         .upload(path, file);
-      
+
       if (error) throw error;
       return data;
     },
@@ -233,26 +260,22 @@ export const db = {
       const { data, error } = await supabase.storage
         .from(bucket)
         .download(path);
-      
+
       if (error) throw error;
       return data;
     },
 
     // Get public URL
     getPublicUrl: (bucket: string, path: string) => {
-      const { data } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(path);
-      
+      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+
       return data.publicUrl;
     },
 
     // Delete file
     delete: async (bucket: string, paths: string[]) => {
-      const { error } = await supabase.storage
-        .from(bucket)
-        .remove(paths);
-      
+      const { error } = await supabase.storage.from(bucket).remove(paths);
+
       if (error) throw error;
     },
   },
@@ -264,7 +287,7 @@ export const realtime = {
   subscribe: (table: string, callback: (payload: any) => void) => {
     return supabase
       .channel(`public:${table}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table }, callback)
+      .on("postgres_changes", { event: "*", schema: "public", table }, callback)
       .subscribe();
   },
 
@@ -272,7 +295,16 @@ export const realtime = {
   subscribeToUser: (userId: string, callback: (payload: any) => void) => {
     return supabase
       .channel(`user:${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `user_id=eq.${userId}` }, callback)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+          filter: `user_id=eq.${userId}`,
+        },
+        callback
+      )
       .subscribe();
   },
 
@@ -282,4 +314,4 @@ export const realtime = {
   },
 };
 
-export default supabase; 
+export default supabase;

@@ -517,6 +517,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // Update password function
+  const updatePassword = async (password: string) => {
+    try {
+      await auth.updatePassword(password);
+      toast.success('Password updated successfully');
+    } catch (error: any) {
+      console.error('Update password error:', error);
+      toast.error('Error updating password');
+      throw error;
+    }
+  };
+
   // Helper functions
   const hasRoleAccess = (role: UserRole | UserRole[]) => {
     return hasRole(profile?.role as UserRole, role);
@@ -544,6 +556,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signOut,
     updateProfile,
     resetPassword,
+    updatePassword,
     hasRole: hasRoleAccess,
     hasPackage: hasPackageAccess,
     canAccess,

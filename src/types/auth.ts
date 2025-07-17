@@ -89,6 +89,7 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
   hasRole: (role: UserRole | UserRole[]) => boolean;
   hasPackage: (packageLevel: StudentPackage | StudentPackage[]) => boolean;
   canAccess: (feature: string) => boolean;
@@ -120,6 +121,12 @@ export interface RegisterFormData {
 // Password reset form data
 export interface PasswordResetFormData {
   email: string;
+}
+
+// New password form data for reset password page
+export interface NewPasswordFormData {
+  password: string;
+  confirmPassword: string;
 }
 
 // Profile update form data

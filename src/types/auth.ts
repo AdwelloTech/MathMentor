@@ -174,6 +174,51 @@ export interface FeaturePermissions {
   viewAuditLogs: boolean;
 }
 
+// Tutor application types
+export type TutorApplicationStatus = 'pending' | 'approved' | 'rejected' | 'under_review';
+
+export interface TutorApplication {
+  id: string;
+  user_id: string;
+  applicant_email: string;
+  full_name: string;
+  phone_number: string;
+  subjects: string[];
+  specializes_learning_disabilities: boolean;
+  cv_file_name?: string;
+  cv_url?: string;
+  cv_file_size?: number;
+  additional_notes?: string;
+  application_status: TutorApplicationStatus;
+  admin_notes?: string;
+  rejection_reason?: string;
+  submitted_at: string;
+  reviewed_at?: string;
+  reviewed_by?: string;
+  approved_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TutorApplicationFormData {
+  full_name: string;
+  phone_number: string;
+  subjects: string[];
+  specializes_learning_disabilities: boolean;
+  additional_notes?: string;
+  cv_file?: File;
+}
+
+export interface TutorApplicationStats {
+  total_applications: number;
+  pending_applications: number;
+  approved_applications: number;
+  rejected_applications: number;
+  under_review_applications: number;
+  applications_this_month: number;
+  applications_this_week: number;
+}
+
 // API response types
 export interface ApiResponse<T = any> {
   data?: T;

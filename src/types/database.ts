@@ -2,6 +2,88 @@
 export interface Database {
   public: {
     Tables: {
+      profile_images: {
+        Row: {
+          id: string;
+          user_id: string;
+          profile_id: string;
+          file_name: string;
+          original_name: string;
+          file_path: string;
+          file_size: number;
+          mime_type: string;
+          width: number | null;
+          height: number | null;
+          is_active: boolean;
+          uploaded_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          profile_id: string;
+          file_name: string;
+          original_name: string;
+          file_path: string;
+          file_size: number;
+          mime_type: string;
+          width?: number | null;
+          height?: number | null;
+          is_active?: boolean;
+          uploaded_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          profile_id?: string;
+          file_name?: string;
+          original_name?: string;
+          file_path?: string;
+          file_size?: number;
+          mime_type?: string;
+          width?: number | null;
+          height?: number | null;
+          is_active?: boolean;
+          uploaded_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      grade_levels: {
+        Row: {
+          id: string;
+          code: string;
+          display_name: string;
+          sort_order: number;
+          category: 'preschool' | 'elementary' | 'middle' | 'high' | 'college' | 'graduate';
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          display_name: string;
+          sort_order: number;
+          category?: 'preschool' | 'elementary' | 'middle' | 'high' | 'college' | 'graduate';
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          display_name?: string;
+          sort_order?: number;
+          category?: 'preschool' | 'elementary' | 'middle' | 'high' | 'college' | 'graduate';
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       profiles: {
         Row: {
           id: string;
@@ -24,6 +106,26 @@ export interface Database {
           subjects: string[] | null;
           qualification: string | null;
           experience_years: number | null;
+          // Student specific fields
+          age: number | null;
+          grade_level: string | null; // Keep for backwards compatibility
+          grade_level_id: string | null; // New foreign key reference
+          has_learning_disabilities: boolean;
+          learning_needs_description: string | null;
+          // Profile image fields
+          profile_image_id: string | null;
+          profile_image_url: string | null;
+          // Tutor specific fields
+          cv_url: string | null;
+          cv_file_name: string | null;
+          specializations: string[] | null;
+          hourly_rate: number | null;
+          availability: string | null;
+          bio: string | null;
+          certifications: string[] | null;
+          languages: string[] | null;
+          profile_completed: boolean | null;
+          // Parent specific fields
           children_ids: string[] | null;
           relationship: string | null;
           hire_date: string | null;
@@ -55,6 +157,26 @@ export interface Database {
           subjects?: string[] | null;
           qualification?: string | null;
           experience_years?: number | null;
+          // Student specific fields
+          age?: number | null;
+          grade_level?: string | null; // Keep for backwards compatibility
+          grade_level_id?: string | null; // New foreign key reference
+          has_learning_disabilities?: boolean;
+          learning_needs_description?: string | null;
+          // Profile image fields
+          profile_image_id?: string | null;
+          profile_image_url?: string | null;
+          // Tutor specific fields
+          cv_url?: string | null;
+          cv_file_name?: string | null;
+          specializations?: string[] | null;
+          hourly_rate?: number | null;
+          availability?: string | null;
+          bio?: string | null;
+          certifications?: string[] | null;
+          languages?: string[] | null;
+          profile_completed?: boolean | null;
+          // Parent specific fields
           children_ids?: string[] | null;
           relationship?: string | null;
           hire_date?: string | null;
@@ -86,6 +208,26 @@ export interface Database {
           subjects?: string[] | null;
           qualification?: string | null;
           experience_years?: number | null;
+          // Student specific fields
+          age?: number | null;
+          grade_level?: string | null; // Keep for backwards compatibility
+          grade_level_id?: string | null; // New foreign key reference
+          has_learning_disabilities?: boolean;
+          learning_needs_description?: string | null;
+          // Profile image fields
+          profile_image_id?: string | null;
+          profile_image_url?: string | null;
+          // Tutor specific fields
+          cv_url?: string | null;
+          cv_file_name?: string | null;
+          specializations?: string[] | null;
+          hourly_rate?: number | null;
+          availability?: string | null;
+          bio?: string | null;
+          certifications?: string[] | null;
+          languages?: string[] | null;
+          profile_completed?: boolean | null;
+          // Parent specific fields
           children_ids?: string[] | null;
           relationship?: string | null;
           hire_date?: string | null;

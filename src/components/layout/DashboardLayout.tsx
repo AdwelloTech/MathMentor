@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Bars3Icon, 
@@ -17,6 +17,7 @@ const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -59,17 +60,27 @@ const DashboardLayout: React.FC = () => {
                 <ul role="list" className="flex flex-1 flex-col gap-y-7">
                   <li>
                     <ul role="list" className="-mx-2 space-y-1">
-                      {navigation.map((item) => (
-                        <li key={item.name}>
-                          <a
-                            href={item.href}
-                            className="text-gray-700 hover:text-primary-600 hover:bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold"
-                          >
-                            <item.icon className="h-6 w-6 shrink-0" />
-                            {item.name}
-                          </a>
-                        </li>
-                      ))}
+                      {navigation.map((item) => {
+                        const isActive = location.pathname === item.href;
+                        return (
+                          <li key={item.name}>
+                            <Link
+                              to={item.href}
+                              className={`group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold ${
+                                isActive 
+                                  ? 'bg-primary-50 text-primary-700'
+                                  : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                              }`}
+                              onClick={() => setSidebarOpen(false)}
+                            >
+                              <item.icon className={`h-6 w-6 shrink-0 ${
+                                isActive ? 'text-primary-600' : 'text-gray-400 group-hover:text-primary-600'
+                              }`} />
+                              {item.name}
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </li>
                 </ul>
@@ -93,17 +104,26 @@ const DashboardLayout: React.FC = () => {
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
                 <ul role="list" className="-mx-2 space-y-1">
-                  {navigation.map((item) => (
-                    <li key={item.name}>
-                      <a
-                        href={item.href}
-                        className="text-gray-700 hover:text-primary-600 hover:bg-gray-50 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold"
-                      >
-                        <item.icon className="h-6 w-6 shrink-0" />
-                        {item.name}
-                      </a>
-                    </li>
-                  ))}
+                  {navigation.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <li key={item.name}>
+                        <Link
+                          to={item.href}
+                          className={`group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold ${
+                            isActive 
+                              ? 'bg-primary-50 text-primary-700'
+                              : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          <item.icon className={`h-6 w-6 shrink-0 ${
+                            isActive ? 'text-primary-600' : 'text-gray-400 group-hover:text-primary-600'
+                          }`} />
+                          {item.name}
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               </li>
             </ul>

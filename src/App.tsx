@@ -7,6 +7,8 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
@@ -51,6 +53,8 @@ function App() {
             <Route path="/" element={<DashboardLayout />}>
               <Route index element={<DashboardRoute />} />
               <Route path="dashboard" element={<DashboardRoute />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="settings" element={<SettingsPage />} />
 
               {/* Admin routes */}
               <Route

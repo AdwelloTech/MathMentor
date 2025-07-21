@@ -37,10 +37,12 @@ const TutorDashboard: React.FC = () => {
     }
 
     try {
-      const existingApplication = await db.tutorApplications.getByUserId(
+      const existingApplications = await db.tutorApplications.getByUserId(
         user.id
       );
-      setApplication(existingApplication);
+      // Get the most recent application (first in the array since it's ordered by submitted_at desc)
+      const mostRecentApplication = existingApplications?.[0] || null;
+      setApplication(mostRecentApplication);
     } catch (error: any) {
       // If no application found, that's fine
       if (error.code !== "PGRST116") {

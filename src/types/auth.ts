@@ -1,17 +1,47 @@
-// User roles in the system
+// User roles
 export type UserRole = 
-  | 'admin'
-  | 'principal'
-  | 'teacher'
-  | 'tutor'
-  | 'student'
-  | 'parent'
-  | 'hr'
-  | 'finance'
-  | 'support';
+  | 'admin' 
+  | 'principal' 
+  | 'teacher' 
+  | 'student' 
+  | 'parent' 
+  | 'hr' 
+  | 'finance' 
+  | 'support'
+  | 'tutor';
 
-// Student subscription packages
+// Student packages
 export type StudentPackage = 'free' | 'silver' | 'gold';
+
+// Profile image interface from database
+export interface ProfileImage {
+  id: string;
+  user_id: string;
+  profile_id: string;
+  file_name: string;
+  original_name: string;
+  file_path: string;
+  file_size: number;
+  mime_type: string;
+  width: number | null;
+  height: number | null;
+  is_active: boolean;
+  uploaded_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Grade level interface from database
+export interface GradeLevel {
+  id: string;
+  code: string;
+  display_name: string;
+  sort_order: number;
+  category: 'preschool' | 'elementary' | 'middle' | 'high' | 'college' | 'graduate';
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 // Base user interface from Supabase
 export interface User {
@@ -44,6 +74,15 @@ export interface UserProfile {
   student_id?: string;
   package?: StudentPackage;
   class_id?: string;
+  age?: number;
+  grade_level?: string; // Keep for backwards compatibility
+  grade_level_id?: string; // New foreign key reference
+  has_learning_disabilities?: boolean;
+  learning_needs_description?: string;
+  
+  // Profile image fields
+  profile_image_id?: string;
+  profile_image_url?: string;
   
   // Teacher specific fields
   employee_id?: string;
@@ -140,6 +179,20 @@ export interface ProfileUpdateFormData {
   emergencyContact?: string;
 }
 
+// Student profile form data with database-driven grade levels
+export interface StudentProfileFormData extends ProfileUpdateFormData {
+  email: string; // Display only
+  age?: number;
+  gradeLevelId?: string; // Use database ID instead of code
+  hasLearningDisabilities: boolean;
+  learningNeedsDescription?: string;
+}
+
+// Extended profile with grade level information
+export interface ProfileWithGradeLevel extends UserProfile {
+  grade_level_info?: GradeLevel;
+}
+
 // Feature permissions based on roles and packages
 export interface FeaturePermissions {
   // Academic features
@@ -232,4 +285,21 @@ export interface AuthError {
   message: string;
   code?: string;
   details?: any;
+} 
+
+// Profile image upload data
+export interface ProfileImageUpload {
+  file: File;
+  preview?: string;
+}
+
+// Profile image upload response
+export interface ProfileImageUploadResponse {
+  id: string;
+  file_path: string;
+  file_name: string;
+  file_size: number;
+  width?: number;
+  height?: number;
+  public_url: string;
 } 

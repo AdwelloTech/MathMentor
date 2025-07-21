@@ -1,3 +1,10 @@
+import React, { useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  Bars3Icon,
+  XMarkIcon,
+=======
 import React, { useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -8,10 +15,10 @@ import {
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
   BellIcon,
-  Cog6ToothIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '@/contexts/AuthContext';
-import { getRoleDisplayName } from '@/utils/permissions';
+  Cog6ToothIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "@/contexts/AuthContext";
+import { getRoleDisplayName } from "@/utils/permissions";
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,21 +28,24 @@ const DashboardLayout: React.FC = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/login');
+    navigate("/login");
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: AcademicCapIcon },
-    { name: 'Profile', href: '/profile', icon: UserCircleIcon },
-    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+    { name: "Dashboard", href: "/dashboard", icon: AcademicCapIcon },
+    { name: "Profile", href: "/profile", icon: UserCircleIcon },
+    { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar */}
-      <div className={`relative z-50 lg:hidden ${sidebarOpen ? '' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-gray-900/80" onClick={() => setSidebarOpen(false)} />
-        
+      <div className={`relative z-50 lg:hidden ${sidebarOpen ? "" : "hidden"}`}>
+        <div
+          className="fixed inset-0 bg-gray-900/80"
+          onClick={() => setSidebarOpen(false)}
+        />
+
         <div className="fixed inset-0 flex">
           <div className="relative mr-16 flex w-full max-w-xs flex-1">
             <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
@@ -47,15 +57,17 @@ const DashboardLayout: React.FC = () => {
                 <XMarkIcon className="h-6 w-6 text-white" />
               </button>
             </div>
-            
+
             <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
               <div className="flex h-16 shrink-0 items-center">
                 <div className="flex items-center">
                   <AcademicCapIcon className="h-8 w-8 text-primary-600" />
-                  <span className="ml-2 text-xl font-bold text-gray-900">IEMS</span>
+                  <span className="ml-2 text-xl font-bold text-gray-900">
+                    IEMS
+                  </span>
                 </div>
               </div>
-              
+
               <nav className="flex flex-1 flex-col">
                 <ul role="list" className="flex flex-1 flex-col gap-y-7">
                   <li>
@@ -99,7 +111,7 @@ const DashboardLayout: React.FC = () => {
               <span className="ml-2 text-xl font-bold text-gray-900">IEMS</span>
             </div>
           </div>
-          
+
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
@@ -196,4 +208,4 @@ const DashboardLayout: React.FC = () => {
   );
 };
 
-export default DashboardLayout; 
+export default DashboardLayout;

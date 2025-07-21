@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { UserProfile } from '@/types/auth';
+import type { UserProfile, TutorApplication, TutorApplicationStats, TutorApplicationFormData } from '@/types/auth';
 
 // Subscription management
 export const db = {
@@ -150,6 +150,153 @@ export const db = {
       
       if (error) throw error;
       return data;
+    },
+  },
+
+  // Tutor application operations
+  tutorApplications: {
+    create: async (application: {
+      user_id: string;
+      applicant_email: string;
+      full_name: string;
+      phone_number: string;
+      subjects: string[];
+      specializes_learning_disabilities: boolean;
+      cv_file_name?: string;
+      cv_url?: string;
+      cv_file_size?: number;
+      additional_notes?: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('tutor_applications')
+        .insert([application])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+
+    getByUserId: async (userId: string) => {
+      const { data, error } = await supabase
+        .from('tutor_applications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('submitted_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+
+    getById: async (id: string) => {
+      const { data, error } = await supabase
+        .from('tutor_applications')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+
+    getAll: async () => {
+      const { data, error } = await supabase
+        .from('tutor_applications')
+        .select('*')
+        .order('submitted_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+
+    getByStatus: async (status: string) => {
+      const { data, error } = await supabase
+        .from('tutor_applications')
+        .select('*')
+        .eq('application_status', status)
+        .order('submitted_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+
+    update: async (id: string, updates: Partial<TutorApplication>) => {
+      const { data, error } = await supabase
+        .from('tutor_applications')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+
+    approve: async (applicationId: string, adminUserId: string, adminNotes?: string) => {
+      const { data, error } = await supabase.rpc('approve_tutor_application', {
+        application_id: applicationId,
+        admin_user_id: adminUserId,
+        admin_notes_text: adminNotes || null,
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+
+    reject: async (applicationId: string, adminUserId: string, rejectionReason: string, adminNotes?: string) => {
+      const { data, error } = await supabase.rpc('reject_tutor_application', {
+        application_id: applicationId,
+        admin_user_id: adminUserId,
+        rejection_reason_text: rejectionReason,
+        admin_notes_text: adminNotes || null,
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+
+    getStats: async (): Promise<TutorApplicationStats> => {
+      const { data, error } = await supabase.rpc('get_tutor_application_stats');
+      
+      if (error) throw error;
+      return data;
+    },
+  },
+
+  // Storage operations for CV uploads
+  storage: {
+    uploadTutorCV: async (userId: string, file: File): Promise<{ url: string; path: string; size: number }> => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}_${Date.now()}.${fileExt}`;
+      const filePath = `tutor-applications/${userId}/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      return {
+        url: publicUrl,
+        path: filePath,
+        size: file.size
+      };
+    },
+
+    deleteTutorCV: async (filePath: string) => {
+      const { error } = await supabase.storage
+        .from('documents')
+        .remove([filePath]);
+
+      if (error) throw error;
+      return true;
     },
   },
 };

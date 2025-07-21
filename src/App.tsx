@@ -20,6 +20,7 @@ import FinanceDashboard from "./pages/dashboards/FinanceDashboard";
 import SupportDashboard from "./pages/dashboards/SupportDashboard";
 import NotFoundPage from "./pages/NotFoundPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
+import TutorApplicationPage from "./pages/TutorApplicationPage";
 
 function App() {
   const { user, loading } = useAuth();
@@ -145,6 +146,9 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Tutor application route - accessible to all logged-in users */}
+              <Route path="apply-tutor" element={<TutorApplicationPage />} />
 
               {/* Error routes */}
               <Route path="unauthorized" element={<UnauthorizedPage />} />

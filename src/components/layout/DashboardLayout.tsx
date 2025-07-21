@@ -1,32 +1,18 @@
 import React, { useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Bars3Icon,
   XMarkIcon,
-import React, { useState } from 'react';
-
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { 
-  Bars3Icon, 
-  XMarkIcon, 
   AcademicCapIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
   BellIcon,
   Cog6ToothIcon,
-
-  SparklesIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '@/contexts/AuthContext';
-import { getRoleDisplayName } from '@/utils/permissions';
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRoleDisplayName } from "@/utils/permissions";
-
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -50,167 +36,160 @@ const DashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar */}
-      <div className={`relative z-50 lg:hidden ${sidebarOpen ? "" : "hidden"}`}>
-        <div
-          className="fixed inset-0 bg-gray-900/80"
-          onClick={() => setSidebarOpen(false)}
-        />
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            className="relative z-50 lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <motion.div
+              className="fixed inset-0 bg-gray-900/80"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+            />
 
-        <div className="fixed inset-0 flex">
-          <div className="relative mr-16 flex w-full max-w-xs flex-1">
-            <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
-              <button
-                type="button"
-                className="-m-2.5 p-2.5"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <XMarkIcon className="h-6 w-6 text-white" />
-              </button>
-            </div>
-            
-            <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-br from-white via-blue-50 to-indigo-100 px-6 pb-4 shadow-xl backdrop-blur-sm">
-              <motion.div 
-                className="flex h-16 shrink-0 items-center"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <motion.div 
-                  className="flex items-center"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
+            <motion.div
+              className="fixed inset-0 flex"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            >
+              <div className="relative mr-16 flex w-full max-w-xs flex-1">
+                <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
+                  <button
+                    type="button"
+                    className="-m-2.5 p-2.5"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <XMarkIcon className="h-6 w-6 text-white" />
+                  </button>
+                </div>
+
+                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-br from-white via-blue-50 to-indigo-100 px-6 pb-4 shadow-xl backdrop-blur-sm">
                   <motion.div
-                    animate={{ rotate: [0, 5, -5, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="flex h-16 shrink-0 items-center"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
                   >
-                    <AcademicCapIcon className="h-8 w-8 text-blue-600" />
+                    <motion.div
+                      className="flex items-center"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <motion.div
+                        animate={{ rotate: [0, 5, -5, 0] }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <AcademicCapIcon className="h-8 w-8 text-blue-600" />
+                      </motion.div>
+                      <motion.span
+                        className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                      >
+                        IEMS
+                      </motion.span>
+                      <motion.div
+                        className="ml-2"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <SparklesIcon className="h-4 w-4 text-yellow-500" />
+                      </motion.div>
+                    </motion.div>
                   </motion.div>
-                  <motion.span 
-                    className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                  >
-                    IEMS
-                  </motion.span>
-                  <motion.div
-                    className="ml-2"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <SparklesIcon className="h-4 w-4 text-yellow-500" />
-                  </motion.div>
-                </motion.div>
-              </motion.div>
-              
-              <nav className="flex flex-1 flex-col">
-                <ul role="list" className="flex flex-1 flex-col gap-y-7">
-                  <li>
-                    <ul role="list" className="-mx-2 space-y-2">
-                      {navigation.map((item, index) => (
-                        <motion.li 
-                          key={item.name}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.5, delay: index * 0.1 }}
-                        >
-                          <motion.a
-                            href={item.href}
-                            className={`group flex gap-x-3 rounded-2xl p-4 text-sm leading-6 font-medium transition-all duration-300 relative overflow-hidden border ${
-                              isActive(item.href) 
-                                ? 'text-blue-700 bg-gradient-to-r from-blue-100 via-blue-50 to-indigo-100 shadow-lg border-blue-300' 
-                                : 'text-gray-700 hover:text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 border-transparent hover:border-blue-200'
-                            }`}
-                            whileHover={{ 
-                              scale: 1.03, 
-                              x: 8,
-                              transition: { type: "spring", stiffness: 400, damping: 10 }
-                            }}
-                            whileTap={{ scale: 0.97 }}
-                          >
-                            <motion.div
-                              className="relative"
-                              whileHover={{ rotate: 360, scale: 1.2 }}
-                              transition={{ duration: 0.8, type: "spring", stiffness: 200 }}
+
+                  <nav className="flex flex-1 flex-col">
+                    <ul role="list" className="flex flex-1 flex-col gap-y-7">
+                      <li>
+                        <ul role="list" className="-mx-2 space-y-2">
+                          {navigation.map((item, index) => (
+                            <motion.li
+                              key={item.name}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.5, delay: index * 0.1 }}
                             >
-                              <item.icon className="h-5 w-5 shrink-0 drop-shadow-sm" />
-                              {isActive(item.href) && (
+                              <Link
+                                to={item.href}
+                                className={`group flex gap-x-3 rounded-2xl p-4 text-sm leading-6 font-medium transition-all duration-300 relative overflow-hidden border ${
+                                  isActive(item.href)
+                                    ? "text-blue-700 bg-gradient-to-r from-blue-100 via-blue-50 to-indigo-100 shadow-lg border-blue-300"
+                                    : "text-gray-700 hover:text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 border-transparent hover:border-blue-200"
+                                }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
                                 <motion.div
-                                  className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg"
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  transition={{ type: "spring", stiffness: 500 }}
-                                />
-                              )}
-                            </motion.div>
-                            <span>{item.name}</span>
-                            {isActive(item.href) && (
-                              <motion.div
-                                className="absolute inset-0 bg-gradient-to-r from-blue-200/20 to-purple-200/20 rounded-xl"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.3 }}
-                              />
-                            )}
-                          </motion.a>
-                        </motion.li>
-                      ))}
-
-            <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
-              <div className="flex h-16 shrink-0 items-center">
-                <div className="flex items-center">
-                  <AcademicCapIcon className="h-8 w-8 text-primary-600" />
-                  <span className="ml-2 text-xl font-bold text-gray-900">
-                    IEMS
-                  </span>
+                                  className="relative"
+                                  whileHover={{ rotate: 360, scale: 1.2 }}
+                                  transition={{
+                                    duration: 0.8,
+                                    type: "spring",
+                                    stiffness: 200,
+                                  }}
+                                >
+                                  <item.icon className="h-5 w-5 shrink-0 drop-shadow-sm" />
+                                  {isActive(item.href) && (
+                                    <motion.div
+                                      className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg"
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      transition={{
+                                        type: "spring",
+                                        stiffness: 500,
+                                      }}
+                                    />
+                                  )}
+                                </motion.div>
+                                <span>{item.name}</span>
+                                {isActive(item.href) && (
+                                  <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-blue-200/20 to-purple-200/20 rounded-xl"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                  />
+                                )}
+                              </Link>
+                            </motion.li>
+                          ))}
+                        </ul>
+                      </li>
+                    </ul>
+                  </nav>
                 </div>
               </div>
-
-              <nav className="flex flex-1 flex-col">
-                <ul role="list" className="flex flex-1 flex-col gap-y-7">
-                  <li>
-                    <ul role="list" className="-mx-2 space-y-1">
-                      {navigation.map((item) => {
-                        const isActive = location.pathname === item.href;
-                        return (
-                          <li key={item.name}>
-                            <Link
-                              to={item.href}
-                              className={`group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold ${
-                                isActive 
-                                  ? 'bg-primary-50 text-primary-700'
-                                  : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-                              }`}
-                              onClick={() => setSidebarOpen(false)}
-                            >
-                              <item.icon className={`h-6 w-6 shrink-0 ${
-                                isActive ? 'text-primary-600' : 'text-gray-400 group-hover:text-primary-600'
-                              }`} />
-                              {item.name}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </div>
-        </div>
-      </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Static sidebar for desktop */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-blue-200 bg-gradient-to-br from-white via-blue-50 to-indigo-100 px-6 pb-4 shadow-xl backdrop-blur-sm">
-          <motion.div 
+          <motion.div
             className="flex h-16 shrink-0 items-center"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <motion.div 
+            <motion.div
               className="flex items-center"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
@@ -218,16 +197,24 @@ const DashboardLayout: React.FC = () => {
               <motion.div
                 className="relative"
                 animate={{ rotate: [0, 8, -8, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
               >
                 <AcademicCapIcon className="h-8 w-8 text-blue-600 drop-shadow-lg" />
                 <motion.div
                   className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full"
                   animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
                 />
               </motion.div>
-              <motion.span 
+              <motion.span
                 className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent drop-shadow-sm"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -238,42 +225,44 @@ const DashboardLayout: React.FC = () => {
               <motion.div
                 className="ml-2"
                 animate={{ scale: [1, 1.3, 1], rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                transition={{
+                  duration: 2.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
               >
                 <SparklesIcon className="h-4 w-4 text-yellow-500 drop-shadow-md" />
               </motion.div>
             </motion.div>
           </motion.div>
-          
+
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
                 <ul role="list" className="-mx-2 space-y-2">
                   {navigation.map((item, index) => (
-                    <motion.li 
+                    <motion.li
                       key={item.name}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.5, delay: index * 0.1 }}
                     >
-                                              <motion.a
-                          href={item.href}
-                          className={`group flex gap-x-3 rounded-2xl p-4 text-sm leading-6 font-medium transition-all duration-300 relative overflow-hidden border ${
-                            isActive(item.href) 
-                              ? 'text-blue-700 bg-gradient-to-r from-blue-100 via-blue-50 to-indigo-100 shadow-lg border-blue-300' 
-                              : 'text-gray-700 hover:text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 border-transparent hover:border-blue-200'
-                          }`}
-                          whileHover={{ 
-                            scale: 1.03, 
-                            x: 8,
-                            transition: { type: "spring", stiffness: 400, damping: 10 }
-                          }}
-                          whileTap={{ scale: 0.97 }}
-                        >
+                      <Link
+                        to={item.href}
+                        className={`group flex gap-x-3 rounded-2xl p-4 text-sm leading-6 font-medium transition-all duration-300 relative overflow-hidden border ${
+                          isActive(item.href)
+                            ? "text-blue-700 bg-gradient-to-r from-blue-100 via-blue-50 to-indigo-100 shadow-lg border-blue-300"
+                            : "text-gray-700 hover:text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 border-transparent hover:border-blue-200"
+                        }`}
+                      >
                         <motion.div
                           className="relative"
                           whileHover={{ rotate: 360, scale: 1.2 }}
-                          transition={{ duration: 0.8, type: "spring", stiffness: 200 }}
+                          transition={{
+                            duration: 0.8,
+                            type: "spring",
+                            stiffness: 200,
+                          }}
                         >
                           <item.icon className="h-5 w-5 shrink-0 drop-shadow-sm" />
                           {isActive(item.href) && (
@@ -294,42 +283,9 @@ const DashboardLayout: React.FC = () => {
                             transition={{ duration: 0.3 }}
                           />
                         )}
-                      </motion.a>
+                      </Link>
                     </motion.li>
                   ))}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
-          <div className="flex h-16 shrink-0 items-center">
-            <div className="flex items-center">
-              <AcademicCapIcon className="h-8 w-8 text-primary-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">IEMS</span>
-            </div>
-          </div>
-
-          <nav className="flex flex-1 flex-col">
-            <ul role="list" className="flex flex-1 flex-col gap-y-7">
-              <li>
-                <ul role="list" className="-mx-2 space-y-1">
-                  {navigation.map((item) => {
-                    const isActive = location.pathname === item.href;
-                    return (
-                      <li key={item.name}>
-                        <Link
-                          to={item.href}
-                          className={`group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold ${
-                            isActive 
-                              ? 'bg-primary-50 text-primary-700'
-                              : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-                          }`}
-                        >
-                          <item.icon className={`h-6 w-6 shrink-0 ${
-                            isActive ? 'text-primary-600' : 'text-gray-400 group-hover:text-primary-600'
-                          }`} />
-                          {item.name}
-                        </Link>
-                      </li>
-                    );
-                  })}
                 </ul>
               </li>
             </ul>
@@ -339,7 +295,7 @@ const DashboardLayout: React.FC = () => {
 
       <div className="lg:pl-64">
         {/* Header */}
-        <motion.div 
+        <motion.div
           className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-blue-200 bg-gradient-to-r from-white via-blue-50 to-indigo-100 px-4 shadow-xl backdrop-blur-sm sm:gap-x-6 sm:px-6 lg:px-8"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -358,7 +314,7 @@ const DashboardLayout: React.FC = () => {
           <div className="h-6 w-px bg-gray-200 lg:hidden" />
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <motion.div 
+            <motion.div
               className="relative flex flex-1 items-center"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -380,7 +336,7 @@ const DashboardLayout: React.FC = () => {
 
               <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
 
-              <motion.div 
+              <motion.div
                 className="relative"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300 }}
@@ -392,7 +348,7 @@ const DashboardLayout: React.FC = () => {
                 >
                   <span className="sr-only">Sign out</span>
                   <div className="flex items-center gap-x-2">
-                    <motion.span 
+                    <motion.span
                       className="text-sm font-semibold leading-6 text-gray-900"
                       whileHover={{ color: "#2563eb" }}
                     >

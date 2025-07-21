@@ -9,17 +9,21 @@ import {
   AcademicCapIcon,
   ClockIcon,
   CurrencyDollarIcon,
-  XCircleIcon
-} from '@heroicons/react/24/outline';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import TutorApplicationForm from '@/components/forms/TutorApplicationForm';
-import { db } from '@/lib/db';
-import type { TutorApplication } from '@/types/auth';
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
+import TutorProfileEdit from "@/components/ui/TutorProfileEdit";
+import { db } from "@/lib/db";
+import type { TutorApplication } from "@/types/auth";
 
 const TutorDashboard: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<TutorApplication | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
 
   // Check for existing application on mount
   useEffect(() => {
@@ -33,22 +37,19 @@ const TutorDashboard: React.FC = () => {
     }
 
     try {
-      const existingApplication = await db.tutorApplications.getByUserId(user.id);
+      const existingApplication = await db.tutorApplications.getByUserId(
+        user.id
+      );
       setApplication(existingApplication);
     } catch (error: any) {
       // If no application found, that's fine
-      if (error.code !== 'PGRST116') {
+      if (error.code !== "PGRST116") {
         console.error("Error checking application:", error);
       }
-} from "@heroicons/react/24/outline";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import TutorProfileEdit from "@/components/ui/TutorProfileEdit";
-
-const TutorDashboard: React.FC = () => {
-  const { profile, updateProfile } = useAuth();
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const profileCompletion = calculateProfileCompletion(profile);
   const isProfileComplete = profile?.profile_completed || false;
@@ -64,7 +65,7 @@ const TutorDashboard: React.FC = () => {
 
   const handleProfileSaved = () => {
     // Refresh data or handle post-save logic
-    console.log('Profile saved successfully');
+    console.log("Profile saved successfully");
   };
 
   // Handle CV file upload
@@ -128,7 +129,8 @@ const TutorDashboard: React.FC = () => {
             Complete Your Tutor Application
           </h1>
           <p className="text-gray-600">
-            Please provide your details and qualifications to start tutoring with us.
+            Please provide your details and qualifications to start tutoring
+            with us.
           </p>
         </div>
         <TutorApplicationForm onSuccess={handleApplicationSuccess} />
@@ -137,7 +139,7 @@ const TutorDashboard: React.FC = () => {
   }
 
   // Show application status for submitted applications
-  if (application.application_status === 'pending') {
+  if (application.application_status === "pending") {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <motion.div
@@ -150,28 +152,43 @@ const TutorDashboard: React.FC = () => {
             Application Under Review
           </h1>
           <p className="text-gray-600 mb-6">
-            Thank you for submitting your tutor application. Our team is currently reviewing your qualifications and experience.
+            Thank you for submitting your tutor application. Our team is
+            currently reviewing your qualifications and experience.
           </p>
-          
+
           <div className="bg-white border border-blue-200 rounded-lg p-4 mb-6 text-left">
-            <h3 className="font-medium text-gray-900 mb-2">Application Details:</h3>
+            <h3 className="font-medium text-gray-900 mb-2">
+              Application Details:
+            </h3>
             <div className="space-y-1 text-sm text-gray-600">
-              <p><span className="font-medium">Submitted:</span> {new Date(application.submitted_at).toLocaleDateString()}</p>
-              <p><span className="font-medium">Subjects:</span> {application.subjects.join(', ')}</p>
-              <p><span className="font-medium">CV:</span> {application.cv_file_name}</p>
+              <p>
+                <span className="font-medium">Submitted:</span>{" "}
+                {new Date(application.submitted_at).toLocaleDateString()}
+              </p>
+              <p>
+                <span className="font-medium">Subjects:</span>{" "}
+                {application.subjects.join(", ")}
+              </p>
+              <p>
+                <span className="font-medium">CV:</span>{" "}
+                {application.cv_file_name}
+              </p>
             </div>
           </div>
 
           <div className="space-y-2 text-sm text-gray-600 mb-6">
             <p>Review typically takes 2-3 business days.</p>
-            <p>We'll notify you via email once your application has been reviewed.</p>
+            <p>
+              We'll notify you via email once your application has been
+              reviewed.
+            </p>
           </div>
         </motion.div>
       </div>
     );
   }
 
-  if (application.application_status === 'under_review') {
+  if (application.application_status === "under_review") {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <motion.div
@@ -184,9 +201,10 @@ const TutorDashboard: React.FC = () => {
             Application Under Additional Review
           </h1>
           <p className="text-gray-600 mb-6">
-            Your application is being reviewed in detail by our team. We may contact you for additional information.
+            Your application is being reviewed in detail by our team. We may
+            contact you for additional information.
           </p>
-          
+
           <div className="bg-white border border-yellow-200 rounded-lg p-4 mb-6">
             <div className="flex items-center text-sm text-gray-600">
               <ClockIcon className="h-5 w-5 mr-2" />
@@ -198,7 +216,7 @@ const TutorDashboard: React.FC = () => {
     );
   }
 
-  if (application.application_status === 'rejected') {
+  if (application.application_status === "rejected") {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <motion.div
@@ -213,23 +231,28 @@ const TutorDashboard: React.FC = () => {
           <p className="text-gray-600 mb-4">
             Unfortunately, your tutor application was not approved at this time.
           </p>
-          
+
           {application.rejection_reason && (
             <div className="bg-white border border-red-200 rounded-lg p-4 mb-4 text-left">
               <h3 className="font-medium text-gray-900 mb-2">Reason:</h3>
-              <p className="text-gray-700 text-sm">{application.rejection_reason}</p>
+              <p className="text-gray-700 text-sm">
+                {application.rejection_reason}
+              </p>
             </div>
           )}
 
           {application.admin_notes && (
             <div className="bg-white border border-red-200 rounded-lg p-4 mb-6 text-left">
-              <h3 className="font-medium text-gray-900 mb-2">Additional Notes:</h3>
+              <h3 className="font-medium text-gray-900 mb-2">
+                Additional Notes:
+              </h3>
               <p className="text-gray-700 text-sm">{application.admin_notes}</p>
             </div>
           )}
 
           <p className="text-sm text-gray-600 mb-6">
-            You're welcome to improve your qualifications and apply again in the future.
+            You're welcome to improve your qualifications and apply again in the
+            future.
           </p>
         </motion.div>
       </div>
@@ -237,9 +260,6 @@ const TutorDashboard: React.FC = () => {
   }
 
   // If approved, show the main tutor dashboard (but locked until admin approval)
-  const profileCompletion = calculateProfileCompletion(profile);
-  const isProfileComplete = profile?.profile_completed || false;
-
   return (
     <div className="space-y-8">
       <div className="border-b border-gray-200 pb-5">
@@ -263,8 +283,13 @@ const TutorDashboard: React.FC = () => {
               Application Submitted Successfully!
             </h3>
             <p className="mt-1 text-sm text-blue-700">
-              Your tutor application is currently under review. You'll have full access to the dashboard once approved by our team.
+              Your tutor application is currently under review. You'll have full
+              access to the dashboard once approved by our team.
             </p>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Profile Completion Alert */}
       {!isProfileComplete && (
         <motion.div
@@ -295,8 +320,8 @@ const TutorDashboard: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Profile Information */}
@@ -314,7 +339,6 @@ const TutorDashboard: React.FC = () => {
                 Curriculum Vitae
               </h2>
 
-              
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-center">
                   <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
@@ -323,12 +347,11 @@ const TutorDashboard: React.FC = () => {
                       CV Uploaded Successfully
                     </h3>
                     <p className="text-sm text-green-700 mt-1">
-                      File: {application?.cv_file_name || 'CV file'}
+                      File: {application?.cv_file_name || "CV file"}
                     </p>
                   </div>
                 </div>
               </div>
-
 
               {profile?.cv_url ? (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -439,15 +462,29 @@ const TutorDashboard: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number
                   </label>
+                  <p className="text-gray-900">
+                    {application?.phone_number || "Not specified"}
+                  </p>
+                </div>
 
-                  <p className="text-gray-900">{application?.phone_number || 'Not specified'}</p>
-
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Experience
+                  </label>
                   <p className="text-gray-900">
                     {profile?.experience_years
                       ? `${profile.experience_years} years`
                       : "Not specified"}
                   </p>
+                </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Qualification
+                  </label>
+                  <p className="text-gray-900">
+                    {profile?.qualification || "Not specified"}
+                  </p>
                 </div>
 
                 <div className="md:col-span-2">
@@ -455,34 +492,22 @@ const TutorDashboard: React.FC = () => {
                     Application Status
                   </label>
                   <p className="text-gray-900">
-
-                    {application?.application_status === 'pending' ? 'Under Review' : 
-                     application?.application_status === 'approved' ? 'Approved' :
-                     application?.application_status === 'rejected' ? 'Rejected' : 'Unknown'}
+                    {application?.application_status === "pending"
+                      ? "Under Review"
+                      : application?.application_status === "approved"
+                      ? "Approved"
+                      : application?.application_status === "rejected"
+                      ? "Rejected"
+                      : "Unknown"}
                   </p>
                 </div>
               </div>
-              
+
               <div className="mt-6">
                 <button className="btn btn-secondary" disabled>
                   Edit Profile (Available after approval)
                 </button>
               </div>
-
-                    {profile?.qualification || "Not specified"}
-                  </p>
-                </div>
-              </div>
-
-                              <div className="mt-6">
-                 <button 
-                   onClick={handleOpenProfileEdit}
-                   className="btn btn-secondary"
-                 >
-                   Edit Profile
-                 </button>
-                </div>
-
             </div>
           </motion.div>
         </div>
@@ -548,11 +573,12 @@ const TutorDashboard: React.FC = () => {
 
               <div className="space-y-3">
                 <div className="flex items-center text-sm">
-
                   <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
-                  <span className="text-gray-500 line-through">Complete application</span>
+                  <span className="text-gray-500 line-through">
+                    Complete application
+                  </span>
                 </div>
-                
+
                 <div className="flex items-center text-sm">
                   <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
                   <span className="text-gray-900">Wait for approval</span>
@@ -571,7 +597,6 @@ const TutorDashboard: React.FC = () => {
                   >
                     Upload CV
                   </span>
-
                 </div>
 
                 <div className="flex items-center text-sm">

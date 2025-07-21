@@ -15,7 +15,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
 import TutorProfileEdit from "@/components/ui/TutorProfileEdit";
 import { db } from "@/lib/db";
-import type { TutorApplication } from "@/types/auth";
+import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
 
 const TutorDashboard: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -141,7 +141,9 @@ const TutorDashboard: React.FC = () => {
   }
 
   // Show application status for submitted applications
-  if (application.application_status === "pending") {
+  if (
+    application.application_status === ("pending" as TutorApplicationStatus)
+  ) {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <motion.div
@@ -190,7 +192,10 @@ const TutorDashboard: React.FC = () => {
     );
   }
 
-  if (application.application_status === "under_review") {
+  if (
+    application.application_status ===
+    ("under_review" as TutorApplicationStatus)
+  ) {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <motion.div
@@ -218,7 +223,9 @@ const TutorDashboard: React.FC = () => {
     );
   }
 
-  if (application.application_status === "rejected") {
+  if (
+    application.application_status === ("rejected" as TutorApplicationStatus)
+  ) {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <motion.div
@@ -494,11 +501,14 @@ const TutorDashboard: React.FC = () => {
                     Application Status
                   </label>
                   <p className="text-gray-900">
-                    {application?.application_status === "pending"
+                    {application?.application_status ===
+                    ("pending" as TutorApplicationStatus)
                       ? "Under Review"
-                      : application?.application_status === "approved"
+                      : application?.application_status ===
+                        ("approved" as TutorApplicationStatus)
                       ? "Approved"
-                      : application?.application_status === "rejected"
+                      : application?.application_status ===
+                        ("rejected" as TutorApplicationStatus)
                       ? "Rejected"
                       : "Unknown"}
                   </p>

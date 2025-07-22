@@ -58,7 +58,13 @@ export interface Database {
           code: string;
           display_name: string;
           sort_order: number;
-          category: 'preschool' | 'elementary' | 'middle' | 'high' | 'college' | 'graduate';
+          category:
+            | "preschool"
+            | "elementary"
+            | "middle"
+            | "high"
+            | "college"
+            | "graduate";
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -68,7 +74,13 @@ export interface Database {
           code: string;
           display_name: string;
           sort_order: number;
-          category?: 'preschool' | 'elementary' | 'middle' | 'high' | 'college' | 'graduate';
+          category?:
+            | "preschool"
+            | "elementary"
+            | "middle"
+            | "high"
+            | "college"
+            | "graduate";
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -78,7 +90,13 @@ export interface Database {
           code?: string;
           display_name?: string;
           sort_order?: number;
-          category?: 'preschool' | 'elementary' | 'middle' | 'high' | 'college' | 'graduate';
+          category?:
+            | "preschool"
+            | "elementary"
+            | "middle"
+            | "high"
+            | "college"
+            | "graduate";
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -447,23 +465,137 @@ export interface Database {
           updated_at?: string;
         };
       };
+      note_subjects: {
+        Row: {
+          id: string;
+          name: string;
+          display_name: string;
+          description: string | null;
+          color: string;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          display_name: string;
+          description?: string | null;
+          color?: string;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          display_name?: string;
+          description?: string | null;
+          color?: string;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      study_notes: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          content: string;
+          subject_id: string | null;
+          grade_level_id: string | null;
+          created_by: string;
+          is_public: boolean;
+          tags: string[] | null;
+          view_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          content: string;
+          subject_id?: string | null;
+          grade_level_id?: string | null;
+          created_by: string;
+          is_public?: boolean;
+          tags?: string[] | null;
+          view_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string | null;
+          content?: string;
+          subject_id?: string | null;
+          grade_level_id?: string | null;
+          created_by?: string;
+          is_public?: boolean;
+          tags?: string[] | null;
+          view_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      search_study_notes: {
+        Args: {
+          search_term?: string;
+          subject_filter?: string;
+          grade_filter?: string;
+        };
+        Returns: {
+          id: string;
+          title: string;
+          description: string | null;
+          content: string;
+          subject_name: string | null;
+          subject_display_name: string | null;
+          subject_color: string | null;
+          grade_level_code: string | null;
+          grade_level_display: string | null;
+          created_by: string;
+          is_public: boolean;
+          view_count: number;
+          created_at: string;
+        }[];
+      };
+      increment_note_view_count: {
+        Args: {
+          note_id: string;
+        };
+        Returns: void;
+      };
     };
     Enums: {
-      user_role: 'admin' | 'principal' | 'teacher' | 'student' | 'parent' | 'hr' | 'finance' | 'support';
-      student_package: 'free' | 'silver' | 'gold';
-      booking_type: 'one_to_one' | 'group_class' | 'consultation';
-      booking_status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-      attendance_status: 'present' | 'absent' | 'late' | 'excused';
-      message_type: 'direct' | 'announcement' | 'system';
+      user_role:
+        | "admin"
+        | "principal"
+        | "teacher"
+        | "student"
+        | "parent"
+        | "hr"
+        | "finance"
+        | "support";
+      student_package: "free" | "silver" | "gold";
+      booking_type: "one_to_one" | "group_class" | "consultation";
+      booking_status: "pending" | "confirmed" | "completed" | "cancelled";
+      attendance_status: "present" | "absent" | "late" | "excused";
+      message_type: "direct" | "announcement" | "system";
     };
     CompositeTypes: {
       [_ in never]: never;
     };
   };
-} 
+}

@@ -1,32 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  UsersIcon, 
-  AcademicCapIcon, 
-  CurrencyDollarIcon, 
-  ChartBarIcon,
-  BookOpenIcon,
-  CalendarDaysIcon,
-  UserGroupIcon,
-  BanknotesIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
   EyeIcon,
   CreditCardIcon,
   ClockIcon,
   CheckCircleIcon,
-  XCircleIcon
+  XCircleIcon,
+  UserGroupIcon,
+  AcademicCapIcon,
+  CurrencyDollarIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
-import { useAdmin } from '@/contexts/AdminContext';
 import { AdminStudentService, Student, PackageInfo } from '@/lib/adminStudentService';
 import toast from 'react-hot-toast';
 
-const AdminDashboard: React.FC = () => {
-  const { adminSession } = useAdmin();
+const ManageStudentsPage: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [packages, setPackages] = useState<PackageInfo[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPackage, setFilterPackage] = useState('all');
@@ -45,6 +39,7 @@ const AdminDashboard: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('Loading data in ManageStudentsPage...');
       
       // Load students, packages, and stats in parallel
       const [studentsData, packagesData, statsData] = await Promise.all([
@@ -52,6 +47,10 @@ const AdminDashboard: React.FC = () => {
         AdminStudentService.getPackageInfo(),
         AdminStudentService.getStudentStats()
       ]);
+
+      console.log('Students data received:', studentsData);
+      console.log('Packages data received:', packagesData);
+      console.log('Stats data received:', statsData);
 
       setStudents(studentsData);
       setFilteredStudents(studentsData);
@@ -64,8 +63,6 @@ const AdminDashboard: React.FC = () => {
       setLoading(false);
     }
   };
-
-
 
   useEffect(() => {
     // Filter students based on search and package filter
@@ -91,6 +88,8 @@ const AdminDashboard: React.FC = () => {
     setShowStudentModal(true);
   };
 
+
+
   const getPackageInfo = (packageType: string) => {
     return packages.find(p => p.package_type === packageType);
   };
@@ -113,7 +112,7 @@ const AdminDashboard: React.FC = () => {
       value: stats.total.toString(),
       change: '+12%',
       changeType: 'positive',
-      icon: UsersIcon,
+      icon: UserGroupIcon,
     },
     {
       name: 'Active Students',
@@ -123,18 +122,18 @@ const AdminDashboard: React.FC = () => {
       icon: CheckCircleIcon,
     },
     {
-      name: 'Premium Subscriptions',
-      value: ((stats.byPackage.gold || 0) + (stats.byPackage.silver || 0)).toString(),
-      change: '+15%',
-      changeType: 'positive',
-      icon: CreditCardIcon,
-    },
-    {
       name: 'Recent Registrations',
       value: stats.recentRegistrations.toString(),
       change: '+8%',
       changeType: 'positive',
       icon: AcademicCapIcon,
+    },
+    {
+      name: 'Premium Subscriptions',
+      value: ((stats.byPackage.gold || 0) + (stats.byPackage.silver || 0)).toString(),
+      change: '+15%',
+      changeType: 'positive',
+      icon: CurrencyDollarIcon,
     },
   ];
 
@@ -150,17 +149,12 @@ const AdminDashboard: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div className="border-b border-gray-200 pb-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Welcome back, {adminSession?.profile?.full_name || 'Admin'}
-            </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Manage students, subscriptions, and system overview.
-            </p>
-          </div>
-
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Manage Students
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          View and manage all student accounts, subscriptions, and information.
+        </p>
       </div>
 
       {/* Stats */}
@@ -205,7 +199,7 @@ const AdminDashboard: React.FC = () => {
       <div className="card">
         <div className="card-header">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-gray-900">Recent Students</h2>
+            <h2 className="text-lg font-medium text-gray-900">Student Management</h2>
           </div>
         </div>
         
@@ -268,7 +262,7 @@ const AdminDashboard: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.slice(0, 5).map((student) => {
+                  filteredStudents.map((student) => {
                     const packageInfo = getPackageInfo(student.package);
                     return (
                       <tr key={student.id} className="hover:bg-gray-50">
@@ -347,6 +341,7 @@ const AdminDashboard: React.FC = () => {
                             <button
                               onClick={() => handleViewStudent(student)}
                               className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                              title="View Details"
                             >
                               <EyeIcon className="h-4 w-4 mr-1" />
                               View
@@ -360,18 +355,6 @@ const AdminDashboard: React.FC = () => {
               </tbody>
             </table>
           </div>
-
-          {/* View All Students Link */}
-          {students.length > 5 && (
-            <div className="mt-6 text-center">
-              <a
-                href="/admin/students"
-                className="text-primary-600 hover:text-primary-500 font-medium"
-              >
-                View All Students →
-              </a>
-            </div>
-          )}
         </div>
       </div>
 
@@ -534,4 +517,4 @@ const AdminDashboard: React.FC = () => {
   );
 };
 
-export default AdminDashboard; 
+export default ManageStudentsPage; 

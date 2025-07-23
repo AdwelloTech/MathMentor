@@ -1,8 +1,9 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { UserIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '@/contexts/AuthContext';
-import StudentProfile from '@/components/student/StudentProfile';
+import React from "react";
+import { motion } from "framer-motion";
+import { UserIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "@/contexts/AuthContext";
+import StudentProfile from "@/components/student/StudentProfile";
+import TutorProfile from "@/components/tutor/TutorProfile";
 
 const ProfilePage: React.FC = () => {
   const { profile } = useAuth();
@@ -19,9 +20,7 @@ const ProfilePage: React.FC = () => {
         <div className="flex items-center">
           <UserIcon className="h-8 w-8 text-primary-600 mr-3" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              My Profile
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
             <p className="mt-2 text-sm text-gray-600">
               Manage your personal information and learning preferences.
             </p>
@@ -35,8 +34,10 @@ const ProfilePage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        {profile?.role === 'student' ? (
+        {profile?.role === "student" ? (
           <StudentProfile />
+        ) : profile?.role === "tutor" ? (
+          <TutorProfile />
         ) : (
           <div className="card">
             <div className="card-body">
@@ -54,4 +55,4 @@ const ProfilePage: React.FC = () => {
   );
 };
 
-export default ProfilePage; 
+export default ProfilePage;

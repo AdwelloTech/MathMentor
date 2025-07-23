@@ -13,7 +13,10 @@ import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
+import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
+import NotesPage from "./pages/notes/NotesPage";
+import CreateNotePage from "./pages/notes/CreateNotePage";
 import ParentDashboard from "./pages/dashboards/ParentDashboard";
 import HRDashboard from "./pages/dashboards/HRDashboard";
 import FinanceDashboard from "./pages/dashboards/FinanceDashboard";
@@ -102,10 +105,15 @@ function App() {
                 path="student/*"
                 element={
                   <ProtectedRoute requiredRole="student">
-                    <StudentDashboard />
+                    <StudentLayout />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route index element={<StudentDashboard />} />
+                <Route path="notes" element={<NotesPage />} />
+                <Route path="notes/create" element={<CreateNotePage />} />
+                <Route path="notes/edit/:noteId" element={<CreateNotePage />} />
+              </Route>
 
               {/* Parent routes */}
               <Route

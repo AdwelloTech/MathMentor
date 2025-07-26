@@ -10,9 +10,11 @@ import {
   BellIcon,
   Cog6ToothIcon,
   SparklesIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRoleDisplayName } from "@/utils/permissions";
+
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,6 +29,7 @@ const DashboardLayout: React.FC = () => {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: AcademicCapIcon },
+    { name: "Schedule Class", href: "/schedule-class", icon: CalendarDaysIcon },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];

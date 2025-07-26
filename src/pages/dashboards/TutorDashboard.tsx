@@ -10,12 +10,20 @@ import {
   ClockIcon,
   CurrencyDollarIcon,
   XCircleIcon,
+  CalendarDaysIcon,
+  PlusIcon,
+  VideoCameraIcon,
+  UserGroupIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
 import TutorProfileEdit from "@/components/ui/TutorProfileEdit";
+import ClassSchedulingPage from "@/components/classScheduling/ClassSchedulingPage";
 import { db } from "@/lib/db";
+import { classSchedulingService } from "@/lib/classSchedulingService";
 import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
+import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
 
 const TutorDashboard: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -24,6 +32,9 @@ const TutorDashboard: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
+  const [showClassScheduling, setShowClassScheduling] = useState(false);
+  const [dashboardStats, setDashboardStats] = useState<TutorDashboardStats | null>(null);
+  const [upcomingClasses, setUpcomingClasses] = useState<TutorClass[]>([]);
 
   // Check for existing application on mount
   useEffect(() => {
@@ -43,6 +54,11 @@ const TutorDashboard: React.FC = () => {
       // Get the most recent application (first in the array since it's ordered by submitted_at desc)
       const mostRecentApplication = existingApplications?.[0] || null;
       setApplication(mostRecentApplication);
+
+      // If application is approved, load dashboard data
+      if (mostRecentApplication?.application_status === 'approved') {
+        await loadDashboardData();
+      }
     } catch (error: any) {
       // If no application found, that's fine
       if (error.code !== "PGRST116") {
@@ -50,6 +66,20 @@ const TutorDashboard: React.FC = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDashboardData = async () => {
+    try {
+      const [stats, classes] = await Promise.all([
+        classSchedulingService.stats.getTutorStats(user!.id),
+        classSchedulingService.classes.getUpcomingByTutorId(user!.id)
+      ]);
+      
+      setDashboardStats(stats);
+      setUpcomingClasses(classes);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
     }
   };
 
@@ -112,6 +142,14 @@ const TutorDashboard: React.FC = () => {
   const handleApplicationSuccess = () => {
     checkApplication(); // Refresh application status
   };
+
+  const handleClassSchedulingSuccess = () => {
+    loadDashboardData(); // Refresh dashboard data
+  };
+
+  const isApprovedTutor = application?.application_status === 'approved';
+  const isPendingTutor = application?.application_status === 'pending';
+  const isRejectedTutor = application?.application_status === 'rejected';
 
   // Show loading while checking application
   if (loading) {
@@ -268,36 +306,236 @@ const TutorDashboard: React.FC = () => {
     );
   }
 
-  // If approved, show the main tutor dashboard (but locked until admin approval)
-  return (
-    <div className="space-y-8">
-      <div className="border-b border-gray-200 pb-5">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome, {profile?.full_name}
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Tutor Dashboard - Manage your tutoring profile and sessions.
-        </p>
-      </div>
-      {/* Application Status Notice */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-blue-50 border border-blue-200 rounded-lg p-4"
-      >
-        <div className="flex items-start">
-          <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-blue-800">
-              Application Submitted Successfully!
-            </h3>
-            <p className="mt-1 text-sm text-blue-700">
-              Your tutor application is currently under review. You'll have full
-              access to the dashboard once approved by our team.
-            </p>
-          </div>
+  // If approved, show the main tutor dashboard
+  if (isApprovedTutor) {
+    return (
+      <div className="space-y-8">
+        <div className="border-b border-gray-200 pb-5">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome, {profile?.full_name}
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Tutor Dashboard - Manage your tutoring profile and sessions.
+          </p>
         </div>
-      </motion.div>
+
+        {/* Success Notice */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-green-50 border border-green-200 rounded-lg p-4"
+        >
+          <div className="flex items-start">
+            <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-green-800">
+                Application Approved!
+              </h3>
+              <p className="mt-1 text-sm text-green-700">
+                Your tutor application has been approved. You can now schedule classes and start teaching!
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowClassScheduling(true)}
+            className="p-6 bg-blue-50 border-2 border-blue-200 rounded-lg hover:border-blue-300 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              <PlusIcon className="h-8 w-8 text-blue-600" />
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900">Schedule Class</h3>
+                <p className="text-sm text-gray-600">Create new tutoring sessions</p>
+              </div>
+            </div>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleOpenProfileEdit}
+            className="p-6 bg-purple-50 border-2 border-purple-200 rounded-lg hover:border-purple-300 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              <UserIcon className="h-8 w-8 text-purple-600" />
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900">Edit Profile</h3>
+                <p className="text-sm text-gray-600">Update your information</p>
+              </div>
+            </div>
+          </motion.button>
+
+          <motion.div className="p-6 bg-green-50 border-2 border-green-200 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <VideoCameraIcon className="h-8 w-8 text-green-600" />
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900">My Classes</h3>
+                <p className="text-sm text-gray-600">{dashboardStats?.upcoming_classes || 0} upcoming</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div className="p-6 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900">Earnings</h3>
+                <p className="text-sm text-gray-600">${dashboardStats?.total_earnings || 0}</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Dashboard Stats */}
+        {dashboardStats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <AcademicCapIcon className="h-8 w-8 text-blue-600 mr-3" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Classes</p>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardStats.total_classes}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <ClockIcon className="h-8 w-8 text-green-600 mr-3" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Upcoming</p>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardStats.upcoming_classes}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <CurrencyDollarIcon className="h-8 w-8 text-yellow-600 mr-3" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Earnings</p>
+                  <p className="text-2xl font-bold text-gray-900">${dashboardStats.total_earnings}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <UserGroupIcon className="h-8 w-8 text-purple-600 mr-3" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Students</p>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardStats.total_students}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Upcoming Classes */}
+        {upcomingClasses.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Upcoming Classes</h2>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {upcomingClasses.slice(0, 5).map((classItem) => (
+                  <div key={classItem.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        {classItem.class_type?.name === 'One-to-One' || classItem.class_type?.name === 'One-to-One Extended' ? (
+                          <UserIcon className="h-5 w-5 text-blue-600" />
+                        ) : classItem.class_type?.name === 'Group Class' ? (
+                          <UserGroupIcon className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <ChatBubbleLeftRightIcon className="h-5 w-5 text-purple-600" />
+                        )}
+                        <span className="font-medium text-gray-900">{classItem.title}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">
+                        {new Date(classItem.date).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {classItem.start_time} - {classItem.end_time}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Class Scheduling Modal */}
+        {showClassScheduling && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">Schedule Classes</h2>
+                <button
+                  onClick={() => setShowClassScheduling(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircleIcon className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="overflow-y-auto h-full">
+                <ClassSchedulingPage />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Profile Edit Modal */}
+        {isProfileEditOpen && (
+          <TutorProfileEdit
+            isOpen={isProfileEditOpen}
+            onClose={handleCloseProfileEdit}
+            onSave={handleProfileSaved}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // If pending, show pending status
+  if (isPendingTutor) {
+    return (
+      <div className="space-y-8">
+        <div className="border-b border-gray-200 pb-5">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome, {profile?.full_name}
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Tutor Dashboard - Manage your tutoring profile and sessions.
+          </p>
+        </div>
+        {/* Application Status Notice */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-blue-50 border border-blue-200 rounded-lg p-4"
+        >
+          <div className="flex items-start">
+            <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-blue-800">
+                Application Under Review
+              </h3>
+              <p className="mt-1 text-sm text-blue-700">
+                Your tutor application is currently under review. You'll have full
+                access to the dashboard once approved by our team.
+              </p>
+            </div>
+          </div>
+        </motion.div>
 
       {/* Profile Completion Alert */}
       {!isProfileComplete && (
@@ -632,13 +870,16 @@ const TutorDashboard: React.FC = () => {
       </div>
 
       {/* Profile Edit Modal */}
-      <TutorProfileEdit
-        isOpen={isProfileEditOpen}
-        onClose={handleCloseProfileEdit}
-        onSave={handleProfileSaved}
-      />
+      {isProfileEditOpen && (
+        <TutorProfileEdit
+          isOpen={isProfileEditOpen}
+          onClose={handleCloseProfileEdit}
+          onSave={handleProfileSaved}
+        />
+      )}
     </div>
   );
+  }
 };
 
 // Helper function to calculate profile completion percentage

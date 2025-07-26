@@ -175,6 +175,7 @@ export interface CalendarDay {
   isDisabled: boolean;
   hasClasses: boolean;
   classes: TutorClass[];
+  isCurrentMonth: boolean;
 }
 
 export interface TimeSlot {

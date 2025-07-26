@@ -442,34 +442,122 @@ const TutorDashboard: React.FC = () => {
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">Upcoming Classes</h2>
             </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {upcomingClasses.slice(0, 5).map((classItem) => (
-                  <div key={classItem.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        {classItem.class_type?.name === 'One-to-One' || classItem.class_type?.name === 'One-to-One Extended' ? (
-                          <UserIcon className="h-5 w-5 text-blue-600" />
-                        ) : classItem.class_type?.name === 'Group Class' ? (
-                          <UserGroupIcon className="h-5 w-5 text-green-600" />
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Class Details
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date & Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Students
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Zoom Meeting
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {upcomingClasses.slice(0, 10).map((classItem) => (
+                    <tr key={classItem.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            {classItem.class_type?.name === 'One-to-One' || classItem.class_type?.name === 'One-to-One Extended' ? (
+                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <UserIcon className="h-5 w-5 text-blue-600" />
+                              </div>
+                            ) : classItem.class_type?.name === 'Group Class' ? (
+                              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                <UserGroupIcon className="h-5 w-5 text-green-600" />
+                              </div>
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                                <ChatBubbleLeftRightIcon className="h-5 w-5 text-purple-600" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{classItem.title}</div>
+                            <div className="text-sm text-gray-500">{classItem.class_type?.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {new Date(classItem.date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {classItem.start_time} - {classItem.end_time}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {classItem.current_students}/{classItem.max_students}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          ${classItem.price_per_session}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {classItem.zoom_link ? (
+                          <div className="space-y-1">
+                            <a
+                              href={classItem.zoom_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                              Join Meeting
+                            </a>
+                            {classItem.zoom_meeting_id && (
+                              <div className="text-xs text-gray-500">
+                                ID: {classItem.zoom_meeting_id}
+                              </div>
+                            )}
+                            {classItem.zoom_password && (
+                              <div className="text-xs text-gray-500">
+                                Pass: {classItem.zoom_password}
+                              </div>
+                            )}
+                          </div>
                         ) : (
-                          <ChatBubbleLeftRightIcon className="h-5 w-5 text-purple-600" />
+                          <span className="text-sm text-gray-400">Generating...</span>
                         )}
-                        <span className="font-medium text-gray-900">{classItem.title}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">
-                        {new Date(classItem.date).toLocaleDateString()}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {classItem.start_time} - {classItem.end_time}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          classItem.status === 'scheduled' 
+                            ? 'bg-green-100 text-green-800'
+                            : classItem.status === 'in_progress'
+                            ? 'bg-blue-100 text-blue-800'
+                            : classItem.status === 'completed'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {classItem.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+            {upcomingClasses.length > 10 && (
+              <div className="px-6 py-3 bg-gray-50 text-sm text-gray-500">
+                Showing 10 of {upcomingClasses.length} upcoming classes
+              </div>
+            )}
           </div>
         )}
 

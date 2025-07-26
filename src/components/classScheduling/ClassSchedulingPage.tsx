@@ -35,6 +35,8 @@ const ClassSchedulingPage: React.FC = () => {
   const [showTimeSelection, setShowTimeSelection] = useState(false);
   const [showClassForm, setShowClassForm] = useState(false);
   const [existingClasses, setExistingClasses] = useState<TutorClass[]>([]);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
   // Form state
   const [formData, setFormData] = useState<CreateClassFormData>({
@@ -52,6 +54,14 @@ const ClassSchedulingPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    generateCalendar();
+  }, [existingClasses]);
+
+  useEffect(() => {
+    generateCalendar();
+  }, [currentMonth, currentYear]);
 
   const loadData = async () => {
     try {
@@ -73,27 +83,44 @@ const ClassSchedulingPage: React.FC = () => {
   };
 
   const generateCalendar = () => {
-    const today = new Date();
     const days: CalendarDay[] = [];
     
-    // Generate next 30 days
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
+    // Get the first day of the current month
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+    
+    // Get the start of the week that contains the first day of the month
+    const startOfWeek = new Date(firstDayOfMonth);
+    const dayOfWeek = firstDayOfMonth.getDay(); // 0 = Sunday, 6 = Saturday
+    startOfWeek.setDate(firstDayOfMonth.getDate() - dayOfWeek);
+    
+    // Generate calendar days (6 weeks to ensure we cover the entire month)
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
       
       const dateString = date.toISOString().split('T')[0];
-      const dayClasses = existingClasses.filter(c => c.date === dateString);
+      const today = new Date();
+      const isPastDate = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      
+      // Only show classes for the current month being viewed
+      const dayClasses = existingClasses.filter(c => 
+        c.date === dateString && 
+        new Date(c.date).getMonth() === currentMonth &&
+        new Date(c.date).getFullYear() === currentYear
+      );
       
       days.push({
         date: dateString,
         day: date.getDate(),
         month: date.getMonth(),
         year: date.getFullYear(),
-        isToday: i === 0,
+        isToday: date.toDateString() === today.toDateString(),
         isSelected: false,
-        isDisabled: false,
+        isDisabled: isPastDate || date.getMonth() !== currentMonth,
         hasClasses: dayClasses.length > 0,
-        classes: dayClasses
+        classes: dayClasses,
+        isCurrentMonth: date.getMonth() === currentMonth
       });
     }
     
@@ -102,11 +129,12 @@ const ClassSchedulingPage: React.FC = () => {
 
   const generateTimeSlots = (classType: ClassType, date: string) => {
     const slots: TimeSlot[] = [];
-    const startHour = 9; // 9 AM
-    const endHour = 17; // 5 PM
+    const startHour = 7; // 7 AM - earlier start for early birds
+    const endHour = 22; // 10 PM - later end for evening classes
     
     for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
+      // Add 15-minute intervals for more flexibility
+      for (let minute = 0; minute < 60; minute += 15) {
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         
         // Check if this time slot conflicts with existing classes
@@ -256,6 +284,30 @@ const ClassSchedulingPage: React.FC = () => {
     }
   };
 
+  const goToPreviousMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
+  const goToCurrentMonth = () => {
+    const today = new Date();
+    setCurrentMonth(today.getMonth());
+    setCurrentYear(today.getFullYear());
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -337,6 +389,25 @@ const ClassSchedulingPage: React.FC = () => {
             {/* Calendar */}
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-4">Select Date</h3>
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={goToPreviousMonth}
+                  className="p-2 text-gray-600 hover:text-gray-800"
+                  title="Previous Month"
+                >
+                  &lt;
+                </button>
+                <span className="text-lg font-semibold text-gray-900">
+                  {new Date(currentYear, currentMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </span>
+                <button
+                  onClick={goToNextMonth}
+                  className="p-2 text-gray-600 hover:text-gray-800"
+                  title="Next Month"
+                >
+                  &gt;
+                </button>
+              </div>
               <div className="grid grid-cols-7 gap-1">
                 {/* Day headers */}
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
@@ -349,8 +420,8 @@ const ClassSchedulingPage: React.FC = () => {
                 {calendarDays.map((day) => (
                   <motion.button
                     key={day.date}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: day.isDisabled ? 1 : 1.05 }}
+                    whileTap={{ scale: day.isDisabled ? 1 : 0.95 }}
                     className={`p-2 text-center rounded-lg transition-all ${
                       day.isToday
                         ? 'bg-blue-100 text-blue-700 font-semibold'
@@ -358,7 +429,9 @@ const ClassSchedulingPage: React.FC = () => {
                         ? 'bg-blue-500 text-white'
                         : day.hasClasses
                         ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                        : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                        : day.isCurrentMonth
+                        ? 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                        : 'bg-gray-100 text-gray-400'
                     } ${day.isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                     onClick={() => !day.isDisabled && handleDateSelect(day.date)}
                     disabled={day.isDisabled}
@@ -378,34 +451,51 @@ const ClassSchedulingPage: React.FC = () => {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
                   Select Time for {selectedDate}
                 </h3>
-                <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
-                  {timeSlots.map((slot) => (
-                    <motion.button
-                      key={slot.time}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`p-3 text-center rounded-lg transition-all ${
-                        slot.isSelected
-                          ? 'bg-blue-500 text-white'
-                          : slot.isAvailable
-                          ? 'bg-gray-50 hover:bg-gray-100 text-gray-700'
-                          : 'bg-red-50 text-red-500 cursor-not-allowed'
-                      } ${slot.isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                      onClick={() => slot.isAvailable && handleTimeSelect(slot.time)}
-                      disabled={slot.isDisabled}
-                    >
-                      <div className="text-sm font-medium">
-                        {new Date(`2000-01-01T${slot.time}`).toLocaleTimeString([], {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
+                <div className="max-h-80 overflow-y-auto">
+                  {/* Group time slots by hour */}
+                  {Array.from({ length: 16 }, (_, hourIndex) => {
+                    const hour = hourIndex + 7; // Start from 7 AM
+                    const hourSlots = timeSlots.filter(slot => {
+                      const slotHour = parseInt(slot.time.split(':')[0]);
+                      return slotHour === hour;
+                    });
+                    
+                    if (hourSlots.length === 0) return null;
+                    
+                    return (
+                      <div key={hour} className="mb-4">
+                        <div className="grid grid-cols-4 gap-2">
+                          {hourSlots.map((slot) => (
+                            <motion.button
+                              key={slot.time}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className={`p-2 text-center rounded-lg transition-all text-xs ${
+                                slot.isSelected
+                                  ? 'bg-blue-500 text-white'
+                                  : slot.isAvailable
+                                  ? 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                                  : 'bg-red-50 text-red-500 cursor-not-allowed'
+                              } ${slot.isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              onClick={() => slot.isAvailable && handleTimeSelect(slot.time)}
+                              disabled={slot.isDisabled}
+                            >
+                              <div className="font-medium">
+                                {new Date(`2000-01-01T${slot.time}`).toLocaleTimeString([], {
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  hour12: true
+                                })}
+                              </div>
+                              {slot.existingClass && (
+                                <div className="text-xs mt-1 opacity-75">Booked</div>
+                              )}
+                            </motion.button>
+                          ))}
+                        </div>
                       </div>
-                      {slot.existingClass && (
-                        <div className="text-xs mt-1">Booked</div>
-                      )}
-                    </motion.button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

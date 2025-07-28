@@ -41,14 +41,6 @@ const DashboardLayout: React.FC = () => {
     }
   };
 
-  const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: AcademicCapIcon },
-    { name: "Schedule Class", href: "/schedule-class", icon: CalendarDaysIcon },
-    { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
-    { name: "Profile", href: "/profile", icon: UserCircleIcon },
-    { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
-  ];
-
   // Add admin-specific navigation
   const adminNavigation = [
     { name: "Dashboard", href: "/admin", icon: AcademicCapIcon },
@@ -58,8 +50,38 @@ const DashboardLayout: React.FC = () => {
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];
 
-  // Use admin navigation if user is admin or admin session exists
-  const currentNavigation = (profile?.role === 'admin' || isAdminLoggedIn) ? adminNavigation : navigation;
+  // Base navigation for all users
+  const baseNavigation = [
+    { name: "Dashboard", href: "/dashboard", icon: AcademicCapIcon },
+    { name: "Profile", href: "/profile", icon: UserCircleIcon },
+    { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
+  ];
+
+  // Tutor-specific navigation items
+  const tutorNavigationItems = [
+    { name: "Schedule Class", href: "/schedule-class", icon: CalendarDaysIcon },
+    { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
+  ];
+
+  // Build navigation based on user role
+  const getNavigation = () => {
+    if (profile?.role === 'admin' || isAdminLoggedIn) {
+      return adminNavigation;
+    }
+    
+    // For tutors, include tutor-specific items
+    if (profile?.role === 'tutor') {
+      return [...baseNavigation.slice(0, 1), ...tutorNavigationItems, ...baseNavigation.slice(1)];
+    }
+    
+    // For students and other roles, only show base navigation
+    return baseNavigation;
+  };
+
+  const navigation = getNavigation();
+
+  // Use the dynamically built navigation
+  const currentNavigation = navigation;
 
   const isActive = (href: string) => location.pathname === href;
 

@@ -17,6 +17,8 @@ import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPa
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
+import ScheduleClassPage from "./components/classScheduling/ClassSchedulingPage";
+
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
 import NotesPage from "./pages/notes/NotesPage";
@@ -63,6 +65,7 @@ function App() {
             <Route path="/" element={<DashboardLayout />}>
               <Route index element={<DashboardRoute />} />
               <Route path="dashboard" element={<DashboardRoute />} />
+              <Route path="schedule-class" element={<ScheduleClassPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
 

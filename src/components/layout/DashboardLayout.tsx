@@ -44,6 +44,7 @@ const DashboardLayout: React.FC = () => {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: AcademicCapIcon },
     { name: "Schedule Class", href: "/schedule-class", icon: CalendarDaysIcon },
+    { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];

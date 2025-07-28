@@ -152,7 +152,13 @@ export const classSchedulingService = {
           tutor:profiles(id, full_name, email)
         `)
         .eq('tutor_id', tutorId)
-        .gte('date', new Date().toISOString().split('T')[0])
+        .gte('date', (() => {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        })())
         .eq('status', 'scheduled')
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
@@ -200,7 +206,13 @@ export const classSchedulingService = {
           tutor:profiles(id, full_name, email)
         `)
         .eq('status', 'scheduled')
-        .gte('date', new Date().toISOString().split('T')[0])
+        .gte('date', (() => {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        })())
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
 
@@ -540,8 +552,18 @@ export const classSchedulingService = {
         .from('tutor_classes')
         .select('price_per_session, current_students')
         .eq('tutor_id', tutorId)
-        .gte('date', firstDayOfMonth.toISOString().split('T')[0])
-        .lte('date', lastDayOfMonth.toISOString().split('T')[0]);
+        .gte('date', (() => {
+          const year = firstDayOfMonth.getFullYear();
+          const month = String(firstDayOfMonth.getMonth() + 1).padStart(2, '0');
+          const day = String(firstDayOfMonth.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        })())
+        .lte('date', (() => {
+          const year = lastDayOfMonth.getFullYear();
+          const month = String(lastDayOfMonth.getMonth() + 1).padStart(2, '0');
+          const day = String(lastDayOfMonth.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        })());
 
       const classesThisMonth = thisMonthClasses?.length || 0;
       const earningsThisMonth = thisMonthClasses

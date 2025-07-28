@@ -99,7 +99,11 @@ const ClassSchedulingPage: React.FC = () => {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
       
-      const dateString = date.toISOString().split('T')[0];
+      // Use timezone-safe date formatting to avoid UTC conversion issues
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
       const today = new Date();
       const isPastDate = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
       
@@ -159,7 +163,7 @@ const ClassSchedulingPage: React.FC = () => {
           time: timeString,
           isAvailable: !hasConflict && !conflictingClass,
           isSelected: false,
-          isDisabled: hasConflict || conflictingClass,
+          isDisabled: hasConflict || !!conflictingClass,
           existingClass: conflictingClass
         });
       }
@@ -185,6 +189,7 @@ const ClassSchedulingPage: React.FC = () => {
   const handleDateSelect = (date: string) => {
     if (!selectedClassType) return;
     
+    console.log('Selected date:', date); // Debug log
     setSelectedDate(date);
     setCalendarDays(prev => prev.map(day => ({
       ...day,
@@ -202,6 +207,7 @@ const ClassSchedulingPage: React.FC = () => {
       isSelected: slot.time === time
     })));
     
+    // Use the current selectedDate state directly
     setFormData(prev => ({
       ...prev,
       date: selectedDate,
@@ -448,9 +454,9 @@ const ClassSchedulingPage: React.FC = () => {
             {/* Time Selection */}
             {showTimeSelection && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Select Time for {selectedDate}
-                </h3>
+                                 <h3 className="text-lg font-medium text-gray-900 mb-4">
+                   Select Time
+                 </h3>
                 <div className="max-h-80 overflow-y-auto">
                   {/* Group time slots by hour */}
                   {Array.from({ length: 16 }, (_, hourIndex) => {

@@ -491,11 +491,16 @@ const TutorDashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {new Date(classItem.date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
+                          {(() => {
+                            // Parse the date string to avoid timezone issues
+                            const [year, month, day] = classItem.date.split('-').map(Number);
+                            const date = new Date(year, month - 1, day); // month is 0-indexed
+                            return date.toLocaleDateString('en-US', { 
+                              weekday: 'short', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            });
+                          })()}
                         </div>
                         <div className="text-sm text-gray-500">
                           {classItem.start_time} - {classItem.end_time}

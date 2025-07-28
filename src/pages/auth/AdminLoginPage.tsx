@@ -1,50 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { AcademicCapIcon, BookOpenIcon } from '@heroicons/react/24/solid';
-import { useAuth } from '@/contexts/AuthContext';
+import { EyeIcon, EyeSlashIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { useAdmin } from '@/contexts/AdminContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
-import type { LoginFormData } from '@/types/auth';
 
-const LoginPage: React.FC = () => {
+interface AdminLoginFormData {
+  email: string;
+  password: string;
+}
+
+const AdminLoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { loginAsAdmin } = useAdmin();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setError,
-    setValue,
-  } = useForm<LoginFormData>();
+  } = useForm<AdminLoginFormData>();
 
-  // Handle navigation state from registration
-  useEffect(() => {
-    const state = location.state as any;
-    if (state?.message) {
-      toast.success(state.message);
-      // Clear the state to prevent showing message on refresh
-      window.history.replaceState({}, document.title);
-    }
-    if (state?.email) {
-      setValue('email', state.email);
-    }
-  }, [location.state, setValue]);
-
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: AdminLoginFormData) => {
     try {
       setIsLoading(true);
-      await signIn(data.email, data.password);
-      navigate('/dashboard');
+      
+      const success = await loginAsAdmin(data.email, data.password);
+      if (success) {
+        navigate('/admin');
+      } else {
+        setError('root', {
+          message: 'Invalid admin credentials',
+        });
+      }
     } catch (error: any) {
       setError('root', {
-        message: error.message || 'Invalid email or password',
+        message: error.message || 'Login failed',
       });
     } finally {
       setIsLoading(false);
@@ -52,7 +47,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <motion.div
@@ -63,17 +58,17 @@ const LoginPage: React.FC = () => {
         >
           <div className="flex justify-center mb-4">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl blur opacity-30 animate-pulse"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-30 animate-pulse"></div>
               <div className="relative bg-white p-3 rounded-2xl shadow-lg">
-                <AcademicCapIcon className="h-8 w-8 text-primary-600" />
+                <ShieldCheckIcon className="h-8 w-8 text-red-600" />
               </div>
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome Back
+            Admin Access
           </h2>
           <p className="text-gray-600">
-            Sign in to your Institute Management System
+            Secure admin panel for MathMentor
           </p>
         </motion.div>
 
@@ -82,14 +77,14 @@ const LoginPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="card"
+          className="card border-2 border-red-100"
         >
           <div className="card-body">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Email Field */}
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
-                  Email Address
+                  Admin Email
                 </label>
                 <input
                   {...register('email', {
@@ -101,7 +96,7 @@ const LoginPage: React.FC = () => {
                   })}
                   type="email"
                   id="email"
-                  placeholder="Enter your email"
+                  placeholder="admin@mathmentor.com"
                   className={`input ${errors.email ? 'input-error' : ''}`}
                 />
                 {errors.email && (
@@ -112,7 +107,7 @@ const LoginPage: React.FC = () => {
               {/* Password Field */}
               <div className="form-group">
                 <label htmlFor="password" className="form-label">
-                  Password
+                  Admin Password
                 </label>
                 <div className="relative">
                   <input
@@ -125,7 +120,7 @@ const LoginPage: React.FC = () => {
                     })}
                     type={showPassword ? 'text' : 'password'}
                     id="password"
-                    placeholder="Enter your password"
+                    placeholder="Enter admin password"
                     className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
                   />
                   <button
@@ -145,27 +140,6 @@ const LoginPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    {...register('remember')}
-                    id="remember"
-                    type="checkbox"
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember" className="ml-2 block text-sm text-gray-900">
-                    Remember me
-                  </label>
-                </div>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-primary-600 hover:text-primary-500 font-medium"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
               {/* Error Message */}
               {errors.root && (
                 <motion.div
@@ -181,14 +155,14 @@ const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="btn btn-primary w-full btn-lg hover-lift"
+                className="btn btn-primary w-full btn-lg hover-lift bg-red-600 hover:bg-red-700"
               >
                 {isLoading ? (
                   <LoadingSpinner size="sm" />
                 ) : (
                   <>
-                    <BookOpenIcon className="h-5 w-5 mr-2" />
-                    Sign In
+                    <ShieldCheckIcon className="h-5 w-5 mr-2" />
+                    Admin Login
                   </>
                 )}
               </button>
@@ -196,65 +170,38 @@ const LoginPage: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Register Link */}
+        {/* Admin Credentials */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-center"
+          className="bg-white p-4 rounded-lg shadow-sm border border-red-200"
         >
-          <p className="text-gray-600">
-            Don't have an account?{' '}
-            <Link
-              to="/register"
-              className="text-primary-600 hover:text-primary-500 font-medium"
-            >
-              Register here
-            </Link>
-          </p>
+          <h3 className="text-sm font-medium text-gray-900 mb-2">Admin Credentials</h3>
+          <div className="text-xs text-gray-600 space-y-1">
+            <div>
+              <strong>Email:</strong> admin@mathmentor.com
+            </div>
+            <div>
+              <strong>Password:</strong> admin123
+            </div>
+          </div>
         </motion.div>
 
-        {/* Admin Login Link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-center"
-        >
-          <p className="text-gray-600">
-            <Link
-              to="/admin/login"
-              className="text-red-600 hover:text-red-500 font-medium"
-            >
-              Admin Login →
-            </Link>
-          </p>
-        </motion.div>
-
-        {/* Demo Credentials */}
+        {/* Back to Regular Login */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+          className="text-center"
         >
-          <h3 className="text-sm font-medium text-gray-900 mb-2">Demo Credentials</h3>
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-            <div>
-              <strong>Admin:</strong> admin@iems.com
-            </div>
-            <div>
-              <strong>Student:</strong> student@iems.com
-            </div>
-            <div>
-              <strong>Teacher:</strong> teacher@iems.com
-            </div>
-            <div>
-              <strong>Parent:</strong> parent@iems.com
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Password: <code className="bg-gray-100 px-1 rounded">password123</code>
+          <p className="text-gray-600">
+            <a
+              href="/login"
+              className="text-red-600 hover:text-red-500 font-medium"
+            >
+              ← Back to Regular Login
+            </a>
           </p>
         </motion.div>
       </div>
@@ -262,4 +209,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage; 
+export default AdminLoginPage; 

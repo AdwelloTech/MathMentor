@@ -1,8 +1,10 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
+import { useAdmin } from "./contexts/AdminContext";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 import LoginPage from "./pages/auth/LoginPage";
+import AdminLoginPage from "./pages/auth/AdminLoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
@@ -10,6 +12,8 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
+import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
+import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
@@ -29,9 +33,10 @@ import TutorApplicationPage from "./pages/TutorApplicationPage";
 
 function App() {
   const { user, loading } = useAuth();
+  const { adminSession, isAdminLoggedIn, loading: adminLoading } = useAdmin();
 
   // Show loading spinner while checking authentication
-  if (loading) {
+  if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <LoadingSpinner size="lg" />
@@ -46,9 +51,10 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Public routes */}
-        {!user ? (
+        {!user && !isAdminLoggedIn ? (
           <>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
@@ -65,10 +71,26 @@ function App() {
 
               {/* Admin routes */}
               <Route
-                path="admin/*"
+                path="admin"
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/students"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ManageStudentsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/tutor-applications"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ManageTutorApplicationsPage />
                   </ProtectedRoute>
                 }
               />
@@ -190,6 +212,12 @@ function App() {
 // Dashboard route component that redirects to appropriate dashboard
 function DashboardRoute() {
   const { user, profile, loading } = useAuth();
+  const { adminSession, isAdminLoggedIn } = useAdmin();
+
+  // Check for admin session first
+  if (isAdminLoggedIn && adminSession) {
+    return <Navigate to="/admin" replace />;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -240,7 +268,17 @@ interface ProtectedRouteProps {
 
 function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   const { user } = useAuth();
+  const { isAdminLoggedIn } = useAdmin();
 
+  // For admin routes, check admin session
+  if (requiredRole === "admin") {
+    if (!isAdminLoggedIn) {
+      return <Navigate to="/admin/login" replace />;
+    }
+    return <>{children}</>;
+  }
+
+  // For other routes, check regular user session
   if (!user) {
     return <Navigate to="/login" replace />;
   }

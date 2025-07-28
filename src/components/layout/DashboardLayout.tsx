@@ -10,21 +10,35 @@ import {
   BellIcon,
   Cog6ToothIcon,
   SparklesIcon,
+
   CalendarDaysIcon,
+
+  UserGroupIcon,
+  DocumentTextIcon,
+
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdmin } from "@/contexts/AdminContext";
 import { getRoleDisplayName } from "@/utils/permissions";
 
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
+  const { adminSession, isAdminLoggedIn, logoutAdmin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
+    if (isAdminLoggedIn) {
+      // Admin logout
+      await logoutAdmin();
+      navigate("/admin/login");
+    } else {
+      // Regular user logout
+      await signOut();
+      navigate("/login");
+    }
   };
 
   const navigation = [
@@ -33,6 +47,18 @@ const DashboardLayout: React.FC = () => {
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];
+
+  // Add admin-specific navigation
+  const adminNavigation = [
+    { name: "Dashboard", href: "/admin", icon: AcademicCapIcon },
+    { name: "Manage Students", href: "/admin/students", icon: UserGroupIcon },
+    { name: "Tutor Applications", href: "/admin/tutor-applications", icon: DocumentTextIcon },
+    { name: "Profile", href: "/profile", icon: UserCircleIcon },
+    { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
+  ];
+
+  // Use admin navigation if user is admin or admin session exists
+  const currentNavigation = (profile?.role === 'admin' || isAdminLoggedIn) ? adminNavigation : navigation;
 
   const isActive = (href: string) => location.pathname === href;
 
@@ -122,7 +148,7 @@ const DashboardLayout: React.FC = () => {
                     <ul role="list" className="flex flex-1 flex-col gap-y-7">
                       <li>
                         <ul role="list" className="-mx-2 space-y-2">
-                          {navigation.map((item, index) => (
+                          {currentNavigation.map((item, index) => (
                             <motion.li
                               key={item.name}
                               initial={{ opacity: 0, x: -20 }}
@@ -243,7 +269,7 @@ const DashboardLayout: React.FC = () => {
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
                 <ul role="list" className="-mx-2 space-y-2">
-                  {navigation.map((item, index) => (
+                  {currentNavigation.map((item, index) => (
                     <motion.li
                       key={item.name}
                       initial={{ opacity: 0, x: -20 }}

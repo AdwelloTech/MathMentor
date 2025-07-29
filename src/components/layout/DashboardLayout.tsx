@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,14 +20,41 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { getRoleDisplayName } from "@/utils/permissions";
+import { db } from "@/lib/db";
+import type { TutorApplication } from "@/types/auth";
 
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tutorApplication, setTutorApplication] = useState<TutorApplication | null>(null);
+  const [loadingApplication, setLoadingApplication] = useState(false);
   const { user, profile, signOut } = useAuth();
   const { adminSession, isAdminLoggedIn, logoutAdmin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check tutor application status on mount
+  useEffect(() => {
+    if (profile?.role === 'tutor' && user) {
+      checkTutorApplication();
+    }
+  }, [profile?.role, user]);
+
+  const checkTutorApplication = async () => {
+    if (!user) return;
+    
+    setLoadingApplication(true);
+    try {
+      const applications = await db.tutorApplications.getByUserId(user.id);
+      // Get the most recent application
+      const mostRecentApplication = applications?.[0] || null;
+      setTutorApplication(mostRecentApplication);
+    } catch (error) {
+      console.error("Error checking tutor application:", error);
+    } finally {
+      setLoadingApplication(false);
+    }
+  };
 
   const handleSignOut = async () => {
     if (isAdminLoggedIn) {
@@ -63,15 +90,32 @@ const DashboardLayout: React.FC = () => {
     { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
   ];
 
+  // Check if tutor navigation should be disabled
+  const isTutorApproved = tutorApplication?.application_status === 'approved';
+  const isTutorPending = tutorApplication?.application_status === 'pending';
+  const isTutorRejected = tutorApplication?.application_status === 'rejected';
+
   // Build navigation based on user role
   const getNavigation = () => {
     if (profile?.role === 'admin' || isAdminLoggedIn) {
       return adminNavigation;
     }
     
-    // For tutors, include tutor-specific items
+    // For tutors, include tutor-specific items but mark them as disabled if not approved
     if (profile?.role === 'tutor') {
-      return [...baseNavigation.slice(0, 1), ...tutorNavigationItems, ...baseNavigation.slice(1)];
+      const navigationItems = [...baseNavigation.slice(0, 1), ...tutorNavigationItems, ...baseNavigation.slice(1)];
+      
+      // If tutor is not approved or has no application, disable tutor-specific items
+      if (!isTutorApproved) {
+        return navigationItems.map(item => {
+          if (tutorNavigationItems.some(tutorItem => tutorItem.name === item.name)) {
+            return { ...item, disabled: true };
+          }
+          return item;
+        });
+      }
+      
+      return navigationItems;
     }
     
     // For students and other roles, only show base navigation
@@ -84,6 +128,132 @@ const DashboardLayout: React.FC = () => {
   const currentNavigation = navigation;
 
   const isActive = (href: string) => location.pathname === href;
+
+  // Render navigation item with disabled state
+  const renderNavigationItem = (item: any, index: number) => {
+    const isDisabled = item.disabled;
+    
+    // Get tooltip message based on application status
+    const getTooltipMessage = () => {
+      if (profile?.role !== 'tutor') return '';
+      
+      if (isTutorPending) {
+        return "Your application is under review. This feature will be available once approved.";
+      }
+      if (isTutorRejected) {
+        return "Your application was rejected. Please contact support for more information.";
+      }
+      if (!tutorApplication) {
+        return "Please submit a tutor application first.";
+      }
+      return "Application pending approval";
+    };
+    
+    return (
+      <motion.li
+        key={item.name}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+      >
+        {isDisabled ? (
+          // Disabled navigation item
+          <div
+            className={`group flex gap-x-3 rounded-2xl p-4 text-sm leading-6 font-medium transition-all duration-300 relative overflow-hidden border cursor-not-allowed ${
+              isActive(item.href)
+                ? "text-gray-400 bg-gray-100 shadow-lg border-gray-300"
+                : "text-gray-400 bg-gray-50 border-gray-200"
+            }`}
+            title={getTooltipMessage()}
+          >
+            <motion.div
+              className="relative opacity-50"
+              whileHover={{ scale: 1.0 }}
+              transition={{
+                duration: 0.8,
+                type: "spring",
+                stiffness: 200,
+              }}
+            >
+              <item.icon className="h-5 w-5 shrink-0 drop-shadow-sm" />
+            </motion.div>
+            <span className="opacity-50">{item.name}</span>
+            {isTutorPending && (
+              <motion.div
+                className="absolute top-2 right-2 w-2 h-2 bg-yellow-500 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            )}
+            {isTutorRejected && (
+              <motion.div
+                className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            )}
+            {/* Status indicator text */}
+            <div className="absolute bottom-1 right-2 text-xs opacity-60">
+              {isTutorPending && "Pending"}
+              {isTutorRejected && "Rejected"}
+              {!tutorApplication && "No App"}
+            </div>
+          </div>
+        ) : (
+          // Enabled navigation item
+          <Link
+            to={item.href}
+            className={`group flex gap-x-3 rounded-2xl p-4 text-sm leading-6 font-medium transition-all duration-300 relative overflow-hidden border ${
+              isActive(item.href)
+                ? "text-blue-700 bg-gradient-to-r from-blue-100 via-blue-50 to-indigo-100 shadow-lg border-blue-300"
+                : "text-gray-700 hover:text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 border-transparent hover:border-blue-200"
+            }`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <motion.div
+              className="relative"
+              whileHover={{ rotate: 360, scale: 1.2 }}
+              transition={{
+                duration: 0.8,
+                type: "spring",
+                stiffness: 200,
+              }}
+            >
+              <item.icon className="h-5 w-5 shrink-0 drop-shadow-sm" />
+              {isActive(item.href) && (
+                <motion.div
+                  className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                  }}
+                />
+              )}
+            </motion.div>
+            <span>{item.name}</span>
+            {isActive(item.href) && (
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-blue-200/20 to-purple-200/20 rounded-xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            )}
+          </Link>
+        )}
+      </motion.li>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -171,56 +341,9 @@ const DashboardLayout: React.FC = () => {
                     <ul role="list" className="flex flex-1 flex-col gap-y-7">
                       <li>
                         <ul role="list" className="-mx-2 space-y-2">
-                          {currentNavigation.map((item, index) => (
-                            <motion.li
-                              key={item.name}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ duration: 0.5, delay: index * 0.1 }}
-                            >
-                              <Link
-                                to={item.href}
-                                className={`group flex gap-x-3 rounded-2xl p-4 text-sm leading-6 font-medium transition-all duration-300 relative overflow-hidden border ${
-                                  isActive(item.href)
-                                    ? "text-blue-700 bg-gradient-to-r from-blue-100 via-blue-50 to-indigo-100 shadow-lg border-blue-300"
-                                    : "text-gray-700 hover:text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 border-transparent hover:border-blue-200"
-                                }`}
-                                onClick={() => setSidebarOpen(false)}
-                              >
-                                <motion.div
-                                  className="relative"
-                                  whileHover={{ rotate: 360, scale: 1.2 }}
-                                  transition={{
-                                    duration: 0.8,
-                                    type: "spring",
-                                    stiffness: 200,
-                                  }}
-                                >
-                                  <item.icon className="h-5 w-5 shrink-0 drop-shadow-sm" />
-                                  {isActive(item.href) && (
-                                    <motion.div
-                                      className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg"
-                                      initial={{ scale: 0 }}
-                                      animate={{ scale: 1 }}
-                                      transition={{
-                                        type: "spring",
-                                        stiffness: 500,
-                                      }}
-                                    />
-                                  )}
-                                </motion.div>
-                                <span>{item.name}</span>
-                                {isActive(item.href) && (
-                                  <motion.div
-                                    className="absolute inset-0 bg-gradient-to-r from-blue-200/20 to-purple-200/20 rounded-xl"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.3 }}
-                                  />
-                                )}
-                              </Link>
-                            </motion.li>
-                          ))}
+                          {currentNavigation.map((item, index) => 
+                            renderNavigationItem(item, index)
+                          )}
                         </ul>
                       </li>
                     </ul>
@@ -292,52 +415,9 @@ const DashboardLayout: React.FC = () => {
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
                 <ul role="list" className="-mx-2 space-y-2">
-                  {currentNavigation.map((item, index) => (
-                    <motion.li
-                      key={item.name}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <Link
-                        to={item.href}
-                        className={`group flex gap-x-3 rounded-2xl p-4 text-sm leading-6 font-medium transition-all duration-300 relative overflow-hidden border ${
-                          isActive(item.href)
-                            ? "text-blue-700 bg-gradient-to-r from-blue-100 via-blue-50 to-indigo-100 shadow-lg border-blue-300"
-                            : "text-gray-700 hover:text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 border-transparent hover:border-blue-200"
-                        }`}
-                      >
-                        <motion.div
-                          className="relative"
-                          whileHover={{ rotate: 360, scale: 1.2 }}
-                          transition={{
-                            duration: 0.8,
-                            type: "spring",
-                            stiffness: 200,
-                          }}
-                        >
-                          <item.icon className="h-5 w-5 shrink-0 drop-shadow-sm" />
-                          {isActive(item.href) && (
-                            <motion.div
-                              className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg"
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ type: "spring", stiffness: 500 }}
-                            />
-                          )}
-                        </motion.div>
-                        <span>{item.name}</span>
-                        {isActive(item.href) && (
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-blue-200/20 to-purple-200/20 rounded-xl"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3 }}
-                          />
-                        )}
-                      </Link>
-                    </motion.li>
-                  ))}
+                  {currentNavigation.map((item, index) => 
+                    renderNavigationItem(item, index)
+                  )}
                 </ul>
               </li>
             </ul>
@@ -377,6 +457,59 @@ const DashboardLayout: React.FC = () => {
               </h1>
             </motion.div>
             <div className="flex items-center gap-x-4 lg:gap-x-6">
+              {/* Tutor Application Status Indicator */}
+              {profile?.role === 'tutor' && (
+                <>
+                  {loadingApplication ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200"
+                    >
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></div>
+                        <span>Checking Status...</span>
+                      </div>
+                    </motion.div>
+                  ) : tutorApplication && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        isTutorApproved
+                          ? 'bg-green-100 text-green-800 border border-green-200'
+                          : isTutorPending
+                          ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                          : isTutorRejected
+                          ? 'bg-red-100 text-red-800 border border-red-200'
+                          : 'bg-gray-100 text-gray-800 border border-gray-200'
+                      }`}
+                    >
+                      {isTutorApproved && (
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span>Approved</span>
+                        </div>
+                      )}
+                      {isTutorPending && (
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                          <span>Pending Review</span>
+                        </div>
+                      )}
+                      {isTutorRejected && (
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          <span>Application Rejected</span>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </>
+              )}
+
               <motion.button
                 type="button"
                 className="-m-2.5 p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200"

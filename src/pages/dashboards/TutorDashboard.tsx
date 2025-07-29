@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DocumentArrowUpIcon,
@@ -9,7 +10,6 @@ import {
   AcademicCapIcon,
   ClockIcon,
   CurrencyDollarIcon,
-  XCircleIcon,
   CalendarDaysIcon,
   PlusIcon,
   VideoCameraIcon,
@@ -18,21 +18,18 @@ import {
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
-import TutorProfileEdit from "@/components/ui/TutorProfileEdit";
-import ClassSchedulingPage from "@/components/classScheduling/ClassSchedulingPage";
 import { db } from "@/lib/db";
 import { classSchedulingService } from "@/lib/classSchedulingService";
 import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
 import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
 
 const TutorDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user, profile, updateProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<TutorApplication | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
-  const [showClassScheduling, setShowClassScheduling] = useState(false);
   const [dashboardStats, setDashboardStats] = useState<TutorDashboardStats | null>(null);
   const [upcomingClasses, setUpcomingClasses] = useState<TutorClass[]>([]);
 
@@ -86,21 +83,6 @@ const TutorDashboard: React.FC = () => {
   const profileCompletion = calculateProfileCompletion(profile);
   const isProfileComplete = profile?.profile_completed || false;
 
-  // Handle profile edit modal
-  const handleOpenProfileEdit = () => {
-    setIsProfileEditOpen(true);
-  };
-
-  const handleCloseProfileEdit = () => {
-    setIsProfileEditOpen(false);
-  };
-
-  const handleProfileSaved = () => {
-    // Refresh data or handle post-save logic
-    console.log("Profile saved successfully");
-  };
-
-  // Handle CV file upload
   const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -141,10 +123,6 @@ const TutorDashboard: React.FC = () => {
 
   const handleApplicationSuccess = () => {
     checkApplication(); // Refresh application status
-  };
-
-  const handleClassSchedulingSuccess = () => {
-    loadDashboardData(); // Refresh dashboard data
   };
 
   const isApprovedTutor = application?.application_status === 'approved';
@@ -343,7 +321,7 @@ const TutorDashboard: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setShowClassScheduling(true)}
+            onClick={() => navigate('/schedule-class')}
             className="p-6 bg-blue-50 border-2 border-blue-200 rounded-lg hover:border-blue-300 transition-colors"
           >
             <div className="flex items-center space-x-3">
@@ -358,7 +336,7 @@ const TutorDashboard: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={handleOpenProfileEdit}
+            onClick={() => navigate('/profile')}
             className="p-6 bg-purple-50 border-2 border-purple-200 rounded-lg hover:border-purple-300 transition-colors"
           >
             <div className="flex items-center space-x-3">
@@ -566,34 +544,6 @@ const TutorDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Class Scheduling Modal */}
-        {showClassScheduling && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Schedule Classes</h2>
-                <button
-                  onClick={() => setShowClassScheduling(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XCircleIcon className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="overflow-y-auto h-full">
-                <ClassSchedulingPage />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Profile Edit Modal */}
-        {isProfileEditOpen && (
-          <TutorProfileEdit
-            isOpen={isProfileEditOpen}
-            onClose={handleCloseProfileEdit}
-            onSave={handleProfileSaved}
-          />
-        )}
       </div>
     );
   }
@@ -962,14 +912,6 @@ const TutorDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Profile Edit Modal */}
-      {isProfileEditOpen && (
-        <TutorProfileEdit
-          isOpen={isProfileEditOpen}
-          onClose={handleCloseProfileEdit}
-          onSave={handleProfileSaved}
-        />
-      )}
     </div>
   );
   }

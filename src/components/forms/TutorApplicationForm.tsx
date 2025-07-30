@@ -70,6 +70,18 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
     subjects: [],
     specializes_learning_disabilities: false,
     additional_notes: "",
+
+    // New required fields
+    postcode: "",
+    based_in_country: "",
+
+    // New optional fields
+    past_experience: "",
+    weekly_availability: "",
+    employment_status: "",
+    education_level: "",
+    average_weekly_hours: undefined,
+    expected_hourly_rate: undefined,
   });
 
   const [errors, setErrors] = useState<Partial<TutorApplicationFormData>>({});
@@ -199,8 +211,19 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
       const cleanPhone = formData.phone_number.replace(/[\s\-\(\)]/g, "");
       // Allow numbers starting with + or digits, minimum 7 digits, maximum 15 digits
       if (!/^[\+]?[\d]{7,15}$/.test(cleanPhone)) {
-        newErrors.phone_number = "Please enter a valid phone number (7-15 digits)";
+        newErrors.phone_number =
+          "Please enter a valid phone number (7-15 digits)";
       }
+    }
+
+    if (!formData.postcode.trim()) {
+      newErrors.postcode =
+        "Postcode is required for local availability assessment";
+    }
+
+    if (!formData.based_in_country.trim()) {
+      newErrors.based_in_country =
+        "Please specify which country you are based in";
     }
 
     if (formData.subjects.length === 0) {
@@ -262,6 +285,18 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
         cv_url: cvUrl,
         cv_file_size: cvFileSize,
         additional_notes: formData.additional_notes?.trim() || null,
+
+        // New required fields
+        postcode: formData.postcode.trim(),
+        based_in_country: formData.based_in_country.trim(),
+
+        // New optional fields
+        past_experience: formData.past_experience?.trim() || null,
+        weekly_availability: formData.weekly_availability?.trim() || null,
+        employment_status: formData.employment_status?.trim() || null,
+        education_level: formData.education_level?.trim() || null,
+        average_weekly_hours: formData.average_weekly_hours || null,
+        expected_hourly_rate: formData.expected_hourly_rate || null,
       };
 
       await db.tutorApplications.create(applicationData);
@@ -362,6 +397,58 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
               <p className="text-red-500 text-sm mt-1">{errors.phone_number}</p>
             )}
           </div>
+
+          {/* Postcode */}
+          <div>
+            <label
+              htmlFor="postcode"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Postcode *
+            </label>
+            <input
+              type="text"
+              id="postcode"
+              value={formData.postcode}
+              onChange={(e) => handleInputChange("postcode", e.target.value)}
+              className={`input w-full ${
+                errors.postcode ? "border-red-500" : ""
+              }`}
+              placeholder="Enter your postcode"
+              required
+            />
+            {errors.postcode && (
+              <p className="text-red-500 text-sm mt-1">{errors.postcode}</p>
+            )}
+          </div>
+
+          {/* Based in Country */}
+          <div>
+            <label
+              htmlFor="based_in_country"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Based in which country? *
+            </label>
+            <input
+              type="text"
+              id="based_in_country"
+              value={formData.based_in_country}
+              onChange={(e) =>
+                handleInputChange("based_in_country", e.target.value)
+              }
+              className={`input w-full ${
+                errors.based_in_country ? "border-red-500" : ""
+              }`}
+              placeholder="e.g., United Kingdom, United States, etc."
+              required
+            />
+            {errors.based_in_country && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.based_in_country}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Teaching Information */}
@@ -435,6 +522,148 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
               </div>
             </label>
           </div>
+
+          {/* Additional Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Additional Information
+            </h3>
+
+            {/* Past Experience */}
+            <div>
+              <label
+                htmlFor="past_experience"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Past Teaching/Tutoring Experience
+              </label>
+              <textarea
+                id="past_experience"
+                value={formData.past_experience}
+                onChange={(e) =>
+                  handleInputChange("past_experience", e.target.value)
+                }
+                rows={3}
+                className="input w-full"
+                placeholder="Describe your previous teaching or tutoring experience..."
+              />
+            </div>
+
+            {/* Weekly Availability */}
+            <div>
+              <label
+                htmlFor="weekly_availability"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Weekly Availability
+              </label>
+              <textarea
+                id="weekly_availability"
+                value={formData.weekly_availability}
+                onChange={(e) =>
+                  handleInputChange("weekly_availability", e.target.value)
+                }
+                rows={3}
+                className="input w-full"
+                placeholder="Describe your weekly availability for tutoring sessions..."
+              />
+            </div>
+
+            {/* Employment Status */}
+            <div>
+              <label
+                htmlFor="employment_status"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Current Employment Status
+              </label>
+              <input
+                type="text"
+                id="employment_status"
+                value={formData.employment_status}
+                onChange={(e) =>
+                  handleInputChange("employment_status", e.target.value)
+                }
+                className="input w-full"
+                placeholder="e.g., Full-time teacher, Part-time tutor, Freelance, etc."
+              />
+            </div>
+
+            {/* Education Level */}
+            <div>
+              <label
+                htmlFor="education_level"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Highest Level of Education
+              </label>
+              <input
+                type="text"
+                id="education_level"
+                value={formData.education_level}
+                onChange={(e) =>
+                  handleInputChange("education_level", e.target.value)
+                }
+                className="input w-full"
+                placeholder="e.g., Bachelor's degree, Master's degree, PhD, etc."
+              />
+            </div>
+
+            {/* Average Weekly Hours */}
+            <div>
+              <label
+                htmlFor="average_weekly_hours"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Average Weekly Hours Available for Tutoring
+              </label>
+              <input
+                type="number"
+                id="average_weekly_hours"
+                value={formData.average_weekly_hours || ""}
+                onChange={(e) =>
+                  handleInputChange(
+                    "average_weekly_hours",
+                    e.target.value ? parseInt(e.target.value) : undefined
+                  )
+                }
+                className="input w-full"
+                placeholder="e.g., 10, 20, 30"
+                min="1"
+                max="168"
+              />
+            </div>
+
+            {/* Expected Hourly Rate */}
+            <div>
+              <label
+                htmlFor="expected_hourly_rate"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Expected Hourly Rate (Optional)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  £
+                </span>
+                <input
+                  type="number"
+                  id="expected_hourly_rate"
+                  value={formData.expected_hourly_rate || ""}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "expected_hourly_rate",
+                      e.target.value ? parseFloat(e.target.value) : undefined
+                    )
+                  }
+                  className="input w-full pl-8"
+                  placeholder="e.g., 25.00"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* CV Upload */}
@@ -474,27 +703,30 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
           ) : (
             <div
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                isDragOver 
-                  ? "border-blue-500 bg-blue-50" 
-                  : errors.cv_file 
-                    ? "border-red-500" 
-                    : "border-gray-300 hover:border-gray-400"
+                isDragOver
+                  ? "border-blue-500 bg-blue-50"
+                  : errors.cv_file
+                  ? "border-red-500"
+                  : "border-gray-300 hover:border-gray-400"
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <DocumentArrowUpIcon className={`h-12 w-12 mx-auto mb-4 transition-colors ${
-                isDragOver ? "text-blue-500" : "text-gray-400"
-              }`} />
+              <DocumentArrowUpIcon
+                className={`h-12 w-12 mx-auto mb-4 transition-colors ${
+                  isDragOver ? "text-blue-500" : "text-gray-400"
+                }`}
+              />
               <h4 className="text-lg font-medium text-gray-900 mb-2">
-                {isDragOver ? "Drop your CV here" : "Upload Your Curriculum Vitae"}
+                {isDragOver
+                  ? "Drop your CV here"
+                  : "Upload Your Curriculum Vitae"}
               </h4>
               <p className="text-gray-600 mb-6">
-                {isDragOver 
+                {isDragOver
                   ? "Release to upload your CV file"
-                  : "Drag and drop your resume/CV here, or click to browse"
-                }
+                  : "Drag and drop your resume/CV here, or click to browse"}
               </p>
 
               {uploadError && (

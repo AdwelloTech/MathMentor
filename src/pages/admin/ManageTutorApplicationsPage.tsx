@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
   MagnifyingGlassIcon,
   EyeIcon,
   CheckCircleIcon,
@@ -14,33 +14,42 @@ import {
   CalendarIcon,
   DocumentArrowDownIcon,
   CheckIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
-import { AdminTutorApplicationService, TutorApplication, ApplicationStats } from '@/lib/adminTutorApplicationService';
-import { useAdmin } from '@/contexts/AdminContext';
-import { supabase } from '@/lib/supabase';
-import toast from 'react-hot-toast';
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import {
+  AdminTutorApplicationService,
+  TutorApplication,
+  ApplicationStats,
+} from "@/lib/adminTutorApplicationService";
+import { useAdmin } from "@/contexts/AdminContext";
+import { supabase } from "@/lib/supabase";
+import toast from "react-hot-toast";
 
 const ManageTutorApplicationsPage: React.FC = () => {
   const { adminSession } = useAdmin();
   const [applications, setApplications] = useState<TutorApplication[]>([]);
-  const [filteredApplications, setFilteredApplications] = useState<TutorApplication[]>([]);
-  const [selectedApplication, setSelectedApplication] = useState<TutorApplication | null>(null);
+  const [filteredApplications, setFilteredApplications] = useState<
+    TutorApplication[]
+  >([]);
+  const [selectedApplication, setSelectedApplication] =
+    useState<TutorApplication | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
-  const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
-  const [adminNotes, setAdminNotes] = useState('');
-  const [rejectionReason, setRejectionReason] = useState('');
+  const [actionType, setActionType] = useState<"approve" | "reject" | null>(
+    null
+  );
+  const [adminNotes, setAdminNotes] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
   const [processingAction, setProcessingAction] = useState(false);
   const [stats, setStats] = useState<ApplicationStats>({
     total: 0,
     pending: 0,
     approved: 0,
     rejected: 0,
-    recentApplications: 0
+    recentApplications: 0,
   });
 
   useEffect(() => {
@@ -53,15 +62,15 @@ const ManageTutorApplicationsPage: React.FC = () => {
       // Load applications and stats in parallel
       const [applicationsData, statsData] = await Promise.all([
         AdminTutorApplicationService.getAllApplications(),
-        AdminTutorApplicationService.getApplicationStats()
+        AdminTutorApplicationService.getApplicationStats(),
       ]);
 
       setApplications(applicationsData);
       setFilteredApplications(applicationsData);
       setStats(statsData);
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Failed to load tutor application data');
+      console.error("Error loading data:", error);
+      toast.error("Failed to load tutor application data");
     } finally {
       setLoading(false);
     }
@@ -70,21 +79,28 @@ const ManageTutorApplicationsPage: React.FC = () => {
   useEffect(() => {
     // Filter applications based on search and status filter
     let filtered = applications;
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(application =>
-        application.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        application.applicant_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        application.subjects.some(subject => 
-          subject.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      filtered = filtered.filter(
+        (application) =>
+          application.full_name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          application.applicant_email
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          application.subjects.some((subject) =>
+            subject.toLowerCase().includes(searchTerm.toLowerCase())
+          )
       );
     }
-    
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(application => application.application_status === filterStatus);
+
+    if (filterStatus !== "all") {
+      filtered = filtered.filter(
+        (application) => application.application_status === filterStatus
+      );
     }
-    
+
     setFilteredApplications(filtered);
   }, [applications, searchTerm, filterStatus]);
 
@@ -95,31 +111,33 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
   const handleApproveApplication = (application: TutorApplication) => {
     setSelectedApplication(application);
-    setActionType('approve');
-    setAdminNotes('');
+    setActionType("approve");
+    setAdminNotes("");
     setShowActionModal(true);
   };
 
   const handleRejectApplication = (application: TutorApplication) => {
     setSelectedApplication(application);
-    setActionType('reject');
-    setAdminNotes('');
-    setRejectionReason('');
+    setActionType("reject");
+    setAdminNotes("");
+    setRejectionReason("");
     setShowActionModal(true);
   };
 
   const handleDownloadCV = async (cvUrl: string, fileName: string) => {
     try {
       // Check if the URL is valid
-      if (!cvUrl || cvUrl.includes('undefined') || cvUrl.includes('null')) {
-        toast.error('CV file not found or URL is invalid');
+      if (!cvUrl || cvUrl.includes("undefined") || cvUrl.includes("null")) {
+        toast.error("CV file not found or URL is invalid");
         return;
       }
 
       // Extract bucket and path from URL
-      const urlMatch = cvUrl.match(/\/storage\/v1\/object\/public\/([^\/]+)\/(.+)/);
+      const urlMatch = cvUrl.match(
+        /\/storage\/v1\/object\/public\/([^\/]+)\/(.+)/
+      );
       if (!urlMatch) {
-        toast.error('Invalid CV URL format');
+        toast.error("Invalid CV URL format");
         return;
       }
 
@@ -139,30 +157,32 @@ const ManageTutorApplicationsPage: React.FC = () => {
         if (data) {
           // Create a blob URL
           const blobUrl = window.URL.createObjectURL(data);
-          
+
           // Create a temporary anchor element
-          const link = document.createElement('a');
+          const link = document.createElement("a");
           link.href = blobUrl;
-          link.download = fileName || 'cv.pdf';
-          
+          link.download = fileName || "cv.pdf";
+
           // Append to body, click, and remove
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          
+
           // Clean up the blob URL
           window.URL.revokeObjectURL(blobUrl);
-          
-          toast.success('CV download started');
+
+          toast.success("CV download started");
           return;
         }
       } catch (storageError) {
         // Fallback: Try direct URL fetch
         const response = await fetch(cvUrl);
-        
+
         if (!response.ok) {
           if (response.status === 404) {
-            toast.error('CV file not found. The file may have been deleted or moved.');
+            toast.error(
+              "CV file not found. The file may have been deleted or moved."
+            );
           } else {
             toast.error(`Failed to download CV. Error: ${response.status}`);
           }
@@ -171,34 +191,34 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
         // Get the blob from the response
         const blob = await response.blob();
-        
+
         // Create a blob URL
         const blobUrl = window.URL.createObjectURL(blob);
-        
+
         // Create a temporary anchor element
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = blobUrl;
-        link.download = fileName || 'cv.pdf';
-        
+        link.download = fileName || "cv.pdf";
+
         // Append to body, click, and remove
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         // Clean up the blob URL
         window.URL.revokeObjectURL(blobUrl);
-        
-        toast.success('CV download started');
+
+        toast.success("CV download started");
       }
     } catch (error) {
-      console.error('Error downloading CV:', error);
-      toast.error('Failed to download CV. Please try again.');
+      console.error("Error downloading CV:", error);
+      toast.error("Failed to download CV. Please try again.");
     }
   };
 
   const handleActionSubmit = async () => {
     if (!selectedApplication || !actionType || !adminSession) {
-      toast.error('Missing required information');
+      toast.error("Missing required information");
       return;
     }
 
@@ -207,21 +227,21 @@ const ManageTutorApplicationsPage: React.FC = () => {
     try {
       let success = false;
 
-      if (actionType === 'approve') {
+      if (actionType === "approve") {
         success = await AdminTutorApplicationService.approveApplication(
           selectedApplication.id,
           adminSession.user.id,
           adminNotes || undefined
         );
-        
+
         if (success) {
-          toast.success('Application approved successfully');
+          toast.success("Application approved successfully");
         } else {
-          toast.error('Failed to approve application');
+          toast.error("Failed to approve application");
         }
-      } else if (actionType === 'reject') {
+      } else if (actionType === "reject") {
         if (!rejectionReason.trim()) {
-          toast.error('Please provide a rejection reason');
+          toast.error("Please provide a rejection reason");
           setProcessingAction(false);
           return;
         }
@@ -232,11 +252,11 @@ const ManageTutorApplicationsPage: React.FC = () => {
           rejectionReason,
           adminNotes || undefined
         );
-        
+
         if (success) {
-          toast.success('Application rejected successfully');
+          toast.success("Application rejected successfully");
         } else {
-          toast.error('Failed to reject application');
+          toast.error("Failed to reject application");
         }
       }
 
@@ -246,8 +266,8 @@ const ManageTutorApplicationsPage: React.FC = () => {
         loadData(); // Reload data to reflect changes
       }
     } catch (error) {
-      console.error('Error processing application action:', error);
-      toast.error('An error occurred while processing the application');
+      console.error("Error processing application action:", error);
+      toast.error("An error occurred while processing the application");
     } finally {
       setProcessingAction(false);
     }
@@ -255,21 +275,21 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
+      case "pending":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
             <ClockIcon className="h-3 w-3 mr-1" />
             Pending
           </span>
         );
-      case 'approved':
+      case "approved":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircleIcon className="h-3 w-3 mr-1" />
             Approved
           </span>
         );
-      case 'rejected':
+      case "rejected":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
             <XCircleIcon className="h-3 w-3 mr-1" />
@@ -286,51 +306,51 @@ const ManageTutorApplicationsPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const dashboardStats = [
     {
-      name: 'Total Applications',
+      name: "Total Applications",
       value: stats.total.toString(),
-      change: '+12%',
-      changeType: 'positive',
+      change: "+12%",
+      changeType: "positive",
       icon: DocumentTextIcon,
     },
     {
-      name: 'Pending Review',
+      name: "Pending Review",
       value: stats.pending.toString(),
-      change: '+5%',
-      changeType: 'positive',
+      change: "+5%",
+      changeType: "positive",
       icon: ClockIcon,
     },
     {
-      name: 'Approved',
+      name: "Approved",
       value: stats.approved.toString(),
-      change: '+8%',
-      changeType: 'positive',
+      change: "+8%",
+      changeType: "positive",
       icon: CheckCircleIcon,
     },
     {
-      name: 'Recent Applications',
+      name: "Recent Applications",
       value: stats.recentApplications.toString(),
-      change: '+15%',
-      changeType: 'positive',
+      change: "+15%",
+      changeType: "positive",
       icon: UserGroupIcon,
     },
   ];
@@ -379,9 +399,13 @@ const ManageTutorApplicationsPage: React.FC = () => {
                       <div className="text-2xl font-semibold text-gray-900">
                         {stat.value}
                       </div>
-                      <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                        stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <div
+                        className={`ml-2 flex items-baseline text-sm font-semibold ${
+                          stat.changeType === "positive"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
                         {stat.change}
                       </div>
                     </dd>
@@ -397,10 +421,12 @@ const ManageTutorApplicationsPage: React.FC = () => {
       <div className="card">
         <div className="card-header">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-gray-900">Tutor Applications</h2>
+            <h2 className="text-lg font-medium text-gray-900">
+              Tutor Applications
+            </h2>
           </div>
         </div>
-        
+
         <div className="card-body">
           {/* Search and Filter */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -428,7 +454,6 @@ const ManageTutorApplicationsPage: React.FC = () => {
                 <option value="rejected">Rejected</option>
               </select>
             </div>
-
           </div>
 
           {/* Applications Table */}
@@ -456,8 +481,13 @@ const ManageTutorApplicationsPage: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                      {applications.length === 0 ? 'No applications found' : 'No applications match your search criteria'}
+                    <td
+                      colSpan={5}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      {applications.length === 0
+                        ? "No applications found"
+                        : "No applications match your search criteria"}
                     </td>
                   </tr>
                 ) : (
@@ -467,7 +497,10 @@ const ManageTutorApplicationsPage: React.FC = () => {
                         <div className="flex items-center">
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                             <span className="text-sm font-medium text-gray-600">
-                              {application.full_name.split(' ').map(n => n[0]).join('')}
+                              {application.full_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
                             </span>
                           </div>
                           <div className="ml-4">
@@ -485,14 +518,16 @@ const ManageTutorApplicationsPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-wrap gap-1">
-                          {application.subjects.slice(0, 3).map((subject, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                            >
-                              {subject}
-                            </span>
-                          ))}
+                          {application.subjects
+                            .slice(0, 3)
+                            .map((subject, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                              >
+                                {subject}
+                              </span>
+                            ))}
                           {application.subjects.length > 3 && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                               +{application.subjects.length - 3} more
@@ -523,10 +558,12 @@ const ManageTutorApplicationsPage: React.FC = () => {
                             <EyeIcon className="h-4 w-4 mr-1" />
                             View
                           </button>
-                          {application.application_status === 'pending' && (
+                          {application.application_status === "pending" && (
                             <>
                               <button
-                                onClick={() => handleApproveApplication(application)}
+                                onClick={() =>
+                                  handleApproveApplication(application)
+                                }
                                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
                                 title="Approve Application"
                               >
@@ -534,7 +571,9 @@ const ManageTutorApplicationsPage: React.FC = () => {
                                 Approve
                               </button>
                               <button
-                                onClick={() => handleRejectApplication(application)}
+                                onClick={() =>
+                                  handleRejectApplication(application)
+                                }
                                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
                                 title="Reject Application"
                               >
@@ -570,34 +609,49 @@ const ManageTutorApplicationsPage: React.FC = () => {
                   <XMarkIcon className="h-6 w-6" />
                 </button>
               </div>
-              
+
               <div className="space-y-6">
                 {/* Personal Information */}
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-3">Personal Information</h4>
+                  <h4 className="text-md font-medium text-gray-900 mb-3">
+                    Personal Information
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center">
                       <UserGroupIcon className="h-4 w-4 mr-2 text-gray-400" />
-                      <span><strong>Name:</strong> {selectedApplication.full_name}</span>
+                      <span>
+                        <strong>Name:</strong> {selectedApplication.full_name}
+                      </span>
                     </div>
                     <div className="flex items-center">
                       <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400" />
-                      <span><strong>Email:</strong> {selectedApplication.applicant_email}</span>
+                      <span>
+                        <strong>Email:</strong>{" "}
+                        {selectedApplication.applicant_email}
+                      </span>
                     </div>
                     <div className="flex items-center">
                       <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
-                      <span><strong>Phone:</strong> {selectedApplication.phone_number}</span>
+                      <span>
+                        <strong>Phone:</strong>{" "}
+                        {selectedApplication.phone_number}
+                      </span>
                     </div>
                     <div className="flex items-center">
                       <CalendarIcon className="h-4 w-4 mr-2 text-gray-400" />
-                      <span><strong>Submitted:</strong> {formatDate(selectedApplication.submitted_at)}</span>
+                      <span>
+                        <strong>Submitted:</strong>{" "}
+                        {formatDate(selectedApplication.submitted_at)}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Teaching Information */}
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-3">Teaching Information</h4>
+                  <h4 className="text-md font-medium text-gray-900 mb-3">
+                    Teaching Information
+                  </h4>
                   <div className="space-y-3">
                     <div>
                       <strong>Subjects:</strong>
@@ -614,16 +668,97 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     </div>
                     <div>
                       <strong>Learning Disabilities Specialization:</strong>
-                      <span className={`ml-2 ${selectedApplication.specializes_learning_disabilities ? 'text-green-600' : 'text-gray-500'}`}>
-                        {selectedApplication.specializes_learning_disabilities ? 'Yes' : 'No'}
+                      <span
+                        className={`ml-2 ${
+                          selectedApplication.specializes_learning_disabilities
+                            ? "text-green-600"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {selectedApplication.specializes_learning_disabilities
+                          ? "Yes"
+                          : "No"}
                       </span>
                     </div>
                   </div>
                 </div>
 
+                {/* Additional Information */}
+                <div>
+                  <h4 className="text-md font-medium text-gray-900 mb-3">
+                    Additional Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Postcode:</strong>{" "}
+                        {selectedApplication.postcode}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Based in Country:</strong>{" "}
+                        {selectedApplication.based_in_country}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Employment Status:</strong>{" "}
+                        {selectedApplication.employment_status ||
+                          "Not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Education Level:</strong>{" "}
+                        {selectedApplication.education_level || "Not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Average Weekly Hours:</strong>{" "}
+                        {selectedApplication.average_weekly_hours ||
+                          "Not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Expected Hourly Rate:</strong>{" "}
+                        {selectedApplication.expected_hourly_rate
+                          ? `$${selectedApplication.expected_hourly_rate}`
+                          : "Not specified"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedApplication.past_experience && (
+                    <div className="mt-4">
+                      <strong>Past Experience:</strong>
+                      <div className="bg-gray-50 p-3 rounded-lg mt-2">
+                        <p className="text-sm text-gray-700">
+                          {selectedApplication.past_experience}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedApplication.weekly_availability && (
+                    <div className="mt-4">
+                      <strong>Weekly Availability:</strong>
+                      <div className="bg-gray-50 p-3 rounded-lg mt-2">
+                        <p className="text-sm text-gray-700">
+                          {selectedApplication.weekly_availability}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* CV Information */}
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-3">CV Information</h4>
+                  <h4 className="text-md font-medium text-gray-900 mb-3">
+                    CV Information
+                  </h4>
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
@@ -631,11 +766,17 @@ const ManageTutorApplicationsPage: React.FC = () => {
                           {selectedApplication.cv_file_name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          Size: {formatFileSize(selectedApplication.cv_file_size)}
+                          Size:{" "}
+                          {formatFileSize(selectedApplication.cv_file_size)}
                         </div>
                       </div>
                       <button
-                        onClick={() => handleDownloadCV(selectedApplication.cv_url, selectedApplication.cv_file_name)}
+                        onClick={() =>
+                          handleDownloadCV(
+                            selectedApplication.cv_url,
+                            selectedApplication.cv_file_name
+                          )
+                        }
                         className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
                       >
                         <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
@@ -648,16 +789,22 @@ const ManageTutorApplicationsPage: React.FC = () => {
                 {/* Additional Notes */}
                 {selectedApplication.additional_notes && (
                   <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-3">Additional Notes</h4>
+                    <h4 className="text-md font-medium text-gray-900 mb-3">
+                      Additional Notes
+                    </h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-700">{selectedApplication.additional_notes}</p>
+                      <p className="text-sm text-gray-700">
+                        {selectedApplication.additional_notes}
+                      </p>
                     </div>
                   </div>
                 )}
 
                 {/* Application Status */}
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-3">Application Status</h4>
+                  <h4 className="text-md font-medium text-gray-900 mb-3">
+                    Application Status
+                  </h4>
                   <div className="space-y-2">
                     <div className="flex items-center">
                       <span className="mr-2">Status:</span>
@@ -670,29 +817,35 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     )}
                     {selectedApplication.rejection_reason && (
                       <div className="text-sm text-gray-600">
-                        <strong>Rejection Reason:</strong> {selectedApplication.rejection_reason}
+                        <strong>Rejection Reason:</strong>{" "}
+                        {selectedApplication.rejection_reason}
                       </div>
                     )}
                     {selectedApplication.admin_notes && (
                       <div className="text-sm text-gray-600">
-                        <strong>Admin Notes:</strong> {selectedApplication.admin_notes}
+                        <strong>Admin Notes:</strong>{" "}
+                        {selectedApplication.admin_notes}
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                {selectedApplication.application_status === 'pending' && (
+                {selectedApplication.application_status === "pending" && (
                   <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                     <button
-                      onClick={() => handleApproveApplication(selectedApplication)}
+                      onClick={() =>
+                        handleApproveApplication(selectedApplication)
+                      }
                       className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
                     >
                       <CheckIcon className="h-4 w-4 mr-2" />
                       Approve Application
                     </button>
                     <button
-                      onClick={() => handleRejectApplication(selectedApplication)}
+                      onClick={() =>
+                        handleRejectApplication(selectedApplication)
+                      }
                       className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
                     >
                       <XMarkIcon className="h-4 w-4 mr-2" />
@@ -713,7 +866,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
             <div className="mt-3">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  {actionType === 'approve' ? 'Approve' : 'Reject'} Application
+                  {actionType === "approve" ? "Approve" : "Reject"} Application
                 </h3>
                 <button
                   onClick={() => setShowActionModal(false)}
@@ -722,16 +875,17 @@ const ManageTutorApplicationsPage: React.FC = () => {
                   <XMarkIcon className="h-6 w-6" />
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600 mb-4">
-                    You are about to <strong>{actionType}</strong> the application from{' '}
+                    You are about to <strong>{actionType}</strong> the
+                    application from{" "}
                     <strong>{selectedApplication.full_name}</strong>.
                   </p>
                 </div>
 
-                {actionType === 'reject' && (
+                {actionType === "reject" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Rejection Reason *
@@ -770,8 +924,13 @@ const ManageTutorApplicationsPage: React.FC = () => {
                   </button>
                   <button
                     onClick={handleActionSubmit}
-                    className={`btn ${actionType === 'approve' ? 'btn-success' : 'btn-danger'}`}
-                    disabled={processingAction || (actionType === 'reject' && !rejectionReason.trim())}
+                    className={`btn ${
+                      actionType === "approve" ? "btn-success" : "btn-danger"
+                    }`}
+                    disabled={
+                      processingAction ||
+                      (actionType === "reject" && !rejectionReason.trim())
+                    }
                   >
                     {processingAction ? (
                       <>
@@ -780,7 +939,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        {actionType === 'approve' ? (
+                        {actionType === "approve" ? (
                           <>
                             <CheckIcon className="h-4 w-4 mr-2" />
                             Approve Application
@@ -804,4 +963,4 @@ const ManageTutorApplicationsPage: React.FC = () => {
   );
 };
 
-export default ManageTutorApplicationsPage; 
+export default ManageTutorApplicationsPage;

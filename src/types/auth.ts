@@ -1,17 +1,17 @@
 // User roles
-export type UserRole = 
-  | 'admin' 
-  | 'principal' 
-  | 'teacher' 
-  | 'student' 
-  | 'parent' 
-  | 'hr' 
-  | 'finance' 
-  | 'support'
-  | 'tutor';
+export type UserRole =
+  | "admin"
+  | "principal"
+  | "teacher"
+  | "student"
+  | "parent"
+  | "hr"
+  | "finance"
+  | "support"
+  | "tutor";
 
 // Student packages
-export type StudentPackage = 'free' | 'silver' | 'gold';
+export type StudentPackage = "free" | "silver" | "gold";
 
 // Profile image interface from database
 export interface ProfileImage {
@@ -37,7 +37,13 @@ export interface GradeLevel {
   code: string;
   display_name: string;
   sort_order: number;
-  category: 'preschool' | 'elementary' | 'middle' | 'high' | 'college' | 'graduate';
+  category:
+    | "preschool"
+    | "elementary"
+    | "middle"
+    | "high"
+    | "college"
+    | "graduate";
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -67,30 +73,41 @@ export interface UserProfile {
   phone?: string;
   address?: string;
   date_of_birth?: string;
-  gender?: 'male' | 'female' | 'other';
+  gender?: "male" | "female" | "other";
   emergency_contact?: string;
-  
+
   // Student specific fields
   student_id?: string;
   package?: StudentPackage;
   class_id?: string;
   age?: number;
-  grade_level?: string; // Keep for backwards compatibility
+  current_grade?: string; // Renamed from grade_level
   grade_level_id?: string; // New foreign key reference
+  academic_set?: "Set 1" | "Set 2" | "Set 3" | "Set 4 (Foundation)"; // New set classification
   has_learning_disabilities?: boolean;
   learning_needs_description?: string;
-  
+
+  // Parent contact information
+  parent_name?: string;
+  parent_phone?: string;
+  parent_email?: string;
+
+  // Location information (replacing full address)
+  city?: string;
+  postcode?: string;
+  school_name?: string;
+
   // Profile image fields
   profile_image_id?: string;
   profile_image_url?: string;
-  
+
   // Teacher specific fields
   employee_id?: string;
   department?: string;
   subjects?: string[];
   qualification?: string;
   experience_years?: number;
-  
+
   // Tutor specific fields
   cv_url?: string;
   cv_file_name?: string;
@@ -101,16 +118,16 @@ export interface UserProfile {
   certifications?: string[];
   languages?: string[];
   profile_completed?: boolean;
-  
+
   // Parent specific fields
   children_ids?: string[];
   relationship?: string;
-  
+
   // Staff specific fields
   hire_date?: string;
   salary?: number;
   position?: string;
-  
+
   // System fields
   is_active: boolean;
   last_login?: string;
@@ -124,7 +141,11 @@ export interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: Partial<UserProfile>) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    userData: Partial<UserProfile>
+  ) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -174,8 +195,8 @@ export interface ProfileUpdateFormData {
   lastName: string;
   phone?: string;
   address?: string;
-  dateOfBirth?: string;
-  gender?: 'male' | 'female' | 'other';
+
+  gender?: "male" | "female" | "other";
   emergencyContact?: string;
 }
 
@@ -184,8 +205,20 @@ export interface StudentProfileFormData extends ProfileUpdateFormData {
   email: string; // Display only
   age?: number;
   gradeLevelId?: string; // Use database ID instead of code
+  currentGrade?: string; // Renamed from grade_level
+  academicSet?: "Set 1" | "Set 2" | "Set 3" | "Set 4 (Foundation)"; // New set classification
   hasLearningDisabilities: boolean;
   learningNeedsDescription?: string;
+
+  // Parent contact information
+  parentName?: string;
+  parentPhone?: string;
+  parentEmail?: string;
+
+  // Location information (replacing full address)
+  city?: string;
+  postcode?: string;
+  schoolName?: string;
 }
 
 // Extended profile with grade level information
@@ -202,25 +235,25 @@ export interface FeaturePermissions {
   manageGrades: boolean;
   viewAttendance: boolean;
   manageAttendance: boolean;
-  
+
   // Learning features
   accessLearningResources: boolean;
   bookOneToOne: boolean;
   bookConsultation: boolean;
   joinGroupClasses: boolean;
-  
+
   // Administrative features
   manageUsers: boolean;
   viewReports: boolean;
   manageFinance: boolean;
   manageAdmissions: boolean;
   manageHR: boolean;
-  
+
   // Communication features
   sendMessages: boolean;
   receiveMessages: boolean;
   makeAnnouncements: boolean;
-  
+
   // System features
   accessDashboard: boolean;
   manageSettings: boolean;
@@ -228,7 +261,11 @@ export interface FeaturePermissions {
 }
 
 // Tutor application types
-export type TutorApplicationStatus = 'pending' | 'approved' | 'rejected' | 'under_review';
+export type TutorApplicationStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "under_review";
 
 export interface TutorApplication {
   id: string;
@@ -238,10 +275,23 @@ export interface TutorApplication {
   phone_number: string;
   subjects: string[];
   specializes_learning_disabilities: boolean;
-  cv_file_name?: string;
-  cv_url?: string;
+  cv_file_name: string; // Now mandatory
+  cv_url: string; // Now mandatory
   cv_file_size?: number;
   additional_notes?: string;
+
+  // New required fields
+  postcode: string;
+  based_in_country: string;
+
+  // New optional fields
+  past_experience?: string;
+  weekly_availability?: string;
+  employment_status?: string;
+  education_level?: string;
+  average_weekly_hours?: number;
+  expected_hourly_rate?: number;
+
   application_status: TutorApplicationStatus;
   admin_notes?: string;
   rejection_reason?: string;
@@ -260,6 +310,18 @@ export interface TutorApplicationFormData {
   specializes_learning_disabilities: boolean;
   additional_notes?: string;
   cv_file?: File;
+
+  // New required fields
+  postcode: string;
+  based_in_country: string;
+
+  // New optional fields
+  past_experience?: string;
+  weekly_availability?: string;
+  employment_status?: string;
+  education_level?: string;
+  average_weekly_hours?: number;
+  expected_hourly_rate?: number;
 }
 
 export interface TutorApplicationStats {
@@ -285,7 +347,7 @@ export interface AuthError {
   message: string;
   code?: string;
   details?: any;
-} 
+}
 
 // Profile image upload data
 export interface ProfileImageUpload {
@@ -302,4 +364,4 @@ export interface ProfileImageUploadResponse {
   width?: number;
   height?: number;
   public_url: string;
-} 
+}

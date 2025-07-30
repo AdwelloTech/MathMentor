@@ -6,7 +6,7 @@ import { TutorClass, ClassType } from '../types/classScheduling';
 import { CalendarDays, Clock, Users, DollarSign, Edit, Trash2, Eye, Filter, Search, X } from 'lucide-react';
 
 const TutorManageClassesPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [classes, setClasses] = useState<TutorClass[]>([]);
   const [classTypes, setClassTypes] = useState<ClassType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,12 +18,40 @@ const TutorManageClassesPage: React.FC = () => {
   const [filterDate, setFilterDate] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
+  // Check if tutor is active
+  const isActiveTutor = profile?.is_active !== false; // Default to true if not set
+
   useEffect(() => {
     if (user) {
       loadClasses();
       loadClassTypes();
     }
   }, [user]);
+
+  // If tutor is inactive, show error message
+  if (!isActiveTutor) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <X className="h-6 w-6 text-red-600" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Account Temporarily Inactive
+          </h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Your tutor account has been temporarily deactivated by the admin. You cannot manage classes at this time. Please contact support for more information.
+          </p>
+          <button
+            onClick={() => window.history.back()}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const loadClasses = async () => {
     try {

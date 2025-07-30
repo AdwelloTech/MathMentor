@@ -15,6 +15,7 @@ import {
   VideoCameraIcon,
   UserGroupIcon,
   ChatBubbleLeftRightIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
@@ -82,6 +83,7 @@ const TutorDashboard: React.FC = () => {
 
   const profileCompletion = calculateProfileCompletion(profile);
   const isProfileComplete = profile?.profile_completed || false;
+  const isActiveTutor = profile?.is_active !== false; // Default to true if not set
 
   const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -297,24 +299,47 @@ const TutorDashboard: React.FC = () => {
           </p>
         </div>
 
-        {/* Success Notice */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-green-50 border border-green-200 rounded-lg p-4"
-        >
-          <div className="flex items-start">
-            <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
-            <div className="flex-1">
-              <h3 className="text-sm font-medium text-green-800">
-                Application Approved!
-              </h3>
-              <p className="mt-1 text-sm text-green-700">
-                Your tutor application has been approved. You can now schedule classes and start teaching!
-              </p>
+        {/* Inactive Status Warning */}
+        {!isActiveTutor && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 border border-red-200 rounded-lg p-4"
+          >
+            <div className="flex items-start">
+              <XCircleIcon className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800">
+                  Account Temporarily Inactive
+                </h3>
+                <p className="mt-1 text-sm text-red-700">
+                  Your tutor account has been temporarily deactivated by the admin. You can still view your dashboard and profile, but you cannot schedule new classes or accept new students. Please contact support for more information.
+                </p>
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
+
+        {/* Success Notice - Only show if active */}
+        {isActiveTutor && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-green-50 border border-green-200 rounded-lg p-4"
+          >
+            <div className="flex items-start">
+              <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-green-800">
+                  Application Approved!
+                </h3>
+                <p className="mt-1 text-sm text-green-700">
+                  Your tutor application has been approved. You can now schedule classes and start teaching!
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -322,13 +347,22 @@ const TutorDashboard: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/schedule-class')}
-            className="p-6 bg-blue-50 border-2 border-blue-200 rounded-lg hover:border-blue-300 transition-colors"
+            disabled={!isActiveTutor}
+            className={`p-6 border-2 rounded-lg transition-colors ${
+              isActiveTutor 
+                ? 'bg-blue-50 border-blue-200 hover:border-blue-300' 
+                : 'bg-gray-50 border-gray-200 cursor-not-allowed opacity-50'
+            }`}
           >
             <div className="flex items-center space-x-3">
-              <PlusIcon className="h-8 w-8 text-blue-600" />
+              <PlusIcon className={`h-8 w-8 ${isActiveTutor ? 'text-blue-600' : 'text-gray-400'}`} />
               <div className="text-left">
-                <h3 className="font-semibold text-gray-900">Schedule Class</h3>
-                <p className="text-sm text-gray-600">Create new tutoring sessions</p>
+                <h3 className={`font-semibold ${isActiveTutor ? 'text-gray-900' : 'text-gray-500'}`}>
+                  Schedule Class
+                </h3>
+                <p className={`text-sm ${isActiveTutor ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {isActiveTutor ? 'Create new tutoring sessions' : 'Unavailable - Account inactive'}
+                </p>
               </div>
             </div>
           </motion.button>

@@ -38,6 +38,9 @@ const ClassSchedulingPage: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
+  // Check if tutor is active
+  const isActiveTutor = profile?.is_active !== false; // Default to true if not set
+
   // Form state
   const [formData, setFormData] = useState<CreateClassFormData>({
     class_type_id: '',
@@ -50,6 +53,31 @@ const ClassSchedulingPage: React.FC = () => {
     price_per_session: 0,
     is_recurring: false,
   });
+
+  // If tutor is inactive, show error message
+  if (!isActiveTutor) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <XMarkIcon className="h-6 w-6 text-red-600" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Account Temporarily Inactive
+          </h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Your tutor account has been temporarily deactivated by the admin. You cannot schedule new classes at this time. Please contact support for more information.
+          </p>
+          <button
+            onClick={() => window.history.back()}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     loadData();
@@ -388,7 +416,7 @@ const ClassSchedulingPage: React.FC = () => {
           className="bg-white rounded-lg shadow-lg p-6"
         >
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Select Date and Time for {selectedClassType.name}
+            Select Date and Time for {selectedClassType?.name}
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -573,7 +601,7 @@ const ClassSchedulingPage: React.FC = () => {
                 />
               </div>
 
-              {selectedClassType?.max_students > 1 && (
+              {selectedClassType && selectedClassType.max_students > 1 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Max Students

@@ -93,6 +93,7 @@ const DashboardLayout: React.FC = () => {
   const isTutorApproved = tutorApplication?.application_status === 'approved';
   const isTutorPending = tutorApplication?.application_status === 'pending';
   const isTutorRejected = tutorApplication?.application_status === 'rejected';
+  const isTutorActive = profile?.is_active !== false; // Default to true if not set
 
   // Build navigation based on user role
   const getNavigation = () => {
@@ -100,12 +101,12 @@ const DashboardLayout: React.FC = () => {
       return adminNavigation;
     }
     
-    // For tutors, include tutor-specific items but mark them as disabled if not approved
+    // For tutors, include tutor-specific items but mark them as disabled if not approved or inactive
     if (profile?.role === 'tutor') {
       const navigationItems = [...baseNavigation.slice(0, 1), ...tutorNavigationItems, ...baseNavigation.slice(1)];
       
-      // If tutor is not approved or has no application, disable tutor-specific items
-      if (!isTutorApproved) {
+      // If tutor is not approved, inactive, or has no application, disable tutor-specific items
+      if (!isTutorApproved || !isTutorActive) {
         return navigationItems.map(item => {
           if (tutorNavigationItems.some(tutorItem => tutorItem.name === item.name)) {
             return { ...item, disabled: true };
@@ -136,6 +137,9 @@ const DashboardLayout: React.FC = () => {
     const getTooltipMessage = () => {
       if (profile?.role !== 'tutor') return '';
       
+      if (!isTutorActive) {
+        return "Your account has been temporarily deactivated. This feature will be available once your account is reactivated.";
+      }
       if (isTutorPending) {
         return "Your application is under review. This feature will be available once approved.";
       }

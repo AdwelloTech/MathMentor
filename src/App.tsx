@@ -14,6 +14,7 @@ import SettingsPage from "./pages/SettingsPage";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
 import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
+import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
@@ -93,6 +94,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <ManageTutorApplicationsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/tutors"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ManageTutorsPage />
                   </ProtectedRoute>
                 }
               />

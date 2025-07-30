@@ -10,12 +10,10 @@ import {
   BellIcon,
   Cog6ToothIcon,
   SparklesIcon,
-
   CalendarDaysIcon,
-
   UserGroupIcon,
   DocumentTextIcon,
-
+  UserIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -72,6 +70,7 @@ const DashboardLayout: React.FC = () => {
   const adminNavigation = [
     { name: "Dashboard", href: "/admin", icon: AcademicCapIcon },
     { name: "Manage Students", href: "/admin/students", icon: UserGroupIcon },
+    { name: "Manage Tutors", href: "/admin/tutors", icon: UserIcon },
     { name: "Tutor Applications", href: "/admin/tutor-applications", icon: DocumentTextIcon },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },

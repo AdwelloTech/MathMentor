@@ -23,6 +23,7 @@ import TutorManageClassesPage from "./pages/TutorManageClassesPage";
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
 import BookSessionPage from "./pages/BookSessionPage";
+import BookConsultationPage from "./pages/BookConsultationPage";
 import ManageSessionsPage from "./pages/ManageSessionsPage";
 import NotesPage from "./pages/notes/NotesPage";
 import CreateNotePage from "./pages/notes/CreateNotePage";
@@ -142,6 +143,15 @@ function App() {
                 }
               >
                 <Route index element={<StudentDashboard />} />
+                <Route path="book-session" element={<BookSessionPage />} />
+                <Route
+                  path="book-consultation"
+                  element={<BookConsultationPage />}
+                />
+                <Route
+                  path="manage-sessions"
+                  element={<ManageSessionsPage />}
+                />
                 <Route path="notes" element={<NotesPage />} />
                 <Route path="notes/create" element={<CreateNotePage />} />
                 <Route path="notes/edit/:noteId" element={<CreateNotePage />} />
@@ -191,10 +201,24 @@ function App() {
               <Route path="apply-tutor" element={<TutorApplicationPage />} />
 
               {/* Student routes */}
-              <Route path="student" element={<ProtectedRoute requiredRole="student"><StudentLayout /></ProtectedRoute>}>
+              <Route
+                path="student"
+                element={
+                  <ProtectedRoute requiredRole="student">
+                    <StudentLayout />
+                  </ProtectedRoute>
+                }
+              >
                 <Route index element={<StudentDashboard />} />
                 <Route path="book-session" element={<BookSessionPage />} />
-                <Route path="manage-sessions" element={<ManageSessionsPage />} />
+                <Route
+                  path="book-consultation"
+                  element={<BookConsultationPage />}
+                />
+                <Route
+                  path="manage-sessions"
+                  element={<ManageSessionsPage />}
+                />
               </Route>
 
               {/* Error routes */}

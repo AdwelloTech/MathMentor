@@ -126,10 +126,21 @@ export interface Database {
           experience_years: number | null;
           // Student specific fields
           age: number | null;
-          grade_level: string | null; // Keep for backwards compatibility
+          current_grade: string | null; // Renamed from grade_level
           grade_level_id: string | null; // New foreign key reference
+          academic_set: string | null; // New set classification field
           has_learning_disabilities: boolean;
           learning_needs_description: string | null;
+
+          // Parent contact information
+          parent_name: string | null;
+          parent_phone: string | null;
+          parent_email: string | null;
+
+          // Location information (replacing full address)
+          city: string | null;
+          postcode: string | null;
+          school_name: string | null;
           // Profile image fields
           profile_image_id: string | null;
           profile_image_url: string | null;
@@ -177,7 +188,7 @@ export interface Database {
           experience_years?: number | null;
           // Student specific fields
           age?: number | null;
-          grade_level?: string | null; // Keep for backwards compatibility
+          current_grade?: string | null; // Renamed from grade_level
           grade_level_id?: string | null; // New foreign key reference
           has_learning_disabilities?: boolean;
           learning_needs_description?: string | null;

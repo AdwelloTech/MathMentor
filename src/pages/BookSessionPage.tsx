@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
-import { useAuth } from '../contexts/AuthContext';
-import { classSchedulingService } from '../lib/classSchedulingService';
-import { ClassSearchResult, ClassType } from '../types/classScheduling';
-import { 
-  CalendarDays, 
-  Clock, 
-  Users, 
-  DollarSign, 
-  Filter, 
-  Search, 
-  X, 
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+import { motion } from "framer-motion";
+import { useAuth } from "../contexts/AuthContext";
+import { classSchedulingService } from "../lib/classSchedulingService";
+import { ClassSearchResult, ClassType } from "../types/classScheduling";
+import {
+  CalendarDays,
+  Clock,
+  Users,
+  DollarSign,
+  Filter,
+  Search,
+  X,
   Star,
   BookOpen,
   Video,
-  CheckCircle
-} from 'lucide-react';
+  CheckCircle,
+} from "lucide-react";
 
 const BookSessionPage: React.FC = () => {
   const { user } = useAuth();
@@ -25,12 +25,12 @@ const BookSessionPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookingLoading, setBookingLoading] = useState<string | null>(null);
-  
+
   // Filters
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterDate, setFilterDate] = useState<string>('');
-  const [filterSubject, setFilterSubject] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterDate, setFilterDate] = useState<string>("");
+  const [filterSubject, setFilterSubject] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     loadSessions();
@@ -43,8 +43,8 @@ const BookSessionPage: React.FC = () => {
       const data = await classSchedulingService.classes.getAvailableClasses();
       setSessions(data || []);
     } catch (err) {
-      setError('Failed to load available sessions');
-      console.error('Error loading sessions:', err);
+      setError("Failed to load available sessions");
+      console.error("Error loading sessions:", err);
     } finally {
       setLoading(false);
     }
@@ -55,81 +55,106 @@ const BookSessionPage: React.FC = () => {
       const data = await classSchedulingService.classTypes.getAll();
       setClassTypes(data || []);
     } catch (err) {
-      console.error('Error loading class types:', err);
+      console.error("Error loading class types:", err);
     }
   };
 
   const handleBookSession = async (classId: string, price: number) => {
     if (!user) return;
-    
+
     try {
       setBookingLoading(classId);
       await classSchedulingService.bookings.create(classId, user.id, price);
-      
+
       // Refresh sessions to update available slots
       await loadSessions();
-      
+
       // Show success message
-      toast.success('Session booked successfully!');
+      toast.success("Session booked successfully!");
     } catch (err) {
-      console.error('Error booking session:', err);
-      toast.error('Failed to book session. Please try again.');
+      console.error("Error booking session:", err);
+      toast.error("Failed to book session. Please try again.");
     } finally {
       setBookingLoading(null);
     }
   };
 
   const formatDate = (dateString: string) => {
-    const [year, month, day] = dateString.split('-').map(Number);
+    const [year, month, day] = dateString.split("-").map(Number);
     const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-      hour: 'numeric', 
-      minute: '2-digit', 
-      hour12: true
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
   const getClassTypeName = (classTypeId: string) => {
-    const classType = classTypes.find(ct => ct.id === classTypeId);
-    return classType?.name || 'Unknown';
+    const classType = classTypes.find((ct) => ct.id === classTypeId);
+    return classType?.name || "Unknown";
   };
 
   const getClassTypeIcon = (classTypeName: string) => {
     switch (classTypeName.toLowerCase()) {
-      case 'group':
+      case "group":
         return <Users className="w-5 h-5" />;
-      case 'consultation':
+      case "consultation":
         return <BookOpen className="w-5 h-5" />;
-      case 'one-on-one':
-      case 'one-on-one extended':
+      case "one-on-one":
+      case "one-on-one extended":
         return <Video className="w-5 h-5" />;
       default:
         return <BookOpen className="w-5 h-5" />;
     }
   };
 
-  const filteredSessions = sessions.filter(sessionResult => {
+  const filteredSessions = sessions.filter((sessionResult) => {
     const session = sessionResult.class;
-    const matchesType = filterType === 'all' || session.class_type_id === filterType;
+
+    // Filter out past sessions - only show upcoming sessions
+    const sessionDate = session.date;
+    const sessionTime = session.start_time;
+    const sessionDateTime = new Date(`${sessionDate}T${sessionTime}`);
+    const now = new Date();
+    const isUpcoming = sessionDateTime > now;
+
+    if (!isUpcoming) return false;
+
+    const matchesType =
+      filterType === "all" || session.class_type_id === filterType;
     const matchesDate = !filterDate || session.date === filterDate;
-    const matchesSubject = !filterSubject || 
+    const matchesSubject =
+      !filterSubject ||
       session.title.toLowerCase().includes(filterSubject.toLowerCase()) ||
-      (session.description && session.description.toLowerCase().includes(filterSubject.toLowerCase()));
-    const matchesSearch = !searchTerm || 
+      (session.description &&
+        session.description
+          .toLowerCase()
+          .includes(filterSubject.toLowerCase()));
+    const matchesSearch =
+      !searchTerm ||
       session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sessionResult.tutor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (session.description && session.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    return matchesType && matchesDate && matchesSubject && matchesSearch && sessionResult.is_bookable;
+      sessionResult.tutor.full_name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (session.description &&
+        session.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    return (
+      matchesType &&
+      matchesDate &&
+      matchesSubject &&
+      matchesSearch &&
+      sessionResult.is_bookable
+    );
   });
 
   if (loading) {
@@ -149,8 +174,12 @@ const BookSessionPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Book a Session</h1>
-          <p className="text-gray-600">Find and book sessions with our expert tutors</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Book a Session
+          </h1>
+          <p className="text-gray-600">
+            Find and book upcoming sessions with our expert tutors
+          </p>
         </motion.div>
 
         {/* Filters */}
@@ -163,7 +192,7 @@ const BookSessionPage: React.FC = () => {
             <Filter className="w-5 h-5 text-gray-500" />
             <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Session Type Filter */}
             <div>
@@ -176,8 +205,10 @@ const BookSessionPage: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Types</option>
-                {classTypes.map(type => (
-                  <option key={type.id} value={type.id}>{type.name}</option>
+                {classTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -228,14 +259,17 @@ const BookSessionPage: React.FC = () => {
           </div>
 
           {/* Clear Filters */}
-          {(filterType !== 'all' || filterDate || filterSubject || searchTerm) && (
+          {(filterType !== "all" ||
+            filterDate ||
+            filterSubject ||
+            searchTerm) && (
             <div className="mt-4">
               <button
                 onClick={() => {
-                  setFilterType('all');
-                  setFilterDate('');
-                  setFilterSubject('');
-                  setSearchTerm('');
+                  setFilterType("all");
+                  setFilterDate("");
+                  setFilterSubject("");
+                  setSearchTerm("");
                 }}
                 className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
               >
@@ -263,7 +297,7 @@ const BookSessionPage: React.FC = () => {
             const session = sessionResult.class;
             const tutor = sessionResult.tutor;
             const isBooking = bookingLoading === session.id;
-            
+
             return (
               <motion.div
                 key={session.id}
@@ -276,7 +310,9 @@ const BookSessionPage: React.FC = () => {
                 <div className="p-6 pb-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      {getClassTypeIcon(getClassTypeName(session.class_type_id))}
+                      {getClassTypeIcon(
+                        getClassTypeName(session.class_type_id)
+                      )}
                       <span className="text-sm font-medium text-blue-600">
                         {getClassTypeName(session.class_type_id)}
                       </span>
@@ -287,7 +323,7 @@ const BookSessionPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {session.description && (
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                       {session.description}
@@ -297,32 +333,40 @@ const BookSessionPage: React.FC = () => {
 
                 {/* Tutor Info */}
                 <div className="px-6 pb-4 flex flex-col min-h-[120px] justify-start">
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-      <span className="text-blue-600 font-semibold">
-        {tutor.full_name.charAt(0)}
-      </span>
-    </div>
-    <div>
-      <p className="font-medium text-gray-900">{tutor.full_name}</p>
-      <div className="flex items-center gap-1">
-        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-        <span className="text-sm text-gray-600">
-          {tutor.rating.toFixed(1)} ({tutor.total_reviews} reviews)
-        </span>
-      </div>
-    </div>
-  </div>
-  {/* Subject below tutor info */}
-  <h3 className="text-lg font-semibold text-gray-900 mt-2">{session.title}</h3>
-  {session.description ? (
-    <p className="text-sm text-gray-600 mt-1 mb-0 line-clamp-2">
-      {session.description}
-    </p>
-  ) : (
-    <span className="block h-8 mt-1 mb-0" aria-hidden="true"></span>
-  )}
-</div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 font-semibold">
+                        {tutor.full_name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {tutor.full_name}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="text-sm text-gray-600">
+                          {tutor.rating.toFixed(1)} ({tutor.total_reviews}{" "}
+                          reviews)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Subject below tutor info */}
+                  <h3 className="text-lg font-semibold text-gray-900 mt-2">
+                    {session.title}
+                  </h3>
+                  {session.description ? (
+                    <p className="text-sm text-gray-600 mt-1 mb-0 line-clamp-2">
+                      {session.description}
+                    </p>
+                  ) : (
+                    <span
+                      className="block h-8 mt-1 mb-0"
+                      aria-hidden="true"
+                    ></span>
+                  )}
+                </div>
 
                 {/* Session Details */}
                 <div className="px-6 pb-4 space-y-2">
@@ -332,12 +376,16 @@ const BookSessionPage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Clock className="w-4 h-4" />
-                    <span>{formatTime(session.start_time)} - {formatTime(session.end_time)}</span>
+                    <span>
+                      {formatTime(session.start_time)} -{" "}
+                      {formatTime(session.end_time)}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Users className="w-4 h-4" />
                     <span>
-                      {sessionResult.available_slots} of {session.max_students} spots available
+                      {sessionResult.available_slots} of {session.max_students}{" "}
+                      spots available
                     </span>
                   </div>
                 </div>
@@ -345,12 +393,14 @@ const BookSessionPage: React.FC = () => {
                 {/* Book Button */}
                 <div className="px-6 pb-6 mt-auto">
                   <button
-                    onClick={() => handleBookSession(session.id, session.price_per_session)}
+                    onClick={() =>
+                      handleBookSession(session.id, session.price_per_session)
+                    }
                     disabled={isBooking || !sessionResult.is_bookable}
                     className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
                       sessionResult.is_bookable
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
-                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        ? "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                        : "bg-gray-200 text-gray-500 cursor-not-allowed"
                     }`}
                   >
                     {isBooking ? (
@@ -364,7 +414,7 @@ const BookSessionPage: React.FC = () => {
                         Book Now
                       </div>
                     ) : (
-                      'Fully Booked'
+                      "Fully Booked"
                     )}
                   </button>
                 </div>
@@ -381,7 +431,9 @@ const BookSessionPage: React.FC = () => {
             className="text-center py-12"
           >
             <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No sessions found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No sessions found
+            </h3>
             <p className="text-gray-600">
               Try adjusting your filters or check back later for new sessions.
             </p>

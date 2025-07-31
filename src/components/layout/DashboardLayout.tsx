@@ -13,6 +13,8 @@ import {
   CalendarDaysIcon,
   UserGroupIcon,
   DocumentTextIcon,
+  UserIcon,
+
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -69,11 +71,16 @@ const DashboardLayout: React.FC = () => {
   const adminNavigation = [
     { name: "Dashboard", href: "/admin", icon: AcademicCapIcon },
     { name: "Manage Students", href: "/admin/students", icon: UserGroupIcon },
+
+    { name: "Manage Tutors", href: "/admin/tutors", icon: UserIcon },
+    { name: "Tutor Applications", href: "/admin/tutor-applications", icon: DocumentTextIcon },
+
     {
       name: "Tutor Applications",
       href: "/admin/tutor-applications",
       icon: DocumentTextIcon,
     },
+
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];
@@ -92,9 +99,16 @@ const DashboardLayout: React.FC = () => {
   ];
 
   // Check if tutor navigation should be disabled
+
+  const isTutorApproved = tutorApplication?.application_status === 'approved';
+  const isTutorPending = tutorApplication?.application_status === 'pending';
+  const isTutorRejected = tutorApplication?.application_status === 'rejected';
+  const isTutorActive = profile?.is_active !== false; // Default to true if not set
+
   const isTutorApproved = tutorApplication?.application_status === "approved";
   const isTutorPending = tutorApplication?.application_status === "pending";
   const isTutorRejected = tutorApplication?.application_status === "rejected";
+
 
   // Build navigation based on user role
   const getNavigation = () => {
@@ -112,6 +126,17 @@ const DashboardLayout: React.FC = () => {
       return adminNavigation;
     }
 
+    
+    // For tutors, include tutor-specific items but mark them as disabled if not approved or inactive
+    if (profile?.role === 'tutor') {
+      const navigationItems = [...baseNavigation.slice(0, 1), ...tutorNavigationItems, ...baseNavigation.slice(1)];
+      
+      // If tutor is not approved, inactive, or has no application, disable tutor-specific items
+      if (!isTutorApproved || !isTutorActive) {
+        return navigationItems.map(item => {
+          if (tutorNavigationItems.some(tutorItem => tutorItem.name === item.name)) {
+
+
     // For tutors, include tutor-specific items but mark them as disabled if not approved
     if (profile?.role === "tutor") {
       const navigationItems = [
@@ -128,6 +153,7 @@ const DashboardLayout: React.FC = () => {
               (tutorItem) => tutorItem.name === item.name
             )
           ) {
+
             return { ...item, disabled: true };
           }
           return item;
@@ -154,7 +180,15 @@ const DashboardLayout: React.FC = () => {
 
     // Get tooltip message based on application status
     const getTooltipMessage = () => {
+
+      if (profile?.role !== 'tutor') return '';
+      
+      if (!isTutorActive) {
+        return "Your account has been temporarily deactivated. This feature will be available once your account is reactivated.";
+      }
+
       if (profile?.role !== "tutor") return "";
+
 
       if (isTutorPending) {
         return "Your application is under review. This feature will be available once approved.";

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { classSchedulingService } from "../../lib/classSchedulingService";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -102,24 +103,80 @@ const StudentDashboard: React.FC = () => {
     { value: "computer-science", label: "Computer Science" },
   ];
 
-  const upcomingSessions = [
-    {
-      id: 1,
-      tutor: "Dr. Sarah Johnson",
-      subject: "Calculus",
-      time: "Today, 2:00 PM",
-      duration: "60 min",
-      type: "One-to-One",
-    },
-    {
-      id: 2,
-      tutor: "Prof. Michael Chen",
-      subject: "Physics",
-      time: "Tomorrow, 10:00 AM",
-      duration: "45 min",
-      type: "Group Session",
-    },
-  ];
+  const [upcomingSessions, setUpcomingSessions] = useState<any[]>([]);
+  const [loadingUpcoming, setLoadingUpcoming] = useState(true);
+
+  useEffect(() => {
+    const fetchUpcoming = async () => {
+      if (!profile?.user_id) return;
+      setLoadingUpcoming(true);
+      try {
+        // Fetch upcoming bookings for this student
+        const allBookings =
+          await classSchedulingService.bookings.getByStudentId(
+            profile.user_id,
+            { booking_status: "confirmed" }
+          );
+        // Only include future sessions (date/time after now)
+        const now = new Date();
+        const futureBookings = allBookings.filter((booking: any) => {
+          const date = booking.class?.date;
+          const time = booking.class?.start_time;
+          if (!date || !time) return false;
+          const sessionDateTime = new Date(`${date}T${time}`);
+          return sessionDateTime > now;
+        });
+        // Map to the shape expected by the UI
+        const mapped = futureBookings.map((booking: any) => ({
+          id: booking.id,
+          tutor: booking.class?.tutor?.full_name || booking.tutor_name,
+          subject: booking.class?.title,
+          time: formatUpcomingTime(
+            booking.class?.date,
+            booking.class?.start_time
+          ),
+          duration: getDuration(
+            booking.class?.start_time,
+            booking.class?.end_time
+          ),
+          type: booking.class?.class_type?.name || booking.class_type,
+        }));
+        setUpcomingSessions(mapped);
+      } catch (err) {
+        setUpcomingSessions([]);
+      } finally {
+        setLoadingUpcoming(false);
+      }
+    };
+    fetchUpcoming();
+  }, [profile?.user_id]);
+
+  function formatUpcomingTime(date: string, time: string) {
+    // Format as 'Today, 2:00 PM' or 'Thursday, July 31, 2025, 7:00 AM'
+    if (!date || !time) return "";
+    const dt = new Date(`${date}T${time}`);
+    const today = new Date();
+    if (dt.toDateString() === today.toDateString()) {
+      return `Today, ${dt.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    }
+    return `${dt.toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })}, ${dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  }
+
+  function getDuration(start: string, end: string) {
+    if (!start || !end) return "";
+    const [sh, sm] = start.split(":").map(Number);
+    const [eh, em] = end.split(":").map(Number);
+    let mins = eh * 60 + em - (sh * 60 + sm);
+    return `${mins} min`;
+  }
 
   const packageInfo = {
     name: profile?.package || "free",
@@ -379,6 +436,7 @@ const StudentDashboard: React.FC = () => {
             <motion.div
               className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group float"
               whileHover={{ y: -5, scale: 1.02, rotateY: 2 }}
+              onClick={() => navigate("/student/manage-sessions")}
             >
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
                 <CalendarDaysIcon className="w-6 h-6 text-white" />
@@ -437,6 +495,7 @@ const StudentDashboard: React.FC = () => {
             <motion.div
               className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group float"
               whileHover={{ y: -5, scale: 1.02, rotateY: 2 }}
+              onClick={() => navigate("/student/book-consultation")}
             >
               <div className="bg-gradient-to-r from-orange-500 to-red-600 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
                 <ChatBubbleLeftRightIcon className="w-6 h-6 text-white" />

@@ -10,12 +10,9 @@ import {
   BellIcon,
   Cog6ToothIcon,
   SparklesIcon,
-
   CalendarDaysIcon,
-
   UserGroupIcon,
   DocumentTextIcon,
-
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -23,10 +20,10 @@ import { getRoleDisplayName } from "@/utils/permissions";
 import { db } from "@/lib/db";
 import type { TutorApplication } from "@/types/auth";
 
-
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [tutorApplication, setTutorApplication] = useState<TutorApplication | null>(null);
+  const [tutorApplication, setTutorApplication] =
+    useState<TutorApplication | null>(null);
   const [loadingApplication, setLoadingApplication] = useState(false);
   const { user, profile, signOut } = useAuth();
   const { adminSession, isAdminLoggedIn, logoutAdmin } = useAdmin();
@@ -35,14 +32,14 @@ const DashboardLayout: React.FC = () => {
 
   // Check tutor application status on mount
   useEffect(() => {
-    if (profile?.role === 'tutor' && user) {
+    if (profile?.role === "tutor" && user) {
       checkTutorApplication();
     }
   }, [profile?.role, user]);
 
   const checkTutorApplication = async () => {
     if (!user) return;
-    
+
     setLoadingApplication(true);
     try {
       const applications = await db.tutorApplications.getByUserId(user.id);
@@ -72,7 +69,11 @@ const DashboardLayout: React.FC = () => {
   const adminNavigation = [
     { name: "Dashboard", href: "/admin", icon: AcademicCapIcon },
     { name: "Manage Students", href: "/admin/students", icon: UserGroupIcon },
-    { name: "Tutor Applications", href: "/admin/tutor-applications", icon: DocumentTextIcon },
+    {
+      name: "Tutor Applications",
+      href: "/admin/tutor-applications",
+      icon: DocumentTextIcon,
+    },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];
@@ -91,33 +92,51 @@ const DashboardLayout: React.FC = () => {
   ];
 
   // Check if tutor navigation should be disabled
-  const isTutorApproved = tutorApplication?.application_status === 'approved';
-  const isTutorPending = tutorApplication?.application_status === 'pending';
-  const isTutorRejected = tutorApplication?.application_status === 'rejected';
+  const isTutorApproved = tutorApplication?.application_status === "approved";
+  const isTutorPending = tutorApplication?.application_status === "pending";
+  const isTutorRejected = tutorApplication?.application_status === "rejected";
 
   // Build navigation based on user role
   const getNavigation = () => {
-    if (profile?.role === 'admin' || isAdminLoggedIn) {
+    // Student-specific navigation
+    if (profile?.role === "student") {
+      return [
+        { name: "Dashboard", href: "/student", icon: AcademicCapIcon },
+        { name: "Book a Session", href: "/student/book-session", icon: CalendarDaysIcon },
+        { name: "My Sessions", href: "/student/manage-sessions", icon: SparklesIcon },
+        { name: "Profile", href: "/profile", icon: UserCircleIcon },
+        { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
+      ];
+    }
+    if (profile?.role === "admin" || isAdminLoggedIn) {
       return adminNavigation;
     }
-    
+
     // For tutors, include tutor-specific items but mark them as disabled if not approved
-    if (profile?.role === 'tutor') {
-      const navigationItems = [...baseNavigation.slice(0, 1), ...tutorNavigationItems, ...baseNavigation.slice(1)];
-      
+    if (profile?.role === "tutor") {
+      const navigationItems = [
+        ...baseNavigation.slice(0, 1),
+        ...tutorNavigationItems,
+        ...baseNavigation.slice(1),
+      ];
+
       // If tutor is not approved or has no application, disable tutor-specific items
       if (!isTutorApproved) {
-        return navigationItems.map(item => {
-          if (tutorNavigationItems.some(tutorItem => tutorItem.name === item.name)) {
+        return navigationItems.map((item) => {
+          if (
+            tutorNavigationItems.some(
+              (tutorItem) => tutorItem.name === item.name
+            )
+          ) {
             return { ...item, disabled: true };
           }
           return item;
         });
       }
-      
+
       return navigationItems;
     }
-    
+
     // For students and other roles, only show base navigation
     return baseNavigation;
   };
@@ -132,11 +151,11 @@ const DashboardLayout: React.FC = () => {
   // Render navigation item with disabled state
   const renderNavigationItem = (item: any, index: number) => {
     const isDisabled = item.disabled;
-    
+
     // Get tooltip message based on application status
     const getTooltipMessage = () => {
-      if (profile?.role !== 'tutor') return '';
-      
+      if (profile?.role !== "tutor") return "";
+
       if (isTutorPending) {
         return "Your application is under review. This feature will be available once approved.";
       }
@@ -148,7 +167,7 @@ const DashboardLayout: React.FC = () => {
       }
       return "Application pending approval";
     };
-    
+
     return (
       <motion.li
         key={item.name}
@@ -341,7 +360,7 @@ const DashboardLayout: React.FC = () => {
                     <ul role="list" className="flex flex-1 flex-col gap-y-7">
                       <li>
                         <ul role="list" className="-mx-2 space-y-2">
-                          {currentNavigation.map((item, index) => 
+                          {currentNavigation.map((item, index) =>
                             renderNavigationItem(item, index)
                           )}
                         </ul>
@@ -415,7 +434,7 @@ const DashboardLayout: React.FC = () => {
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
                 <ul role="list" className="-mx-2 space-y-2">
-                  {currentNavigation.map((item, index) => 
+                  {currentNavigation.map((item, index) =>
                     renderNavigationItem(item, index)
                   )}
                 </ul>
@@ -458,7 +477,7 @@ const DashboardLayout: React.FC = () => {
             </motion.div>
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               {/* Tutor Application Status Indicator */}
-              {profile?.role === 'tutor' && (
+              {profile?.role === "tutor" && (
                 <>
                   {loadingApplication ? (
                     <motion.div
@@ -472,40 +491,42 @@ const DashboardLayout: React.FC = () => {
                         <span>Checking Status...</span>
                       </div>
                     </motion.div>
-                  ) : tutorApplication && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3 }}
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        isTutorApproved
-                          ? 'bg-green-100 text-green-800 border border-green-200'
-                          : isTutorPending
-                          ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                          : isTutorRejected
-                          ? 'bg-red-100 text-red-800 border border-red-200'
-                          : 'bg-gray-100 text-gray-800 border border-gray-200'
-                      }`}
-                    >
-                      {isTutorApproved && (
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span>Approved</span>
-                        </div>
-                      )}
-                      {isTutorPending && (
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                          <span>Pending Review</span>
-                        </div>
-                      )}
-                      {isTutorRejected && (
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                          <span>Application Rejected</span>
-                        </div>
-                      )}
-                    </motion.div>
+                  ) : (
+                    tutorApplication && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          isTutorApproved
+                            ? "bg-green-100 text-green-800 border border-green-200"
+                            : isTutorPending
+                            ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                            : isTutorRejected
+                            ? "bg-red-100 text-red-800 border border-red-200"
+                            : "bg-gray-100 text-gray-800 border border-gray-200"
+                        }`}
+                      >
+                        {isTutorApproved && (
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span>Approved</span>
+                          </div>
+                        )}
+                        {isTutorPending && (
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                            <span>Pending Review</span>
+                          </div>
+                        )}
+                        {isTutorRejected && (
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                            <span>Application Rejected</span>
+                          </div>
+                        )}
+                      </motion.div>
+                    )
                   )}
                 </>
               )}

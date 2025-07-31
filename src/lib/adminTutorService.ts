@@ -29,6 +29,7 @@ export interface Tutor {
   qualification: string | null;
   experience_years: number | null;
   subjects: string[] | null;
+  profile_image_url?: string | null;
   // Application status from tutor_applications
   application_status?: string;
   submitted_at?: string;

@@ -360,31 +360,34 @@ const ManageTutorsPage: React.FC = () => {
                     {formatDate(tutor.created_at)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
+                      {/* View Details Button */}
                       <button
                         onClick={() => handleViewTutor(tutor)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="inline-flex items-center justify-center p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         title="View Details"
                       >
                         <EyeIcon className="h-5 w-5" />
                       </button>
                       
+                      {/* View Classes Button */}
                       <button
                         onClick={() => handleViewClasses(tutor)}
-                        className="text-green-600 hover:text-green-900"
+                        className="inline-flex items-center justify-center p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                         title="View Classes"
                       >
                         <CalendarDaysIcon className="h-5 w-5" />
                       </button>
                       
+                      {/* Activate/Deactivate Button */}
                       <button
                         onClick={() => handleUpdateStatus(tutor.id, !tutor.is_active)}
                         disabled={updatingStatus === tutor.id}
-                        className={`${
+                        className={`inline-flex items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                           tutor.is_active 
-                            ? 'text-red-600 hover:text-red-900' 
-                            : 'text-green-600 hover:text-green-900'
-                        }`}
+                            ? 'bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500' 
+                            : 'bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 focus:ring-green-500'
+                        } ${updatingStatus === tutor.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title={tutor.is_active ? 'Deactivate' : 'Activate'}
                       >
                         {updatingStatus === tutor.id ? (
@@ -396,10 +399,13 @@ const ManageTutorsPage: React.FC = () => {
                         )}
                       </button>
                       
+                      {/* Delete Button */}
                       <button
                         onClick={() => handleDeleteTutor(tutor.id)}
                         disabled={deletingTutor === tutor.id}
-                        className="text-red-600 hover:text-red-900"
+                        className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
+                          deletingTutor === tutor.id ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                         title="Delete"
                       >
                         {deletingTutor === tutor.id ? (

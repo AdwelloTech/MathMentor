@@ -14,6 +14,7 @@ import {
   UserGroupIcon,
   DocumentTextIcon,
   UserIcon,
+  IdentificationIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -76,6 +77,11 @@ const DashboardLayout: React.FC = () => {
       href: "/admin/tutor-applications",
       icon: DocumentTextIcon,
     },
+    {
+      name: "ID Verifications",
+      href: "/admin/id-verifications",
+      icon: IdentificationIcon,
+    },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];
@@ -91,6 +97,7 @@ const DashboardLayout: React.FC = () => {
   const tutorNavigationItems = [
     { name: "Schedule Class", href: "/schedule-class", icon: CalendarDaysIcon },
     { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
+    { name: "ID Verification", href: "/id-verification", icon: IdentificationIcon },
   ];
 
   // Check if tutor navigation should be disabled

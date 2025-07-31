@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
 import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
+import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
@@ -35,6 +36,7 @@ import SupportDashboard from "./pages/dashboards/SupportDashboard";
 import NotFoundPage from "./pages/NotFoundPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import TutorApplicationPage from "./pages/TutorApplicationPage";
+import IDVerificationPage from "./pages/IDVerificationPage";
 
 function App() {
   const { user, loading } = useAuth();
@@ -77,6 +79,7 @@ function App() {
               />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="id-verification" element={<IDVerificationPage />} />
 
               {/* Admin routes */}
               <Route
@@ -108,6 +111,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <ManageTutorsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/id-verifications"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ManageIDVerificationsPage />
                   </ProtectedRoute>
                 }
               />

@@ -23,6 +23,9 @@ import TutorManageClassesPage from "./pages/TutorManageClassesPage";
 
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
+import BookSessionPage from "./pages/BookSessionPage";
+import BookConsultationPage from "./pages/BookConsultationPage";
+import ManageSessionsPage from "./pages/ManageSessionsPage";
 import NotesPage from "./pages/notes/NotesPage";
 import CreateNotePage from "./pages/notes/CreateNotePage";
 import ParentDashboard from "./pages/dashboards/ParentDashboard";
@@ -68,7 +71,10 @@ function App() {
               <Route index element={<DashboardRoute />} />
               <Route path="dashboard" element={<DashboardRoute />} />
               <Route path="schedule-class" element={<ScheduleClassPage />} />
-              <Route path="manage-classes" element={<TutorManageClassesPage />} />
+              <Route
+                path="manage-classes"
+                element={<TutorManageClassesPage />}
+              />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
 
@@ -146,6 +152,15 @@ function App() {
                 }
               >
                 <Route index element={<StudentDashboard />} />
+                <Route path="book-session" element={<BookSessionPage />} />
+                <Route
+                  path="book-consultation"
+                  element={<BookConsultationPage />}
+                />
+                <Route
+                  path="manage-sessions"
+                  element={<ManageSessionsPage />}
+                />
                 <Route path="notes" element={<NotesPage />} />
                 <Route path="notes/create" element={<CreateNotePage />} />
                 <Route path="notes/edit/:noteId" element={<CreateNotePage />} />
@@ -193,6 +208,27 @@ function App() {
 
               {/* Tutor application route - accessible to all logged-in users */}
               <Route path="apply-tutor" element={<TutorApplicationPage />} />
+
+              {/* Student routes */}
+              <Route
+                path="student"
+                element={
+                  <ProtectedRoute requiredRole="student">
+                    <StudentLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<StudentDashboard />} />
+                <Route path="book-session" element={<BookSessionPage />} />
+                <Route
+                  path="book-consultation"
+                  element={<BookConsultationPage />}
+                />
+                <Route
+                  path="manage-sessions"
+                  element={<ManageSessionsPage />}
+                />
+              </Route>
 
               {/* Error routes */}
               <Route path="unauthorized" element={<UnauthorizedPage />} />

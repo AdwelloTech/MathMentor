@@ -14,6 +14,7 @@ import {
   UserGroupIcon,
   DocumentTextIcon,
   UserIcon,
+  CreditCardIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -114,6 +115,11 @@ const DashboardLayout: React.FC = () => {
           name: "My Sessions",
           href: "/student/manage-sessions",
           icon: SparklesIcon,
+        },
+        {
+          name: "Packages",
+          href: "/student/packages",
+          icon: CreditCardIcon,
         },
         { name: "Profile", href: "/profile", icon: UserCircleIcon },
         { name: "Settings", href: "/settings", icon: Cog6ToothIcon },

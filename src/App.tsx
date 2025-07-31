@@ -26,6 +26,7 @@ import StudentDashboard from "./pages/dashboards/StudentDashboard";
 import BookSessionPage from "./pages/BookSessionPage";
 import BookConsultationPage from "./pages/BookConsultationPage";
 import ManageSessionsPage from "./pages/ManageSessionsPage";
+import PackagesPage from "./pages/PackagesPage";
 import NotesPage from "./pages/notes/NotesPage";
 import CreateNotePage from "./pages/notes/CreateNotePage";
 import ParentDashboard from "./pages/dashboards/ParentDashboard";
@@ -161,6 +162,7 @@ function App() {
                   path="manage-sessions"
                   element={<ManageSessionsPage />}
                 />
+                <Route path="packages" element={<PackagesPage />} />
                 <Route path="notes" element={<NotesPage />} />
                 <Route path="notes/create" element={<CreateNotePage />} />
                 <Route path="notes/edit/:noteId" element={<CreateNotePage />} />

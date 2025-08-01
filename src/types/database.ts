@@ -555,6 +555,41 @@ export interface Database {
           updated_at?: string;
         };
       };
+      package_pricing: {
+        Row: {
+          id: string;
+          package_type: string;
+          display_name: string;
+          price_monthly: number;
+          price_yearly: number;
+          features: string[];
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          package_type: string;
+          display_name: string;
+          price_monthly: number;
+          price_yearly: number;
+          features: string[];
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          package_type?: string;
+          display_name?: string;
+          price_monthly?: number;
+          price_yearly?: number;
+          features?: string[];
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

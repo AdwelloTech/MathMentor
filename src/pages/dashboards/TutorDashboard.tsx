@@ -16,11 +16,13 @@ import {
   UserGroupIcon,
   ChatBubbleLeftRightIcon,
   XCircleIcon,
+  IdentificationIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
 import { db } from "@/lib/db";
 import { classSchedulingService } from "@/lib/classSchedulingService";
+import { supabase } from "@/lib/supabase";
 import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
 import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
 
@@ -29,14 +31,16 @@ const TutorDashboard: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<TutorApplication | null>(null);
+  const [idVerification, setIdVerification] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dashboardStats, setDashboardStats] = useState<TutorDashboardStats | null>(null);
   const [upcomingClasses, setUpcomingClasses] = useState<TutorClass[]>([]);
 
-  // Check for existing application on mount
+  // Check for existing application and ID verification on mount
   useEffect(() => {
     checkApplication();
+    checkIDVerification();
   }, [user]);
 
   const checkApplication = async () => {
@@ -53,9 +57,9 @@ const TutorDashboard: React.FC = () => {
       const mostRecentApplication = existingApplications?.[0] || null;
       setApplication(mostRecentApplication);
 
-      // If application is approved, load dashboard data
+      // If application is approved, check ID verification first
       if (mostRecentApplication?.application_status === 'approved') {
-        await loadDashboardData();
+        await checkIDVerification();
       }
     } catch (error: any) {
       // If no application found, that's fine
@@ -67,11 +71,40 @@ const TutorDashboard: React.FC = () => {
     }
   };
 
+  const checkIDVerification = async () => {
+    if (!user || !profile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('id_verifications')
+        .select('*')
+        .eq('user_id', profile.id) // Use profile.id instead of user.id
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error("Error checking ID verification:", error);
+      } else {
+        setIdVerification(data);
+        
+        // Only load dashboard data if both application and ID verification are approved
+        if (application?.application_status === 'approved' && data?.verification_status === 'approved') {
+          await loadDashboardData();
+        }
+      }
+    } catch (error) {
+      console.error("Error checking ID verification:", error);
+    }
+  };
+
   const loadDashboardData = async () => {
+    if (!profile) return;
+    
     try {
       const [stats, classes] = await Promise.all([
-        classSchedulingService.stats.getTutorStats(user!.id),
-        classSchedulingService.classes.getUpcomingByTutorId(user!.id)
+        classSchedulingService.stats.getTutorStats(profile.id), // Use profile.id instead of user.id
+        classSchedulingService.classes.getUpcomingByTutorId(profile.id) // Use profile.id instead of user.id
       ]);
       
       setDashboardStats(stats);
@@ -130,6 +163,15 @@ const TutorDashboard: React.FC = () => {
   const isApprovedTutor = application?.application_status === 'approved';
   const isPendingTutor = application?.application_status === 'pending';
   const isRejectedTutor = application?.application_status === 'rejected';
+  
+  // Check ID verification status
+  const isIDVerificationApproved = idVerification?.verification_status === 'approved';
+  const isIDVerificationPending = idVerification?.verification_status === 'pending';
+  const isIDVerificationRejected = idVerification?.verification_status === 'rejected';
+  const hasIDVerification = !!idVerification;
+  
+  // Tutor features are only enabled when both application is approved AND ID verification is approved
+  const areTutorFeaturesEnabled = isApprovedTutor && isIDVerificationApproved;
 
   // Show loading while checking application
   if (loading) {
@@ -286,8 +328,116 @@ const TutorDashboard: React.FC = () => {
     );
   }
 
+  // If application is approved but ID verification is not completed
+  if (isApprovedTutor && !areTutorFeaturesEnabled) {
+    return (
+      <div className="space-y-8">
+        <div className="border-b border-gray-200 pb-5">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome, {profile?.full_name}
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Tutor Dashboard - Manage your tutoring profile and sessions.
+          </p>
+        </div>
+
+        {/* Application Approved Notice */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-green-50 border border-green-200 rounded-lg p-4"
+        >
+          <div className="flex items-start">
+            <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-green-800">
+                Application Approved!
+              </h3>
+              <p className="mt-1 text-sm text-green-700">
+                Congratulations! Your tutor application has been approved. To complete your setup and access all tutor features, please complete your ID verification.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ID Verification Status */}
+        <div className="bg-white border border-green-200 rounded-lg p-6">
+          <h3 className="font-medium text-gray-900 mb-4">
+            Next Steps:
+          </h3>
+          <div className="space-y-3 text-sm text-gray-600">
+            {!hasIDVerification && (
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                <span>Submit ID verification documents</span>
+              </div>
+            )}
+            {isIDVerificationPending && (
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span>ID verification under review</span>
+              </div>
+            )}
+            {isIDVerificationRejected && (
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span>ID verification rejected - please resubmit</span>
+              </div>
+            )}
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>Access full tutor features once ID verification is approved</span>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {!hasIDVerification && (
+              <button
+                onClick={() => navigate('/id-verification')}
+                className="btn btn-primary w-full"
+              >
+                <IdentificationIcon className="h-5 w-5 mr-2" />
+                Complete ID Verification
+              </button>
+            )}
+            {isIDVerificationRejected && (
+              <button
+                onClick={() => navigate('/id-verification')}
+                className="btn btn-primary w-full"
+              >
+                <IdentificationIcon className="h-5 w-5 mr-2" />
+                Resubmit ID Verification
+              </button>
+            )}
+            <button
+              onClick={() => navigate('/profile')}
+              className="btn btn-secondary w-full"
+            >
+              View Profile
+            </button>
+          </div>
+        </div>
+
+        {/* Note: Dashboard data and upcoming classes are only available after ID verification is completed */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="flex items-start">
+            <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-blue-800">
+                Complete ID Verification to Access Dashboard
+              </h3>
+              <p className="mt-1 text-sm text-blue-700">
+                Once your ID verification is approved, you'll have access to your full tutor dashboard including upcoming classes, earnings, and student information.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // If approved, show the main tutor dashboard
-  if (isApprovedTutor) {
+  if (areTutorFeaturesEnabled) {
     return (
       <div className="space-y-8">
         <div className="border-b border-gray-200 pb-5">
@@ -331,10 +481,10 @@ const TutorDashboard: React.FC = () => {
               <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-green-800">
-                  Application Approved!
+                  Setup Complete!
                 </h3>
                 <p className="mt-1 text-sm text-green-700">
-                  Your tutor application has been approved. You can now schedule classes and start teaching!
+                  Your tutor application and ID verification have been approved. You can now schedule classes and start teaching!
                 </p>
               </div>
             </div>

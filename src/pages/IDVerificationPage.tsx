@@ -14,22 +14,24 @@ import {
 } from '@heroicons/react/24/outline';
 
 const IDVerificationPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [verification, setVerification] = useState<IDVerification | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && profile) {
       loadVerification();
     }
-  }, [user]);
+  }, [user, profile]);
 
   const loadVerification = async () => {
+    if (!user || !profile) return;
+    
     try {
       setLoading(true);
-      const existingVerification = await idVerificationService.getVerificationByUserId(user!.id);
+      const existingVerification = await idVerificationService.getVerificationByUserId(profile.id); // Use profile.id instead of user.id
       setVerification(existingVerification);
       
       // Show form if no verification exists
@@ -185,8 +187,7 @@ const IDVerificationPage: React.FC = () => {
         {/* Form */}
         {showForm && (
           <IDVerificationForm
-            userId={user!.id}
-            applicationId="" // You might want to get this from the tutor's application
+            userId={profile!.id}
             onSuccess={handleVerificationSuccess}
             onCancel={handleCancel}
           />

@@ -3,11 +3,10 @@ import { supabase } from './supabase';
 export interface IDVerification {
   id: string;
   user_id: string;
-  application_id?: string;
   id_type: 'national_id' | 'passport' | 'drivers_license' | 'student_id' | 'other';
   id_number: string;
-  full_name_on_id: string;
-  date_of_birth_on_id?: string;
+  full_name: string;
+  date_of_birth?: string;
   expiry_date?: string;
   issuing_country?: string;
   issuing_authority?: string;
@@ -26,8 +25,8 @@ export interface IDVerification {
 export interface IDVerificationFormData {
   id_type: 'national_id' | 'passport' | 'drivers_license' | 'student_id' | 'other';
   id_number: string;
-  full_name_on_id: string;
-  date_of_birth_on_id?: string;
+  full_name: string;
+  date_of_birth?: string;
   expiry_date?: string;
   issuing_country?: string;
   issuing_authority?: string;
@@ -48,7 +47,7 @@ export interface IDVerificationStats {
 class IDVerificationService {
   private bucketName = 'id-verification-documents';
 
-  async submitVerification(userId: string, applicationId: string, formData: IDVerificationFormData): Promise<IDVerification> {
+  async submitVerification(userId: string, formData: IDVerificationFormData): Promise<IDVerification> {
     try {
       // Upload images to storage
       const [frontImageUrl, backImageUrl, selfieUrl] = await Promise.all([
@@ -62,11 +61,10 @@ class IDVerificationService {
         .from('id_verifications')
         .insert({
           user_id: userId,
-          application_id: applicationId,
           id_type: formData.id_type,
           id_number: formData.id_number,
-          full_name_on_id: formData.full_name_on_id,
-          date_of_birth_on_id: formData.date_of_birth_on_id,
+          full_name: formData.full_name,
+          date_of_birth: formData.date_of_birth,
           expiry_date: formData.expiry_date,
           issuing_country: formData.issuing_country,
           issuing_authority: formData.issuing_authority,
@@ -173,11 +171,6 @@ class IDVerificationService {
             full_name,
             email,
             phone
-          ),
-          tutor_applications:application_id (
-            id,
-            full_name,
-            applicant_email
           )
         `)
         .order('submitted_at', { ascending: false });

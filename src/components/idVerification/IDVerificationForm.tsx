@@ -17,22 +17,20 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface IDVerificationFormProps {
   userId: string;
-  applicationId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
   userId,
-  applicationId,
   onSuccess,
   onCancel
 }) => {
   const [formData, setFormData] = useState<Partial<IDVerificationFormData>>({
     id_type: 'national_id',
     id_number: '',
-    full_name_on_id: '',
-    date_of_birth_on_id: '',
+    full_name: '',
+    date_of_birth: '',
     expiry_date: '',
     issuing_country: '',
     issuing_authority: ''
@@ -112,8 +110,8 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
     if (!formData.id_number?.trim()) {
       newErrors.id_number = 'ID number is required';
     }
-    if (!formData.full_name_on_id?.trim()) {
-      newErrors.full_name_on_id = 'Full name on ID is required';
+    if (!formData.full_name?.trim()) {
+      newErrors.full_name = 'Full name is required';
     }
 
     // Required files
@@ -158,7 +156,7 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
         selfie_with_id: files.selfie_with_id
       };
 
-      await idVerificationService.submitVerification(userId, applicationId, submissionData);
+      await idVerificationService.submitVerification(userId, submissionData);
       
       toast.success('ID verification submitted successfully!');
       onSuccess?.();
@@ -252,47 +250,47 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name on ID *
-            </label>
-            <div className="relative">
-              <input
-                type={showPasswords.full_name ? 'text' : 'password'}
-                value={formData.full_name_on_id || ''}
-                onChange={(e) => handleInputChange('full_name_on_id', e.target.value)}
-                className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.full_name_on_id ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter full name as shown on ID"
-              />
-              <button
-                type="button"
-                onClick={() => togglePasswordVisibility('full_name')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPasswords.full_name ? (
-                  <EyeSlashIcon className="h-5 w-5" />
-                ) : (
-                  <EyeIcon className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-            {errors.full_name_on_id && (
-              <p className="mt-1 text-sm text-red-600">{errors.full_name_on_id}</p>
-            )}
+                         <label className="block text-sm font-medium text-gray-700 mb-2">
+               Full Name *
+             </label>
+             <div className="relative">
+               <input
+                 type={showPasswords.full_name ? 'text' : 'password'}
+                 value={formData.full_name || ''}
+                 onChange={(e) => handleInputChange('full_name', e.target.value)}
+                 className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                   errors.full_name ? 'border-red-500' : 'border-gray-300'
+                 }`}
+                 placeholder="Enter your full name"
+               />
+               <button
+                 type="button"
+                 onClick={() => togglePasswordVisibility('full_name')}
+                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+               >
+                 {showPasswords.full_name ? (
+                   <EyeSlashIcon className="h-5 w-5" />
+                 ) : (
+                   <EyeIcon className="h-5 w-5" />
+                 )}
+               </button>
+             </div>
+             {errors.full_name && (
+               <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
+             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date of Birth on ID
-            </label>
-            <input
-              type="date"
-              value={formData.date_of_birth_on_id || ''}
-              onChange={(e) => handleInputChange('date_of_birth_on_id', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+                     <div>
+             <label className="block text-sm font-medium text-gray-700 mb-2">
+               Date of Birth
+             </label>
+             <input
+               type="date"
+               value={formData.date_of_birth || ''}
+               onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+             />
+           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

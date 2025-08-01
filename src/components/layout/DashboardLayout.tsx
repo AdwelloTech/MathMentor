@@ -20,22 +20,25 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { getRoleDisplayName } from "@/utils/permissions";
 import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import type { TutorApplication } from "@/types/auth";
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorApplication, setTutorApplication] =
     useState<TutorApplication | null>(null);
+  const [idVerification, setIdVerification] = useState<any>(null);
   const [loadingApplication, setLoadingApplication] = useState(false);
   const { user, profile, signOut } = useAuth();
   const { adminSession, isAdminLoggedIn, logoutAdmin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check tutor application status on mount
+  // Check tutor application and ID verification status on mount
   useEffect(() => {
     if (profile?.role === "tutor" && user) {
       checkTutorApplication();
+      checkIDVerification();
     }
   }, [profile?.role, user]);
 
@@ -52,6 +55,28 @@ const DashboardLayout: React.FC = () => {
       console.error("Error checking tutor application:", error);
     } finally {
       setLoadingApplication(false);
+    }
+  };
+
+  const checkIDVerification = async () => {
+    if (!user || !profile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('id_verifications')
+        .select('*')
+        .eq('user_id', profile.id) // Use profile.id instead of user.id
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error("Error checking ID verification:", error);
+      } else {
+        setIdVerification(data);
+      }
+    } catch (error) {
+      console.error("Error checking ID verification:", error);
     }
   };
 
@@ -105,6 +130,15 @@ const DashboardLayout: React.FC = () => {
   const isTutorPending = tutorApplication?.application_status === "pending";
   const isTutorRejected = tutorApplication?.application_status === "rejected";
   const isTutorActive = profile?.is_active !== false; // Default to true if not set
+  
+  // Check ID verification status
+  const isIDVerificationApproved = idVerification?.verification_status === "approved";
+  const isIDVerificationPending = idVerification?.verification_status === "pending";
+  const isIDVerificationRejected = idVerification?.verification_status === "rejected";
+  const hasIDVerification = !!idVerification;
+  
+  // Tutor features are only enabled when both application is approved AND ID verification is approved
+  const areTutorFeaturesEnabled = isTutorApproved && isIDVerificationApproved && isTutorActive;
 
   // Build navigation based on user role
   const getNavigation = () => {
@@ -139,7 +173,7 @@ const DashboardLayout: React.FC = () => {
       ];
 
       // If tutor is not approved, inactive, or has no application, disable tutor-specific items
-      if (!isTutorApproved || !isTutorActive) {
+      if (!areTutorFeaturesEnabled) {
         return navigationItems.map((item) => {
           if (
             tutorNavigationItems.some(
@@ -181,12 +215,27 @@ const DashboardLayout: React.FC = () => {
       if (isTutorPending) {
         return "Your application is under review. This feature will be available once approved.";
       }
+      
       if (isTutorRejected) {
         return "Your application was rejected. Please contact support for more information.";
       }
+      
       if (!tutorApplication) {
         return "Please submit a tutor application first.";
       }
+      
+      if (isTutorApproved && !hasIDVerification) {
+        return "Your application is approved! Please complete ID verification to access tutor features.";
+      }
+      
+      if (isTutorApproved && isIDVerificationPending) {
+        return "Your ID verification is under review. This feature will be available once approved.";
+      }
+      
+      if (isTutorApproved && isIDVerificationRejected) {
+        return "Your ID verification was rejected. Please resubmit with correct documents.";
+      }
+      
       return "Application pending approval";
     };
 
@@ -241,11 +290,36 @@ const DashboardLayout: React.FC = () => {
                 }}
               />
             )}
+            {isTutorApproved && isIDVerificationPending && (
+              <motion.div
+                className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            )}
+            {isTutorApproved && isIDVerificationRejected && (
+              <motion.div
+                className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            )}
             {/* Status indicator text */}
             <div className="absolute bottom-1 right-2 text-xs opacity-60">
-              {isTutorPending && "Pending"}
-              {isTutorRejected && "Rejected"}
+              {isTutorPending && "App Pending"}
+              {isTutorRejected && "App Rejected"}
               {!tutorApplication && "No App"}
+              {isTutorApproved && !hasIDVerification && "Need ID"}
+              {isTutorApproved && isIDVerificationPending && "ID Pending"}
+              {isTutorApproved && isIDVerificationRejected && "ID Rejected"}
             </div>
           </div>
         ) : (

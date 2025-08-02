@@ -80,21 +80,23 @@ const TutorDashboard: React.FC = () => {
         .select('*')
         .eq('user_id', profile.id) // Use profile.id instead of user.id
         .order('submitted_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (error) {
         console.error("Error checking ID verification:", error);
+        setIdVerification(null);
       } else {
-        setIdVerification(data);
+        // Set the first record or null if no records found
+        setIdVerification(data?.[0] || null);
         
         // Only load dashboard data if both application and ID verification are approved
-        if (application?.application_status === 'approved' && data?.verification_status === 'approved') {
+        if (application?.application_status === 'approved' && data?.[0]?.verification_status === 'approved') {
           await loadDashboardData();
         }
       }
     } catch (error) {
       console.error("Error checking ID verification:", error);
+      setIdVerification(null);
     }
   };
 

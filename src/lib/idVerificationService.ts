@@ -91,7 +91,10 @@ class IDVerificationService {
   private async uploadImage(userId: string, imageType: 'front' | 'back' | 'selfie', file: File): Promise<string> {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${imageType}_${Date.now()}.${fileExt}`;
+      // Use the auth user ID (not profile ID) for the folder structure to match storage policies
+      const { data: { user } } = await supabase.auth.getUser();
+      const authUserId = user?.id || userId;
+      const fileName = `${authUserId}/${imageType}_${Date.now()}.${fileExt}`;
       
       const { data, error } = await supabase.storage
         .from(this.bucketName)
@@ -124,15 +127,15 @@ class IDVerificationService {
         .select('*')
         .eq('user_id', userId)
         .order('submitted_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (error) {
         console.error('Error fetching ID verification:', error);
         throw error;
       }
 
-      return data;
+      // Return the first record or null if no records found
+      return data?.[0] || null;
     } catch (error) {
       console.error('Error in getVerificationByUserId:', error);
       throw error;
@@ -145,14 +148,15 @@ class IDVerificationService {
         .from('id_verifications')
         .select('*')
         .eq('id', verificationId)
-        .single();
+        .limit(1);
 
       if (error) {
         console.error('Error fetching ID verification:', error);
         throw error;
       }
 
-      return data;
+      // Return the first record or null if no records found
+      return data?.[0] || null;
     } catch (error) {
       console.error('Error in getVerificationById:', error);
       throw error;

@@ -67,16 +67,18 @@ const DashboardLayout: React.FC = () => {
         .select('*')
         .eq('user_id', profile.id) // Use profile.id instead of user.id
         .order('submitted_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (error) {
         console.error("Error checking ID verification:", error);
+        setIdVerification(null);
       } else {
-        setIdVerification(data);
+        // Set the first record or null if no records found
+        setIdVerification(data?.[0] || null);
       }
     } catch (error) {
       console.error("Error checking ID verification:", error);
+      setIdVerification(null);
     }
   };
 

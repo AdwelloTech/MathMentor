@@ -92,6 +92,11 @@ const DashboardLayout: React.FC = () => {
   const tutorNavigationItems = [
     { name: "Schedule Class", href: "/schedule-class", icon: CalendarDaysIcon },
     { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
+    {
+      name: "Manage Materials",
+      href: "/tutor/manage-materials",
+      icon: DocumentTextIcon,
+    },
   ];
 
   // Check if tutor navigation should be disabled

@@ -1,0 +1,115 @@
+export interface Quiz {
+  id: string;
+  tutor_id: string;
+  title: string;
+  description?: string;
+  subject: string;
+  grade_level?: string;
+  time_limit_minutes: number;
+  total_questions: number;
+  total_points: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  tutor?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
+  questions?: Question[];
+}
+
+export interface Question {
+  id: string;
+  quiz_id: string;
+  question_text: string;
+  question_type: 'multiple_choice' | 'true_false' | 'short_answer';
+  points: number;
+  question_order: number;
+  created_at: string;
+  answers?: Answer[];
+}
+
+export interface Answer {
+  id: string;
+  question_id: string;
+  answer_text: string;
+  is_correct: boolean;
+  answer_order: number;
+  created_at: string;
+}
+
+export interface QuizAttempt {
+  id: string;
+  quiz_id: string;
+  student_id: string;
+  started_at: string;
+  completed_at?: string;
+  score?: number;
+  max_score?: number;
+  status: 'in_progress' | 'completed' | 'abandoned';
+  created_at: string;
+  quiz?: Quiz;
+  student?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
+}
+
+export interface StudentAnswer {
+  id: string;
+  attempt_id: string;
+  question_id: string;
+  selected_answer_id?: string;
+  answer_text?: string;
+  is_correct?: boolean;
+  points_earned: number;
+  created_at: string;
+  question?: Question;
+  selected_answer?: Answer;
+}
+
+export interface CreateQuizData {
+  title: string;
+  description?: string;
+  subject: string;
+  grade_level?: string;
+  time_limit_minutes: number;
+  total_questions: number;
+  total_points: number;
+  questions: CreateQuestionData[];
+}
+
+export interface CreateQuestionData {
+  question_text: string;
+  question_type: 'multiple_choice' | 'true_false' | 'short_answer';
+  points: number;
+  question_order: number;
+  answers: CreateAnswerData[];
+}
+
+export interface CreateAnswerData {
+  answer_text: string;
+  is_correct: boolean;
+  answer_order: number;
+}
+
+export interface UpdateQuizData {
+  title?: string;
+  description?: string;
+  subject?: string;
+  grade_level?: string;
+  time_limit_minutes?: number;
+  total_questions?: number;
+  total_points?: number;
+  is_active?: boolean;
+}
+
+export interface QuizStats {
+  total_quizzes: number;
+  active_quizzes: number;
+  total_attempts: number;
+  average_score: number;
+  total_students: number;
+} 

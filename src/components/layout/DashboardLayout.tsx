@@ -124,6 +124,7 @@ const DashboardLayout: React.FC = () => {
   const tutorNavigationItems = [
     { name: "Schedule Class", href: "/schedule-class", icon: CalendarDaysIcon },
     { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
+    { name: "Quizzes", href: "/quizzes", icon: DocumentTextIcon },
     { name: "ID Verification", href: "/id-verification", icon: IdentificationIcon },
   ];
 

@@ -65,7 +65,8 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
       return;
     }
 
-    if (!formData.content.trim()) {
+    // Content is optional if there's a file, but required if no file
+    if (!hasFile && !formData.content.trim()) {
       toast.error("Please enter content for your material");
       return;
     }
@@ -296,20 +297,18 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                 </div>
 
                 {/* Content */}
-                {!hasFile && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Content *
-                    </label>
-                    <RichTextEditor
-                      value={formData.content}
-                      onChange={(content) =>
-                        setFormData({ ...formData, content })
-                      }
-                      placeholder="Write your study material content here..."
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Content
+                  </label>
+                  <RichTextEditor
+                    value={formData.content}
+                    onChange={(content) =>
+                      setFormData({ ...formData, content })
+                    }
+                    placeholder="Write your study material content here..."
+                  />
+                </div>
 
                 {/* Premium Toggle */}
                 <div className="flex items-center space-x-3">

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { classSchedulingService } from "../lib/classSchedulingService";
 import { ClassSearchResult, ClassType } from "../types/classScheduling";
+import SessionPaymentForm from "../components/payment/SessionPaymentForm";
 import {
   CalendarDays,
   Clock,
@@ -25,6 +26,11 @@ const BookSessionPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookingLoading, setBookingLoading] = useState<string | null>(null);
+
+  // Payment Modal State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedSession, setSelectedSession] =
+    useState<ClassSearchResult | null>(null);
 
   // Filters
   const [filterType, setFilterType] = useState<string>("all");
@@ -59,17 +65,33 @@ const BookSessionPage: React.FC = () => {
     }
   };
 
-  const handleBookSession = async (classId: string, price: number) => {
+  const handleBookSession = (sessionResult: ClassSearchResult) => {
     if (!user) return;
 
+    setSelectedSession(sessionResult);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async (paymentIntentId: string) => {
+    if (!selectedSession || !user) return;
+
     try {
-      setBookingLoading(classId);
-      await classSchedulingService.bookings.create(classId, user.id, price);
+      setBookingLoading(selectedSession.class.id);
+
+      // Create booking with payment information
+      await classSchedulingService.bookings.create(
+        selectedSession.class.id,
+        user.id,
+        selectedSession.class.price_per_session,
+        paymentIntentId
+      );
 
       // Refresh sessions to update available slots
       await loadSessions();
 
-      // Show success message
+      // Close modal and show success message
+      setShowPaymentModal(false);
+      setSelectedSession(null);
       toast.success("Session booked successfully!");
     } catch (err) {
       console.error("Error booking session:", err);
@@ -77,6 +99,15 @@ const BookSessionPage: React.FC = () => {
     } finally {
       setBookingLoading(null);
     }
+  };
+
+  const handlePaymentError = (error: string) => {
+    toast.error(`Payment failed: ${error}`);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentModal(false);
+    setSelectedSession(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -393,9 +424,7 @@ const BookSessionPage: React.FC = () => {
                 {/* Book Button */}
                 <div className="px-6 pb-6 mt-auto">
                   <button
-                    onClick={() =>
-                      handleBookSession(session.id, session.price_per_session)
-                    }
+                    onClick={() => handleBookSession(sessionResult)}
                     disabled={isBooking || !sessionResult.is_bookable}
                     className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
                       sessionResult.is_bookable
@@ -440,6 +469,30 @@ const BookSessionPage: React.FC = () => {
           </motion.div>
         )}
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedSession && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+          >
+            <SessionPaymentForm
+              sessionTitle={selectedSession.class.title}
+              tutorName={selectedSession.tutor.full_name}
+              sessionDate={selectedSession.class.date}
+              sessionTime={selectedSession.class.start_time}
+              amount={selectedSession.class.price_per_session}
+              customerEmail={user?.email || ""}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+              onCancel={handlePaymentCancel}
+            />
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

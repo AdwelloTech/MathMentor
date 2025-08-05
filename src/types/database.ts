@@ -555,6 +555,65 @@ export interface Database {
           updated_at?: string;
         };
       };
+      tutor_notes: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          content: string | null;
+          file_url: string | null;
+          file_name: string | null;
+          file_size: number | null;
+          subject_id: string | null;
+          grade_level_id: string | null;
+          created_by: string;
+          is_premium: boolean;
+          is_active: boolean;
+          view_count: number;
+          download_count: number;
+          tags: string[] | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          content?: string | null;
+          file_url?: string | null;
+          file_name?: string | null;
+          file_size?: number | null;
+          subject_id?: string | null;
+          grade_level_id?: string | null;
+          created_by: string;
+          is_premium?: boolean;
+          is_active?: boolean;
+          view_count?: number;
+          download_count?: number;
+          tags?: string[] | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string | null;
+          content?: string | null;
+          file_url?: string | null;
+          file_name?: string | null;
+          file_size?: number | null;
+          subject_id?: string | null;
+          grade_level_id?: string | null;
+          created_by?: string;
+          is_premium?: boolean;
+          is_active?: boolean;
+          view_count?: number;
+          download_count?: number;
+          tags?: string[] | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       package_pricing: {
         Row: {
           id: string;
@@ -622,6 +681,48 @@ export interface Database {
           note_id: string;
         };
         Returns: void;
+      };
+      increment_tutor_note_view_count: {
+        Args: {
+          note_id: string;
+        };
+        Returns: void;
+      };
+      increment_tutor_note_download_count: {
+        Args: {
+          note_id: string;
+        };
+        Returns: void;
+      };
+      search_tutor_notes: {
+        Args: {
+          search_term?: string;
+          subject_filter?: string;
+          premium_only?: boolean;
+          tutor_id?: string;
+        };
+        Returns: {
+          id: string;
+          title: string;
+          description: string | null;
+          content: string | null;
+          file_url: string | null;
+          file_name: string | null;
+          file_size: number | null;
+          subject_id: string | null;
+          subject_name: string | null;
+          subject_display_name: string | null;
+          subject_color: string | null;
+          grade_level_id: string | null;
+          grade_level_code: string | null;
+          grade_level_display: string | null;
+          created_by: string;
+          is_premium: boolean;
+          view_count: number;
+          download_count: number;
+          tags: string[] | null;
+          created_at: string;
+        }[];
       };
     };
     Enums: {

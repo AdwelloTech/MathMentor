@@ -20,6 +20,7 @@ import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
 import ScheduleClassPage from "./components/classScheduling/ClassSchedulingPage";
 import TutorManageClassesPage from "./pages/TutorManageClassesPage";
+import ManageMaterialsPage from "./pages/tutor/ManageMaterialsPage";
 
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
@@ -75,6 +76,10 @@ function App() {
               <Route
                 path="manage-classes"
                 element={<TutorManageClassesPage />}
+              />
+              <Route
+                path="tutor/manage-materials"
+                element={<ManageMaterialsPage />}
               />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />

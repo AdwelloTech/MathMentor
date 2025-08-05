@@ -14,7 +14,11 @@ import {
   UserGroupIcon,
   DocumentTextIcon,
   UserIcon,
+
   IdentificationIcon,
+
+  CreditCardIcon,
+
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -124,8 +128,16 @@ const DashboardLayout: React.FC = () => {
   const tutorNavigationItems = [
     { name: "Schedule Class", href: "/schedule-class", icon: CalendarDaysIcon },
     { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
+
     { name: "Quizzes", href: "/quizzes", icon: DocumentTextIcon },
     { name: "ID Verification", href: "/id-verification", icon: IdentificationIcon },
+
+    {
+      name: "Manage Materials",
+      href: "/tutor/manage-materials",
+      icon: DocumentTextIcon,
+    },
+
   ];
 
   // Check if tutor navigation should be disabled
@@ -158,6 +170,11 @@ const DashboardLayout: React.FC = () => {
           name: "My Sessions",
           href: "/student/manage-sessions",
           icon: SparklesIcon,
+        },
+        {
+          name: "Packages",
+          href: "/student/packages",
+          icon: CreditCardIcon,
         },
         { name: "Profile", href: "/profile", icon: UserCircleIcon },
         { name: "Settings", href: "/settings", icon: Cog6ToothIcon },

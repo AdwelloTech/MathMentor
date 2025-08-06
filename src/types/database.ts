@@ -724,6 +724,74 @@ export interface Database {
           created_at: string;
         }[];
       };
+      get_student_tutor_materials: {
+        Args: {
+          p_student_id: string;
+          p_search_term?: string;
+          p_subject_filter?: string;
+        };
+        Returns: {
+          id: string;
+          title: string;
+          description: string | null;
+          content: string | null;
+          file_url: string | null;
+          file_name: string | null;
+          file_size: number | null;
+          subject_id: string | null;
+          subject_name: string | null;
+          subject_display_name: string | null;
+          subject_color: string | null;
+          grade_level_id: string | null;
+          grade_level_display: string | null;
+          created_by: string;
+          tutor_name: string | null;
+          is_premium: boolean;
+          is_active: boolean;
+          view_count: number;
+          download_count: number;
+          tags: string[] | null;
+          created_at: string;
+          updated_at: string;
+        }[];
+      };
+      student_has_premium_access: {
+        Args: {
+          p_student_id: string;
+        };
+        Returns: boolean;
+      };
+      get_student_tutor_material_by_id: {
+        Args: {
+          p_student_id: string;
+          p_material_id: string;
+        };
+        Returns: {
+          id: string;
+          title: string;
+          description: string | null;
+          content: string | null;
+          file_url: string | null;
+          file_name: string | null;
+          file_size: number | null;
+          subject_id: string | null;
+          subject_name: string | null;
+          subject_display_name: string | null;
+          subject_color: string | null;
+          grade_level_id: string | null;
+          grade_level_display: string | null;
+          created_by: string;
+          tutor_name: string | null;
+          is_premium: boolean;
+          is_active: boolean;
+          view_count: number;
+          download_count: number;
+          tags: string[] | null;
+          created_at: string;
+          updated_at: string;
+          has_access: boolean;
+        }[];
+      };
     };
     Enums: {
       user_role:

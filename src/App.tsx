@@ -15,12 +15,20 @@ import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
 import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
+import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
 import ScheduleClassPage from "./components/classScheduling/ClassSchedulingPage";
 import TutorManageClassesPage from "./pages/TutorManageClassesPage";
+
+import QuizManagementPage from "./pages/quiz/QuizManagementPage";
+import CreateQuizPage from "./pages/quiz/CreateQuizPage";
+import QuizViewPage from "./pages/quiz/QuizViewPage";
+import EditQuizPage from "./pages/quiz/EditQuizPage";
+
 import ManageMaterialsPage from "./pages/tutor/ManageMaterialsPage";
+
 
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
@@ -38,6 +46,7 @@ import SupportDashboard from "./pages/dashboards/SupportDashboard";
 import NotFoundPage from "./pages/NotFoundPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import TutorApplicationPage from "./pages/TutorApplicationPage";
+import IDVerificationPage from "./pages/IDVerificationPage";
 
 function App() {
   const { user, loading } = useAuth();
@@ -78,12 +87,20 @@ function App() {
                 path="manage-classes"
                 element={<TutorManageClassesPage />}
               />
+
+                          <Route path="quizzes" element={<QuizManagementPage />} />
+            <Route path="create-quiz" element={<CreateQuizPage />} />
+            <Route path="quiz/:quizId" element={<QuizViewPage />} />
+            <Route path="edit-quiz/:quizId" element={<EditQuizPage />} />
+
               <Route
                 path="tutor/manage-materials"
                 element={<ManageMaterialsPage />}
               />
+
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="id-verification" element={<IDVerificationPage />} />
 
               {/* Admin routes */}
               <Route
@@ -115,6 +132,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <ManageTutorsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/id-verifications"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ManageIDVerificationsPage />
                   </ProtectedRoute>
                 }
               />

@@ -108,6 +108,7 @@ BEGIN
     WHERE id = application_id;
     
     -- Update the user's profile to tutor role and add application data
+    -- Note: tutor_features_enabled will be set to true only after ID verification is approved
     UPDATE public.profiles 
     SET 
         role = 'tutor',
@@ -121,6 +122,7 @@ BEGIN
         cv_url = app_record.cv_url,
         cv_file_name = app_record.cv_file_name,
         profile_completed = true,
+        tutor_features_enabled = false, -- Will be enabled after ID verification approval
         updated_at = NOW()
     WHERE user_id = app_record.user_id;
     

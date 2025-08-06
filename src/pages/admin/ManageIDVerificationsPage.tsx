@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   IdentificationIcon,
   MagnifyingGlassIcon,
@@ -11,27 +11,38 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   UserIcon,
-} from '@heroicons/react/24/outline';
-import { idVerificationService, IDVerification, IDVerificationStats } from '@/lib/idVerificationService';
-import toast from 'react-hot-toast';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+} from "@heroicons/react/24/outline";
+import {
+  idVerificationService,
+  IDVerification,
+  IDVerificationStats,
+} from "@/lib/idVerificationService";
+import toast from "react-hot-toast";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const ManageIDVerificationsPage: React.FC = () => {
   const [verifications, setVerifications] = useState<IDVerification[]>([]);
-  const [filteredVerifications, setFilteredVerifications] = useState<IDVerification[]>([]);
-  const [selectedVerification, setSelectedVerification] = useState<IDVerification | null>(null);
+  const [filteredVerifications, setFilteredVerifications] = useState<
+    IDVerification[]
+  >([]);
+  const [selectedVerification, setSelectedVerification] =
+    useState<IDVerification | null>(null);
   const [stats, setStats] = useState<IDVerificationStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
-  const [actionType, setActionType] = useState<'approve' | 'reject' | 'expire'>('approve');
+  const [actionType, setActionType] = useState<"approve" | "reject" | "expire">(
+    "approve"
+  );
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
-  const [deletingVerification, setDeletingVerification] = useState<string | null>(null);
-  const [adminNotes, setAdminNotes] = useState('');
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [showSensitiveData, setShowSensitiveData] = useState(false);
+  const [deletingVerification, setDeletingVerification] = useState<
+    string | null
+  >(null);
+  const [adminNotes, setAdminNotes] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showSensitiveData, setShowSensitiveData] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -40,18 +51,18 @@ const ManageIDVerificationsPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      
+
       const [verificationsData, statsData] = await Promise.all([
         idVerificationService.getAllVerifications(),
-        idVerificationService.getVerificationStats()
+        idVerificationService.getVerificationStats(),
       ]);
 
       setVerifications(verificationsData);
       setFilteredVerifications(verificationsData);
       setStats(statsData);
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Failed to load ID verification data');
+      console.error("Error loading data:", error);
+      toast.error("Failed to load ID verification data");
     } finally {
       setLoading(false);
     }
@@ -59,22 +70,28 @@ const ManageIDVerificationsPage: React.FC = () => {
 
   useEffect(() => {
     let filtered = verifications;
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(verification => {
+      filtered = filtered.filter((verification) => {
         const profile = (verification as any).profiles;
         return (
-          profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          profile?.full_name
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           profile?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          verification.id_number.toLowerCase().includes(searchTerm.toLowerCase())
+          verification.id_number
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
         );
       });
     }
-    
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(verification => verification.verification_status === filterStatus);
+
+    if (filterStatus !== "all") {
+      filtered = filtered.filter(
+        (verification) => verification.verification_status === filterStatus
+      );
     }
-    
+
     setFilteredVerifications(filtered);
   }, [verifications, searchTerm, filterStatus]);
 
@@ -83,11 +100,14 @@ const ManageIDVerificationsPage: React.FC = () => {
     setShowDetailsModal(true);
   };
 
-  const handleAction = (verification: IDVerification, type: 'approve' | 'reject' | 'expire') => {
+  const handleAction = (
+    verification: IDVerification,
+    type: "approve" | "reject" | "expire"
+  ) => {
     setSelectedVerification(verification);
     setActionType(type);
-    setAdminNotes('');
-    setRejectionReason('');
+    setAdminNotes("");
+    setRejectionReason("");
     setShowActionModal(true);
   };
 
@@ -96,58 +116,67 @@ const ManageIDVerificationsPage: React.FC = () => {
 
     try {
       setUpdatingStatus(selectedVerification.id);
-      
+
       const statusMap = {
-        'approve': 'approved' as const,
-        'reject': 'rejected' as const,
-        'expire': 'expired' as const
+        approve: "approved" as const,
+        reject: "rejected" as const,
+        expire: "expired" as const,
       };
-      
+
       const newStatus = statusMap[actionType];
-      
+
       await idVerificationService.updateVerificationStatus(
         selectedVerification.id,
         newStatus,
         adminNotes,
-        actionType === 'reject' ? rejectionReason : undefined
+        actionType === "reject" ? rejectionReason : undefined
       );
-      
-      setVerifications(prev => prev.map(v => 
-        v.id === selectedVerification.id 
-          ? { 
-              ...v, 
-              verification_status: newStatus,
-              admin_notes: adminNotes,
-              rejection_reason: actionType === 'reject' ? rejectionReason : v.rejection_reason,
-              verified_at: new Date().toISOString()
-            }
-          : v
-      ));
-      
+
+      setVerifications((prev) =>
+        prev.map((v) =>
+          v.id === selectedVerification.id
+            ? {
+                ...v,
+                verification_status: newStatus,
+                admin_notes: adminNotes,
+                rejection_reason:
+                  actionType === "reject"
+                    ? rejectionReason
+                    : v.rejection_reason,
+                verified_at: new Date().toISOString(),
+              }
+            : v
+        )
+      );
+
       toast.success(`ID verification ${actionType}d successfully`);
       setShowActionModal(false);
       setSelectedVerification(null);
     } catch (error) {
-      console.error('Error updating verification status:', error);
-      toast.error('Failed to update verification status');
+      console.error("Error updating verification status:", error);
+      toast.error("Failed to update verification status");
     } finally {
       setUpdatingStatus(null);
     }
   };
 
   const handleDeleteVerification = async (verificationId: string) => {
-    if (!confirm('Are you sure you want to delete this ID verification? This action cannot be undone.')) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this ID verification? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
     try {
       setDeletingVerification(verificationId);
       await idVerificationService.deleteVerification(verificationId);
-      setVerifications(prev => prev.filter(v => v.id !== verificationId));
-      toast.success('ID verification deleted successfully');
+      setVerifications((prev) => prev.filter((v) => v.id !== verificationId));
+      toast.success("ID verification deleted successfully");
     } catch (error) {
-      console.error('Error deleting verification:', error);
-      toast.error('Failed to delete verification');
+      console.error("Error deleting verification:", error);
+      toast.error("Failed to delete verification");
     } finally {
       setDeletingVerification(null);
     }
@@ -155,25 +184,25 @@ const ManageIDVerificationsPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
+      case "pending":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
             Pending
           </span>
         );
-      case 'approved':
+      case "approved":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             Approved
           </span>
         );
-      case 'rejected':
+      case "rejected":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
             Rejected
           </span>
         );
-      case 'expired':
+      case "expired":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
             Expired
@@ -189,14 +218,15 @@ const ManageIDVerificationsPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
   };
 
   const formatIDType = (idType: string) => {
-    return idType.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    return idType
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   if (loading) {
@@ -211,7 +241,9 @@ const ManageIDVerificationsPage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-200 pb-5">
-        <h1 className="text-2xl font-bold text-gray-900">Manage ID Verifications</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Manage ID Verifications
+        </h1>
         <p className="mt-2 text-sm text-gray-600">
           Review and manage ID verification submissions from tutors.
         </p>
@@ -224,8 +256,12 @@ const ManageIDVerificationsPage: React.FC = () => {
             <div className="flex items-center">
               <IdentificationIcon className="h-8 w-8 text-blue-600 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Verifications</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Verifications
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.total}
+                </p>
               </div>
             </div>
           </div>
@@ -235,7 +271,9 @@ const ManageIDVerificationsPage: React.FC = () => {
               <ClockIcon className="h-8 w-8 text-yellow-600 mr-3" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.pending}
+                </p>
               </div>
             </div>
           </div>
@@ -245,7 +283,9 @@ const ManageIDVerificationsPage: React.FC = () => {
               <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.approved}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.approved}
+                </p>
               </div>
             </div>
           </div>
@@ -255,7 +295,9 @@ const ManageIDVerificationsPage: React.FC = () => {
               <ExclamationTriangleIcon className="h-8 w-8 text-red-600 mr-3" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.rejected}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.rejected}
+                </p>
               </div>
             </div>
           </div>
@@ -277,7 +319,7 @@ const ManageIDVerificationsPage: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <FunnelIcon className="h-5 w-5 text-gray-400" />
             <select
@@ -302,7 +344,7 @@ const ManageIDVerificationsPage: React.FC = () => {
             ID Verifications ({filteredVerifications.length})
           </h2>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -336,10 +378,10 @@ const ManageIDVerificationsPage: React.FC = () => {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {profile?.full_name || 'Unknown'}
+                            {profile?.full_name || "Unknown"}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {profile?.email || 'No email'}
+                            {profile?.email || "No email"}
                           </div>
                         </div>
                       </div>
@@ -349,7 +391,9 @@ const ManageIDVerificationsPage: React.FC = () => {
                         {formatIDType(verification.id_type)}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {showSensitiveData ? verification.id_number : '••••••••••'}
+                        {showSensitiveData
+                          ? verification.id_number
+                          : "••••••••••"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -368,35 +412,41 @@ const ManageIDVerificationsPage: React.FC = () => {
                         >
                           <EyeIcon className="h-5 w-5" />
                         </button>
-                        
+
                         {/* Approve Button */}
-                        {verification.verification_status === 'pending' && (
+                        {verification.verification_status === "pending" && (
                           <button
-                            onClick={() => handleAction(verification, 'approve')}
+                            onClick={() =>
+                              handleAction(verification, "approve")
+                            }
                             className="inline-flex items-center justify-center p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                             title="Approve"
                           >
                             <CheckCircleIcon className="h-5 w-5" />
                           </button>
                         )}
-                        
+
                         {/* Reject Button */}
-                        {verification.verification_status === 'pending' && (
+                        {verification.verification_status === "pending" && (
                           <button
-                            onClick={() => handleAction(verification, 'reject')}
+                            onClick={() => handleAction(verification, "reject")}
                             className="inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                             title="Reject"
                           >
                             <XCircleIcon className="h-5 w-5" />
                           </button>
                         )}
-                        
+
                         {/* Delete Button */}
                         <button
-                          onClick={() => handleDeleteVerification(verification.id)}
+                          onClick={() =>
+                            handleDeleteVerification(verification.id)
+                          }
                           disabled={deletingVerification === verification.id}
                           className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                            deletingVerification === verification.id ? 'opacity-50 cursor-not-allowed' : ''
+                            deletingVerification === verification.id
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
                           }`}
                           title="Delete"
                         >
@@ -414,16 +464,17 @@ const ManageIDVerificationsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-        
+
         {filteredVerifications.length === 0 && (
           <div className="text-center py-12">
             <IdentificationIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No verifications found</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              No verifications found
+            </h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || filterStatus !== 'all' 
-                ? 'Try adjusting your search or filter criteria.'
-                : 'No ID verifications have been submitted yet.'
-              }
+              {searchTerm || filterStatus !== "all"
+                ? "Try adjusting your search or filter criteria."
+                : "No ID verifications have been submitted yet."}
             </p>
           </div>
         )}
@@ -437,7 +488,7 @@ const ManageIDVerificationsPage: React.FC = () => {
             className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800"
           >
             <EyeIcon className="h-4 w-4" />
-            <span>{showSensitiveData ? 'Hide' : 'Show'} Sensitive Data</span>
+            <span>{showSensitiveData ? "Hide" : "Show"} Sensitive Data</span>
           </button>
         </div>
       </div>
@@ -457,37 +508,50 @@ const ManageIDVerificationsPage: React.FC = () => {
                 <XCircleIcon className="h-6 w-6" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-6">
               {/* User Information */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">User Information</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  User Information
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Full Name
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {showSensitiveData ? selectedVerification.full_name : '••••••••••'}
+                      {showSensitiveData
+                        ? selectedVerification.full_name
+                        : "••••••••••"}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {(selectedVerification as any).profiles?.email || 'No email'}
+                      {(selectedVerification as any).profiles?.email ||
+                        "No email"}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Date of Birth
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {showSensitiveData && selectedVerification.date_of_birth 
+                      {showSensitiveData && selectedVerification.date_of_birth
                         ? formatDate(selectedVerification.date_of_birth)
-                        : '••••••••••'
-                      }
+                        : "••••••••••"}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Phone
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {(selectedVerification as any).profiles?.phone || 'No phone'}
+                      {(selectedVerification as any).profiles?.phone ||
+                        "No phone"}
                     </p>
                   </div>
                 </div>
@@ -495,37 +559,53 @@ const ManageIDVerificationsPage: React.FC = () => {
 
               {/* ID Information */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">ID Information</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  ID Information
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">ID Type</label>
-                    <p className="mt-1 text-sm text-gray-900">{formatIDType(selectedVerification.id_type)}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">ID Number</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      ID Type
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {showSensitiveData ? selectedVerification.id_number : '••••••••••'}
+                      {formatIDType(selectedVerification.id_type)}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Issuing Country</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      ID Number
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {selectedVerification.issuing_country || 'Not specified'}
+                      {showSensitiveData
+                        ? selectedVerification.id_number
+                        : "••••••••••"}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Issuing Authority</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Issuing Country
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {selectedVerification.issuing_authority || 'Not specified'}
+                      {selectedVerification.issuing_country || "Not specified"}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Issuing Authority
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {showSensitiveData && selectedVerification.expiry_date 
+                      {selectedVerification.issuing_authority ||
+                        "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Expiry Date
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {showSensitiveData && selectedVerification.expiry_date
                         ? formatDate(selectedVerification.expiry_date)
-                        : '••••••••••'
-                      }
+                        : "••••••••••"}
                     </p>
                   </div>
                 </div>
@@ -533,129 +613,172 @@ const ManageIDVerificationsPage: React.FC = () => {
 
               {/* Verification Status */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Verification Status</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Verification Status
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <div className="mt-1">{getStatusBadge(selectedVerification.verification_status)}</div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Status
+                    </label>
+                    <div className="mt-1">
+                      {getStatusBadge(selectedVerification.verification_status)}
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Submitted</label>
-                    <p className="mt-1 text-sm text-gray-900">{formatDate(selectedVerification.submitted_at)}</p>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Submitted
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {formatDate(selectedVerification.submitted_at)}
+                    </p>
                   </div>
                   {selectedVerification.verified_at && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Verified</label>
-                      <p className="mt-1 text-sm text-gray-900">{formatDate(selectedVerification.verified_at)}</p>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Verified
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {formatDate(selectedVerification.verified_at)}
+                      </p>
                     </div>
                   )}
                   {selectedVerification.admin_notes && (
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Admin Notes</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedVerification.admin_notes}</p>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Admin Notes
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedVerification.admin_notes}
+                      </p>
                     </div>
                   )}
                   {selectedVerification.rejection_reason && (
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Rejection Reason</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedVerification.rejection_reason}</p>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Rejection Reason
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedVerification.rejection_reason}
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
 
-                             {/* ID Images */}
-               <div className="bg-gray-50 p-4 rounded-lg">
-                 <h3 className="text-lg font-medium text-gray-900 mb-4">ID Images</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                   {selectedVerification.front_image_url && (
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">Front Image</label>
-                       <div className="relative">
-                         <img
-                           src={selectedVerification.front_image_url}
-                           alt="ID Front"
-                           className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                           onError={(e) => {
-                             console.error('Error loading front image:', selectedVerification.front_image_url);
-                             (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+';
-                           }}
-                         />
-                         <div className="absolute top-2 right-2">
-                           <a
-                             href={selectedVerification.front_image_url}
-                             target="_blank"
-                             rel="noopener noreferrer"
-                             className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
-                           >
-                             Open
-                           </a>
-                         </div>
-                       </div>
-                       
-                     </div>
-                   )}
-                   {selectedVerification.back_image_url && (
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">Back Image</label>
-                       <div className="relative">
-                         <img
-                           src={selectedVerification.back_image_url}
-                           alt="ID Back"
-                           className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                           onError={(e) => {
-                             console.error('Error loading back image:', selectedVerification.back_image_url);
-                             (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+';
-                           }}
-                         />
-                         <div className="absolute top-2 right-2">
-                           <a
-                             href={selectedVerification.back_image_url}
-                             target="_blank"
-                             rel="noopener noreferrer"
-                             className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
-                           >
-                             Open
-                           </a>
-                         </div>
-                       </div>
-                       
-                     </div>
-                   )}
-                   {selectedVerification.selfie_with_id_url && (
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">Selfie with ID</label>
-                       <div className="relative">
-                         <img
-                           src={selectedVerification.selfie_with_id_url}
-                           alt="Selfie with ID"
-                           className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                           onError={(e) => {
-                             console.error('Error loading selfie image:', selectedVerification.selfie_with_id_url);
-                             (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+';
-                           }}
-                         />
-                         <div className="absolute top-2 right-2">
-                           <a
-                             href={selectedVerification.selfie_with_id_url}
-                             target="_blank"
-                             rel="noopener noreferrer"
-                             className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
-                           >
-                             Open
-                           </a>
-                         </div>
-                       </div>
-                       
-                     </div>
-                   )}
-                 </div>
-                 {!selectedVerification.front_image_url && !selectedVerification.back_image_url && !selectedVerification.selfie_with_id_url && (
-                   <p className="text-sm text-gray-500 mt-2">No images uploaded</p>
-                 )}
-               </div>
+              {/* ID Images */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  ID Images
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {selectedVerification.front_image_url && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Front Image
+                      </label>
+                      <div className="relative">
+                        <img
+                          src={selectedVerification.front_image_url}
+                          alt="ID Front"
+                          className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                          onError={(e) => {
+                            console.error(
+                              "Error loading front image:",
+                              selectedVerification.front_image_url
+                            );
+                            (e.target as HTMLImageElement).src =
+                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+";
+                          }}
+                        />
+                        <div className="absolute top-2 right-2">
+                          <a
+                            href={selectedVerification.front_image_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
+                          >
+                            Open
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {selectedVerification.back_image_url && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Back Image
+                      </label>
+                      <div className="relative">
+                        <img
+                          src={selectedVerification.back_image_url}
+                          alt="ID Back"
+                          className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                          onError={(e) => {
+                            console.error(
+                              "Error loading back image:",
+                              selectedVerification.back_image_url
+                            );
+                            (e.target as HTMLImageElement).src =
+                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+";
+                          }}
+                        />
+                        <div className="absolute top-2 right-2">
+                          <a
+                            href={selectedVerification.back_image_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
+                          >
+                            Open
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {selectedVerification.selfie_with_id_url && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Selfie with ID
+                      </label>
+                      <div className="relative">
+                        <img
+                          src={selectedVerification.selfie_with_id_url}
+                          alt="Selfie with ID"
+                          className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                          onError={(e) => {
+                            console.error(
+                              "Error loading selfie image:",
+                              selectedVerification.selfie_with_id_url
+                            );
+                            (e.target as HTMLImageElement).src =
+                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+";
+                          }}
+                        />
+                        <div className="absolute top-2 right-2">
+                          <a
+                            href={selectedVerification.selfie_with_id_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
+                          >
+                            Open
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {!selectedVerification.front_image_url &&
+                  !selectedVerification.back_image_url &&
+                  !selectedVerification.selfie_with_id_url && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      No images uploaded
+                    </p>
+                  )}
+              </div>
             </div>
-            
+
             <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200">
               <button
                 onClick={() => setShowDetailsModal(false)}
@@ -674,7 +797,12 @@ const ManageIDVerificationsPage: React.FC = () => {
           <div className="bg-white rounded-lg w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">
-                {actionType === 'approve' ? 'Approve' : actionType === 'reject' ? 'Reject' : 'Mark as Expired'} Verification
+                {actionType === "approve"
+                  ? "Approve"
+                  : actionType === "reject"
+                  ? "Reject"
+                  : "Mark as Expired"}{" "}
+                Verification
               </h2>
               <button
                 onClick={() => setShowActionModal(false)}
@@ -683,12 +811,12 @@ const ManageIDVerificationsPage: React.FC = () => {
                 <XCircleIcon className="h-6 w-6" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-4">
               <p className="text-sm text-gray-600">
                 Are you sure you want to {actionType} this ID verification?
               </p>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Admin Notes
@@ -701,8 +829,8 @@ const ManageIDVerificationsPage: React.FC = () => {
                   placeholder="Add notes about this decision..."
                 />
               </div>
-              
-              {actionType === 'reject' && (
+
+              {actionType === "reject" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Rejection Reason *
@@ -718,7 +846,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200">
               <button
                 onClick={() => setShowActionModal(false)}
@@ -728,19 +856,26 @@ const ManageIDVerificationsPage: React.FC = () => {
               </button>
               <button
                 onClick={handleUpdateStatus}
-                disabled={updatingStatus === selectedVerification.id || (actionType === 'reject' && !rejectionReason.trim())}
+                disabled={
+                  updatingStatus === selectedVerification.id ||
+                  (actionType === "reject" && !rejectionReason.trim())
+                }
                 className={`px-4 py-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  actionType === 'approve' 
-                    ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                    : actionType === 'reject'
-                    ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-                    : 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500'
+                  actionType === "approve"
+                    ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
+                    : actionType === "reject"
+                    ? "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                    : "bg-gray-600 hover:bg-gray-700 focus:ring-gray-500"
                 }`}
               >
                 {updatingStatus === selectedVerification.id ? (
                   <LoadingSpinner size="sm" />
+                ) : actionType === "approve" ? (
+                  "Approve"
+                ) : actionType === "reject" ? (
+                  "Reject"
                 ) : (
-                  actionType === 'approve' ? 'Approve' : actionType === 'reject' ? 'Reject' : 'Mark as Expired'
+                  "Mark as Expired"
                 )}
               </button>
             </div>
@@ -751,4 +886,4 @@ const ManageIDVerificationsPage: React.FC = () => {
   );
 };
 
-export default ManageIDVerificationsPage; 
+export default ManageIDVerificationsPage;

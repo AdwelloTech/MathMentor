@@ -41,6 +41,11 @@ GRANT SELECT, INSERT ON tutor_note_views TO authenticated;
 -- RLS policies for tutor_note_views table
 ALTER TABLE tutor_note_views ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist to avoid conflicts
+DROP POLICY IF EXISTS "Users can view their own note view records" ON tutor_note_views;
+DROP POLICY IF EXISTS "Users can insert their own note view records" ON tutor_note_views;
+DROP POLICY IF EXISTS "Tutors can view records for their own notes" ON tutor_note_views;
+
 -- Users can only see their own view records
 CREATE POLICY "Users can view their own note view records" ON tutor_note_views
     FOR SELECT USING (auth.uid() = user_id);

@@ -38,6 +38,7 @@ import ManageSessionsPage from "./pages/ManageSessionsPage";
 import PackagesPage from "./pages/PackagesPage";
 import NotesPage from "./pages/notes/NotesPage";
 import CreateNotePage from "./pages/notes/CreateNotePage";
+import TutorMaterialsPage from "./pages/student/TutorMaterialsPage";
 import ParentDashboard from "./pages/dashboards/ParentDashboard";
 import HRDashboard from "./pages/dashboards/HRDashboard";
 import FinanceDashboard from "./pages/dashboards/FinanceDashboard";
@@ -193,6 +194,10 @@ function App() {
                   element={<ManageSessionsPage />}
                 />
                 <Route path="packages" element={<PackagesPage />} />
+                <Route
+                  path="tutor-materials"
+                  element={<TutorMaterialsPage />}
+                />
                 <Route path="notes" element={<NotesPage />} />
                 <Route path="notes/create" element={<CreateNotePage />} />
                 <Route path="notes/edit/:noteId" element={<CreateNotePage />} />

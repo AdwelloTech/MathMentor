@@ -26,9 +26,11 @@ import QuizManagementPage from "./pages/quiz/QuizManagementPage";
 import CreateQuizPage from "./pages/quiz/CreateQuizPage";
 import QuizViewPage from "./pages/quiz/QuizViewPage";
 import EditQuizPage from "./pages/quiz/EditQuizPage";
+import StudentQuizDashboard from "./pages/student/StudentQuizDashboard";
+import TakeQuizPage from "./pages/student/TakeQuizPage";
+import QuizResultsPage from "./pages/student/QuizResultsPage";
 
 import ManageMaterialsPage from "./pages/tutor/ManageMaterialsPage";
-
 
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
@@ -88,10 +90,10 @@ function App() {
                 element={<TutorManageClassesPage />}
               />
 
-                          <Route path="quizzes" element={<QuizManagementPage />} />
-            <Route path="create-quiz" element={<CreateQuizPage />} />
-            <Route path="quiz/:quizId" element={<QuizViewPage />} />
-            <Route path="edit-quiz/:quizId" element={<EditQuizPage />} />
+              <Route path="quizzes" element={<QuizManagementPage />} />
+              <Route path="create-quiz" element={<CreateQuizPage />} />
+              <Route path="quiz/:quizId" element={<QuizViewPage />} />
+              <Route path="edit-quiz/:quizId" element={<EditQuizPage />} />
 
               <Route
                 path="tutor/manage-materials"
@@ -201,6 +203,13 @@ function App() {
                 <Route path="notes" element={<NotesPage />} />
                 <Route path="notes/create" element={<CreateNotePage />} />
                 <Route path="notes/edit/:noteId" element={<CreateNotePage />} />
+                <Route path="quizzes" element={<StudentQuizDashboard />} />
+                <Route path="take-quiz/:attemptId" element={<TakeQuizPage />} />
+                <Route path="quiz-results" element={<QuizResultsPage />} />
+                <Route
+                  path="quiz-results/:attemptId"
+                  element={<QuizResultsPage />}
+                />
               </Route>
 
               {/* Parent routes */}

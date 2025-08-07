@@ -17,13 +17,20 @@ export interface Quiz {
     email: string;
   };
   questions?: Question[];
+  // Attempt status fields (added for student dashboard)
+  attempt_status?: "in_progress" | "completed" | "abandoned" | null;
+  attempt_score?: number | null;
+  attempt_max_score?: number | null;
+  attempt_correct_answers?: number | null;
+  attempt_total_questions?: number | null;
+  attempt_id?: string | null;
 }
 
 export interface Question {
   id: string;
   quiz_id: string;
   question_text: string;
-  question_type: 'multiple_choice' | 'true_false' | 'short_answer';
+  question_type: "multiple_choice" | "true_false" | "short_answer";
   points: number;
   question_order: number;
   created_at: string;
@@ -47,7 +54,9 @@ export interface QuizAttempt {
   completed_at?: string;
   score?: number;
   max_score?: number;
-  status: 'in_progress' | 'completed' | 'abandoned';
+  correct_answers?: number;
+  total_questions?: number;
+  status: "in_progress" | "completed" | "abandoned";
   created_at: string;
   quiz?: Quiz;
   student?: {
@@ -83,7 +92,7 @@ export interface CreateQuizData {
 
 export interface CreateQuestionData {
   question_text: string;
-  question_type: 'multiple_choice' | 'true_false' | 'short_answer';
+  question_type: "multiple_choice" | "true_false" | "short_answer";
   points: number;
   question_order: number;
   answers: CreateAnswerData[];
@@ -112,4 +121,4 @@ export interface QuizStats {
   total_attempts: number;
   average_score: number;
   total_students: number;
-} 
+}

@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { AcademicCapIcon, BookOpenIcon } from '@heroicons/react/24/solid';
-import { useAuth } from '@/contexts/AuthContext';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import toast from 'react-hot-toast';
-import type { LoginFormData } from '@/types/auth';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { motion } from "framer-motion";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { BookOpenIcon } from "@heroicons/react/24/solid";
+import { useAuth } from "@/contexts/AuthContext";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import toast from "react-hot-toast";
+import type { LoginFormData } from "@/types/auth";
+// shadcn/ui
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -33,18 +38,31 @@ const LoginPage: React.FC = () => {
       window.history.replaceState({}, document.title);
     }
     if (state?.email) {
-      setValue('email', state.email);
+      setValue("email", state.email);
     }
   }, [location.state, setValue]);
+
+  // animations similar to RegisterPage
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0 },
+  } as const;
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.06, delayChildren: 0.1 },
+    },
+  } as const;
 
   const onSubmit = async (data: LoginFormData) => {
     try {
       setIsLoading(true);
       await signIn(data.email, data.password);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (error: any) {
-      setError('root', {
-        message: error.message || 'Invalid email or password',
+      setError("root", {
+        message: error.message || "Invalid email or password",
       });
     } finally {
       setIsLoading(false);
@@ -52,214 +70,402 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <div className="flex justify-center mb-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl blur opacity-30 animate-pulse"></div>
-              <div className="relative bg-white p-3 rounded-2xl shadow-lg">
-                <AcademicCapIcon className="h-8 w-8 text-primary-600" />
-              </div>
-            </div>
+    <div className="h-screen w-screen grid grid-cols-1 lg:grid-cols-2 relative">
+      {/* Left Column - Visual Panel (placeholder image) */}
+      <motion.div
+        initial={{ x: -24, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative hidden lg:flex items-center justify-center overflow-hidden"
+      >
+        <div className="absolute inset-10 rounded-3xl bg-gradient-to-br from-[#1f6d37] via-[#1c5d30] to-[#144d23] overflow-visible">
+          <div className="absolute -left-10 -bottom-24 h-[38rem] w-[38rem] rounded-full border-2 border-white/10" />
+          <div className="absolute left-10 top-16 h-[28rem] w-[28rem] rounded-full border-2 border-white/10" />
+
+          {/* Math Symbols Background */}
+          <svg
+            className="absolute inset-0 w-full h-full opacity-20"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+          >
+            {/* Plus symbol */}
+            <text
+              x="15"
+              y="25"
+              fill="#fbbf24"
+              fontSize="8"
+              fontFamily="Arial, sans-serif"
+            >
+              +
+            </text>
+            <text
+              x="85"
+              y="35"
+              fill="#fbbf24"
+              fontSize="6"
+              fontFamily="Arial, sans-serif"
+            >
+              +
+            </text>
+            <text
+              x="25"
+              y="75"
+              fill="#fbbf24"
+              fontSize="7"
+              fontFamily="Arial, sans-serif"
+            >
+              +
+            </text>
+
+            {/* Minus symbol */}
+            <text
+              x="75"
+              y="20"
+              fill="#fbbf24"
+              fontSize="5"
+              fontFamily="Arial, sans-serif"
+            >
+              −
+            </text>
+            <text
+              x="10"
+              y="60"
+              fill="#fbbf24"
+              fontSize="6"
+              fontFamily="Arial, sans-serif"
+            >
+              −
+            </text>
+
+            {/* Multiplication symbol */}
+            <text
+              x="90"
+              y="70"
+              fill="#fbbf24"
+              fontSize="7"
+              fontFamily="Arial, sans-serif"
+            >
+              ×
+            </text>
+            <text
+              x="35"
+              y="45"
+              fill="#fbbf24"
+              fontSize="5"
+              fontFamily="Arial, sans-serif"
+            >
+              ×
+            </text>
+
+            {/* Division symbol */}
+            <text
+              x="65"
+              y="85"
+              fill="#fbbf24"
+              fontSize="6"
+              fontFamily="Arial, sans-serif"
+            >
+              ÷
+            </text>
+            <text
+              x="5"
+              y="40"
+              fill="#fbbf24"
+              fontSize="4"
+              fontFamily="Arial, sans-serif"
+            >
+              ÷
+            </text>
+
+            {/* Equals symbol */}
+            <text
+              x="80"
+              y="50"
+              fill="#fbbf24"
+              fontSize="5"
+              fontFamily="Arial, sans-serif"
+            >
+              =
+            </text>
+            <text
+              x="20"
+              y="85"
+              fill="#fbbf24"
+              fontSize="6"
+              fontFamily="Arial, sans-serif"
+            >
+              =
+            </text>
+
+            {/* Pi symbol */}
+            <text
+              x="95"
+              y="15"
+              fill="#fbbf24"
+              fontSize="4"
+              fontFamily="Arial, sans-serif"
+            >
+              π
+            </text>
+            <text
+              x="45"
+              y="80"
+              fill="#fbbf24"
+              fontSize="5"
+              fontFamily="Arial, sans-serif"
+            >
+              π
+            </text>
+
+            {/* Square root symbol */}
+            <text
+              x="70"
+              y="25"
+              fill="#fbbf24"
+              fontSize="6"
+              fontFamily="Arial, sans-serif"
+            >
+              √
+            </text>
+            <text
+              x="15"
+              y="90"
+              fill="#fbbf24"
+              fontSize="5"
+              fontFamily="Arial, sans-serif"
+            >
+              √
+            </text>
+
+            {/* Infinity symbol */}
+            <text
+              x="50"
+              y="15"
+              fill="#fbbf24"
+              fontSize="4"
+              fontFamily="Arial, sans-serif"
+            >
+              ∞
+            </text>
+            <text
+              x="30"
+              y="95"
+              fill="#fbbf24"
+              fontSize="5"
+              fontFamily="Arial, sans-serif"
+            >
+              ∞
+            </text>
+
+            {/* Degree symbol */}
+            <text
+              x="85"
+              y="90"
+              fill="#fbbf24"
+              fontSize="3"
+              fontFamily="Arial, sans-serif"
+            >
+              °
+            </text>
+            <text
+              x="55"
+              y="65"
+              fill="#fbbf24"
+              fontSize="4"
+              fontFamily="Arial, sans-serif"
+            >
+              °
+            </text>
+          </svg>
+
+          <div className="relative z-10 h-full w-full flex flex-col items-center text-center text-white px-8 pt-12 md:pt-16">
+            <motion.h1
+              className="text-4xl font-bold leading-tight mb-3"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              Welcome Back
+            </motion.h1>
+            <motion.p
+              className="text-white/90 max-w-[640px] mb-8"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              Enter your credentials to sign in to MathMentor
+            </motion.p>
+            {/* Placeholder image. Replace the src with your asset. */}
+            <motion.img
+              src={"/src/assets/student-login.png"}
+              alt="Login Illustration"
+              className="pointer-events-none absolute -translate-x-1/2 bottom-[-42px] w-[88%] max-w-[680px] object-contain drop-shadow-2xl"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            />
           </div>
+        </div>
+      </motion.div>
+
+      {/* Right Column - Form */}
+      <motion.div
+        initial={{ x: 24, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="bg-white max-w-full flex flex-col justify-center items-center p-6 md:p-10 relative"
+      >
+        <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome Back
+            Sign in to MathMentor
           </h2>
-          <p className="text-gray-600">
-            Sign in to your Institute Management System
-          </p>
-        </motion.div>
+        </div>
 
-        {/* Login Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="card"
+        <motion.form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-6 w-full max-w-md"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-          <div className="card-body">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Email Field */}
-              <div className="form-group">
-                <label htmlFor="email" className="form-label">
-                  Email Address
-                </label>
-                <input
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                      message: 'Please enter a valid email address',
-                    },
-                  })}
-                  type="email"
-                  id="email"
-                  placeholder="Enter your email"
-                  className={`input ${errors.email ? 'input-error' : ''}`}
-                />
-                {errors.email && (
-                  <p className="form-error">{errors.email.message}</p>
-                )}
-              </div>
+          {/* Email */}
+          <motion.div className="space-y-2" variants={fadeInUp}>
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              {...register("email", {
+                required: "Email is required",
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: "Please enter a valid email address",
+                },
+              })}
+              type="email"
+              id="email"
+              placeholder="Enter your email"
+              className={
+                errors.email ? "border-red-500 focus-visible:ring-red-500" : ""
+              }
+            />
+            {errors.email && (
+              <p className="text-sm text-red-600">{errors.email.message}</p>
+            )}
+          </motion.div>
 
-              {/* Password Field */}
-              <div className="form-group">
-                <label htmlFor="password" className="form-label">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    {...register('password', {
-                      required: 'Password is required',
-                      minLength: {
-                        value: 6,
-                        message: 'Password must be at least 6 characters',
-                      },
-                    })}
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    placeholder="Enter your password"
-                    className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="form-error">{errors.password.message}</p>
-                )}
-              </div>
-
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    {...register('remember')}
-                    id="remember"
-                    type="checkbox"
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember" className="ml-2 block text-sm text-gray-900">
-                    Remember me
-                  </label>
-                </div>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-primary-600 hover:text-primary-500 font-medium"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
-              {/* Error Message */}
-              {errors.root && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="p-3 bg-red-50 border border-red-200 rounded-lg"
-                >
-                  <p className="text-sm text-red-600">{errors.root.message}</p>
-                </motion.div>
-              )}
-
-              {/* Submit Button */}
+          {/* Password */}
+          <motion.div className="space-y-2" variants={fadeInUp}>
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 6,
+                    message: "Password must be at least 6 characters",
+                  },
+                })}
+                type={showPassword ? "text" : "password"}
+                id="password"
+                placeholder="Enter your password"
+                className={`pr-10 ${
+                  errors.password
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }`}
+              />
               <button
-                type="submit"
-                disabled={isLoading}
-                className="btn btn-primary w-full btn-lg hover-lift"
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowPassword(!showPassword)}
               >
-                {isLoading ? (
-                  <LoadingSpinner size="sm" />
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5 text-gray-400" />
                 ) : (
-                  <>
-                    <BookOpenIcon className="h-5 w-5 mr-2" />
-                    Sign In
-                  </>
+                  <EyeIcon className="h-5 w-5 text-gray-400" />
                 )}
               </button>
-            </form>
-          </div>
-        </motion.div>
+            </div>
+            {errors.password && (
+              <p className="text-sm text-red-600">{errors.password.message}</p>
+            )}
+          </motion.div>
 
-        {/* Register Link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-center"
-        >
-          <p className="text-gray-600">
-            Don't have an account?{' '}
+          {/* Remember & Forgot */}
+          <motion.div
+            className="flex items-center justify-between"
+            variants={fadeInUp}
+          >
+            <div className="flex items-center space-x-2">
+              <Checkbox id="remember" {...register("remember")} />
+              <Label htmlFor="remember" className="text-sm font-normal">
+                Remember me
+              </Label>
+            </div>
             <Link
-              to="/register"
-              className="text-primary-600 hover:text-primary-500 font-medium"
+              to="/forgot-password"
+              className="text-sm text-[#32a852] hover:text-[#16a34a] font-medium"
             >
-              Register here
+              Forgot password?
             </Link>
-          </p>
-        </motion.div>
+          </motion.div>
 
-        {/* Admin Login Link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-center"
-        >
-          <p className="text-gray-600">
-            <Link
-              to="/admin/login"
-              className="text-red-600 hover:text-red-500 font-medium"
+          {/* Error */}
+          {errors.root && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="p-3 bg-red-50 border border-red-200 rounded-lg"
             >
-              Admin Login →
-            </Link>
-          </p>
-        </motion.div>
+              <p className="text-sm text-red-600">{errors.root.message}</p>
+            </motion.div>
+          )}
 
-        {/* Demo Credentials */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-        >
-          <h3 className="text-sm font-medium text-gray-900 mb-2">Demo Credentials</h3>
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-            <div>
-              <strong>Admin:</strong> admin@iems.com
-            </div>
-            <div>
-              <strong>Student:</strong> student@iems.com
-            </div>
-            <div>
-              <strong>Teacher:</strong> teacher@iems.com
-            </div>
-            <div>
-              <strong>Parent:</strong> parent@iems.com
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Password: <code className="bg-gray-100 px-1 rounded">password123</code>
-          </p>
-        </motion.div>
-      </div>
+          {/* Submit */}
+          <motion.div variants={fadeInUp}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full"
+              size="lg"
+            >
+              {isLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <>
+                  <BookOpenIcon className="h-5 w-5" />
+                  Sign In
+                </>
+              )}
+            </Button>
+          </motion.div>
+
+          {/* Register link */}
+          <motion.div className="text-center" variants={fadeInUp}>
+            <p className="text-gray-600">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="text-[#32a852] hover:text-[#16a34a] font-medium"
+              >
+                Register here
+              </Link>
+            </p>
+          </motion.div>
+
+          {/* Admin Login link */}
+          <motion.div className="text-center" variants={fadeInUp}>
+            <p className="text-gray-600">
+              <Link
+                to="/admin/login"
+                className="text-red-600 hover:text-red-500 font-medium"
+              >
+                Admin Login →
+              </Link>
+            </p>
+          </motion.div>
+
+          {/* Demo credentials */}
+        </motion.form>
+      </motion.div>
     </div>
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

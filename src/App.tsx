@@ -26,6 +26,8 @@ import QuizManagementPage from "./pages/quiz/QuizManagementPage";
 import CreateQuizPage from "./pages/quiz/CreateQuizPage";
 import QuizViewPage from "./pages/quiz/QuizViewPage";
 import EditQuizPage from "./pages/quiz/EditQuizPage";
+import QuizResponsesPage from "./pages/quiz/QuizResponsesPage";
+import QuizAttemptReviewPage from "./pages/quiz/QuizAttemptReviewPage";
 import StudentQuizDashboard from "./pages/student/StudentQuizDashboard";
 import TakeQuizPage from "./pages/student/TakeQuizPage";
 import QuizResultsPage from "./pages/student/QuizResultsPage";
@@ -94,6 +96,14 @@ function App() {
               <Route path="create-quiz" element={<CreateQuizPage />} />
               <Route path="quiz/:quizId" element={<QuizViewPage />} />
               <Route path="edit-quiz/:quizId" element={<EditQuizPage />} />
+              <Route
+                path="quiz/:quizId/responses"
+                element={<QuizResponsesPage />}
+              />
+              <Route
+                path="quiz/attempt/:attemptId"
+                element={<QuizAttemptReviewPage />}
+              />
 
               <Route
                 path="tutor/manage-materials"

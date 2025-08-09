@@ -345,6 +345,15 @@ const StudentQuizDashboard: React.FC = () => {
                           )}
                           %)
                         </div>
+                        {quiz.attempt_tutor_feedback ? (
+                          <div className="text-center text-xs font-medium text-green-700 bg-green-100 py-1 rounded">
+                            Feedback received
+                          </div>
+                        ) : (
+                          <div className="text-center text-xs font-medium text-orange-700 bg-orange-100 py-1 rounded">
+                            Feedback pending
+                          </div>
+                        )}
                         <button
                           onClick={() =>
                             navigate(`/student/quiz-results/${quiz.attempt_id}`)

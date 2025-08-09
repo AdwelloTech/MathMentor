@@ -24,6 +24,7 @@ export interface Quiz {
   attempt_correct_answers?: number | null;
   attempt_total_questions?: number | null;
   attempt_id?: string | null;
+  attempt_tutor_feedback?: string | null;
 }
 
 export interface Question {
@@ -58,6 +59,8 @@ export interface QuizAttempt {
   total_questions?: number;
   status: "in_progress" | "completed" | "abandoned";
   created_at: string;
+  // Optional tutor-written overall feedback for the attempt
+  tutor_feedback?: string | null;
   quiz?: Quiz;
   student?: {
     id: string;

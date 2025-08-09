@@ -314,6 +314,19 @@ export const quizService = {
       return data;
     },
 
+    // Update overall tutor feedback on an attempt
+    saveTutorFeedback: async (
+      attemptId: string,
+      feedback: string
+    ): Promise<void> => {
+      const { error } = await supabase
+        .from("quiz_attempts")
+        .update({ tutor_feedback: feedback })
+        .eq("id", attemptId);
+
+      if (error) throw error;
+    },
+
     getByStudentId: async (studentId: string): Promise<QuizAttempt[]> => {
       const { data, error } = await supabase
         .from("quiz_attempts")
@@ -541,7 +554,7 @@ export const quizService = {
       const { data: attemptsData } = await supabase
         .from("quiz_attempts")
         .select(
-          "id, quiz_id, status, score, max_score, correct_answers, total_questions"
+          "id, quiz_id, status, score, max_score, correct_answers, total_questions, tutor_feedback"
         )
         .eq("student_id", studentProfile.id);
 
@@ -556,6 +569,7 @@ export const quizService = {
           attempt_correct_answers: attempt?.correct_answers || null,
           attempt_total_questions: attempt?.total_questions || null,
           attempt_id: attempt?.id || null,
+          attempt_tutor_feedback: (attempt as any)?.tutor_feedback ?? null,
         };
       });
 

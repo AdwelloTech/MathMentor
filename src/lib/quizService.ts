@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 import type {
   Quiz,
   Question,
@@ -9,15 +9,18 @@ import type {
   CreateQuestionData,
   CreateAnswerData,
   UpdateQuizData,
-  QuizStats
-} from '@/types/quiz';
+  QuizStats,
+} from "@/types/quiz";
 
 export const quizService = {
   // Quiz operations
   quizzes: {
-    create: async (tutorId: string, quizData: CreateQuizData): Promise<Quiz> => {
+    create: async (
+      tutorId: string,
+      quizData: CreateQuizData
+    ): Promise<Quiz> => {
       const { data: quiz, error: quizError } = await supabase
-        .from('quizzes')
+        .from("quizzes")
         .insert({
           tutor_id: tutorId,
           title: quizData.title,
@@ -26,7 +29,7 @@ export const quizService = {
           grade_level: quizData.grade_level,
           time_limit_minutes: quizData.time_limit_minutes,
           total_questions: quizData.total_questions,
-          total_points: quizData.total_points
+          total_points: quizData.total_points,
         })
         .select()
         .single();
@@ -36,13 +39,13 @@ export const quizService = {
       // Create questions and answers
       for (const questionData of quizData.questions) {
         const { data: question, error: questionError } = await supabase
-          .from('quiz_questions')
+          .from("quiz_questions")
           .insert({
             quiz_id: quiz.id,
             question_text: questionData.question_text,
             question_type: questionData.question_type,
             points: questionData.points,
-            question_order: questionData.question_order
+            question_order: questionData.question_order,
           })
           .select()
           .single();
@@ -52,12 +55,12 @@ export const quizService = {
         // Create answers for this question
         for (const answerData of questionData.answers) {
           const { error: answerError } = await supabase
-            .from('quiz_answers')
+            .from("quiz_answers")
             .insert({
               question_id: question.id,
               answer_text: answerData.answer_text,
               is_correct: answerData.is_correct,
-              answer_order: answerData.answer_order
+              answer_order: answerData.answer_order,
             });
 
           if (answerError) throw answerError;
@@ -69,16 +72,18 @@ export const quizService = {
 
     getById: async (quizId: string): Promise<Quiz> => {
       const { data, error } = await supabase
-        .from('quizzes')
-        .select(`
+        .from("quizzes")
+        .select(
+          `
           *,
           tutor:profiles(id, full_name, email),
           questions:quiz_questions(
             *,
             answers:quiz_answers(*)
           )
-        `)
-        .eq('id', quizId)
+        `
+        )
+        .eq("id", quizId)
         .single();
 
       if (error) throw error;
@@ -87,23 +92,28 @@ export const quizService = {
 
     getByTutorId: async (tutorId: string): Promise<Quiz[]> => {
       const { data, error } = await supabase
-        .from('quizzes')
-        .select(`
+        .from("quizzes")
+        .select(
+          `
           *,
           tutor:profiles(id, full_name, email)
-        `)
-        .eq('tutor_id', tutorId)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .eq("tutor_id", tutorId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
     },
 
-    update: async (quizId: string, updateData: UpdateQuizData): Promise<Quiz> => {
+    update: async (
+      quizId: string,
+      updateData: UpdateQuizData
+    ): Promise<Quiz> => {
       const { data, error } = await supabase
-        .from('quizzes')
+        .from("quizzes")
         .update(updateData)
-        .eq('id', quizId)
+        .eq("id", quizId)
         .select()
         .single();
 
@@ -113,38 +123,43 @@ export const quizService = {
 
     delete: async (quizId: string): Promise<void> => {
       const { error } = await supabase
-        .from('quizzes')
+        .from("quizzes")
         .delete()
-        .eq('id', quizId);
+        .eq("id", quizId);
 
       if (error) throw error;
     },
 
     getAll: async (): Promise<Quiz[]> => {
       const { data, error } = await supabase
-        .from('quizzes')
-        .select(`
+        .from("quizzes")
+        .select(
+          `
           *,
           tutor:profiles(id, full_name, email)
-        `)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
-    }
+    },
   },
 
   // Question operations
   questions: {
-    create: async (quizId: string, questionData: CreateQuestionData): Promise<Question> => {
+    create: async (
+      quizId: string,
+      questionData: CreateQuestionData
+    ): Promise<Question> => {
       const { data: question, error: questionError } = await supabase
-        .from('quiz_questions')
+        .from("quiz_questions")
         .insert({
           quiz_id: quizId,
           question_text: questionData.question_text,
           question_type: questionData.question_type,
           points: questionData.points,
-          question_order: questionData.question_order
+          question_order: questionData.question_order,
         })
         .select()
         .single();
@@ -154,12 +169,12 @@ export const quizService = {
       // Create answers for this question
       for (const answerData of questionData.answers) {
         const { error: answerError } = await supabase
-          .from('quiz_answers')
+          .from("quiz_answers")
           .insert({
             question_id: question.id,
             answer_text: answerData.answer_text,
             is_correct: answerData.is_correct,
-            answer_order: answerData.answer_order
+            answer_order: answerData.answer_order,
           });
 
         if (answerError) throw answerError;
@@ -170,23 +185,28 @@ export const quizService = {
 
     getByQuizId: async (quizId: string): Promise<Question[]> => {
       const { data, error } = await supabase
-        .from('quiz_questions')
-        .select(`
+        .from("quiz_questions")
+        .select(
+          `
           *,
           answers:quiz_answers(*)
-        `)
-        .eq('quiz_id', quizId)
-        .order('question_order', { ascending: true });
+        `
+        )
+        .eq("quiz_id", quizId)
+        .order("question_order", { ascending: true });
 
       if (error) throw error;
       return data;
     },
 
-    update: async (questionId: string, updateData: Partial<Question>): Promise<Question> => {
+    update: async (
+      questionId: string,
+      updateData: Partial<Question>
+    ): Promise<Question> => {
       const { data, error } = await supabase
-        .from('quiz_questions')
+        .from("quiz_questions")
         .update(updateData)
-        .eq('id', questionId)
+        .eq("id", questionId)
         .select()
         .single();
 
@@ -196,24 +216,27 @@ export const quizService = {
 
     delete: async (questionId: string): Promise<void> => {
       const { error } = await supabase
-        .from('quiz_questions')
+        .from("quiz_questions")
         .delete()
-        .eq('id', questionId);
+        .eq("id", questionId);
 
       if (error) throw error;
-    }
+    },
   },
 
   // Answer operations
   answers: {
-    create: async (questionId: string, answerData: CreateAnswerData): Promise<Answer> => {
+    create: async (
+      questionId: string,
+      answerData: CreateAnswerData
+    ): Promise<Answer> => {
       const { data, error } = await supabase
-        .from('quiz_answers')
+        .from("quiz_answers")
         .insert({
           question_id: questionId,
           answer_text: answerData.answer_text,
           is_correct: answerData.is_correct,
-          answer_order: answerData.answer_order
+          answer_order: answerData.answer_order,
         })
         .select()
         .single();
@@ -224,20 +247,23 @@ export const quizService = {
 
     getByQuestionId: async (questionId: string): Promise<Answer[]> => {
       const { data, error } = await supabase
-        .from('quiz_answers')
-        .select('*')
-        .eq('question_id', questionId)
-        .order('answer_order', { ascending: true });
+        .from("quiz_answers")
+        .select("*")
+        .eq("question_id", questionId)
+        .order("answer_order", { ascending: true });
 
       if (error) throw error;
       return data;
     },
 
-    update: async (answerId: string, updateData: Partial<Answer>): Promise<Answer> => {
+    update: async (
+      answerId: string,
+      updateData: Partial<Answer>
+    ): Promise<Answer> => {
       const { data, error } = await supabase
-        .from('quiz_answers')
+        .from("quiz_answers")
         .update(updateData)
-        .eq('id', answerId)
+        .eq("id", answerId)
         .select()
         .single();
 
@@ -247,22 +273,22 @@ export const quizService = {
 
     delete: async (answerId: string): Promise<void> => {
       const { error } = await supabase
-        .from('quiz_answers')
+        .from("quiz_answers")
         .delete()
-        .eq('id', answerId);
+        .eq("id", answerId);
 
       if (error) throw error;
-    }
+    },
   },
 
   // Quiz attempts operations
   attempts: {
     create: async (quizId: string, studentId: string): Promise<QuizAttempt> => {
       const { data, error } = await supabase
-        .from('quiz_attempts')
+        .from("quiz_attempts")
         .insert({
           quiz_id: quizId,
-          student_id: studentId
+          student_id: studentId,
         })
         .select()
         .single();
@@ -273,13 +299,15 @@ export const quizService = {
 
     getById: async (attemptId: string): Promise<QuizAttempt> => {
       const { data, error } = await supabase
-        .from('quiz_attempts')
-        .select(`
+        .from("quiz_attempts")
+        .select(
+          `
           *,
           quiz:quizzes(*),
           student:profiles(id, full_name, email)
-        `)
-        .eq('id', attemptId)
+        `
+        )
+        .eq("id", attemptId)
         .single();
 
       if (error) throw error;
@@ -288,53 +316,63 @@ export const quizService = {
 
     getByStudentId: async (studentId: string): Promise<QuizAttempt[]> => {
       const { data, error } = await supabase
-        .from('quiz_attempts')
-        .select(`
+        .from("quiz_attempts")
+        .select(
+          `
           *,
           quiz:quizzes(*)
-        `)
-        .eq('student_id', studentId)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .eq("student_id", studentId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
     },
 
-    complete: async (attemptId: string, score: number, maxScore: number): Promise<QuizAttempt> => {
+    complete: async (
+      attemptId: string,
+      score: number,
+      maxScore: number
+    ): Promise<QuizAttempt> => {
       const { data, error } = await supabase
-        .from('quiz_attempts')
+        .from("quiz_attempts")
         .update({
           completed_at: new Date().toISOString(),
           score: score,
           max_score: maxScore,
-          status: 'completed'
+          status: "completed",
         })
-        .eq('id', attemptId)
+        .eq("id", attemptId)
         .select()
         .single();
 
       if (error) throw error;
       return data;
-    }
+    },
   },
 
   // Student answers operations
   studentAnswers: {
-    create: async (attemptId: string, questionId: string, answerData: {
-      selected_answer_id?: string;
-      answer_text?: string;
-      is_correct?: boolean;
-      points_earned: number;
-    }): Promise<StudentAnswer> => {
+    create: async (
+      attemptId: string,
+      questionId: string,
+      answerData: {
+        selected_answer_id?: string;
+        answer_text?: string;
+        is_correct?: boolean;
+        points_earned: number;
+      }
+    ): Promise<StudentAnswer> => {
       const { data, error } = await supabase
-        .from('student_answers')
+        .from("student_answers")
         .insert({
           attempt_id: attemptId,
           question_id: questionId,
           selected_answer_id: answerData.selected_answer_id,
           answer_text: answerData.answer_text,
           is_correct: answerData.is_correct,
-          points_earned: answerData.points_earned
+          points_earned: answerData.points_earned,
         })
         .select()
         .single();
@@ -345,17 +383,19 @@ export const quizService = {
 
     getByAttemptId: async (attemptId: string): Promise<StudentAnswer[]> => {
       const { data, error } = await supabase
-        .from('student_answers')
-        .select(`
+        .from("student_answers")
+        .select(
+          `
           *,
           question:quiz_questions(*),
           selected_answer:quiz_answers(*)
-        `)
-        .eq('attempt_id', attemptId);
+        `
+        )
+        .eq("attempt_id", attemptId);
 
       if (error) throw error;
       return data;
-    }
+    },
   },
 
   // Stats operations
@@ -363,24 +403,24 @@ export const quizService = {
     getTutorStats: async (tutorId: string): Promise<QuizStats> => {
       // Get total quizzes
       const { count: totalQuizzes } = await supabase
-        .from('quizzes')
-        .select('*', { count: 'exact', head: true })
-        .eq('tutor_id', tutorId);
+        .from("quizzes")
+        .select("*", { count: "exact", head: true })
+        .eq("tutor_id", tutorId);
 
       // Get active quizzes
       const { count: activeQuizzes } = await supabase
-        .from('quizzes')
-        .select('*', { count: 'exact', head: true })
-        .eq('tutor_id', tutorId)
-        .eq('is_active', true);
+        .from("quizzes")
+        .select("*", { count: "exact", head: true })
+        .eq("tutor_id", tutorId)
+        .eq("is_active", true);
 
       // Get quiz IDs for this tutor
       const { data: tutorQuizzes } = await supabase
-        .from('quizzes')
-        .select('id')
-        .eq('tutor_id', tutorId);
+        .from("quizzes")
+        .select("id")
+        .eq("tutor_id", tutorId);
 
-      const quizIds = tutorQuizzes?.map(q => q.id) || [];
+      const quizIds = tutorQuizzes?.map((q) => q.id) || [];
 
       // Initialize stats
       let totalAttempts = 0;
@@ -391,29 +431,32 @@ export const quizService = {
       if (quizIds.length > 0) {
         // Get total attempts
         const { count: attemptsCount } = await supabase
-          .from('quiz_attempts')
-          .select('*', { count: 'exact', head: true })
-          .in('quiz_id', quizIds);
+          .from("quiz_attempts")
+          .select("*", { count: "exact", head: true })
+          .in("quiz_id", quizIds);
 
         totalAttempts = attemptsCount || 0;
 
         // Get average score
         const { data: attempts } = await supabase
-          .from('quiz_attempts')
-          .select('score, max_score')
-          .in('quiz_id', quizIds)
-          .not('score', 'is', null);
+          .from("quiz_attempts")
+          .select("score, max_score")
+          .in("quiz_id", quizIds)
+          .not("score", "is", null);
 
         if (attempts && attempts.length > 0) {
-          const totalScore = attempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0);
+          const totalScore = attempts.reduce(
+            (sum, attempt) => sum + (attempt.score || 0),
+            0
+          );
           averageScore = totalScore / attempts.length;
         }
 
         // Get unique students
         const { count: studentsCount } = await supabase
-          .from('quiz_attempts')
-          .select('student_id', { count: 'exact', head: true })
-          .in('quiz_id', quizIds);
+          .from("quiz_attempts")
+          .select("student_id", { count: "exact", head: true })
+          .in("quiz_id", quizIds);
 
         totalStudents = studentsCount || 0;
       }
@@ -423,8 +466,361 @@ export const quizService = {
         active_quizzes: activeQuizzes || 0,
         total_attempts: totalAttempts,
         average_score: Math.round(averageScore * 100) / 100,
-        total_students: totalStudents
+        total_students: totalStudents,
       };
-    }
-  }
-}; 
+    },
+  },
+
+  // Student quiz operations
+  studentQuizzes: {
+    // Get quizzes available to a student (from tutors they've booked with)
+    getAvailableQuizzes: async (
+      studentId: string,
+      subjectFilter?: string
+    ): Promise<Quiz[]> => {
+      // First get the tutor IDs from class bookings
+      const { data: bookings, error: bookingsError } = await supabase
+        .from("class_bookings")
+        .select(
+          `
+           tutor_classes!inner(tutor_id)
+         `
+        )
+        .eq("student_id", studentId)
+        .eq("booking_status", "confirmed");
+
+      if (bookingsError) throw bookingsError;
+
+      const tutorUserIds =
+        bookings?.map((booking) => booking.tutor_classes.tutor_id) || [];
+
+      if (tutorUserIds.length === 0) {
+        return [];
+      }
+
+      // Convert tutor user_ids to profile ids for quiz lookup
+      const { data: tutorProfiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, user_id")
+        .in("user_id", tutorUserIds);
+
+      if (profileError) throw profileError;
+
+      const tutorProfileIds = tutorProfiles?.map((profile) => profile.id) || [];
+
+      if (tutorProfileIds.length === 0) {
+        return [];
+      }
+
+      // Then get quizzes from those tutors
+      const { data: quizzesData, error } = await supabase
+        .from("quizzes")
+        .select(
+          `
+           *,
+           tutor:profiles(id, full_name, email)
+         `
+        )
+        .eq("is_active", true)
+        .in("tutor_id", tutorProfileIds)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Get student's profile ID for attempt lookup
+      const { data: studentProfile, error: studentProfileError } =
+        await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", studentId)
+          .single();
+
+      if (studentProfileError) throw studentProfileError;
+
+      // Get student's attempts for these quizzes
+      const { data: attemptsData } = await supabase
+        .from("quiz_attempts")
+        .select(
+          "id, quiz_id, status, score, max_score, correct_answers, total_questions"
+        )
+        .eq("student_id", studentProfile.id);
+
+      // Add attempt status to each quiz
+      const quizzesWithAttempts = quizzesData.map((quiz) => {
+        const attempt = attemptsData?.find((a) => a.quiz_id === quiz.id);
+        return {
+          ...quiz,
+          attempt_status: attempt?.status || null,
+          attempt_score: attempt?.score || null,
+          attempt_max_score: attempt?.max_score || null,
+          attempt_correct_answers: attempt?.correct_answers || null,
+          attempt_total_questions: attempt?.total_questions || null,
+          attempt_id: attempt?.id || null,
+        };
+      });
+
+      // Filter by subject if provided
+      if (subjectFilter) {
+        const filtered = quizzesWithAttempts.filter(
+          (quiz) => quiz.subject === subjectFilter
+        );
+        return filtered;
+      }
+
+      return quizzesWithAttempts;
+    },
+
+    // Get quiz with questions and answers for taking
+    getQuizForTaking: async (quizId: string): Promise<Quiz> => {
+      const { data, error } = await supabase
+        .from("quizzes")
+        .select(
+          `
+          *,
+          tutor:profiles(id, full_name, email),
+          questions:quiz_questions(
+            *,
+            answers:quiz_answers(*)
+          )
+        `
+        )
+        .eq("id", quizId)
+        .eq("is_active", true)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+
+    // Start a quiz attempt
+    startQuizAttempt: async (
+      quizId: string,
+      studentId: string
+    ): Promise<QuizAttempt> => {
+      // Convert student user_id to profile id
+      const { data: studentProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", studentId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      const { data, error } = await supabase
+        .from("quiz_attempts")
+        .insert({
+          quiz_id: quizId,
+          student_id: studentProfile.id,
+          status: "in_progress",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+
+    // Submit quiz answers and calculate score
+    submitQuizAttempt: async (
+      attemptId: string,
+      answers: {
+        questionId: string;
+        selectedAnswerId?: string;
+        answerText?: string;
+      }[]
+    ): Promise<{ score: number; maxScore: number; percentage: number }> => {
+      // Get the attempt and quiz details
+      const { data: attempt, error: attemptError } = await supabase
+        .from("quiz_attempts")
+        .select(
+          `
+          *,
+          quiz:quizzes(*)
+        `
+        )
+        .eq("id", attemptId)
+        .single();
+
+      if (attemptError) throw attemptError;
+
+      // Get correct answers for all questions
+      const { data: questions, error: questionsError } = await supabase
+        .from("quiz_questions")
+        .select(
+          `
+          *,
+          answers:quiz_answers(*)
+        `
+        )
+        .eq("quiz_id", attempt.quiz_id)
+        .order("question_order", { ascending: true });
+
+      if (questionsError) throw questionsError;
+
+      let totalScore = 0;
+      let maxScore = 0;
+      const studentAnswers = [];
+
+      // Calculate score for each answer
+      for (const question of questions) {
+        maxScore += question.points;
+        const studentAnswer = answers.find((a) => a.questionId === question.id);
+
+        if (studentAnswer) {
+          let isCorrect = false;
+          let pointsEarned = 0;
+
+          if (
+            question.question_type === "multiple_choice" &&
+            studentAnswer.selectedAnswerId
+          ) {
+            const correctAnswer = question.answers.find((a) => a.is_correct);
+            isCorrect = correctAnswer?.id === studentAnswer.selectedAnswerId;
+            pointsEarned = isCorrect ? question.points : 0;
+          } else if (
+            question.question_type === "true_false" &&
+            studentAnswer.selectedAnswerId
+          ) {
+            const correctAnswer = question.answers.find((a) => a.is_correct);
+            isCorrect = correctAnswer?.id === studentAnswer.selectedAnswerId;
+            pointsEarned = isCorrect ? question.points : 0;
+          } else if (
+            question.question_type === "short_answer" &&
+            studentAnswer.answerText
+          ) {
+            // For short answer, we'll need manual grading later
+            // For now, we'll store the answer but not auto-grade
+            pointsEarned = 0;
+          }
+
+          totalScore += pointsEarned;
+
+          studentAnswers.push({
+            attempt_id: attemptId,
+            question_id: question.id,
+            selected_answer_id: studentAnswer.selectedAnswerId,
+            answer_text: studentAnswer.answerText,
+            is_correct: isCorrect,
+            points_earned: pointsEarned,
+          });
+        }
+      }
+
+      // Insert student answers
+      if (studentAnswers.length > 0) {
+        const { error: insertError } = await supabase
+          .from("student_answers")
+          .insert(studentAnswers);
+
+        if (insertError) throw insertError;
+      }
+
+      // Update attempt with final score
+      const percentage =
+        maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+
+      // Calculate questions answered correctly
+      const correctAnswers = studentAnswers.filter((a) => a.is_correct).length;
+      const totalQuestions = questions.length;
+
+      const { error: updateError } = await supabase
+        .from("quiz_attempts")
+        .update({
+          completed_at: new Date().toISOString(),
+          score: totalScore,
+          max_score: maxScore,
+          correct_answers: correctAnswers,
+          total_questions: totalQuestions,
+          status: "completed",
+        })
+        .eq("id", attemptId);
+
+      if (updateError) throw updateError;
+
+      return {
+        score: totalScore,
+        maxScore,
+        percentage,
+        correctAnswers,
+        totalQuestions,
+      };
+    },
+
+    // Get student's quiz attempts
+    getStudentAttempts: async (studentId: string): Promise<QuizAttempt[]> => {
+      const { data, error } = await supabase
+        .from("quiz_attempts")
+        .select(
+          `
+          *,
+          quiz:quizzes(
+            *,
+            tutor:profiles(id, full_name, email)
+          )
+        `
+        )
+        .eq("student_id", studentId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+
+    // Get attempt details with answers
+    getAttemptDetails: async (
+      attemptId: string
+    ): Promise<{
+      attempt: QuizAttempt;
+      studentAnswers: StudentAnswer[];
+      questions: Question[];
+    }> => {
+      const { data: attempt, error: attemptError } = await supabase
+        .from("quiz_attempts")
+        .select(
+          `
+          *,
+          quiz:quizzes(
+            *,
+            tutor:profiles(id, full_name, email)
+          )
+        `
+        )
+        .eq("id", attemptId)
+        .single();
+
+      if (attemptError) throw attemptError;
+
+      const { data: studentAnswers, error: answersError } = await supabase
+        .from("student_answers")
+        .select(
+          `
+          *,
+          question:quiz_questions(*),
+          selected_answer:quiz_answers(*)
+        `
+        )
+        .eq("attempt_id", attemptId);
+
+      if (answersError) throw answersError;
+
+      const { data: questions, error: questionsError } = await supabase
+        .from("quiz_questions")
+        .select(
+          `
+          *,
+          answers:quiz_answers(*)
+        `
+        )
+        .eq("quiz_id", attempt.quiz_id)
+        .order("question_order", { ascending: true });
+
+      if (questionsError) throw questionsError;
+
+      return {
+        attempt,
+        studentAnswers: studentAnswers || [],
+        questions: questions || [],
+      };
+    },
+  },
+};

@@ -14,9 +14,7 @@ import {
   UserGroupIcon,
   DocumentTextIcon,
   UserIcon,
-
   IdentificationIcon,
-
   CreditCardIcon,
   BookOpenIcon,
 } from "@heroicons/react/24/outline";
@@ -67,10 +65,10 @@ const DashboardLayout: React.FC = () => {
 
     try {
       const { data, error } = await supabase
-        .from('id_verifications')
-        .select('*')
-        .eq('user_id', profile.id) // Use profile.id instead of user.id
-        .order('submitted_at', { ascending: false })
+        .from("id_verifications")
+        .select("*")
+        .eq("user_id", profile.id) // Use profile.id instead of user.id
+        .order("submitted_at", { ascending: false })
         .limit(1);
 
       if (error) {
@@ -130,14 +128,17 @@ const DashboardLayout: React.FC = () => {
     { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
 
     { name: "Quizzes", href: "/quizzes", icon: DocumentTextIcon },
-    { name: "ID Verification", href: "/id-verification", icon: IdentificationIcon },
+    {
+      name: "ID Verification",
+      href: "/id-verification",
+      icon: IdentificationIcon,
+    },
 
     {
       name: "Manage Materials",
       href: "/tutor/manage-materials",
       icon: DocumentTextIcon,
     },
-
   ];
 
   // Check if tutor navigation should be disabled
@@ -145,15 +146,19 @@ const DashboardLayout: React.FC = () => {
   const isTutorPending = tutorApplication?.application_status === "pending";
   const isTutorRejected = tutorApplication?.application_status === "rejected";
   const isTutorActive = profile?.is_active !== false; // Default to true if not set
-  
+
   // Check ID verification status
-  const isIDVerificationApproved = idVerification?.verification_status === "approved";
-  const isIDVerificationPending = idVerification?.verification_status === "pending";
-  const isIDVerificationRejected = idVerification?.verification_status === "rejected";
+  const isIDVerificationApproved =
+    idVerification?.verification_status === "approved";
+  const isIDVerificationPending =
+    idVerification?.verification_status === "pending";
+  const isIDVerificationRejected =
+    idVerification?.verification_status === "rejected";
   const hasIDVerification = !!idVerification;
-  
+
   // Tutor features are only enabled when both application is approved AND ID verification is approved
-  const areTutorFeaturesEnabled = isTutorApproved && isIDVerificationApproved && isTutorActive;
+  const areTutorFeaturesEnabled =
+    isTutorApproved && isIDVerificationApproved && isTutorActive;
 
   // Build navigation based on user role
   const getNavigation = () => {
@@ -175,6 +180,11 @@ const DashboardLayout: React.FC = () => {
           name: "Tutor Materials",
           href: "/student/tutor-materials",
           icon: BookOpenIcon,
+        },
+        {
+          name: "Quizzes",
+          href: "/student/quizzes",
+          icon: DocumentTextIcon,
         },
         {
           name: "Packages",
@@ -240,27 +250,27 @@ const DashboardLayout: React.FC = () => {
       if (isTutorPending) {
         return "Your application is under review. This feature will be available once approved.";
       }
-      
+
       if (isTutorRejected) {
         return "Your application was rejected. Please contact support for more information.";
       }
-      
+
       if (!tutorApplication) {
         return "Please submit a tutor application first.";
       }
-      
+
       if (isTutorApproved && !hasIDVerification) {
         return "Your application is approved! Please complete ID verification to access tutor features.";
       }
-      
+
       if (isTutorApproved && isIDVerificationPending) {
         return "Your ID verification is under review. This feature will be available once approved.";
       }
-      
+
       if (isTutorApproved && isIDVerificationRejected) {
         return "Your ID verification was rejected. Please resubmit with correct documents.";
       }
-      
+
       return "Application pending approval";
     };
 

@@ -126,13 +126,13 @@ const ManageSessionsPage: React.FC = () => {
   };
 
   const handleJoinSession = (booking: ClassBooking) => {
-    if (!booking.class?.zoom_link) {
-      alert("Zoom link not available for this session");
+    if (!booking.class?.jitsi_meeting_url) {
+      alert("Jitsi meeting link not available for this session");
       return;
     }
 
-    // Open Zoom link in new tab
-    window.open(booking.class.zoom_link, "_blank");
+    // Open Jitsi link in new tab
+    window.open(booking.class.jitsi_meeting_url, "_blank");
   };
 
   // Filter to show only upcoming sessions
@@ -447,8 +447,8 @@ const ManageSessionsPage: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Zoom Link */}
-                    {selectedBooking.class.zoom_link &&
+                    {/* Jitsi Link */}
+                    {selectedBooking.class.jitsi_meeting_url &&
                       selectedBooking.booking_status === "confirmed" && (
                         <div>
                           <h3 className="text-lg font-semibold mb-3">

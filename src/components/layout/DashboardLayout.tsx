@@ -129,6 +129,11 @@ const DashboardLayout: React.FC = () => {
 
     { name: "Quizzes", href: "/quizzes", icon: DocumentTextIcon },
     {
+      name: "Manage Flash Cards",
+      href: "/tutor/flashcards",
+      icon: DocumentTextIcon,
+    },
+    {
       name: "ID Verification",
       href: "/id-verification",
       icon: IdentificationIcon,
@@ -185,6 +190,11 @@ const DashboardLayout: React.FC = () => {
           name: "Quizzes",
           href: "/student/quizzes",
           icon: DocumentTextIcon,
+        },
+        {
+          name: "Flash Cards",
+          href: "/student/flashcards",
+          icon: BookOpenIcon,
         },
         {
           name: "Packages",

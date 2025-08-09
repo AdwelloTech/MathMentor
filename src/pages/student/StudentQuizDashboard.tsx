@@ -137,11 +137,9 @@ const StudentQuizDashboard: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Available Quizzes
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Study</h1>
               <p className="text-gray-600">
-                Take quizzes from tutors you've booked sessions with
+                Quizzes and flash cards from your tutors
               </p>
             </div>
           </div>

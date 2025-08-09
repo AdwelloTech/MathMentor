@@ -33,6 +33,10 @@ import TakeQuizPage from "./pages/student/TakeQuizPage";
 import QuizResultsPage from "./pages/student/QuizResultsPage";
 
 import ManageMaterialsPage from "./pages/tutor/ManageMaterialsPage";
+import ManageFlashcardsPage from "./pages/tutor/ManageFlashcardsPage";
+import CreateEditFlashcardSetPage from "./pages/tutor/CreateEditFlashcardSetPage";
+import FlashcardsListPage from "./pages/student/FlashcardsListPage";
+import FlashcardStudyPage from "./pages/student/FlashcardStudyPage";
 
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
@@ -108,6 +112,24 @@ function App() {
               <Route
                 path="tutor/manage-materials"
                 element={<ManageMaterialsPage />}
+              />
+              <Route
+                path="tutor/flashcards"
+                element={<ManageFlashcardsPage />}
+              />
+              <Route
+                path="tutor/flashcards/create"
+                element={<CreateEditFlashcardSetPage />}
+              />
+              <Route
+                path="tutor/flashcards/edit/:setId"
+                element={<CreateEditFlashcardSetPage />}
+              />
+
+              {/* View flashcards set - accessible to any logged-in role */}
+              <Route
+                path="flashcards/:setId"
+                element={<FlashcardStudyPage />}
               />
 
               <Route path="profile" element={<ProfilePage />} />
@@ -214,6 +236,11 @@ function App() {
                 <Route path="notes/create" element={<CreateNotePage />} />
                 <Route path="notes/edit/:noteId" element={<CreateNotePage />} />
                 <Route path="quizzes" element={<StudentQuizDashboard />} />
+                <Route path="flashcards" element={<FlashcardsListPage />} />
+                <Route
+                  path="flashcards/:setId"
+                  element={<FlashcardStudyPage />}
+                />
                 <Route path="take-quiz/:attemptId" element={<TakeQuizPage />} />
                 <Route path="quiz-results" element={<QuizResultsPage />} />
                 <Route

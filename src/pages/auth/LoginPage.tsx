@@ -297,7 +297,7 @@ const LoginPage: React.FC = () => {
             <motion.img
               src={"/src/assets/student-login.png"}
               alt="Login Illustration"
-              className="pointer-events-none absolute -translate-x-1/2 bottom-[-42px] w-[88%] max-w-[680px] object-contain drop-shadow-2xl"
+              className="pointer-events-none absolute -translate-x-1/2 bottom-[-42px] w-[88%] max-w-[800px] object-cover drop-shadow-2xl"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, ease: "easeOut" }}

@@ -19,6 +19,7 @@ export const flashcards = {
           tutor_id: tutorProfileId,
           title: input.title,
           subject: input.subject,
+          grade_level: input.grade_level,
           is_active: input.is_active ?? true,
         })
         .select()
@@ -27,16 +28,44 @@ export const flashcards = {
       if (setError) throw setError;
 
       if (input.cards?.length) {
-        const rows = input.cards.map((c) => ({
-          set_id: set.id,
-          front_text: c.front_text,
-          back_text: c.back_text,
-          card_order: c.card_order,
-        }));
-        const { error: cardsError } = await supabase
-          .from("flashcards")
-          .insert(rows);
-        if (cardsError) throw cardsError;
+        // Filter out empty cards and validate that both front and back are provided
+        const validCards = input.cards
+          .filter((c) => {
+            const hasFront = c.front_text?.trim();
+            const hasBack = c.back_text?.trim();
+
+            // If one is filled, both must be filled
+            if (hasFront && !hasBack) {
+              throw new Error(
+                `Card ${
+                  c.card_order + 1
+                }: Answer is required when question is provided`
+              );
+            }
+            if (!hasFront && hasBack) {
+              throw new Error(
+                `Card ${
+                  c.card_order + 1
+                }: Question is required when answer is provided`
+              );
+            }
+
+            // Only include cards where both front and back are filled
+            return hasFront && hasBack;
+          })
+          .map((c, index) => ({
+            set_id: set.id,
+            front_text: c.front_text.trim(),
+            back_text: c.back_text.trim(),
+            card_order: index, // Reorder to remove gaps
+          }));
+
+        if (validCards.length > 0) {
+          const { error: cardsError } = await supabase
+            .from("flashcards")
+            .insert(validCards);
+          if (cardsError) throw cardsError;
+        }
       }
 
       return set as FlashcardSet;
@@ -48,7 +77,14 @@ export const flashcards = {
     ): Promise<FlashcardSet> {
       const { data, error } = await supabase
         .from("flashcard_sets")
-        .update(input)
+        .update({
+          ...(input.title !== undefined ? { title: input.title } : {}),
+          ...(input.subject !== undefined ? { subject: input.subject } : {}),
+          grade_level: input.grade_level,
+          ...(input.is_active !== undefined
+            ? { is_active: input.is_active }
+            : {}),
+        })
         .eq("id", setId)
         .select()
         .single();
@@ -82,7 +118,20 @@ export const flashcards = {
         .eq("set_id", setId)
         .order("card_order", { ascending: true });
       if (cardsError) throw cardsError;
-      return { ...(set as FlashcardSet), cards: (cards || []) as Flashcard[] };
+
+      // Filter out empty cards and reorder
+      const validCards = (cards || [])
+        .filter((card) => {
+          const hasFront = card.front_text?.trim();
+          const hasBack = card.back_text?.trim();
+          return hasFront && hasBack;
+        })
+        .map((card, index) => ({
+          ...card,
+          card_order: index, // Reorder to remove gaps
+        })) as Flashcard[];
+
+      return { ...(set as FlashcardSet), cards: validCards };
     },
 
     async remove(setId: string): Promise<void> {

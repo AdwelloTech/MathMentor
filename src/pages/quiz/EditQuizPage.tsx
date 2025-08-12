@@ -19,6 +19,7 @@ import type {
   CreateQuestionData,
   CreateAnswerData,
 } from "@/types/quiz";
+import toast from "react-hot-toast";
 
 // Extended interface for questions with answers during editing
 interface EditableQuestion extends Omit<Question, "answers"> {
@@ -98,7 +99,7 @@ const EditQuizPage: React.FC = () => {
       setQuestions(questionsWithAnswers);
     } catch (error) {
       console.error("Error loading quiz:", error);
-      alert("Failed to load quiz. Please try again.");
+      toast.error("Failed to load quiz. Please try again.");
       navigate("/quizzes");
     } finally {
       setLoading(false);
@@ -159,7 +160,7 @@ const EditQuizPage: React.FC = () => {
 
   const addQuestion = () => {
     if (questions.length >= 40) {
-      alert("Maximum 40 questions allowed per quiz.");
+      toast.error("Maximum 40 questions allowed per quiz.");
       return;
     }
 
@@ -196,20 +197,20 @@ const EditQuizPage: React.FC = () => {
 
   const handleGenerateAI = async () => {
     if (!quizData.subject) {
-      alert("Please select a subject first.");
+      toast.error("Please select a subject first.");
       return;
     }
     setAiLoading(true);
     try {
-      const ai = await generateAIQuestions({
-        subject: quizData.subject,
-        gradeLevel: quizData.grade_level || undefined,
-        numQuestions: aiNumQuestions,
-        difficulty: aiDifficulty,
-        questionType: aiQuestionType,
-        title: quizData.title || undefined,
-      });
-      const mapped = ai.map((q, idx) => ({
+      const ai = await generateAIQuestions(
+        quizData.subject,
+        quizData.grade_level || "",
+        aiNumQuestions,
+        aiDifficulty,
+        aiQuestionType,
+        quizData.title
+      );
+      const mapped = ai.map((q: any, idx: number) => ({
         id: `temp-ai-${Date.now()}-${idx}`,
         quiz_id: quizId!,
         question_text: q.question_text,
@@ -220,7 +221,7 @@ const EditQuizPage: React.FC = () => {
         is_ai_generated: true,
         ai_status: q.ai_status || "pending",
         ai_metadata: q.ai_metadata,
-        answers: q.answers.map((a, i) => ({
+        answers: q.answers.map((a: any, i: number) => ({
           answer_text: a.answer_text,
           is_correct: a.is_correct,
           answer_order: i + 1,
@@ -231,9 +232,12 @@ const EditQuizPage: React.FC = () => {
       setQuestionFilter("ai");
       // Reset number of questions to 1 after generation
       setAiNumQuestions(1);
+      toast.success(
+        `Generated ${mapped.length} question${mapped.length > 1 ? "s" : ""}`
+      );
     } catch (e) {
       console.error(e);
-      alert("AI question generation failed. Please try again.");
+      toast.error("AI question generation failed. Please try again.");
     } finally {
       setAiLoading(false);
     }
@@ -241,7 +245,7 @@ const EditQuizPage: React.FC = () => {
 
   const removeQuestion = (questionIndex: number) => {
     if (questions.length <= 1) {
-      alert("Quiz must have at least 1 question.");
+      toast.error("Quiz must have at least 1 question.");
       return;
     }
 
@@ -257,7 +261,7 @@ const EditQuizPage: React.FC = () => {
 
   const validateForm = () => {
     if (!quizData.title.trim() || !quizData.subject.trim()) {
-      alert("Please fill in all required fields (Title and Subject).");
+      toast.error("Please fill in all required fields (Title and Subject).");
       return false;
     }
 
@@ -269,7 +273,7 @@ const EditQuizPage: React.FC = () => {
           q.answers.every((a) => a.answer_text.trim() !== "")
       )
     ) {
-      alert(
+      toast.error(
         "Please complete all questions and ensure each question has a correct answer."
       );
       return false;
@@ -347,7 +351,7 @@ const EditQuizPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Error updating quiz:", error);
-      alert("Failed to update quiz. Please try again.");
+      toast.error("Failed to update quiz. Please try again.");
     } finally {
       setSaving(false);
     }

@@ -15,6 +15,7 @@ import {
   Eye,
   Calendar,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 const ManageSessionsPage: React.FC = () => {
   const { user } = useAuth();
@@ -127,7 +128,7 @@ const ManageSessionsPage: React.FC = () => {
 
   const handleJoinSession = (booking: ClassBooking) => {
     if (!booking.class?.zoom_link) {
-      alert("Zoom link not available for this session");
+      toast.error("Zoom link not available for this session");
       return;
     }
 

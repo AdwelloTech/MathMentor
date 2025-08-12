@@ -18,6 +18,7 @@ import {
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
 import type { Quiz, QuizStats } from "@/types/quiz";
+import toast from "react-hot-toast";
 
 const QuizManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -68,9 +69,10 @@ const QuizManagementPage: React.FC = () => {
       await quizService.quizzes.delete(quizId);
       setQuizzes(quizzes.filter((quiz) => quiz.id !== quizId));
       loadStats(); // Refresh stats
+      toast.success("Quiz deleted successfully!");
     } catch (error) {
       console.error("Error deleting quiz:", error);
-      alert("Failed to delete quiz. Please try again.");
+      toast.error("Failed to delete quiz. Please try again.");
     } finally {
       setDeletingQuiz(null);
     }
@@ -85,9 +87,10 @@ const QuizManagementPage: React.FC = () => {
         )
       );
       loadStats(); // Refresh stats
+      toast.success("Quiz status updated successfully!");
     } catch (error) {
       console.error("Error updating quiz:", error);
-      alert("Failed to update quiz status. Please try again.");
+      toast.error("Failed to update quiz status. Please try again.");
     }
   };
 

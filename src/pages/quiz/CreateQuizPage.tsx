@@ -18,6 +18,7 @@ import type {
   CreateQuestionData,
   CreateAnswerData,
 } from "@/types/quiz";
+import toast from "react-hot-toast";
 
 type NoteSubject = {
   id: string;
@@ -130,7 +131,7 @@ const CreateQuizPage: React.FC = () => {
 
   const addQuestion = () => {
     if (questions.length >= 40) {
-      alert("Maximum 40 questions allowed per quiz.");
+      toast.error("Maximum 40 questions allowed per quiz.");
       return;
     }
 
@@ -164,7 +165,7 @@ const CreateQuizPage: React.FC = () => {
 
   const handleGenerateAI = async () => {
     if (!quizData.subject) {
-      alert("Please select a subject first.");
+      toast.error("Please select a subject first.");
       return;
     }
     setAiLoading(true);
@@ -195,9 +196,12 @@ const CreateQuizPage: React.FC = () => {
       setQuestionFilter("ai");
       // Reset number of questions to 1 after generation
       setAiNumQuestions(1);
+      toast.success(
+        `Generated ${mapped.length} question${mapped.length > 1 ? "s" : ""}`
+      );
     } catch (e) {
       console.error(e);
-      alert("AI question generation failed. Please try again.");
+      toast.error("AI question generation failed. Please try again.");
     } finally {
       setAiLoading(false);
     }
@@ -296,11 +300,11 @@ const CreateQuizPage: React.FC = () => {
       });
 
       if (included.length === 0) {
-        alert(
+        toast.error(
           "Please add at least one question to your quiz. You can either:\n\n1. Add manual questions using the '+ Add Question' button\n2. Generate AI questions and approve them"
         );
       } else {
-        alert(
+        toast.error(
           "Please complete all questions and ensure each question has a correct answer."
         );
       }
@@ -329,7 +333,7 @@ const CreateQuizPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Error creating quiz:", error);
-      alert("Failed to create quiz. Please try again.");
+      toast.error("Failed to create quiz. Please try again.");
     } finally {
       setLoading(false);
     }

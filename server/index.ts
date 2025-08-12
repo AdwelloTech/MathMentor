@@ -14,6 +14,14 @@ interface GenerateAIRequest {
   title?: string;
 }
 
+interface GenerateAIFlashcardsRequest {
+  subject: string;
+  gradeLevel: string;
+  numCards?: number;
+  title?: string;
+  difficulty?: "easy" | "medium" | "hard";
+}
+
 interface AIAnswer {
   answer_text: string;
   is_correct: boolean;
@@ -28,6 +36,15 @@ interface AIQuestion {
 
 interface AIResponse {
   questions: AIQuestion[];
+}
+
+interface AIFlashcard {
+  front_text: string;
+  back_text: string;
+}
+
+interface AIFlashcardsResponse {
+  cards: AIFlashcard[];
 }
 
 interface GeneratedQuestion extends AIQuestion {
@@ -244,6 +261,324 @@ ${contextLine} Create ${numQuestions} ${difficulty} multiple choice questions fo
   } catch (err) {
     console.error("AI generate error", err);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Generate AI flashcards via OpenRouter Gemma 3n 2B
+app.post("/api/ai/flashcards", async (req: Request, res: Response) => {
+  try {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "Missing OPENROUTER_API_KEY" });
+    }
+
+    const {
+      subject,
+      gradeLevel,
+      numCards = 10,
+      title,
+      difficulty = "medium",
+    }: GenerateAIFlashcardsRequest = req.body || {};
+
+    if (!subject) {
+      return res.status(400).json({ error: "subject is required" });
+    }
+
+    if (!gradeLevel) {
+      return res.status(400).json({ error: "gradeLevel is required" });
+    }
+
+    const contextLine = title ? `Set title: ${title}.` : "";
+
+    const userPrompt = `You are an assistant that generates concise, high‑quality study flashcards for mathematics as term–definition pairs.
+
+Return ONLY valid JSON matching exactly this format:
+{"cards":[{"front_text":"term or question","back_text":"definition or answer"}]}
+
+IMPORTANT: 
+- Return ONLY the JSON object, no other text before or after
+- Use double quotes for all strings
+- Ensure proper JSON syntax with no trailing commas
+- Each card must have exactly "front_text" and "back_text" fields
+
+Context:
+- Subject: Mathematics
+- Grade: ${gradeLevel}
+- Difficulty: ${difficulty}
+${contextLine}
+
+Requirements:
+- Generate exactly ${numCards} mathematics flashcards.
+- front_text: a short mathematical term, concept, or question (5–12 words) at a(n) ${difficulty} difficulty level.
+- back_text: a clear, complete definition, formula, or solution with explanation and answer separated.
+- Format back_text as: "Explanation: [step-by-step explanation] Answer: [final answer]"
+- For formulas: "Formula: [formula] Use: [when to use it]"
+- For definitions: "Definition: [clear definition] Example: [simple example]"
+- No placeholders or generic text like "term 1", "definition 1", "undefined".
+- Use age-appropriate language for ${gradeLevel} students.
+- Focus on mathematical concepts, formulas, definitions, problem-solving steps, and key mathematical facts.
+- Include: formulas, definitions, mathematical terms, problem-solving strategies, geometric concepts, algebraic rules, arithmetic operations, measurement units, and mathematical properties.
+- Ensure accuracy and educational value for mathematics learning.`;
+
+    let content = "";
+    try {
+      const resp = await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer":
+              req.headers["x-forwarded-host"] ||
+              req.headers.host ||
+              "localhost",
+            "X-Title": "MathMentor",
+          },
+          body: JSON.stringify({
+            model: "google/gemma-3n-e2b-it:free",
+            messages: [{ role: "user", content: userPrompt }],
+            temperature: 0.4,
+          }),
+        }
+      );
+
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => "");
+        console.error("OpenRouter API error:", resp.status, errText);
+        throw new Error(`OpenRouter API error: ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      content = data?.choices?.[0]?.message?.content || "";
+
+      if (!content) {
+        throw new Error("Empty response from AI model");
+      }
+    } catch (fetchError) {
+      console.error("Fetch error:", fetchError);
+      // Return fallback cards instead of crashing
+      const fallbackCards: AIFlashcard[] = [
+        {
+          front_text: "What is a variable?",
+          back_text:
+            "Definition: A symbol that represents an unknown value. Example: In x + 5 = 10, x is a variable.",
+        },
+        {
+          front_text: "What is an equation?",
+          back_text:
+            "Definition: A mathematical statement showing two expressions are equal. Example: 2x + 3 = 7",
+        },
+        {
+          front_text: "What is the order of operations?",
+          back_text:
+            "Formula: PEMDAS (Parentheses, Exponents, Multiplication/Division, Addition/Subtraction). Use: When solving multi-step math problems.",
+        },
+        {
+          front_text: "What is a fraction?",
+          back_text:
+            "Definition: A number representing parts of a whole. Example: 3/4 means 3 parts out of 4 total parts.",
+        },
+        {
+          front_text: "What is a decimal?",
+          back_text:
+            "Definition: A number with a decimal point showing parts of a whole. Example: 0.5 represents half.",
+        },
+      ];
+
+      return res.json({
+        cards: fallbackCards.slice(0, Math.min(numCards, fallbackCards.length)),
+        note: "AI service unavailable, showing fallback cards",
+      });
+    }
+
+    // Attempt to parse JSON from the model output
+    let parsed: AIFlashcardsResponse | undefined;
+
+    // Clean up common wrappers (markdown code fences)
+    let contentForParse = (content || "").trim();
+    if (contentForParse.startsWith("```")) {
+      // Remove opening fence like ```json or ```
+      const openFence = contentForParse.match(/^```[a-zA-Z]*\s*\n?/);
+      if (openFence) {
+        contentForParse = contentForParse.slice(openFence[0].length);
+      }
+      // Remove trailing closing fence ``` (last occurrence)
+      const lastFenceIdx = contentForParse.lastIndexOf("```");
+      if (lastFenceIdx !== -1) {
+        contentForParse = contentForParse.slice(0, lastFenceIdx);
+      }
+      contentForParse = contentForParse.trim();
+    }
+
+    try {
+      parsed = JSON.parse(contentForParse);
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      console.error("Raw AI response:", content);
+
+      // Try to extract JSON object if not parsed yet
+      if (!parsed) {
+        const jsonMatch = contentForParse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            parsed = JSON.parse(jsonMatch[0]);
+          } catch (jsonMatchError) {
+            console.error("JSON match parse error:", jsonMatchError);
+          }
+        }
+      }
+
+      // If still no valid JSON, try to fix common issues
+      if (!parsed) {
+        try {
+          // Try to fix common JSON issues
+          let fixedContent = contentForParse
+            .replace(/,\s*]/g, "]") // Remove trailing commas in arrays
+            .replace(/,\s*}/g, "}") // Remove trailing commas in objects
+            .replace(/}\s*,\s*]/g, "}]") // Fix array ending
+            .replace(/}\s*,\s*}/g, "}}") // Fix object ending
+            .replace(/]\s*,\s*}/g, "]}") // Fix object ending after array
+            .replace(/]\s*,\s*]/g, "]]") // Fix array ending after array
+            .replace(/}\s*,\s*{/g, "},{") // Fix object separation
+            .replace(/]\s*,\s*{/g, "},{") // Fix object after array
+            .replace(/}\s*,\s*\[/g, "},["); // Fix array after object
+
+          parsed = JSON.parse(fixedContent);
+        } catch (fixError) {
+          console.error("JSON fix attempt failed:", fixError);
+          // Return fallback instead of throwing
+          const fallbackCards: AIFlashcard[] = [
+            {
+              front_text: "What is a variable?",
+              back_text:
+                "Definition: A symbol that represents an unknown value. Example: In x + 5 = 10, x is a variable.",
+            },
+            {
+              front_text: "What is an equation?",
+              back_text:
+                "Definition: A mathematical statement showing two expressions are equal. Example: 2x + 3 = 7",
+            },
+            {
+              front_text: "What is the order of operations?",
+              back_text:
+                "Formula: PEMDAS (Parentheses, Exponents, Multiplication/Division, Addition/Subtraction). Use: When solving multi-step math problems.",
+            },
+            {
+              front_text: "What is a fraction?",
+              back_text:
+                "Definition: A number representing parts of a whole. Example: 3/4 means 3 parts out of 4 total parts.",
+            },
+            {
+              front_text: "What is a decimal?",
+              back_text:
+                "Definition: A number with a decimal point showing parts of a whole. Example: 0.5 represents half.",
+            },
+          ];
+
+          return res.json({
+            cards: fallbackCards.slice(
+              0,
+              Math.min(numCards, fallbackCards.length)
+            ),
+            note: "AI response was malformed, showing fallback cards",
+          });
+        }
+      }
+    }
+
+    if (!parsed || !Array.isArray(parsed.cards)) {
+      console.error("Malformed AI response - missing cards array:", parsed);
+      console.error("Raw content:", content);
+
+      // Return a fallback response instead of error
+      const fallbackCards: AIFlashcard[] = [
+        {
+          front_text: "What is a variable?",
+          back_text:
+            "Definition: A symbol that represents an unknown value. Example: In x + 5 = 10, x is a variable.",
+        },
+        {
+          front_text: "What is an equation?",
+          back_text:
+            "Definition: A mathematical statement showing two expressions are equal. Example: 2x + 3 = 7",
+        },
+        {
+          front_text: "What is the order of operations?",
+          back_text:
+            "Formula: PEMDAS (Parentheses, Exponents, Multiplication/Division, Addition/Subtraction). Use: When solving multi-step math problems.",
+        },
+        {
+          front_text: "What is a fraction?",
+          back_text:
+            "Definition: A number representing parts of a whole. Example: 3/4 means 3 parts out of 4 total parts.",
+        },
+        {
+          front_text: "What is a decimal?",
+          back_text:
+            "Definition: A number with a decimal point showing parts of a whole. Example: 0.5 represents half.",
+        },
+      ];
+
+      return res.json({
+        cards: fallbackCards.slice(0, Math.min(numCards, fallbackCards.length)),
+        note: "AI response was malformed, showing fallback cards",
+      });
+    }
+
+    // Sanitize and validate flashcards
+    const cards: AIFlashcard[] = parsed.cards
+      .slice(0, numCards)
+      .map((card, idx) => ({
+        front_text: String(card.front_text || `Term ${idx + 1}`),
+        back_text: String(card.back_text || `Definition ${idx + 1}`),
+      }))
+      .filter(
+        (card) =>
+          card.front_text.trim() &&
+          card.back_text.trim() &&
+          !card.front_text.includes("undefined") &&
+          !card.back_text.includes("undefined")
+      );
+
+    res.json({ cards });
+  } catch (err) {
+    console.error("AI flashcards error:", err);
+    console.error("Request body:", req.body);
+
+    // Always return a response, never let the server crash
+    const fallbackCards: AIFlashcard[] = [
+      {
+        front_text: "What is a variable?",
+        back_text:
+          "Definition: A symbol that represents an unknown value. Example: In x + 5 = 10, x is a variable.",
+      },
+      {
+        front_text: "What is an equation?",
+        back_text:
+          "Definition: A mathematical statement showing two expressions are equal. Example: 2x + 3 = 7",
+      },
+      {
+        front_text: "What is the order of operations?",
+        back_text:
+          "Formula: PEMDAS (Parentheses, Exponents, Multiplication/Division, Addition/Subtraction). Use: When solving multi-step math problems.",
+      },
+      {
+        front_text: "What is a fraction?",
+        back_text:
+          "Definition: A number representing parts of a whole. Example: 3/4 means 3 parts out of 4 total parts.",
+      },
+      {
+        front_text: "What is a decimal?",
+        back_text:
+          "Definition: A number with a decimal point showing parts of a whole. Example: 0.5 represents half.",
+      },
+    ];
+
+    res.status(200).json({
+      cards: fallbackCards.slice(0, 5),
+      note: "Server error occurred, showing fallback cards",
+    });
   }
 });
 

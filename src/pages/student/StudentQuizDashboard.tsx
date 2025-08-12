@@ -44,10 +44,15 @@ const StudentQuizDashboard: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log("Loading quizzes for user:", user!.id);
+
       const [quizzesData, subjectsData] = await Promise.all([
         quizService.studentQuizzes.getAvailableQuizzes(user!.id),
         getNoteSubjects(),
       ]);
+
+      console.log("Quizzes loaded:", quizzesData);
+      console.log("Subjects loaded:", subjectsData);
 
       setAllQuizzes(quizzesData);
       setQuizzes(quizzesData);
@@ -339,7 +344,9 @@ const StudentQuizDashboard: React.FC = () => {
                           {quiz.attempt_correct_answers}/
                           {quiz.attempt_total_questions} Questions Correct (
                           {Math.round(
-                            (quiz.attempt_score / quiz.attempt_max_score) * 100
+                            ((quiz.attempt_score || 0) /
+                              (quiz.attempt_max_score || 1)) *
+                              100
                           )}
                           %)
                         </div>

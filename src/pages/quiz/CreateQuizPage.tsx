@@ -12,11 +12,13 @@ import {
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
 import { getNoteSubjects } from "@/lib/notes";
+import { generateAIQuestions } from "@/lib/ai";
 import type {
   CreateQuizData,
   CreateQuestionData,
   CreateAnswerData,
 } from "@/types/quiz";
+import toast from "react-hot-toast";
 
 type NoteSubject = {
   id: string;
@@ -31,6 +33,17 @@ const CreateQuizPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [subjects, setSubjects] = useState<NoteSubject[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiNumQuestions, setAiNumQuestions] = useState(4);
+  const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">(
+    "medium"
+  );
+  const [aiQuestionType, setAiQuestionType] = useState<
+    "multiple_choice" | "true_false"
+  >("multiple_choice");
+  const [questionFilter, setQuestionFilter] = useState<"all" | "manual" | "ai">(
+    "all"
+  );
 
   // Quiz basic info
   const [quizData, setQuizData] = useState({
@@ -54,57 +67,15 @@ const CreateQuizPage: React.FC = () => {
     loadSubjects();
   }, []);
 
-  // Questions data - start with 4 questions, can add up to 40
-  const [questions, setQuestions] = useState<CreateQuestionData[]>([
-    {
-      question_text: "",
-      question_type: "multiple_choice" as const,
-      points: 10,
-      question_order: 1,
-      answers: [
-        { answer_text: "", is_correct: false, answer_order: 1 },
-        { answer_text: "", is_correct: false, answer_order: 2 },
-        { answer_text: "", is_correct: false, answer_order: 3 },
-        { answer_text: "", is_correct: false, answer_order: 4 },
-      ],
-    },
-    {
-      question_text: "",
-      question_type: "multiple_choice" as const,
-      points: 10,
-      question_order: 2,
-      answers: [
-        { answer_text: "", is_correct: false, answer_order: 1 },
-        { answer_text: "", is_correct: false, answer_order: 2 },
-        { answer_text: "", is_correct: false, answer_order: 3 },
-        { answer_text: "", is_correct: false, answer_order: 4 },
-      ],
-    },
-    {
-      question_text: "",
-      question_type: "multiple_choice" as const,
-      points: 10,
-      question_order: 3,
-      answers: [
-        { answer_text: "", is_correct: false, answer_order: 1 },
-        { answer_text: "", is_correct: false, answer_order: 2 },
-        { answer_text: "", is_correct: false, answer_order: 3 },
-        { answer_text: "", is_correct: false, answer_order: 4 },
-      ],
-    },
-    {
-      question_text: "",
-      question_type: "multiple_choice" as const,
-      points: 10,
-      question_order: 4,
-      answers: [
-        { answer_text: "", is_correct: false, answer_order: 1 },
-        { answer_text: "", is_correct: false, answer_order: 2 },
-        { answer_text: "", is_correct: false, answer_order: 3 },
-        { answer_text: "", is_correct: false, answer_order: 4 },
-      ],
-    },
-  ]);
+  // Questions data - start with 0 questions, can add up to 40
+  const [questions, setQuestions] = useState<CreateQuestionData[]>([]);
+
+  const visibleQuestions = questions.filter((q) => {
+    const isAI = (q as any).is_ai_generated === true;
+    if (questionFilter === "manual") return !isAI;
+    if (questionFilter === "ai") return isAI;
+    return true;
+  });
 
   const updateQuizData = (field: string, value: string | number) => {
     setQuizData((prev) => ({ ...prev, [field]: value }));
@@ -160,7 +131,7 @@ const CreateQuizPage: React.FC = () => {
 
   const addQuestion = () => {
     if (questions.length >= 40) {
-      alert("Maximum 40 questions allowed per quiz.");
+      toast.error("Maximum 40 questions allowed per quiz.");
       return;
     }
 
@@ -180,12 +151,63 @@ const CreateQuizPage: React.FC = () => {
     setQuestions((prev) => [...prev, newQuestion]);
   };
 
-  const removeQuestion = (questionIndex: number) => {
-    if (questions.length <= 1) {
-      alert("Quiz must have at least 1 question.");
+  const approveAIQuestion = (originalIndex: number) => {
+    setQuestions((prev) =>
+      prev.map((q, i) =>
+        i === originalIndex ? { ...q, ai_status: "approved" } : q
+      )
+    );
+  };
+
+  const discardAIQuestion = (originalIndex: number) => {
+    setQuestions((prev) => prev.filter((_, i) => i !== originalIndex));
+  };
+
+  const handleGenerateAI = async () => {
+    if (!quizData.subject) {
+      toast.error("Please select a subject first.");
       return;
     }
+    setAiLoading(true);
+    try {
+      const ai = await generateAIQuestions({
+        subject: quizData.subject,
+        gradeLevel: quizData.grade_level || undefined,
+        numQuestions: aiNumQuestions,
+        difficulty: aiDifficulty,
+        questionType: aiQuestionType,
+        title: quizData.title || undefined,
+      });
+      const mapped = ai.map((q, idx) => ({
+        question_text: q.question_text,
+        question_type: q.question_type,
+        points: q.points ?? 10,
+        question_order: questions.length + idx + 1,
+        is_ai_generated: true,
+        ai_status: q.ai_status || "pending",
+        ai_metadata: q.ai_metadata,
+        answers: q.answers.map((a, i) => ({
+          answer_text: a.answer_text,
+          is_correct: a.is_correct,
+          answer_order: i + 1,
+        })),
+      }));
+      setQuestions((prev) => [...prev, ...mapped]);
+      setQuestionFilter("ai");
+      // Reset number of questions to 1 after generation
+      setAiNumQuestions(1);
+      toast.success(
+        `Generated ${mapped.length} question${mapped.length > 1 ? "s" : ""}`
+      );
+    } catch (e) {
+      console.error(e);
+      toast.error("AI question generation failed. Please try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
+  const removeQuestion = (questionIndex: number) => {
     setQuestions((prev) => {
       const newQuestions = prev.filter((_, index) => index !== questionIndex);
       // Update question order numbers
@@ -200,8 +222,68 @@ const CreateQuizPage: React.FC = () => {
     return quizData.title.trim() !== "" && quizData.subject.trim() !== "";
   };
 
+  const getValidationReason = () => {
+    // Check for pending AI questions
+    const pendingAIQuestions = questions.filter((q) => {
+      const isAI = (q as any).is_ai_generated === true;
+      const status = (q as any).ai_status as any;
+      return isAI && status === "pending";
+    });
+
+    if (pendingAIQuestions.length > 0) {
+      return `Please approve or discard ${
+        pendingAIQuestions.length
+      } pending AI question${pendingAIQuestions.length > 1 ? "s" : ""}`;
+    }
+
+    const included = questions.filter((q) => {
+      const isAI = (q as any).is_ai_generated === true;
+      const status = (q as any).ai_status as any;
+      return !isAI || status === "approved";
+    });
+
+    if (included.length === 0) {
+      return "Add at least one question to create a quiz";
+    }
+
+    const incompleteQuestions = included.filter(
+      (q) =>
+        q.question_text.trim() === "" ||
+        !q.answers.some((a) => a.is_correct) ||
+        q.answers.some((a) => a.answer_text.trim() === "")
+    );
+
+    if (incompleteQuestions.length > 0) {
+      return "Complete all questions and ensure each has a correct answer";
+    }
+
+    return "";
+  };
+
   const validateStep2 = () => {
-    return questions.every(
+    // Check for pending AI questions - must approve or discard all
+    const pendingAIQuestions = questions.filter((q) => {
+      const isAI = (q as any).is_ai_generated === true;
+      const status = (q as any).ai_status as any;
+      return isAI && status === "pending";
+    });
+
+    if (pendingAIQuestions.length > 0) {
+      return false; // Cannot create quiz with pending AI questions
+    }
+
+    const included = questions.filter((q) => {
+      const isAI = (q as any).is_ai_generated === true;
+      const status = (q as any).ai_status as any;
+      return !isAI || status === "approved"; // only approved AI go through
+    });
+
+    // Check if there are any valid questions
+    if (included.length === 0) {
+      return false;
+    }
+
+    return included.every(
       (q) =>
         q.question_text.trim() !== "" &&
         q.answers.some((a) => a.is_correct) &&
@@ -211,20 +293,38 @@ const CreateQuizPage: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!validateStep2()) {
-      alert(
-        "Please complete all questions and ensure each question has a correct answer."
-      );
+      const included = questions.filter((q) => {
+        const isAI = (q as any).is_ai_generated === true;
+        const status = (q as any).ai_status as any;
+        return !isAI || status === "approved";
+      });
+
+      if (included.length === 0) {
+        toast.error(
+          "Please add at least one question to your quiz. You can either:\n\n1. Add manual questions using the '+ Add Question' button\n2. Generate AI questions and approve them"
+        );
+      } else {
+        toast.error(
+          "Please complete all questions and ensure each question has a correct answer."
+        );
+      }
       return;
     }
 
     setLoading(true);
     try {
-      const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
+      const included = questions.filter((q) => {
+        const isAI = (q as any).is_ai_generated === true;
+        const status = (q as any).ai_status as any;
+        return !isAI || status === "approved";
+      });
+
+      const totalPoints = included.reduce((sum, q) => sum + q.points, 0);
       const createQuizData: CreateQuizData = {
         ...quizData,
-        total_questions: questions.length,
+        total_questions: included.length,
         total_points: totalPoints,
-        questions: questions,
+        questions: included,
       };
 
       await quizService.quizzes.create(profile!.id, createQuizData);
@@ -233,7 +333,7 @@ const CreateQuizPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Error creating quiz:", error);
-      alert("Failed to create quiz. Please try again.");
+      toast.error("Failed to create quiz. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -405,6 +505,88 @@ const CreateQuizPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          {/* AI Generator */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                AI Question Generator
+              </h3>
+              <div className="flex items-center space-x-2 text-sm">
+                <label>Show:</label>
+                <select
+                  value={questionFilter}
+                  onChange={(e) => setQuestionFilter(e.target.value as any)}
+                  className="px-2 py-1 border border-gray-300 rounded-md"
+                >
+                  <option value="all">All</option>
+                  <option value="manual">Manual</option>
+                  <option value="ai">AI</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Difficulty
+                </label>
+                <select
+                  value={aiDifficulty}
+                  onChange={(e) => setAiDifficulty(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Question Type
+                </label>
+                <select
+                  value={aiQuestionType}
+                  onChange={(e) => setAiQuestionType(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="multiple_choice">Multiple Choice</option>
+                  <option value="true_false">True/False</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of questions
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={aiNumQuestions}
+                  onChange={(e) =>
+                    setAiNumQuestions(
+                      Math.max(1, Math.min(20, parseInt(e.target.value || "1")))
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleGenerateAI}
+                  disabled={aiLoading}
+                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center"
+                >
+                  {aiLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Generating…
+                    </>
+                  ) : (
+                    "Generate with AI"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
           {/* Quiz Summary */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="text-sm font-medium text-blue-800 mb-2">
@@ -438,7 +620,7 @@ const CreateQuizPage: React.FC = () => {
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">
-                Questions ({questions.length}/40)
+                Questions ({visibleQuestions.length}/{questions.length} shown)
               </h3>
               <button
                 onClick={addQuestion}
@@ -451,141 +633,204 @@ const CreateQuizPage: React.FC = () => {
             </div>
 
             {/* Questions */}
-            {questions.map((question, questionIndex) => (
-              <div
-                key={questionIndex}
-                className="border border-gray-200 rounded-lg p-6 mb-6"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-gray-900">
-                    Question {questionIndex + 1}
-                  </h4>
-                  <div className="flex items-center space-x-4">
-                    <select
-                      value={question.question_type}
-                      onChange={(e) =>
-                        updateQuestion(
-                          questionIndex,
-                          "question_type",
-                          e.target.value
-                        )
-                      }
-                      className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-                    >
-                      <option value="multiple_choice">Multiple Choice</option>
-                      <option value="true_false">True/False</option>
-                      <option value="short_answer">Short Answer</option>
-                    </select>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">Points:</span>
-                      <input
-                        type="number"
-                        value={question.points}
+            {visibleQuestions.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+                <div className="text-gray-500 mb-4">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No questions yet
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  Get started by adding manual questions or generating AI
+                  questions
+                </p>
+                <div className="flex justify-center space-x-4">
+                  <button
+                    onClick={addQuestion}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                  >
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Add Manual Question
+                  </button>
+                </div>
+              </div>
+            ) : (
+              visibleQuestions.map((question) => {
+                const originalIndex = questions.findIndex(
+                  (q) => q === question
+                );
+                const questionIndex = originalIndex; // use original index for updates
+                const isAI = (question as any).is_ai_generated;
+                const aiStatus = (question as any).ai_status as any;
+                return (
+                  <div
+                    key={questionIndex}
+                    className="border border-gray-200 rounded-lg p-6 mb-6"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-medium text-gray-900">
+                        Question {questionIndex + 1}
+                        {isAI && (
+                          <span
+                            className={`ml-2 text-xs px-2 py-1 rounded-full ${
+                              aiStatus === "approved"
+                                ? "bg-green-100 text-green-800"
+                                : aiStatus === "pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            AI {aiStatus || "pending"}
+                          </span>
+                        )}
+                      </h4>
+                      <div className="flex items-center space-x-4">
+                        <select
+                          value={question.question_type}
+                          onChange={(e) =>
+                            updateQuestion(
+                              questionIndex,
+                              "question_type",
+                              e.target.value
+                            )
+                          }
+                          className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                        >
+                          <option value="multiple_choice">
+                            Multiple Choice
+                          </option>
+                          <option value="true_false">True/False</option>
+                        </select>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-600">Points:</span>
+                          <input
+                            type="number"
+                            value={question.points}
+                            onChange={(e) =>
+                              updateQuestion(
+                                questionIndex,
+                                "points",
+                                parseInt(e.target.value)
+                              )
+                            }
+                            className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"
+                            min="1"
+                            max="100"
+                          />
+                        </div>
+                        <button
+                          onClick={() => removeQuestion(questionIndex)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Remove Question"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                        {isAI && aiStatus === "pending" && (
+                          <>
+                            <button
+                              onClick={() => approveAIQuestion(originalIndex)}
+                              className="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-sm font-medium"
+                              title="Approve AI question"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => discardAIQuestion(originalIndex)}
+                              className="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-sm font-medium"
+                              title="Discard AI question"
+                            >
+                              Discard
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Question Text */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Question Text *
+                      </label>
+                      <textarea
+                        value={question.question_text}
                         onChange={(e) =>
                           updateQuestion(
                             questionIndex,
-                            "points",
-                            parseInt(e.target.value)
+                            "question_text",
+                            e.target.value
                           )
                         }
-                        className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"
-                        min="1"
-                        max="100"
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your question here"
                       />
                     </div>
-                    {questions.length > 1 && (
-                      <button
-                        onClick={() => removeQuestion(questionIndex)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Remove Question"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
 
-                {/* Question Text */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Question Text *
-                  </label>
-                  <textarea
-                    value={question.question_text}
-                    onChange={(e) =>
-                      updateQuestion(
-                        questionIndex,
-                        "question_text",
-                        e.target.value
-                      )
-                    }
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your question here"
-                  />
-                </div>
-
-                {/* Answers */}
-                {question.question_type !== "short_answer" && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Answers *
-                    </label>
-                    <div className="space-y-3">
-                      {question.answers.map((answer, answerIndex) => (
-                        <div
-                          key={answerIndex}
-                          className="flex items-center space-x-3"
-                        >
-                          <button
-                            onClick={() =>
-                              setCorrectAnswer(questionIndex, answerIndex)
-                            }
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                              answer.is_correct
-                                ? "border-green-500 bg-green-500 text-white"
-                                : "border-gray-300 hover:border-gray-400"
-                            }`}
+                    {/* Answers */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Answers *
+                      </label>
+                      <div className="space-y-3">
+                        {question.answers.map((answer, answerIndex) => (
+                          <div
+                            key={answerIndex}
+                            className="flex items-center space-x-3"
                           >
+                            <button
+                              onClick={() =>
+                                setCorrectAnswer(questionIndex, answerIndex)
+                              }
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                answer.is_correct
+                                  ? "border-green-500 bg-green-500 text-white"
+                                  : "border-gray-300 hover:border-gray-400"
+                              }`}
+                            >
+                              {answer.is_correct && (
+                                <CheckIcon className="h-4 w-4" />
+                              )}
+                            </button>
+                            <input
+                              type="text"
+                              value={answer.answer_text}
+                              onChange={(e) =>
+                                updateAnswer(
+                                  questionIndex,
+                                  answerIndex,
+                                  "answer_text",
+                                  e.target.value
+                                )
+                              }
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder={`Answer ${answerIndex + 1}`}
+                            />
                             {answer.is_correct && (
-                              <CheckIcon className="h-4 w-4" />
+                              <span className="text-sm text-green-600 font-medium">
+                                Correct
+                              </span>
                             )}
-                          </button>
-                          <input
-                            type="text"
-                            value={answer.answer_text}
-                            onChange={(e) =>
-                              updateAnswer(
-                                questionIndex,
-                                answerIndex,
-                                "answer_text",
-                                e.target.value
-                              )
-                            }
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder={`Answer ${answerIndex + 1}`}
-                          />
-                          {answer.is_correct && (
-                            <span className="text-sm text-green-600 font-medium">
-                              Correct
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                )}
-
-                {question.question_type === "short_answer" && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-sm text-yellow-800">
-                      Short answer questions will be manually graded. Students
-                      will receive full points for any answer.
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
+                );
+              })
+            )}
           </div>
 
           {/* Navigation */}
@@ -601,23 +846,31 @@ const CreateQuizPage: React.FC = () => {
               <div className="text-sm text-gray-600">
                 Questions: {questions.length} | Total Points: {totalPoints}
               </div>
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !validateStep2()}
-                className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              >
-                {loading ? (
-                  <>
-                    <LoadingSpinner size="sm" />
-                    <span className="ml-2">Creating Quiz...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckIcon className="h-4 w-4 mr-2" />
-                    Create Quiz
-                  </>
+              <div className="relative group">
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading || !validateStep2()}
+                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {loading ? (
+                    <>
+                      <LoadingSpinner size="sm" />
+                      <span className="ml-2">Creating Quiz...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckIcon className="h-4 w-4 mr-2" />
+                      Create Quiz
+                    </>
+                  )}
+                </button>
+                {!validateStep2() && !loading && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    {getValidationReason()}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                  </div>
                 )}
-              </button>
+              </div>
             </div>
           </div>
         </motion.div>

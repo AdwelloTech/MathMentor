@@ -1,19 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { quizService } from "@/lib/quizService";
+import type { Quiz, Question, Answer } from "@/types/quiz";
 import {
   ArrowLeftIcon,
   PencilIcon,
   TrashIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ClockIcon,
-  AcademicCapIcon,
-  DocumentTextIcon
-} from '@heroicons/react/24/outline';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { quizService } from '@/lib/quizService';
-import type { Quiz } from '@/types/quiz';
+  PlayIcon,
+  PauseIcon,
+  EyeIcon,
+} from "@heroicons/react/24/outline";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import toast from "react-hot-toast";
 
 const QuizViewPage: React.FC = () => {
   const { quizId } = useParams<{ quizId: string }>();
@@ -32,26 +31,30 @@ const QuizViewPage: React.FC = () => {
       const data = await quizService.quizzes.getById(quizId!);
       setQuiz(data);
     } catch (error) {
-      console.error('Error loading quiz:', error);
-      alert('Failed to load quiz. Please try again.');
+      console.error("Error loading quiz:", error);
+      toast.error("Failed to load quiz. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this quiz? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
     try {
       await quizService.quizzes.delete(quizId!);
-      navigate('/quizzes', { 
-        state: { message: 'Quiz deleted successfully!' }
+      navigate("/quizzes", {
+        state: { message: "Quiz deleted successfully!" },
       });
     } catch (error) {
-      console.error('Error deleting quiz:', error);
-      alert('Failed to delete quiz. Please try again.');
+      console.error("Error deleting quiz:", error);
+      toast.error("Failed to delete quiz. Please try again.");
     }
   };
 
@@ -66,10 +69,14 @@ const QuizViewPage: React.FC = () => {
   if (!quiz) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Quiz not found</h2>
-        <p className="text-gray-600 mb-4">The quiz you're looking for doesn't exist.</p>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Quiz not found
+        </h2>
+        <p className="text-gray-600 mb-4">
+          The quiz you're looking for doesn't exist.
+        </p>
         <button
-          onClick={() => navigate('/quizzes')}
+          onClick={() => navigate("/quizzes")}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
         >
           Back to Quizzes
@@ -85,7 +92,7 @@ const QuizViewPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => navigate('/quizzes')}
+              onClick={() => navigate("/quizzes")}
               className="text-gray-600 hover:text-gray-900"
             >
               <ArrowLeftIcon className="h-5 w-5" />
@@ -118,26 +125,36 @@ const QuizViewPage: React.FC = () => {
 
       {/* Quiz Info */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quiz Information</h2>
-        
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Quiz Information
+        </h2>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Description</h3>
-            <p className="text-gray-900">{quiz.description || 'No description provided'}</p>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
+              Description
+            </h3>
+            <p className="text-gray-900">
+              {quiz.description || "No description provided"}
+            </p>
           </div>
-          
+
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">Subject</h3>
             <p className="text-gray-900">{quiz.subject}</p>
           </div>
-          
+
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Grade Level</h3>
-            <p className="text-gray-900">{quiz.grade_level || 'All grades'}</p>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
+              Grade Level
+            </h3>
+            <p className="text-gray-900">{quiz.grade_level || "All grades"}</p>
           </div>
-          
+
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Time Limit</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
+              Time Limit
+            </h3>
             <p className="text-gray-900">{quiz.time_limit_minutes} minutes</p>
           </div>
         </div>
@@ -148,36 +165,48 @@ const QuizViewPage: React.FC = () => {
               <DocumentTextIcon className="h-6 w-6 text-blue-600 mr-2" />
               <div>
                 <p className="text-sm font-medium text-blue-800">Questions</p>
-                <p className="text-lg font-bold text-blue-900">{quiz.total_questions}</p>
+                <p className="text-lg font-bold text-blue-900">
+                  {quiz.total_questions}
+                </p>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center">
               <AcademicCapIcon className="h-6 w-6 text-green-600 mr-2" />
               <div>
-                <p className="text-sm font-medium text-green-800">Total Points</p>
-                <p className="text-lg font-bold text-green-900">{quiz.total_points}</p>
+                <p className="text-sm font-medium text-green-800">
+                  Total Points
+                </p>
+                <p className="text-lg font-bold text-green-900">
+                  {quiz.total_points}
+                </p>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <div className="flex items-center">
               <ClockIcon className="h-6 w-6 text-yellow-600 mr-2" />
               <div>
-                <p className="text-sm font-medium text-yellow-800">Time Limit</p>
-                <p className="text-lg font-bold text-yellow-900">{quiz.time_limit_minutes}m</p>
+                <p className="text-sm font-medium text-yellow-800">
+                  Time Limit
+                </p>
+                <p className="text-lg font-bold text-yellow-900">
+                  {quiz.time_limit_minutes}m
+                </p>
               </div>
             </div>
           </div>
-          
-          <div className={`border rounded-lg p-4 ${
-            quiz.is_active 
-              ? 'bg-green-50 border-green-200' 
-              : 'bg-red-50 border-red-200'
-          }`}>
+
+          <div
+            className={`border rounded-lg p-4 ${
+              quiz.is_active
+                ? "bg-green-50 border-green-200"
+                : "bg-red-50 border-red-200"
+            }`}
+          >
             <div className="flex items-center">
               {quiz.is_active ? (
                 <CheckCircleIcon className="h-6 w-6 text-green-600 mr-2" />
@@ -185,12 +214,20 @@ const QuizViewPage: React.FC = () => {
                 <XCircleIcon className="h-6 w-6 text-red-600 mr-2" />
               )}
               <div>
-                <p className={`text-sm font-medium ${
-                  quiz.is_active ? 'text-green-800' : 'text-red-800'
-                }`}>Status</p>
-                <p className={`text-lg font-bold ${
-                  quiz.is_active ? 'text-green-900' : 'text-red-900'
-                }`}>{quiz.is_active ? 'Active' : 'Inactive'}</p>
+                <p
+                  className={`text-sm font-medium ${
+                    quiz.is_active ? "text-green-800" : "text-red-800"
+                  }`}
+                >
+                  Status
+                </p>
+                <p
+                  className={`text-lg font-bold ${
+                    quiz.is_active ? "text-green-900" : "text-red-900"
+                  }`}
+                >
+                  {quiz.is_active ? "Active" : "Inactive"}
+                </p>
               </div>
             </div>
           </div>
@@ -203,7 +240,7 @@ const QuizViewPage: React.FC = () => {
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Questions</h2>
           </div>
-          
+
           <div className="divide-y divide-gray-200">
             {quiz.questions.map((question, questionIndex) => (
               <div key={question.id} className="p-6">
@@ -216,41 +253,55 @@ const QuizViewPage: React.FC = () => {
                       {question.points} points
                     </span>
                     <span className="bg-purple-100 text-purple-800 text-sm font-medium px-2.5 py-0.5 rounded capitalize">
-                      {question.question_type.replace('_', ' ')}
+                      {question.question_type.replace("_", " ")}
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="mb-4">
-                  <p className="text-gray-900 text-lg">{question.question_text}</p>
+                  <p className="text-gray-900 text-lg">
+                    {question.question_text}
+                  </p>
                 </div>
-                
+
                 {question.answers && question.answers.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Answers:</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                      Answers:
+                    </h4>
                     {question.answers.map((answer, answerIndex) => (
                       <div
                         key={answer.id}
                         className={`flex items-center space-x-3 p-3 rounded-lg border ${
                           answer.is_correct
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-gray-50 border-gray-200'
+                            ? "bg-green-50 border-green-200"
+                            : "bg-gray-50 border-gray-200"
                         }`}
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          answer.is_correct
-                            ? 'border-green-500 bg-green-500 text-white'
-                            : 'border-gray-300'
-                        }`}>
-                          {answer.is_correct && <CheckCircleIcon className="h-3 w-3" />}
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            answer.is_correct
+                              ? "border-green-500 bg-green-500 text-white"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {answer.is_correct && (
+                            <CheckCircleIcon className="h-3 w-3" />
+                          )}
                         </div>
-                        <span className={`text-sm ${
-                          answer.is_correct ? 'text-green-800 font-medium' : 'text-gray-700'
-                        }`}>
+                        <span
+                          className={`text-sm ${
+                            answer.is_correct
+                              ? "text-green-800 font-medium"
+                              : "text-gray-700"
+                          }`}
+                        >
                           {answer.answer_text}
                         </span>
                         {answer.is_correct && (
-                          <span className="text-xs text-green-600 font-medium">Correct Answer</span>
+                          <span className="text-xs text-green-600 font-medium">
+                            Correct Answer
+                          </span>
                         )}
                       </div>
                     ))}
@@ -273,4 +324,4 @@ const QuizViewPage: React.FC = () => {
   );
 };
 
-export default QuizViewPage; 
+export default QuizViewPage;

@@ -5,7 +5,7 @@ import { flashcards } from "@/lib/flashcards";
 import type { CreateFlashcardSetData, FlashcardSet } from "@/types/flashcards";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
-import { getNoteSubjects } from "@/lib/notes";
+import { subjectsService } from "@/lib/subjects";
 import { generateAIFlashcards } from "@/lib/ai";
 
 // Local type to track AI workflow in UI
@@ -64,8 +64,8 @@ const CreateEditFlashcardSetPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const list = await getNoteSubjects();
-        setSubjects(list);
+        const list = await subjectsService.listActive();
+        setSubjects(list as any);
       } catch (e) {
         // ignore
       }

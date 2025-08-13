@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { flashcards } from "@/lib/flashcards";
 import type { FlashcardSet } from "@/types/flashcards";
 import { useNavigate } from "react-router-dom";
-import { getNoteSubjects } from "@/lib/notes";
+import { subjectsService } from "@/lib/subjects";
 
 const FlashcardsListPage: React.FC = () => {
   const [sets, setSets] = useState<FlashcardSet[]>([]);
@@ -23,8 +23,8 @@ const FlashcardsListPage: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const s = await getNoteSubjects();
-      setSubjects(s);
+      const s = await subjectsService.listActive();
+      setSubjects(s as any);
     })();
   }, []);
 

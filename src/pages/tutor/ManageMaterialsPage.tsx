@@ -7,9 +7,6 @@ import {
   FunnelIcon,
   StarIcon,
   DocumentTextIcon,
-  DocumentArrowUpIcon,
-  PencilIcon,
-  TrashIcon,
   EyeIcon,
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
@@ -25,12 +22,11 @@ import {
   deleteTutorNote,
   transformTutorNoteForCard,
   type TutorNoteWithDetails,
-  type TutorNoteCardProps,
 } from "@/lib/tutorNotes";
 import toast from "react-hot-toast";
 
 const ManageMaterialsPage: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [notes, setNotes] = useState<TutorNoteWithDetails[]>([]);
   const [subjects, setSubjects] = useState<
     Array<{

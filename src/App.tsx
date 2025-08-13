@@ -16,6 +16,7 @@ import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
 import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
 import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
+import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
@@ -174,6 +175,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <ManageIDVerificationsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/subjects"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ManageSubjectsPage />
                   </ProtectedRoute>
                 }
               />

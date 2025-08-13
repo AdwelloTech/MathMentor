@@ -8,10 +8,8 @@ import {
   BookOpenIcon,
   StarIcon,
   DocumentTextIcon,
-  DocumentArrowUpIcon,
   EyeIcon,
   ArrowDownTrayIcon,
-  LockClosedIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -22,13 +20,12 @@ import {
   transformStudentTutorMaterialForCard,
   checkStudentPremiumAccess,
   type StudentTutorMaterial,
-  type StudentTutorMaterialsSearchParams,
 } from "@/lib/studentTutorMaterials";
 import { getNoteSubjects } from "@/lib/notes";
 import toast from "react-hot-toast";
 
 const TutorMaterialsPage: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [materials, setMaterials] = useState<StudentTutorMaterial[]>([]);
   const [allMaterials, setAllMaterials] = useState<StudentTutorMaterial[]>([]);
@@ -84,18 +81,18 @@ const TutorMaterialsPage: React.FC = () => {
       if (searchTerm.trim()) {
         const term = searchTerm.toLowerCase().trim();
         filtered = filtered.filter(
-          (material) =>
-            material.title?.toLowerCase().includes(term) ||
-            material.description?.toLowerCase().includes(term) ||
-            material.subjectDisplayName?.toLowerCase().includes(term) ||
-            material.tutorName?.toLowerCase().includes(term)
+            (material) =>
+              material.title?.toLowerCase().includes(term) ||
+              material.description?.toLowerCase().includes(term) ||
+              material.subject_display_name?.toLowerCase().includes(term) ||
+              material.tutor_name?.toLowerCase().includes(term)
         );
       }
 
       // Filter by subject
       if (selectedSubject) {
         filtered = filtered.filter(
-          (material) => material.subjectId === selectedSubject
+          (material) => material.subject_id === selectedSubject
         );
       }
 

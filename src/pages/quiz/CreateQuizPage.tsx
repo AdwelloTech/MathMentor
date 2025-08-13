@@ -2,22 +2,12 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  PlusIcon,
-  TrashIcon,
-  ArrowLeftIcon,
-  CheckIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { PlusIcon, TrashIcon, ArrowLeftIcon, CheckIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
-import { getNoteSubjects } from "@/lib/notes";
+import { subjectsService } from "@/lib/subjects";
 import { generateAIQuestions } from "@/lib/ai";
-import type {
-  CreateQuizData,
-  CreateQuestionData,
-  CreateAnswerData,
-} from "@/types/quiz";
+import type { CreateQuizData, CreateQuestionData } from "@/types/quiz";
 import toast from "react-hot-toast";
 
 type NoteSubject = {
@@ -58,8 +48,8 @@ const CreateQuizPage: React.FC = () => {
   useEffect(() => {
     const loadSubjects = async () => {
       try {
-        const subjectsData = await getNoteSubjects();
-        setSubjects(subjectsData);
+        const subjectsData = await subjectsService.listActive();
+        setSubjects(subjectsData as any);
       } catch (error) {
         console.error("Error loading subjects:", error);
       }
@@ -170,15 +160,15 @@ const CreateQuizPage: React.FC = () => {
     }
     setAiLoading(true);
     try {
-      const ai = await generateAIQuestions({
-        subject: quizData.subject,
-        gradeLevel: quizData.grade_level || undefined,
-        numQuestions: aiNumQuestions,
-        difficulty: aiDifficulty,
-        questionType: aiQuestionType,
-        title: quizData.title || undefined,
-      });
-      const mapped = ai.map((q, idx) => ({
+      const ai = await generateAIQuestions(
+        quizData.subject,
+        quizData.grade_level || "",
+        aiNumQuestions,
+        aiDifficulty,
+        aiQuestionType,
+        quizData.title || undefined
+      );
+      const mapped = ai.map((q: any, idx: number) => ({
         question_text: q.question_text,
         question_type: q.question_type,
         points: q.points ?? 10,
@@ -186,7 +176,7 @@ const CreateQuizPage: React.FC = () => {
         is_ai_generated: true,
         ai_status: q.ai_status || "pending",
         ai_metadata: q.ai_metadata,
-        answers: q.answers.map((a, i) => ({
+        answers: q.answers.map((a: any, i: number) => ({
           answer_text: a.answer_text,
           is_correct: a.is_correct,
           answer_order: i + 1,

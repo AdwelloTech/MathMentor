@@ -3,6 +3,7 @@ export interface FlashcardSet {
   tutor_id: string; // profiles.id of tutor
   title: string;
   subject: string;
+  topic?: string;
   grade_level: string;
   is_active: boolean;
   created_at: string;
@@ -29,6 +30,7 @@ export interface CreateFlashcardData {
 export interface CreateFlashcardSetData {
   title: string;
   subject: string;
+  topic?: string;
   grade_level: string;
   is_active?: boolean;
   cards: CreateFlashcardData[];
@@ -37,6 +39,7 @@ export interface CreateFlashcardSetData {
 export interface UpdateFlashcardSetData {
   title?: string;
   subject?: string;
+  topic?: string;
   grade_level: string;
   is_active?: boolean;
 }

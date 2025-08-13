@@ -19,6 +19,7 @@ export const flashcards = {
           tutor_id: tutorProfileId,
           title: input.title,
           subject: input.subject,
+          ...(input.topic !== undefined ? { topic: input.topic } : {}),
           grade_level: input.grade_level,
           is_active: input.is_active ?? true,
         })
@@ -80,6 +81,7 @@ export const flashcards = {
         .update({
           ...(input.title !== undefined ? { title: input.title } : {}),
           ...(input.subject !== undefined ? { subject: input.subject } : {}),
+          ...(input.topic !== undefined ? { topic: input.topic } : {}),
           grade_level: input.grade_level,
           ...(input.is_active !== undefined
             ? { is_active: input.is_active }

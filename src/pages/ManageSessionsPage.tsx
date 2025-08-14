@@ -15,6 +15,7 @@ import {
   Eye,
   Calendar,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 const ManageSessionsPage: React.FC = () => {
   const { user } = useAuth();

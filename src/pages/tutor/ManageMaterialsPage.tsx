@@ -18,11 +18,11 @@ import TutorNoteCard from "@/components/tutor/TutorNoteCard";
 import {
   searchTutorNotes,
   getTutorNotesByTutorId,
-  getNoteSubjects,
   deleteTutorNote,
   transformTutorNoteForCard,
   type TutorNoteWithDetails,
 } from "@/lib/tutorNotes";
+import { subjectsService } from "@/lib/subjects";
 import toast from "react-hot-toast";
 
 const ManageMaterialsPage: React.FC = () => {
@@ -60,7 +60,7 @@ const ManageMaterialsPage: React.FC = () => {
       setLoading(true);
       const [notesData, subjectsData] = await Promise.all([
         getTutorNotesByTutorId(user!.id),
-        getNoteSubjects(),
+        subjectsService.listActive(),
       ]);
 
       setNotes(notesData);
@@ -77,7 +77,6 @@ const ManageMaterialsPage: React.FC = () => {
     try {
       const searchResults = await searchTutorNotes({
         searchTerm,
-        subjectFilter: selectedSubject || undefined,
         tutorId: user!.id,
       });
       setNotes(searchResults);
@@ -147,8 +146,13 @@ const ManageMaterialsPage: React.FC = () => {
       (note.description &&
         note.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
+    const selectedObj = subjects.find((s) => s.id === selectedSubject);
     const matchesSubject =
-      !selectedSubject || note.subject_id === selectedSubject;
+      !selectedSubject ||
+      note.subject_id === selectedSubject ||
+      (selectedObj &&
+        (note.subject_display_name === selectedObj.display_name ||
+          note.subject_name === selectedObj.name));
 
     return matchesSearch && matchesSubject;
   });

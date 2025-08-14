@@ -69,6 +69,7 @@ export const classSchedulingService = {
           {
             tutor_id: classData.tutor_id,
             class_type_id: classData.class_type_id,
+            subject_id: classData.subject_id || null,
             title: classData.title,
             description: classData.description,
             date: classData.date,
@@ -94,7 +95,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("id", classRecord.id)
@@ -132,7 +134,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("tutor_id", tutorId)
@@ -167,7 +170,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("tutor_id", tutorId)
@@ -201,7 +205,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .single();
@@ -235,7 +240,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("status", "scheduled")
@@ -349,7 +355,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -379,7 +386,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -408,7 +416,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `

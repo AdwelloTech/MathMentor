@@ -214,10 +214,15 @@ const ManageSessionsPage: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                      {/* Subject below tutor info */}
+                      {/* Title & Subject */}
                       <h3 className="text-lg font-semibold text-gray-900 mb-1">
                         {session.title}
                       </h3>
+                      {session.subject && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mb-2">
+                          {session.subject.display_name}
+                        </span>
+                      )}
                       {session.description && (
                         <p className="text-gray-600 mb-3">
                           {session.description}

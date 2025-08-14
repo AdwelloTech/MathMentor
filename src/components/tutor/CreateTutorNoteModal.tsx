@@ -12,7 +12,7 @@ import {
   uploadTutorNoteFile,
   type CreateTutorNoteData,
 } from "@/lib/tutorNotes";
-import { getNoteSubjects } from "@/lib/notes";
+import { subjectsService } from "@/lib/subjects";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import toast from "react-hot-toast";
 
@@ -24,7 +24,7 @@ interface CreateTutorNoteModalProps {
     id: string;
     name: string;
     display_name: string;
-    color: string;
+    color?: string;
   }>;
 }
 

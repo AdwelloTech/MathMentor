@@ -18,6 +18,7 @@ export interface TutorClass {
   id: string;
   tutor_id: string;
   class_type_id: string;
+  subject_id?: string; // optional FK to subjects table
   title: string;
   description?: string;
   date: string;
@@ -43,6 +44,12 @@ export interface TutorClass {
     id: string;
     full_name: string;
     email: string;
+  };
+  subject?: {
+    id: string;
+    name: string;
+    display_name: string;
+    color?: string | null;
   };
 }
 
@@ -119,6 +126,7 @@ export interface ClassReview {
 // Form Data Types
 export interface CreateClassFormData {
   class_type_id: string;
+  subject_id?: string;
   title: string;
   description?: string;
   date: string;

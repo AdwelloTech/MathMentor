@@ -355,6 +355,14 @@ const BookSessionPage: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Subject pill */}
+                  {session.subject && (
+                    <div className="mb-2">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {session.subject.display_name}
+                      </span>
+                    </div>
+                  )}
                   {session.description && (
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                       {session.description}
@@ -383,10 +391,17 @@ const BookSessionPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  {/* Subject below tutor info */}
+                  {/* Title & Subject */}
                   <h3 className="text-lg font-semibold text-gray-900 mt-2">
                     {session.title}
                   </h3>
+                  {session.subject && (
+                    <div className="mt-1">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {session.subject.display_name}
+                      </span>
+                    </div>
+                  )}
                   {session.description ? (
                     <p className="text-sm text-gray-600 mt-1 mb-0 line-clamp-2">
                       {session.description}

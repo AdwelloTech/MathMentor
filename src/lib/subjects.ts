@@ -7,6 +7,11 @@ import type {
 
 export const subjectsService = {
   async listActive(): Promise<Subject[]> {
+    // Try RPC first (works even with strict RLS if function is SECURITY DEFINER)
+    let rpc = await supabase.rpc("admin_list_subjects", { p_active_only: true });
+    if (!rpc.error && rpc.data) {
+      return rpc.data as Subject[];
+    }
     const { data, error } = await supabase
       .from("subjects")
       .select("*")
@@ -17,6 +22,10 @@ export const subjectsService = {
   },
 
   async listAll(): Promise<Subject[]> {
+    let rpc = await supabase.rpc("admin_list_subjects", { p_active_only: false });
+    if (!rpc.error && rpc.data) {
+      return rpc.data as Subject[];
+    }
     const { data, error } = await supabase
       .from("subjects")
       .select("*")
@@ -32,6 +41,11 @@ export const subjectsService = {
       color: input.color ?? null,
       is_active: input.is_active ?? true,
     };
+    // Try RPC first
+    let rpc = await supabase.rpc("admin_create_subject", payload as any);
+    if (!rpc.error && rpc.data) {
+      return rpc.data as Subject;
+    }
     const { data, error } = await supabase
       .from("subjects")
       .insert([payload])
@@ -48,7 +62,11 @@ export const subjectsService = {
       updates.display_name = input.display_name.trim();
     if (input.color !== undefined) updates.color = input.color;
     if (input.is_active !== undefined) updates.is_active = input.is_active;
-
+    // Try RPC first
+    let rpc = await supabase.rpc("admin_update_subject", { p_id: id, ...updates });
+    if (!rpc.error && rpc.data) {
+      return rpc.data as Subject;
+    }
     const { data, error } = await supabase
       .from("subjects")
       .update(updates)
@@ -60,6 +78,9 @@ export const subjectsService = {
   },
 
   async remove(id: string): Promise<void> {
+    // Try RPC first
+    let rpc = await supabase.rpc("admin_delete_subject", { p_id: id });
+    if (!rpc.error) return;
     const { error } = await supabase.from("subjects").delete().eq("id", id);
     if (error) throw error;
   },

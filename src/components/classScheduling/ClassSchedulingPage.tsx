@@ -22,6 +22,8 @@ import type {
 } from '@/types/classScheduling';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { subjectsService } from '@/lib/subjects';
+import type { Subject } from '@/types/subject';
 
 const ClassSchedulingPage: React.FC = () => {
   const { user, profile } = useAuth();
@@ -37,6 +39,7 @@ const ClassSchedulingPage: React.FC = () => {
   const [existingClasses, setExistingClasses] = useState<TutorClass[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [subjects, setSubjects] = useState<Subject[]>([]);
 
   // Check if tutor is active
   const isActiveTutor = profile?.is_active !== false; // Default to true if not set
@@ -94,13 +97,15 @@ const ClassSchedulingPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [types, classes] = await Promise.all([
+      const [types, classes, subs] = await Promise.all([
         classSchedulingService.classTypes.getAll(),
-        classSchedulingService.classes.getByTutorId(user!.id)
+        classSchedulingService.classes.getByTutorId(user!.id),
+        subjectsService.listActive(),
       ]);
       
       setClassTypes(types);
       setExistingClasses(classes);
+      setSubjects(subs);
       generateCalendar();
     } catch (error) {
       console.error('Error loading data:', error);
@@ -575,6 +580,21 @@ const ClassSchedulingPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Subject
+                </label>
+                <select
+                  value={formData.subject_id || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, subject_id: e.target.value || undefined }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">Select subject (optional)</option>
+                  {subjects.map(s => (
+                    <option key={s.id} value={s.id}>{s.display_name}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Class Title

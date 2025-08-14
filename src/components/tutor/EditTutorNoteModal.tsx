@@ -24,7 +24,7 @@ interface EditTutorNoteModalProps {
     id: string;
     name: string;
     display_name: string;
-    color: string;
+    color?: string;
   }>;
 }
 

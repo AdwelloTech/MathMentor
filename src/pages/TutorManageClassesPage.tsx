@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { classSchedulingService } from '../lib/classSchedulingService';
 import { TutorClass, ClassType } from '../types/classScheduling';
+import { subjectsService } from '@/lib/subjects';
+import type { Subject } from '@/types/subject';
 import { CalendarDays, Clock, Users, DollarSign, Edit, Trash2, Eye, Filter, Search, X } from 'lucide-react';
 
 const TutorManageClassesPage: React.FC = () => {
@@ -11,6 +13,7 @@ const TutorManageClassesPage: React.FC = () => {
   const [classTypes, setClassTypes] = useState<ClassType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedClass, setSelectedClass] = useState<TutorClass | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [editingClass, setEditingClass] = useState<TutorClass | null>(null);
@@ -25,6 +28,7 @@ const TutorManageClassesPage: React.FC = () => {
     if (user) {
       loadClasses();
       loadClassTypes();
+      subjectsService.listActive().then(setSubjects).catch(() => {});
     }
   }, [user]);
 
@@ -238,6 +242,11 @@ const TutorManageClassesPage: React.FC = () => {
                       </h3>
                       <p className="text-sm text-gray-600">
                         {getClassTypeName(classItem.class_type_id)}
+                        {classItem.subject?.display_name && (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-xs">
+                            {classItem.subject.display_name}
+                          </span>
+                        )}
                       </p>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(classItem.status)}`}>
@@ -324,7 +333,14 @@ const TutorManageClassesPage: React.FC = () => {
                   <div className="space-y-4">
                     <div>
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Class Type</h3>
-                      <p className="text-gray-900">{getClassTypeName(selectedClass.class_type_id)}</p>
+                      <p className="text-gray-900">
+                        {getClassTypeName(selectedClass.class_type_id)}
+                        {selectedClass.subject?.display_name && (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-xs">
+                            {selectedClass.subject.display_name}
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Date</h3>
@@ -431,6 +447,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({ classItem, classTypes, on
     title: classItem.title,
     description: classItem.description,
     class_type_id: classItem.class_type_id,
+    subject_id: classItem.subject_id,
     date: classItem.date,
     start_time: classItem.start_time,
     end_time: classItem.end_time,
@@ -438,6 +455,11 @@ const EditClassForm: React.FC<EditClassFormProps> = ({ classItem, classTypes, on
     price_per_session: classItem.price_per_session,
     status: classItem.status
   });
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+
+  useEffect(() => {
+    subjectsService.listActive().then(setSubjects).catch(() => {});
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -476,6 +498,20 @@ const EditClassForm: React.FC<EditClassFormProps> = ({ classItem, classTypes, on
             >
               {classTypes.map(type => (
                 <option key={type.id} value={type.id}>{type.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+            <select
+              value={formData.subject_id || ''}
+              onChange={(e) => setFormData({ ...formData, subject_id: e.target.value || undefined })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select subject (optional)</option>
+              {subjects.map(s => (
+                <option key={s.id} value={s.id}>{s.display_name}</option>
               ))}
             </select>
           </div>

@@ -32,8 +32,9 @@
       "@/lib/*": ["src/lib/*"],
       "@/contexts/*": ["src/contexts/*"],
       "@/assets/*": ["src/assets/*"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["src"],
+  "include": ["src", "server", "vite.config.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
-} 
+}

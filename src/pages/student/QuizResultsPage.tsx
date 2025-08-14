@@ -317,6 +317,18 @@ const QuizResultsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Tutor Feedback */}
+            {selectedAttempt?.attempt?.tutor_feedback && (
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Tutor Feedback
+                </h3>
+                <p className="text-gray-700 whitespace-pre-line">
+                  {selectedAttempt.attempt.tutor_feedback}
+                </p>
+              </div>
+            )}
+
             {/* Question-by-Question Review */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-gray-900">

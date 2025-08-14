@@ -24,16 +24,21 @@ export interface Quiz {
   attempt_correct_answers?: number | null;
   attempt_total_questions?: number | null;
   attempt_id?: string | null;
+  attempt_tutor_feedback?: string | null;
 }
 
 export interface Question {
   id: string;
   quiz_id: string;
   question_text: string;
-  question_type: "multiple_choice" | "true_false" | "short_answer";
+  question_type: "multiple_choice" | "true_false";
   points: number;
   question_order: number;
   created_at: string;
+  // AI augmentation fields (nullable to maintain backward compatibility)
+  is_ai_generated?: boolean;
+  ai_status?: "pending" | "approved" | "discarded" | null;
+  ai_metadata?: Record<string, any> | null;
   answers?: Answer[];
 }
 
@@ -58,6 +63,8 @@ export interface QuizAttempt {
   total_questions?: number;
   status: "in_progress" | "completed" | "abandoned";
   created_at: string;
+  // Optional tutor-written overall feedback for the attempt
+  tutor_feedback?: string | null;
   quiz?: Quiz;
   student?: {
     id: string;
@@ -92,9 +99,13 @@ export interface CreateQuizData {
 
 export interface CreateQuestionData {
   question_text: string;
-  question_type: "multiple_choice" | "true_false" | "short_answer";
+  question_type: "multiple_choice" | "true_false";
   points: number;
   question_order: number;
+  // Optional AI augmentation flags when creating questions
+  is_ai_generated?: boolean;
+  ai_status?: "pending" | "approved" | "discarded";
+  ai_metadata?: Record<string, any>;
   answers: CreateAnswerData[];
 }
 

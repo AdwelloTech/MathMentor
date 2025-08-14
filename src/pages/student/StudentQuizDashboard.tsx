@@ -44,10 +44,15 @@ const StudentQuizDashboard: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log("Loading quizzes for user:", user!.id);
+
       const [quizzesData, subjectsData] = await Promise.all([
         quizService.studentQuizzes.getAvailableQuizzes(user!.id),
         getNoteSubjects(),
       ]);
+
+      console.log("Quizzes loaded:", quizzesData);
+      console.log("Subjects loaded:", subjectsData);
 
       setAllQuizzes(quizzesData);
       setQuizzes(quizzesData);
@@ -137,11 +142,9 @@ const StudentQuizDashboard: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Available Quizzes
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Study</h1>
               <p className="text-gray-600">
-                Take quizzes from tutors you've booked sessions with
+                Quizzes and flash cards from your tutors
               </p>
             </div>
           </div>
@@ -341,10 +344,21 @@ const StudentQuizDashboard: React.FC = () => {
                           {quiz.attempt_correct_answers}/
                           {quiz.attempt_total_questions} Questions Correct (
                           {Math.round(
-                            (quiz.attempt_score / quiz.attempt_max_score) * 100
+                            ((quiz.attempt_score || 0) /
+                              (quiz.attempt_max_score || 1)) *
+                              100
                           )}
                           %)
                         </div>
+                        {quiz.attempt_tutor_feedback ? (
+                          <div className="text-center text-xs font-medium text-green-700 bg-green-100 py-1 rounded">
+                            Feedback received
+                          </div>
+                        ) : (
+                          <div className="text-center text-xs font-medium text-orange-700 bg-orange-100 py-1 rounded">
+                            Feedback pending
+                          </div>
+                        )}
                         <button
                           onClick={() =>
                             navigate(`/student/quiz-results/${quiz.attempt_id}`)

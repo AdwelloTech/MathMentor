@@ -26,11 +26,17 @@ import QuizManagementPage from "./pages/quiz/QuizManagementPage";
 import CreateQuizPage from "./pages/quiz/CreateQuizPage";
 import QuizViewPage from "./pages/quiz/QuizViewPage";
 import EditQuizPage from "./pages/quiz/EditQuizPage";
+import QuizResponsesPage from "./pages/quiz/QuizResponsesPage";
+import QuizAttemptReviewPage from "./pages/quiz/QuizAttemptReviewPage";
 import StudentQuizDashboard from "./pages/student/StudentQuizDashboard";
 import TakeQuizPage from "./pages/student/TakeQuizPage";
 import QuizResultsPage from "./pages/student/QuizResultsPage";
 
 import ManageMaterialsPage from "./pages/tutor/ManageMaterialsPage";
+import ManageFlashcardsPage from "./pages/tutor/ManageFlashcardsPage";
+import CreateEditFlashcardSetPage from "./pages/tutor/CreateEditFlashcardSetPage";
+import FlashcardsListPage from "./pages/student/FlashcardsListPage";
+import FlashcardStudyPage from "./pages/student/FlashcardStudyPage";
 
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
@@ -94,10 +100,36 @@ function App() {
               <Route path="create-quiz" element={<CreateQuizPage />} />
               <Route path="quiz/:quizId" element={<QuizViewPage />} />
               <Route path="edit-quiz/:quizId" element={<EditQuizPage />} />
+              <Route
+                path="quiz/:quizId/responses"
+                element={<QuizResponsesPage />}
+              />
+              <Route
+                path="quiz/attempt/:attemptId"
+                element={<QuizAttemptReviewPage />}
+              />
 
               <Route
                 path="tutor/manage-materials"
                 element={<ManageMaterialsPage />}
+              />
+              <Route
+                path="tutor/flashcards"
+                element={<ManageFlashcardsPage />}
+              />
+              <Route
+                path="tutor/flashcards/create"
+                element={<CreateEditFlashcardSetPage />}
+              />
+              <Route
+                path="tutor/flashcards/edit/:setId"
+                element={<CreateEditFlashcardSetPage />}
+              />
+
+              {/* View flashcards set - accessible to any logged-in role */}
+              <Route
+                path="flashcards/:setId"
+                element={<FlashcardStudyPage />}
               />
 
               <Route path="profile" element={<ProfilePage />} />
@@ -204,6 +236,11 @@ function App() {
                 <Route path="notes/create" element={<CreateNotePage />} />
                 <Route path="notes/edit/:noteId" element={<CreateNotePage />} />
                 <Route path="quizzes" element={<StudentQuizDashboard />} />
+                <Route path="flashcards" element={<FlashcardsListPage />} />
+                <Route
+                  path="flashcards/:setId"
+                  element={<FlashcardStudyPage />}
+                />
                 <Route path="take-quiz/:attemptId" element={<TakeQuizPage />} />
                 <Route path="quiz-results" element={<QuizResultsPage />} />
                 <Route

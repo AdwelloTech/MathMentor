@@ -46,6 +46,9 @@ export const quizService = {
             question_type: questionData.question_type,
             points: questionData.points,
             question_order: questionData.question_order,
+            is_ai_generated: (questionData as any).is_ai_generated ?? false,
+            ai_status: (questionData as any).ai_status ?? null,
+            ai_metadata: (questionData as any).ai_metadata ?? null,
           })
           .select()
           .single();
@@ -160,6 +163,9 @@ export const quizService = {
           question_type: questionData.question_type,
           points: questionData.points,
           question_order: questionData.question_order,
+          is_ai_generated: (questionData as any).is_ai_generated ?? false,
+          ai_status: (questionData as any).ai_status ?? null,
+          ai_metadata: (questionData as any).ai_metadata ?? null,
         })
         .select()
         .single();
@@ -312,6 +318,19 @@ export const quizService = {
 
       if (error) throw error;
       return data;
+    },
+
+    // Update overall tutor feedback on an attempt
+    saveTutorFeedback: async (
+      attemptId: string,
+      feedback: string
+    ): Promise<void> => {
+      const { error } = await supabase
+        .from("quiz_attempts")
+        .update({ tutor_feedback: feedback })
+        .eq("id", attemptId);
+
+      if (error) throw error;
     },
 
     getByStudentId: async (studentId: string): Promise<QuizAttempt[]> => {
@@ -478,6 +497,8 @@ export const quizService = {
       studentId: string,
       subjectFilter?: string
     ): Promise<Quiz[]> => {
+      console.log("Fetching quizzes for student:", studentId);
+
       // First get the tutor IDs from class bookings
       const { data: bookings, error: bookingsError } = await supabase
         .from("class_bookings")
@@ -489,12 +510,34 @@ export const quizService = {
         .eq("student_id", studentId)
         .eq("booking_status", "confirmed");
 
-      if (bookingsError) throw bookingsError;
+      if (bookingsError) {
+        console.error("Error fetching bookings:", bookingsError);
+        throw bookingsError;
+      }
+
+      console.log("Bookings found:", bookings);
+
+      // Let's see the actual structure of the first booking
+      if (bookings && bookings.length > 0) {
+        console.log(
+          "First booking structure:",
+          JSON.stringify(bookings[0], null, 2)
+        );
+      }
 
       const tutorUserIds =
-        bookings?.map((booking) => booking.tutor_classes.tutor_id) || [];
+        bookings
+          ?.flatMap((booking) =>
+            Array.isArray(booking.tutor_classes)
+              ? booking.tutor_classes.map((tc: any) => tc.tutor_id)
+              : [(booking.tutor_classes as any)?.tutor_id]
+          )
+          .filter(Boolean) || [];
+
+      console.log("Tutor user IDs:", tutorUserIds);
 
       if (tutorUserIds.length === 0) {
+        console.log("No tutor user IDs found, returning empty array");
         return [];
       }
 
@@ -504,11 +547,19 @@ export const quizService = {
         .select("id, user_id")
         .in("user_id", tutorUserIds);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Error fetching tutor profiles:", profileError);
+        throw profileError;
+      }
+
+      console.log("Tutor profiles found:", tutorProfiles);
 
       const tutorProfileIds = tutorProfiles?.map((profile) => profile.id) || [];
 
+      console.log("Tutor profile IDs:", tutorProfileIds);
+
       if (tutorProfileIds.length === 0) {
+        console.log("No tutor profile IDs found, returning empty array");
         return [];
       }
 
@@ -525,7 +576,12 @@ export const quizService = {
         .in("tutor_id", tutorProfileIds)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching quizzes:", error);
+        throw error;
+      }
+
+      console.log("Quizzes found:", quizzesData);
 
       // Get student's profile ID for attempt lookup
       const { data: studentProfile, error: studentProfileError } =
@@ -541,7 +597,7 @@ export const quizService = {
       const { data: attemptsData } = await supabase
         .from("quiz_attempts")
         .select(
-          "id, quiz_id, status, score, max_score, correct_answers, total_questions"
+          "id, quiz_id, status, score, max_score, correct_answers, total_questions, tutor_feedback"
         )
         .eq("student_id", studentProfile.id);
 
@@ -556,6 +612,7 @@ export const quizService = {
           attempt_correct_answers: attempt?.correct_answers || null,
           attempt_total_questions: attempt?.total_questions || null,
           attempt_id: attempt?.id || null,
+          attempt_tutor_feedback: (attempt as any)?.tutor_feedback ?? null,
         };
       });
 
@@ -579,7 +636,13 @@ export const quizService = {
           *,
           tutor:profiles(id, full_name, email),
           questions:quiz_questions(
-            *,
+            id,
+            quiz_id,
+            question_text,
+            question_type,
+            points,
+            question_order,
+            created_at,
             answers:quiz_answers(*)
           )
         `
@@ -628,7 +691,13 @@ export const quizService = {
         selectedAnswerId?: string;
         answerText?: string;
       }[]
-    ): Promise<{ score: number; maxScore: number; percentage: number }> => {
+    ): Promise<{
+      score: number;
+      maxScore: number;
+      percentage: number;
+      correctAnswers: number;
+      totalQuestions: number;
+    }> => {
       // Get the attempt and quiz details
       const { data: attempt, error: attemptError } = await supabase
         .from("quiz_attempts")
@@ -674,14 +743,18 @@ export const quizService = {
             question.question_type === "multiple_choice" &&
             studentAnswer.selectedAnswerId
           ) {
-            const correctAnswer = question.answers.find((a) => a.is_correct);
+            const correctAnswer = question.answers.find(
+              (a: any) => a.is_correct
+            );
             isCorrect = correctAnswer?.id === studentAnswer.selectedAnswerId;
             pointsEarned = isCorrect ? question.points : 0;
           } else if (
             question.question_type === "true_false" &&
             studentAnswer.selectedAnswerId
           ) {
-            const correctAnswer = question.answers.find((a) => a.is_correct);
+            const correctAnswer = question.answers.find(
+              (a: any) => a.is_correct
+            );
             isCorrect = correctAnswer?.id === studentAnswer.selectedAnswerId;
             pointsEarned = isCorrect ? question.points : 0;
           } else if (
@@ -795,7 +868,15 @@ export const quizService = {
         .select(
           `
           *,
-          question:quiz_questions(*),
+          question:quiz_questions(
+            id,
+            quiz_id,
+            question_text,
+            question_type,
+            points,
+            question_order,
+            created_at
+          ),
           selected_answer:quiz_answers(*)
         `
         )
@@ -807,7 +888,13 @@ export const quizService = {
         .from("quiz_questions")
         .select(
           `
-          *,
+          id,
+          quiz_id,
+          question_text,
+          question_type,
+          points,
+          question_order,
+          created_at,
           answers:quiz_answers(*)
         `
         )

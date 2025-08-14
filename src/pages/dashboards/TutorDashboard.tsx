@@ -693,9 +693,9 @@ const TutorDashboard: React.FC = () => {
                       <p>{classItem.class_type?.name} • ${classItem.price_per_session}</p>
                       <p>{classItem.current_students}/{classItem.max_students} students</p>
                     </div>
-                    {classItem.zoom_link && (
+                    {classItem.jitsi_meeting_url && (
                       <a
-                        href={classItem.zoom_link}
+                        href={classItem.jitsi_meeting_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center mt-3 text-xs text-blue-600 hover:text-blue-700"
@@ -790,24 +790,24 @@ const TutorDashboard: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {classItem.zoom_link ? (
+                        {classItem.jitsi_meeting_url ? (
                           <div className="space-y-1">
                             <a
-                              href={classItem.zoom_link}
+                              href={classItem.jitsi_meeting_url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                               Join Meeting
                             </a>
-                            {classItem.zoom_meeting_id && (
+                            {classItem.jitsi_room_name && (
                               <div className="text-xs text-gray-500">
-                                ID: {classItem.zoom_meeting_id}
+                                Room: {classItem.jitsi_room_name}
                               </div>
                             )}
-                            {classItem.zoom_password && (
+                            {classItem.jitsi_password && (
                               <div className="text-xs text-gray-500">
-                                Pass: {classItem.zoom_password}
+                                Pass: {classItem.jitsi_password}
                               </div>
                             )}
                           </div>

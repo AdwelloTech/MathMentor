@@ -235,25 +235,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex h-16 shrink-0 items-center mb-6 justify-center lg:justify-start">
         <div className="flex items-center">
           <div className="relative">
-            <AcademicCapIcon className="h-8 w-8 text-green-600" />
-            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-500 rounded-full" />
+            <img
+              src="/src/assets/math-mentor-logo.png"
+              alt="IEMS Logo"
+              className="h-8 w-8 text-green-600 text-center mx-auto"
+            />
           </div>
-          <AnimatePresence>
-            {isHovered && (
-              <motion.div
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <span className="ml-3 text-xl font-bold bg-gradient-to-r from-green-600 to-yellow-500 bg-clip-text text-transparent whitespace-nowrap">
-                  IEMS
-                </span>
-                <SparklesIcon className="ml-2 h-4 w-4 text-yellow-500 inline" />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
     );

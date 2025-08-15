@@ -216,23 +216,6 @@ const StudentTutorMaterialCard: React.FC<
         </div>
 
         {/* File Info */}
-        {hasFile && (
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 shadow-sm">
-                <Upload className="h-4 w-4 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-blue-900 truncate">
-                  {fileName}
-                </p>
-                <p className="text-xs text-blue-600 font-medium">
-                  {formatFileSize(fileSize)}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Stats */}
         <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
@@ -294,18 +277,6 @@ const StudentTutorMaterialCard: React.FC<
                   <Eye className="h-3 w-3 mr-1" />
                   View
                 </Button>
-
-                {hasFile && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleDownload}
-                    className="border-green-900/30 text-green-900 hover:bg-green-50 hover:border-green-900/50 text-xs font-semibold"
-                  >
-                    <Download className="h-3 w-3 mr-1" />
-                    Download
-                  </Button>
-                )}
               </>
             )}
           </div>

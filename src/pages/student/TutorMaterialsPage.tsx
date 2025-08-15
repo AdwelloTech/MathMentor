@@ -456,7 +456,6 @@ const TutorMaterialsPage: React.FC = () => {
             isOpen={isViewerOpen}
             onClose={handleCloseViewer}
             material={selectedMaterial}
-            hasPremiumAccess={hasPremiumAccess}
           />
         )}
       </AnimatePresence>

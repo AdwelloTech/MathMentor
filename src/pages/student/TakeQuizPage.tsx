@@ -3,19 +3,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  ArrowLeftIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PaperAirplaneIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/24/outline";
+  ArrowLeft,
+  Clock,
+  CheckCircle,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
+  Send,
+  AlertTriangle,
+  BookOpen,
+  Target,
+  Award,
+  Timer,
+  User,
+} from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
 import type { Quiz, Question, Answer, QuizAttempt } from "@/types/quiz";
 import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 
 interface StudentAnswer {
   questionId: string;
@@ -185,23 +194,26 @@ const TakeQuizPage: React.FC = () => {
 
   if (!quiz || !attempt) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Quiz Not Found
-          </h2>
-          <p className="text-gray-600 mb-4">
-            The quiz you're looking for doesn't exist or you don't have access
-            to it.
-          </p>
-          <button
-            onClick={() => navigate("/student/quizzes")}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Back to Quizzes
-          </button>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-green-50">
+        <Card className="border-green-200 bg-white max-w-md">
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <CardTitle className="text-xl text-green-900 mb-2">
+              Quiz Not Found
+            </CardTitle>
+            <p className="text-green-700 mb-6">
+              The quiz you're looking for doesn't exist or you don't have access
+              to it.
+            </p>
+            <Button
+              onClick={() => navigate("/student/quizzes")}
+              className="bg-green-900 hover:bg-green-800 text-white"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Quizzes
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -213,45 +225,49 @@ const TakeQuizPage: React.FC = () => {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-green-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b border-green-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button
+              <Button
                 onClick={() => navigate("/student/quizzes")}
-                className="text-gray-600 hover:text-gray-900"
+                variant="ghost"
+                size="sm"
+                className="text-green-700 hover:text-green-900 hover:bg-green-100"
               >
-                <ArrowLeftIcon className="h-5 w-5" />
-              </button>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-green-900">
                   {quiz.title}
                 </h1>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-green-700 flex items-center gap-1">
+                  <User className="h-3 w-3" />
                   by {quiz.tutor?.full_name}
                 </p>
               </div>
             </div>
 
-            {/* Timer */}
-            <div className="flex items-center space-x-4">
+            {/* Timer and Progress */}
+            <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
-                <ClockIcon className="h-5 w-5 text-gray-600" />
+                <Timer className="h-5 w-5 text-green-600" />
                 <span
-                  className={`font-mono text-lg ${
-                    timeRemaining < 300 ? "text-red-600" : "text-gray-900"
+                  className={`font-mono text-lg font-semibold ${
+                    timeRemaining < 300 ? "text-red-600" : "text-green-900"
                   }`}
                 >
                   {formatTime(timeRemaining)}
                 </span>
               </div>
 
-              {/* Progress */}
-              <div className="text-sm text-gray-600">
+              <Badge className="bg-green-100 text-green-800 border-green-200">
+                <Target className="h-3 w-3 mr-1" />
                 {answeredQuestions}/{totalQuestions} answered
-              </div>
+              </Badge>
             </div>
           </div>
         </div>
@@ -261,35 +277,42 @@ const TakeQuizPage: React.FC = () => {
         {!showResults ? (
           <div className="space-y-6">
             {/* Question Navigation */}
-            <div className="bg-white rounded-lg shadow-sm border p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Question {currentQuestionIndex + 1} of {totalQuestions}
-                </h2>
-                <div className="text-sm text-gray-600">
-                  {currentQuestion?.points} points
+            <Card className="border-green-200 bg-white">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-green-900 flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    Question {currentQuestionIndex + 1} of {totalQuestions}
+                  </CardTitle>
+                  <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                    <Award className="h-3 w-3 mr-1" />
+                    {currentQuestion?.points} points
+                  </Badge>
                 </div>
-              </div>
-
-              {/* Question Grid */}
-              <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
-                {quiz.questions?.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentQuestionIndex(index)}
-                    className={`p-2 rounded-lg text-sm font-medium transition-colors ${
-                      index === currentQuestionIndex
-                        ? "bg-blue-600 text-white"
-                        : isQuestionAnswered(index)
-                        ? "bg-purple-100 text-purple-800"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
-            </div>
+              </CardHeader>
+              <CardContent>
+                {/* Question Grid */}
+                <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+                  {quiz.questions?.map((_, index) => (
+                    <Button
+                      key={index}
+                      onClick={() => setCurrentQuestionIndex(index)}
+                      variant="outline"
+                      size="sm"
+                      className={`transition-all duration-200 ${
+                        index === currentQuestionIndex
+                          ? "bg-green-900 text-white border-green-900 hover:bg-green-800"
+                          : isQuestionAnswered(index)
+                          ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
+                          : "bg-white text-green-700 border-green-200 hover:bg-green-50"
+                      }`}
+                    >
+                      {index + 1}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Current Question */}
             {currentQuestion && (
@@ -298,121 +321,103 @@ const TakeQuizPage: React.FC = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white rounded-lg shadow-sm border p-6"
               >
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    {currentQuestion.question_text}
-                  </h3>
+                <Card className="border-green-200 bg-white">
+                  <CardContent className="p-6">
+                    <div className="mb-6">
+                      <h3 className="text-lg font-medium text-green-900 mb-6">
+                        {currentQuestion.question_text}
+                      </h3>
 
-                  {currentQuestion.question_type === "multiple_choice" && (
-                    <div className="space-y-3">
-                      {currentQuestion.answers?.map((answer) => (
-                        <label
-                          key={answer.id}
-                          className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                        >
-                          <input
-                            type="radio"
-                            name={`question-${currentQuestion.id}`}
-                            value={answer.id}
-                            checked={
-                              getCurrentAnswer()?.selectedAnswerId === answer.id
-                            }
-                            onChange={() =>
-                              handleAnswerChange(currentQuestion.id, answer.id)
-                            }
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="ml-3 text-gray-900">
-                            {answer.answer_text}
-                          </span>
-                        </label>
-                      ))}
+                      {(currentQuestion.question_type === "multiple_choice" ||
+                        currentQuestion.question_type === "true_false") && (
+                        <div className="space-y-3">
+                          {currentQuestion.answers?.map((answer) => (
+                            <label
+                              key={answer.id}
+                              className="flex items-center p-4 border border-green-200 rounded-lg hover:bg-green-50 cursor-pointer transition-colors"
+                            >
+                              <input
+                                type="radio"
+                                name={`question-${currentQuestion.id}`}
+                                value={answer.id}
+                                checked={
+                                  getCurrentAnswer()?.selectedAnswerId ===
+                                  answer.id
+                                }
+                                onChange={() =>
+                                  handleAnswerChange(
+                                    currentQuestion.id,
+                                    answer.id
+                                  )
+                                }
+                                className="h-4 w-4 text-green-600 focus:ring-green-500"
+                              />
+                              <span className="ml-3 text-green-900">
+                                {answer.answer_text}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {currentQuestion.question_type === "short_answer" && (
+                        <Textarea
+                          value={getCurrentAnswer()?.answerText || ""}
+                          onChange={(e) =>
+                            handleAnswerChange(
+                              currentQuestion.id,
+                              undefined,
+                              e.target.value
+                            )
+                          }
+                          placeholder="Type your answer here..."
+                          className="w-full border-green-200 focus:border-green-900 focus:ring-green-900"
+                          rows={4}
+                        />
+                      )}
                     </div>
-                  )}
-
-                  {currentQuestion.question_type === "true_false" && (
-                    <div className="space-y-3">
-                      {currentQuestion.answers?.map((answer) => (
-                        <label
-                          key={answer.id}
-                          className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                        >
-                          <input
-                            type="radio"
-                            name={`question-${currentQuestion.id}`}
-                            value={answer.id}
-                            checked={
-                              getCurrentAnswer()?.selectedAnswerId === answer.id
-                            }
-                            onChange={() =>
-                              handleAnswerChange(currentQuestion.id, answer.id)
-                            }
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="ml-3 text-gray-900">
-                            {answer.answer_text}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-
-                  {currentQuestion.question_type === "short_answer" && (
-                    <textarea
-                      value={getCurrentAnswer()?.answerText || ""}
-                      onChange={(e) =>
-                        handleAnswerChange(
-                          currentQuestion.id,
-                          undefined,
-                          e.target.value
-                        )
-                      }
-                      placeholder="Type your answer here..."
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows={4}
-                    />
-                  )}
-                </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
 
             {/* Navigation Buttons */}
             <div className="flex items-center justify-between">
-              <button
+              <Button
                 onClick={handlePreviousQuestion}
                 disabled={currentQuestionIndex === 0}
-                className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="outline"
+                className="text-green-700 hover:text-green-900 hover:bg-green-100 border-green-200"
               >
-                <ChevronLeftIcon className="h-4 w-4 mr-1" />
+                <ChevronLeft className="h-4 w-4 mr-2" />
                 Previous
-              </button>
+              </Button>
 
               <div className="flex items-center space-x-4">
                 {currentQuestionIndex < totalQuestions - 1 ? (
-                  <button
+                  <Button
                     onClick={handleNextQuestion}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="bg-green-900 hover:bg-green-800 text-white"
                   >
                     Next
-                    <ChevronRightIcon className="h-4 w-4 ml-1" />
-                  </button>
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
                 ) : (
-                  <button
+                  <Button
                     onClick={handleSubmitQuiz}
                     disabled={submitting}
-                    className="flex items-center px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-green-900 font-semibold"
                   >
                     {submitting ? (
                       <LoadingSpinner size="sm" />
                     ) : (
                       <>
-                        <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                        <Send className="h-4 w-4 mr-2" />
                         Submit Quiz
                       </>
                     )}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -422,55 +427,63 @@ const TakeQuizPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-lg shadow-sm border p-8"
           >
-            <div className="text-center mb-8">
-              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <CheckCircleIcon className="h-8 w-8 text-green-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Quiz Completed!
-              </h2>
-              <p className="text-gray-600">Here are your results</p>
-            </div>
+            <Card className="border-green-200 bg-white">
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-green-900 mb-2">
+                    Quiz Completed!
+                  </h2>
+                  <p className="text-green-700">Here are your results</p>
+                </div>
 
-            {results && (
-              <div className="text-center mb-8">
-                <div className="text-4xl font-bold text-blue-600 mb-2">
-                  {results.correctAnswers}/{results.totalQuestions}
-                </div>
-                <div className="text-sm text-gray-600 mb-2">
-                  Questions Correct
-                </div>
-                <div className="text-xl text-gray-600 mb-4">
-                  {results.percentage}%
-                </div>
-                <div className="text-sm text-gray-500">
-                  {results.percentage >= 80
-                    ? "Excellent!"
-                    : results.percentage >= 60
-                    ? "Good job!"
-                    : results.percentage >= 40
-                    ? "Keep practicing!"
-                    : "Review the material and try again!"}
-                </div>
-              </div>
-            )}
+                {results && (
+                  <div className="text-center mb-8">
+                    <div className="text-4xl font-bold text-green-600 mb-2">
+                      {results.correctAnswers}/{results.totalQuestions}
+                    </div>
+                    <div className="text-sm text-green-700 mb-2">
+                      Questions Correct
+                    </div>
+                    <div className="text-xl text-green-700 mb-4">
+                      {results.percentage}%
+                    </div>
+                    <div className="text-sm text-green-600">
+                      {results.percentage >= 80
+                        ? "Excellent!"
+                        : results.percentage >= 60
+                        ? "Good job!"
+                        : results.percentage >= 40
+                        ? "Keep practicing!"
+                        : "Review the material and try again!"}
+                    </div>
+                  </div>
+                )}
 
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={() => navigate("/student/quizzes")}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Back to Quizzes
-              </button>
-              <button
-                onClick={() => navigate(`/student/quiz-results/${attemptId}`)}
-                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-              >
-                View Detailed Results
-              </button>
-            </div>
+                <div className="flex justify-center space-x-4">
+                  <Button
+                    onClick={() => navigate("/student/quizzes")}
+                    className="bg-green-900 hover:bg-green-800 text-white"
+                  >
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Back to Quizzes
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      navigate(`/student/quiz-results/${attemptId}`)
+                    }
+                    variant="outline"
+                    className="border-green-200 text-green-700 hover:bg-green-100"
+                  >
+                    <Target className="h-4 w-4 mr-2" />
+                    View Detailed Results
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
         )}
       </div>

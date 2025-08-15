@@ -129,6 +129,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: CalendarDaysIcon,
         },
         {
+          name: "Instant Session",
+          href: "/student/instant-session",
+          icon: SparklesIcon,
+        },
+        {
           name: "My Sessions",
           href: "/student/manage-sessions",
           icon: SparklesIcon,

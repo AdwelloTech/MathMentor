@@ -5,6 +5,7 @@ export interface GenerateAIRequest {
   difficulty?: "easy" | "medium" | "hard";
   questionType?: "multiple_choice" | "true_false";
   title?: string;
+  pdfText?: string;
 }
 
 export interface GeneratedAIAnswer {
@@ -22,28 +23,36 @@ export interface GeneratedAIQuestion {
   ai_metadata?: Record<string, any>;
 }
 
+// Flexible signature: supports either an object or positional params
 export async function generateAIQuestions(
-  subject: string,
-  gradeLevel: string,
+  argsOrSubject: GenerateAIRequest | string,
+  gradeLevel?: string,
   numQuestions: number = 4,
   difficulty: "easy" | "medium" | "hard" = "medium",
   questionType: "multiple_choice" | "true_false" = "multiple_choice",
-  title?: string
+  title?: string,
+  pdfText?: string
 ) {
   try {
+    const payload: GenerateAIRequest =
+      typeof argsOrSubject === "string"
+        ? {
+            subject: argsOrSubject,
+            gradeLevel,
+            numQuestions,
+            difficulty,
+            questionType,
+            title,
+            pdfText,
+          }
+        : argsOrSubject;
+
     const response = await fetch("/api/ai/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        subject,
-        gradeLevel,
-        numQuestions,
-        difficulty,
-        questionType,
-        title,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -59,25 +68,41 @@ export async function generateAIQuestions(
 }
 
 export async function generateAIFlashcards(
-  subject: string,
-  gradeLevel: string,
+  subjectOrArgs:
+    | {
+        subject: string;
+        gradeLevel: string;
+        numCards?: number;
+        title?: string;
+        difficulty?: "easy" | "medium" | "hard";
+        pdfText?: string;
+      }
+    | string,
+  gradeLevel?: string,
   numCards: number = 10,
   title?: string,
-  difficulty: "easy" | "medium" | "hard" = "medium"
+  difficulty: "easy" | "medium" | "hard" = "medium",
+  pdfText?: string
 ) {
   try {
+    const payload =
+      typeof subjectOrArgs === "string"
+        ? {
+            subject: subjectOrArgs,
+            gradeLevel,
+            numCards,
+            title,
+            difficulty,
+            pdfText,
+          }
+        : subjectOrArgs;
+
     const response = await fetch("/api/ai/flashcards", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        subject,
-        gradeLevel,
-        numCards,
-        title,
-        difficulty,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -90,4 +115,21 @@ export async function generateAIFlashcards(
     console.error("Error generating AI flashcards:", error);
     throw error;
   }
+}
+
+// Upload a PDF and get base64 for AI processing
+export async function uploadPdfForAI(
+  file: File
+): Promise<{ pdfBase64: string; fileName: string; fileSize: number }> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch("/api/ai/pdf/upload", {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({} as any));
+    throw new Error(err?.error || "Failed to upload PDF");
+  }
+  return res.json();
 }

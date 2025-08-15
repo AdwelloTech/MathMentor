@@ -70,10 +70,10 @@ export interface TutorClass {
     duration_minutes: number;
     description: string | null;
   };
-  zoom_meeting: {
+  jitsi_meeting: {
     id: string;
-    meeting_id: string;
-    join_url: string;
+    room_name: string;
+    meeting_url: string;
     start_url: string;
   } | null;
 }
@@ -250,22 +250,22 @@ class AdminTutorService {
         classTypeMap.set(type.id, type);
       });
 
-      // Get zoom meetings for all classes
+      // Get jitsi meetings for all classes
       const classIds = classes.map(c => c.id);
-      const { data: zoomMeetings, error: zoomError } = await supabase
-        .from('zoom_meetings')
+      const { data: jitsiMeetings, error: jitsiError } = await supabase
+        .from('jitsi_meetings')
         .select('*')
         .in('class_id', classIds);
 
-      if (zoomError) {
-        console.error('Error fetching zoom meetings:', zoomError);
-        throw zoomError;
+      if (jitsiError) {
+        console.error('Error fetching jitsi meetings:', jitsiError);
+        throw jitsiError;
       }
 
-      // Create a map of class IDs to zoom meeting objects
-      const zoomMap = new Map();
-      zoomMeetings?.forEach(zoom => {
-        zoomMap.set(zoom.class_id, zoom);
+      // Create a map of class IDs to jitsi meeting objects
+      const jitsiMap = new Map();
+      jitsiMeetings?.forEach(jitsi => {
+        jitsiMap.set(jitsi.class_id, jitsi);
       });
 
       // Combine the data
@@ -277,7 +277,7 @@ class AdminTutorService {
           duration_minutes: 0,
           description: null
         },
-        zoom_meeting: zoomMap.get(classItem.id) || null,
+        jitsi_meeting: jitsiMap.get(classItem.id) || null,
       }));
 
       return enrichedClasses;

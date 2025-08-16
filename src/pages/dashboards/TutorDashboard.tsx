@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,6 +50,93 @@ const TutorDashboard: React.FC = () => {
   const [upcomingClasses, setUpcomingClasses] = useState<TutorClass[]>([]);
   const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
+  const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+
+  // Audio notification setup (unlocked on first user interaction)
+  const audioCtxRef = useRef<any>(null);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+
+  // Load subjects for display
+  useEffect(() => {
+    const loadSubjects = async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from("note_subjects")
+          .select("id, display_name, name")
+          .eq("is_active", true);
+
+        if (error) {
+          console.error("Error loading subjects:", error);
+          return;
+        }
+
+        const subjectsMap: { [key: string]: string } = {};
+        data?.forEach((subject: any) => {
+          subjectsMap[subject.id] = subject.display_name || subject.name;
+        });
+        setSubjects(subjectsMap);
+      } catch (error) {
+        console.error("Error loading subjects:", error);
+      }
+    };
+
+    loadSubjects();
+  }, []);
+
+  const getSubjectName = (subjectId: string) => {
+    return subjects[subjectId] || "Unknown Subject";
+  };
+
+  // Audio notification setup
+  useEffect(() => {
+    const unlock = () => {
+      try {
+        const AC =
+          (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!AC) return;
+        if (!audioCtxRef.current) audioCtxRef.current = new AC();
+        if (audioCtxRef.current.state !== "running") {
+          audioCtxRef.current.resume();
+        }
+        setAudioEnabled(true);
+      } catch (_) {}
+      document.removeEventListener("click", unlock);
+      document.removeEventListener("keydown", unlock);
+      document.removeEventListener("touchstart", unlock);
+    };
+    document.addEventListener("click", unlock);
+    document.addEventListener("keydown", unlock);
+    document.addEventListener("touchstart", unlock);
+    return () => {
+      document.removeEventListener("click", unlock);
+      document.removeEventListener("keydown", unlock);
+      document.removeEventListener("touchstart", unlock);
+    };
+  }, []);
+
+  const playNotificationSound = () => {
+    if (!audioEnabled || !audioCtxRef.current) return;
+    try {
+      const oscillator = audioCtxRef.current.createOscillator();
+      const gainNode = audioCtxRef.current.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtxRef.current.destination);
+      oscillator.frequency.setValueAtTime(800, audioCtxRef.current.currentTime);
+      oscillator.frequency.setValueAtTime(
+        600,
+        audioCtxRef.current.currentTime + 0.1
+      );
+      gainNode.gain.setValueAtTime(0.1, audioCtxRef.current.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.01,
+        audioCtxRef.current.currentTime + 0.2
+      );
+      oscillator.start(audioCtxRef.current.currentTime);
+      oscillator.stop(audioCtxRef.current.currentTime + 0.2);
+    } catch (_) {}
+  };
 
   // Check for existing application and ID verification on mount
   useEffect(() => {
@@ -72,26 +159,121 @@ const TutorDashboard: React.FC = () => {
     const isEnabled =
       application?.application_status === "approved" &&
       idVerification?.verification_status === "approved";
-    if (!isEnabled) return;
-    const unsubscribe = instantSessionService.subscribeToPending(
-      ({ new: req, eventType }) => {
-        if (eventType === "INSERT") {
-          setInstantRequests((prev) => [req as InstantRequest, ...prev]);
+    if (!isEnabled) {
+      console.log(
+        "[TutorDashboard] Subscription not enabled - tutor features disabled"
+      );
+      return;
+    }
+
+    // Polling mechanism to fetch pending requests every 10 seconds
+    const poll = setInterval(async () => {
+      try {
+        const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // Last 5 minutes
+        const { data, error } = await (supabase as any)
+          .from("instant_requests")
+          .select("*")
+          .eq("status", "pending")
+          .gte("created_at", sinceIso)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        if (error) return;
+        if (!data) return;
+        setInstantRequests((prev) => {
+          const map = new Map(prev.map((r) => [r.id, r]));
+          for (const row of data as any) map.set(row.id, row);
+          const merged = Array.from(map.values()).filter(
+            (r: any) => r.status === "pending"
+          );
+          console.log("[TutorDashboard] Polling update:", {
+            fetched: (data as any).length,
+            merged: merged.length,
+            current: prev.length,
+          });
+          return merged;
+        });
+      } catch (_) {}
+    }, 10000);
+
+    console.log(
+      "[TutorDashboard] Setting up subscription for tutor:",
+      profile?.id,
+      "enabled:",
+      isEnabled,
+      "application status:",
+      application?.application_status,
+      "id verification status:",
+      idVerification?.verification_status
+    );
+    let unsubscribe: (() => void) | undefined;
+    try {
+      unsubscribe = instantSessionService.subscribeToPending(
+        ({ new: req, eventType }) => {
+          console.log(
+            "[TutorDashboard] Event received:",
+            eventType,
+            (req as any).id,
+            "status:",
+            (req as any).status
+          );
+          if (eventType === "INSERT") {
+            const isFresh =
+              Date.now() - new Date((req as any).created_at).getTime() <=
+              FRESH_WINDOW_MS;
+            if (!isFresh) return; // ignore stale backlog
+            playNotificationSound();
+            setInstantRequests((prev) => {
+              const exists = prev.some((r) => r.id === (req as any).id);
+              if (exists) return prev;
+              return [req as InstantRequest, ...prev];
+            });
+          }
+          if (eventType === "UPDATE") {
+            console.log("[TutorDashboard] UPDATE event received:", {
+              requestId: (req as any).id,
+              status: (req as any).status,
+              currentRequests: instantRequests.length,
+            });
+            setInstantRequests((prev) => {
+              const newList =
+                (req as any).status !== "pending"
+                  ? prev.filter((r) => r.id !== (req as any).id)
+                  : prev;
+              console.log("[TutorDashboard] After UPDATE filter:", {
+                beforeCount: prev.length,
+                afterCount: newList.length,
+                removed: prev.length - newList.length,
+              });
+              return newList;
+            });
+          }
         }
-        if (eventType === "UPDATE") {
-          setInstantRequests((prev) =>
-            prev.filter(
-              (r) =>
-                r.id !== (req as any).id || (req as any).status === "pending"
-            )
+      );
+    } catch (error) {
+      console.error("[TutorDashboard] Error setting up subscription:", error);
+    }
+    return () => {
+      console.log(
+        "[TutorDashboard] Cleaning up subscription for tutor:",
+        profile?.id
+      );
+      clearInterval(poll);
+      if (unsubscribe) {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error(
+            "[TutorDashboard] Error cleaning up subscription:",
+            error
           );
         }
       }
-    );
-    return () => {
-      unsubscribe?.();
     };
-  }, [application, idVerification]);
+  }, [
+    application?.application_status,
+    idVerification?.verification_status,
+    profile?.id,
+  ]);
 
   const checkApplication = async () => {
     if (!user) {
@@ -206,6 +388,9 @@ const TutorDashboard: React.FC = () => {
         requestId,
         profile.id
       );
+      // Optimistically remove the card immediately after accept
+      setDismissedIds((prev) => new Set(prev).add(requestId));
+      setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
       if (accepted.jitsi_meeting_url) {
         window.open(accepted.jitsi_meeting_url, "_blank");
       }
@@ -218,6 +403,7 @@ const TutorDashboard: React.FC = () => {
 
   const handleRejectInstant = (requestId: string) => {
     // Just remove from local state - no need to call service for local dismissal
+    setDismissedIds((prev) => new Set(prev).add(requestId));
     setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
   };
 

@@ -184,14 +184,8 @@ const DashboardLayout: React.FC = () => {
           .limit(20);
         if (error) return;
         if (!data) return;
-        setInstantRequests((prev) => {
-          const map = new Map(prev.map((r) => [r.id, r]));
-          for (const row of data as any) map.set(row.id, row);
-          const merged = Array.from(map.values()).filter(
-            (r: any) => r.status === "pending"
-          );
-          return merged;
-        });
+        // Replace the list with current pending requests to avoid stale items lingering
+        setInstantRequests((data as any[]).filter((r: any) => r.status === "pending"));
       } catch (_) {}
     }, 10000);
 
@@ -219,7 +213,7 @@ const DashboardLayout: React.FC = () => {
             return [req as InstantRequest, ...prev];
           });
         }
-        if (eventType === "UPDATE") {
+        if (eventType === "UPDATE" || eventType === "BROADCAST_ACCEPTED") {
           setInstantRequests((prev) =>
             (req as any).status !== "pending"
               ? prev.filter((r) => r.id !== (req as any).id)

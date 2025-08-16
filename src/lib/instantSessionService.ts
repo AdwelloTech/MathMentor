@@ -78,26 +78,25 @@ export const instantSessionService = {
     console.log("[Instant] subscribeToPending start", channelId);
 
     // Listen for acceptance broadcasts to avoid RLS-related UPDATE filtering
-    channel.on(
-      'broadcast',
-      { event: 'accepted' } as any,
-      (payload: any) => {
-        try {
-          const requestId = payload?.payload?.id;
-          if (!requestId) return;
-          console.log('[Instant] BROADCAST accepted', requestId);
-          // Synthesize a minimal payload to unify handling upstream
-          const minimal = { id: requestId, status: 'accepted' } as unknown as InstantRequest;
-          callback({
-            new: minimal,
-            old: null,
-            eventType: 'BROADCAST_ACCEPTED',
-          });
-        } catch (e) {
-          console.warn('[Instant] broadcast accepted handler error', e);
-        }
+    channel.on("broadcast", { event: "accepted" } as any, (payload: any) => {
+      try {
+        const requestId = payload?.payload?.id;
+        if (!requestId) return;
+        console.log("[Instant] BROADCAST accepted", requestId);
+        // Synthesize a minimal payload to unify handling upstream
+        const minimal = {
+          id: requestId,
+          status: "accepted",
+        } as unknown as InstantRequest;
+        callback({
+          new: minimal,
+          old: null,
+          eventType: "BROADCAST_ACCEPTED",
+        });
+      } catch (e) {
+        console.warn("[Instant] broadcast accepted handler error", e);
       }
-    );
+    });
 
     channel.on(
       "postgres_changes",
@@ -202,9 +201,13 @@ export const instantSessionService = {
       const { channel, ready } = getInstantSharedChannel();
       // Ensure channel is ready (SUBSCRIBED) before sending; this is a one-time await after first use
       await ready;
-      await channel.send({ type: 'broadcast', event: 'accepted', payload: { id: requestId } });
+      await channel.send({
+        type: "broadcast",
+        event: "accepted",
+        payload: { id: requestId },
+      });
     } catch (e) {
-      console.warn('[Instant] acceptance broadcast failed (non-fatal)', e);
+      console.warn("[Instant] acceptance broadcast failed (non-fatal)", e);
     }
 
     // Ensure a meeting URL exists (fallback to deterministic)

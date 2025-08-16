@@ -148,14 +148,16 @@ export const flashcards = {
   // Student-side queries
   student: {
     async listAvailable(subject?: string): Promise<FlashcardSet[]> {
-      const query = supabase
+      let query = supabase
         .from("flashcard_sets")
         .select("*, tutor:profiles(id, full_name, email)")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
+
       if (subject) {
-        (query as any).eq("subject", subject);
+        query = query.eq("subject", subject);
       }
+
       const { data, error } = await query;
       if (error) throw error;
       return (data || []) as FlashcardSet[];

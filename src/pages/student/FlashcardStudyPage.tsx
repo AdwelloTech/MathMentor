@@ -1,9 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+
+interface Flashcard {
+  id: string;
+  front_text: string;
+  back_text: string;
+}
+
+interface FlashcardSet {
+  id: string;
+  title: string;
+  subject: string;
+  topic?: string;
+}
+
 import { flashcards } from "@/lib/flashcards";
-import type { Flashcard, FlashcardSet } from "@/types/flashcards";
+// import { flashcards } from "@/lib/flashcards";
+// import type { Flashcard, FlashcardSet } from "@/types/flashcards";
 import { motion } from "framer-motion";
-// Removed jsPDF/html2canvas usage in favor of fast vector export only
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  BookOpen,
+  Sparkles,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+
+// PDF imports
 // @ts-ignore - types are bundled differently
 import pdfMake from "pdfmake/build/pdfmake";
 // @ts-ignore
@@ -42,21 +71,6 @@ const FlashcardStudyPage: React.FC = () => {
     setIndex((i) => (i - 1 + setData.cards.length) % setData.cards.length);
   };
 
-  // Removed: text list PDF
-
-  // Removed: 2x3 grid PDF
-
-  // Removed: single card per page PDF
-
-  // Utility: render a styled card (Front/Back) into an image via html2canvas for full Unicode support
-  // Removed: html2canvas styled capture utilities
-
-  // Removed: side-by-side image PDF
-
-  // Removed: stacked image PDF
-
-  // Removed: exact-style image PDF
-
   const downloadVectorFastPdf = () => {
     if (!setData) return;
     const dd: any = {
@@ -67,9 +81,9 @@ const FlashcardStudyPage: React.FC = () => {
     };
 
     const makeCard = (text: string, isFront: boolean) => {
-      const cardH = 280; // keep original card size
-      const cardW = 500; // keep original card size
-      const innerPad = 24; // padding for text only
+      const cardH = 280;
+      const cardW = 500;
+      const innerPad = 24;
       const fontSz = isFront ? 14 : 12;
       const lineH = Math.round(fontSz * 1.25);
       const approxCharsPerLine = Math.max(
@@ -111,7 +125,6 @@ const FlashcardStudyPage: React.FC = () => {
     };
 
     setData.cards.forEach((c, idx) => {
-      // Each card pair gets its own page
       if (idx > 0) {
         dd.content.push({ text: "", pageBreak: "before" });
       }
@@ -127,7 +140,7 @@ const FlashcardStudyPage: React.FC = () => {
         text: "Back",
         bold: true,
         fontSize: 14,
-        margin: [2, 12, 0, 4], // more space between cards
+        margin: [2, 12, 0, 4],
       });
       dd.content.push(makeCard(c.back_text, false));
     });
@@ -142,71 +155,258 @@ const FlashcardStudyPage: React.FC = () => {
       );
   };
 
-  if (!setData) return null;
+  if (!setData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50 flex items-center justify-center">
+        <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-2xl rounded-2xl">
+          <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
+            <div className="animate-spin p-4 bg-green-900 rounded-2xl">
+              <BookOpen className="h-8 w-8 text-yellow-400" />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-semibold text-green-900">
+                Loading Flashcards
+              </h3>
+              <p className="text-base text-slate-600">
+                Preparing your study session...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{setData.title}</h1>
-          <div className="text-sm text-gray-600">
-            {setData.subject}
-            {setData.topic ? ` • ${setData.topic}` : ""}
-          </div>
-        </div>
-        <button
-          onClick={downloadVectorFastPdf}
-          className="px-4 py-2 bg-green-600 text-white rounded-md mt-2"
-        >
-          Download PDF
-        </button>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-yellow-50">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-900/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-400/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="flex flex-col items-center">
-        <div className="text-gray-500 text-xs mb-2">Click card to flip</div>
+      <div className="relative max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {/* Header Section */}
         <motion.div
-          className="relative [perspective:1200px]"
-          onClick={() => setShowBack((s) => !s)}
+          className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <motion.div
-            className="bg-white border rounded-xl shadow-md select-none cursor-pointer"
-            style={{
-              width: "min(90vw, 640px)",
-              height: "clamp(260px, 52vw, 380px)",
-              transformStyle: "preserve-3d",
-            }}
-            animate={{ rotateY: showBack ? 180 : 0 }}
-            transition={{ duration: 0.5 }}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-green-900 to-green-800 rounded-2xl shadow-lg">
+                <Sparkles className="h-6 w-6 text-yellow-400" />
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-green-900 to-green-700 bg-clip-text text-transparent">
+                {setData.title}
+              </h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge
+                variant="secondary"
+                className="bg-green-900/10 text-green-900 hover:bg-green-900/20 rounded-xl px-4 py-2 text-base font-medium"
+              >
+                {setData.subject}
+              </Badge>
+              {setData.topic && (
+                <Badge
+                  variant="outline"
+                  className="border-yellow-400 text-yellow-600 rounded-xl px-4 py-2 text-base"
+                >
+                  {setData.topic}
+                </Badge>
+              )}
+              <Badge
+                variant="outline"
+                className="border-slate-300 text-slate-600 rounded-xl px-4 py-2 text-base"
+              >
+                {setData.cards.length} cards
+              </Badge>
+            </div>
+          </div>
+
+          <Button
+            onClick={downloadVectorFastPdf}
+            className="bg-gradient-to-r from-green-900 to-green-800 hover:from-green-800 hover:to-green-700 text-yellow-400 font-semibold px-6 py-3 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
           >
-            <div
-              className="absolute inset-0 flex items-center justify-center px-8 text-xl font-semibold whitespace-pre-wrap [backface-visibility:hidden]"
-              style={{ transform: "rotateY(0deg)" }}
+            <Download className="mr-2 h-5 w-5" />
+            Download PDF
+          </Button>
+        </motion.div>
+
+        {/* Main Flashcard Area */}
+        <div className="flex flex-col items-center space-y-6">
+          {/* Flip Instruction */}
+          <motion.div
+            className="flex items-center gap-2 text-slate-600 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <motion.div
+              animate={{ rotate: showBack ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
             >
-              {current?.front_text}
-            </div>
-            <div
-              className="absolute inset-0 flex items-center justify-center px-8 text-xl font-semibold whitespace-pre-wrap [backface-visibility:hidden]"
-              style={{ transform: "rotateY(180deg)" }}
-            >
-              {current?.back_text}
-            </div>
+              <RotateCcw className="h-4 w-4" />
+            </motion.div>
+            <span className="text-sm font-medium">Click card to flip</span>
+            {showBack ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
           </motion.div>
+
+          {/* 3D Flip Card */}
+          <motion.div
+            className="relative [perspective:1200px] cursor-pointer"
+            onClick={() => setShowBack((s) => !s)}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <motion.div
+              className="bg-gradient-to-br from-white via-white to-slate-50 border border-slate-200/50 rounded-3xl shadow-2xl select-none relative overflow-hidden"
+              style={{
+                width: "min(90vw, 700px)",
+                height: "clamp(300px, 50vw, 420px)",
+                transformStyle: "preserve-3d",
+              }}
+              animate={{ rotateY: showBack ? 180 : 0 }}
+              transition={{ duration: 0.7, ease: "easeInOut" }}
+            >
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-900/5 via-transparent to-yellow-400/5 rounded-3xl"></div>
+
+              {/* Front Side */}
+              {!showBack ? (
+                /* Front Side */
+                <div className="absolute inset-0 flex items-center justify-center p-10">
+                  <div className="text-center space-y-4">
+                    <div className="inline-flex items-center gap-2 bg-green-900/10 text-green-900 px-3 py-1 rounded-full text-sm font-medium">
+                      <BookOpen className="h-4 w-4" />
+                      Front
+                    </div>
+                    <div className="text-2xl lg:text-3xl font-bold text-green-900 whitespace-pre-wrap leading-relaxed">
+                      {current?.front_text}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Back Side */
+                <div
+                  className="absolute inset-0 flex items-center justify-center p-10"
+                  style={{ transform: "rotateY(180deg)" }}
+                >
+                  <div className="text-center space-y-4">
+                    <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">
+                      <Sparkles className="h-4 w-4" />
+                      Back
+                    </div>
+                    <div className="text-xl lg:text-2xl font-semibold text-slate-800 whitespace-pre-wrap leading-relaxed">
+                      {current?.back_text}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Subtle shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-3xl pointer-events-none"></div>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Navigation Controls */}
+        <motion.div
+          className="flex items-center justify-between max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <Button
+            onClick={prev}
+            variant="outline"
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-yellow-400 transition-all duration-300 font-semibold"
+            disabled={!setData?.cards.length}
+          >
+            <ChevronLeft className="h-5 w-5" />
+            Previous
+          </Button>
+
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
+            <CardContent className="px-6 py-4">
+              <div className="flex items-center gap-4">
+                <div className="text-lg font-bold text-green-900">
+                  {index + 1}
+                </div>
+                <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-green-900 to-yellow-400 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{
+                      width: `${((index + 1) / setData.cards.length) * 100}%`,
+                    }}
+                    transition={{ duration: 0.3 }}
+                  ></motion.div>
+                </div>
+                <div className="text-lg font-bold text-slate-600">
+                  {setData.cards.length}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button
+            onClick={next}
+            variant="outline"
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-yellow-400 transition-all duration-300 font-semibold"
+            disabled={!setData?.cards.length}
+          >
+            Next
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </motion.div>
+
+        {/* Study Progress Stats */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+        >
+          <Card className="bg-gradient-to-br from-green-900 to-green-800 border-0 shadow-xl rounded-2xl text-white">
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-yellow-400 mb-2">
+                {setData.cards.length}
+              </div>
+              <div className="text-sm font-medium opacity-90">Total Cards</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-yellow-400 to-yellow-500 border-0 shadow-xl rounded-2xl text-white">
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-green-900 mb-2">
+                {index + 1}
+              </div>
+              <div className="text-sm font-medium text-green-900 opacity-90">
+                Current Card
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-slate-700 to-slate-800 border-0 shadow-xl rounded-2xl text-white">
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-yellow-400 mb-2">
+                {Math.round(((index + 1) / setData.cards.length) * 100)}%
+              </div>
+              <div className="text-sm font-medium opacity-90">Progress</div>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
-
-      <div className="flex items-center justify-between">
-        <button onClick={prev} className="px-4 py-2 bg-gray-100 rounded-md">
-          Previous
-        </button>
-        <div className="text-sm text-gray-600">
-          {index + 1} / {setData.cards.length}
-        </div>
-        <button onClick={next} className="px-4 py-2 bg-gray-100 rounded-md">
-          Next
-        </button>
-      </div>
-
-      {/* Removed bottom PDF button; moved to top-right */}
     </div>
   );
 };

@@ -4,29 +4,15 @@ import { UserIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import StudentProfile from "@/components/student/StudentProfile";
 import TutorProfile from "@/components/tutor/TutorProfile";
+import ProfileHeader from "@/components/layout/ProfileHeader";
 
 const ProfilePage: React.FC = () => {
   const { profile } = useAuth();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full mx-auto">
       {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="border-b border-gray-200 pb-5"
-      >
-        <div className="flex items-center">
-          <UserIcon className="h-8 w-8 text-primary-600 mr-3" />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Manage your personal information and learning preferences.
-            </p>
-          </div>
-        </div>
-      </motion.div>
+      <ProfileHeader />
 
       {/* Profile Content */}
       <motion.div

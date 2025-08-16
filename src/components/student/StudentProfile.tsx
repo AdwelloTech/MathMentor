@@ -9,6 +9,28 @@ import {
   ExclamationTriangleIcon,
   PhotoIcon,
 } from "@heroicons/react/24/outline";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useGradeLevels, findGradeLevelById } from "@/lib/gradeLevels";
@@ -171,6 +193,13 @@ const StudentProfile: React.FC = () => {
     }
   };
 
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   // Handle profile image change
   const handleProfileImageChange = async (imageUrl: string | null) => {
     setCurrentProfileImageUrl(imageUrl);
@@ -314,479 +343,579 @@ const StudentProfile: React.FC = () => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="card"
-    >
-      <div className="card-header">
-        <div className="flex items-center">
-          <UserIcon className="h-6 w-6 text-primary-600 mr-3" />
-          <h2 className="text-xl font-semibold text-gray-900">
-            Student Profile
-          </h2>
-        </div>
-        <p className="mt-1 text-sm text-gray-600">
-          View and update your personal information and learning preferences.
-        </p>
-      </div>
-
-      <div className="card-body">
-        {/* Profile Image Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-8 pb-6 border-b border-gray-200"
-        >
-          <div className="flex items-center mb-4">
-            <PhotoIcon className="h-5 w-5 text-primary-600 mr-2" />
-            <h3 className="text-lg font-medium text-gray-900">Profile Photo</h3>
-          </div>
-          <div className="flex justify-center">
-            {user?.id && profile?.id && (
-              <ProfileImageUpload
-                userId={user.id}
-                profileId={profile.id}
-                currentImageUrl={currentProfileImageUrl || undefined}
-                onImageChange={handleProfileImageChange}
-              />
-            )}
-          </div>
-        </motion.div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Full Name */}
-            <div className="form-group">
-              <label htmlFor="firstName" className="form-label">
-                <UserIcon className="h-4 w-4 text-gray-500 mr-1" />
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className="input"
-                placeholder="Enter your first name"
-                required
-              />
+    <div className="max-w-full mx-auto p-6 space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="shadow-lg border-0 bg-white rounded-2xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white pb-8">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-yellow-400 rounded-xl">
+                <UserIcon className="h-6 w-6 text-emerald-900" />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-semibold text-white">
+                  Student Profile
+                </CardTitle>
+                <CardDescription className="text-emerald-100 mt-1">
+                  View and update your personal information and learning
+                  preferences.
+                </CardDescription>
+              </div>
             </div>
+          </CardHeader>
 
-            <div className="form-group">
-              <label htmlFor="lastName" className="form-label">
-                <UserIcon className="h-4 w-4 text-gray-500 mr-1" />
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="input"
-                placeholder="Enter your last name"
-                required
-              />
-            </div>
-
-            {/* Email (Read-only) */}
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                className="input bg-gray-50 cursor-not-allowed"
-                disabled
-                readOnly
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Email address cannot be changed here. Contact support if needed.
-              </p>
-            </div>
-
-            {/* Age (Calculated/Manual) */}
-            <div className="form-group">
-              <label htmlFor="age" className="form-label">
-                <UserIcon className="h-4 w-4 text-gray-500 mr-1" />
-                Age
-              </label>
-              <input
-                type="number"
-                id="age"
-                name="age"
-                value={formData.age || ""}
-                onChange={handleInputChange}
-                className="input"
-                placeholder="Enter your age"
-                min="5"
-                max="100"
-              />
-            </div>
-
-            {/* Current Grade - Database Driven */}
-            <div className="form-group">
-              <label htmlFor="gradeLevelId" className="form-label">
-                <AcademicCapIcon className="h-4 w-4 text-gray-500 mr-1" />
-                Current Grade
-              </label>
-              {gradeLevelsLoading ? (
-                <div className="input flex items-center">
-                  <LoadingSpinner size="sm" />
-                  <span className="ml-2 text-gray-500">
-                    Loading grade levels...
-                  </span>
+          <CardContent className="p-8 space-y-8">
+            {/* Profile Image Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-center"
+            >
+              <div className="flex items-center mb-6">
+                <div className="p-2 bg-yellow-400/10 rounded-xl mr-3">
+                  <PhotoIcon className="h-5 w-5 text-emerald-900" />
                 </div>
-              ) : gradeLevelsError ? (
-                <div className="input bg-red-50 text-red-600">
-                  Error loading grade levels
+                <h3 className="text-xl font-medium text-slate-900">
+                  Profile Photo
+                </h3>
+              </div>
+              <div className="flex justify-center">
+                {user?.id && profile?.id && (
+                  <ProfileImageUpload
+                    userId={user.id}
+                    profileId={profile.id}
+                    currentImageUrl={currentProfileImageUrl || undefined}
+                    onImageChange={handleProfileImageChange}
+                  />
+                )}
+              </div>
+              <Separator className="mt-8" />
+            </motion.div>
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Basic Information */}
+              <div className="space-y-6">
+                <div className="flex items-center mb-6">
+                  <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
+                    <UserIcon className="h-5 w-5 text-emerald-900" />
+                  </div>
+                  <h3 className="text-xl font-medium text-slate-900">
+                    Basic Information
+                  </h3>
                 </div>
-              ) : (
-                <select
-                  id="gradeLevelId"
-                  name="gradeLevelId"
-                  value={formData.gradeLevelId || ""}
-                  onChange={handleInputChange}
-                  className="input"
-                >
-                  <option value="">Select your current grade</option>
-                  {Object.entries(groupedGradeLevels).map(
-                    ([category, levels]) => (
-                      <optgroup
-                        key={category}
-                        label={
-                          categoryLabels[
-                            category as keyof typeof categoryLabels
-                          ]
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="firstName"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      First Name
+                    </Label>
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      placeholder="Enter your first name"
+                      required
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="lastName"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Last Name
+                    </Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      placeholder="Enter your last name"
+                      required
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="email"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      disabled
+                      readOnly
+                      className="h-12 rounded-2xl bg-slate-50 cursor-not-allowed border-slate-200"
+                    />
+                    <p className="text-xs text-slate-500">
+                      Email address cannot be changed here. Contact support if
+                      needed.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="age"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Age
+                    </Label>
+                    <Input
+                      id="age"
+                      name="age"
+                      type="number"
+                      value={formData.age || ""}
+                      onChange={handleInputChange}
+                      placeholder="Enter your age"
+                      min="5"
+                      max="100"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="gradeLevelId"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Current Grade
+                    </Label>
+                    {gradeLevelsLoading ? (
+                      <div className="h-12 rounded-2xl border border-slate-200 flex items-center px-4">
+                        <LoadingSpinner size="sm" />
+                        <span className="ml-2 text-slate-500">
+                          Loading grade levels...
+                        </span>
+                      </div>
+                    ) : gradeLevelsError ? (
+                      <div className="h-12 rounded-2xl bg-red-50 border border-red-200 flex items-center px-4 text-red-600">
+                        Error loading grade levels
+                      </div>
+                    ) : (
+                      <Select
+                        value={formData.gradeLevelId || ""}
+                        onValueChange={(value) =>
+                          handleSelectChange("gradeLevelId", value)
                         }
                       >
-                        {levels.map((gradeLevel) => (
-                          <option key={gradeLevel.id} value={gradeLevel.id}>
-                            {gradeLevel.display_name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )
-                  )}
-                </select>
-              )}
-            </div>
+                        <SelectTrigger className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900">
+                          <SelectValue placeholder="Select your current grade" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl">
+                          {Object.entries(groupedGradeLevels).map(
+                            ([category, levels]) => (
+                              <div key={category}>
+                                <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+                                  {
+                                    categoryLabels[
+                                      category as keyof typeof categoryLabels
+                                    ]
+                                  }
+                                </div>
+                                {levels.map((gradeLevel) => (
+                                  <SelectItem
+                                    key={gradeLevel.id}
+                                    value={gradeLevel.id}
+                                  >
+                                    {gradeLevel.display_name}
+                                  </SelectItem>
+                                ))}
+                              </div>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
 
-            {/* Academic Set */}
-            <div className="form-group">
-              <label htmlFor="academicSet" className="form-label">
-                <AcademicCapIcon className="h-4 w-4 text-gray-500 mr-1" />
-                Academic Set
-              </label>
-              <select
-                id="academicSet"
-                name="academicSet"
-                value={formData.academicSet || ""}
-                onChange={handleInputChange}
-                className="input"
-              >
-                <option value="">Select your academic set</option>
-                <option value="Set 1">Set 1</option>
-                <option value="Set 2">Set 2</option>
-                <option value="Set 3">Set 3</option>
-                <option value="Set 4 (Foundation)">Set 4 (Foundation)</option>
-              </select>
-            </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="academicSet"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Academic Set
+                    </Label>
+                    <Select
+                      value={formData.academicSet || ""}
+                      onValueChange={(value) =>
+                        handleSelectChange("academicSet", value)
+                      }
+                    >
+                      <SelectTrigger className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900">
+                        <SelectValue placeholder="Select your academic set" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        <SelectItem value="Set 1">Set 1</SelectItem>
+                        <SelectItem value="Set 2">Set 2</SelectItem>
+                        <SelectItem value="Set 3">Set 3</SelectItem>
+                        <SelectItem value="Set 4 (Foundation)">
+                          Set 4 (Foundation)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            {/* School Name */}
-            <div className="form-group">
-              <label htmlFor="schoolName" className="form-label">
-                <AcademicCapIcon className="h-4 w-4 text-gray-500 mr-1" />
-                School Name (Optional)
-              </label>
-              <input
-                type="text"
-                id="schoolName"
-                name="schoolName"
-                value={formData.schoolName}
-                onChange={handleInputChange}
-                className="input"
-                placeholder="Enter your school name"
-              />
-            </div>
-          </div>
-
-          {/* Contact Information */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Contact Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="form-group">
-                <label htmlFor="phone" className="form-label">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Enter your phone number"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="emergencyContact" className="form-label">
-                  Emergency Contact
-                </label>
-                <input
-                  type="tel"
-                  id="emergencyContact"
-                  name="emergencyContact"
-                  value={formData.emergencyContact}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Emergency contact number"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="city" className="form-label">
-                  City
-                </label>
-                <input
-                  type="text"
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Enter your city"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="postcode" className="form-label">
-                  Postcode
-                </label>
-                <input
-                  type="text"
-                  id="postcode"
-                  name="postcode"
-                  value={formData.postcode}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Enter your postcode"
-                />
-              </div>
-
-              <div className="form-group md:col-span-2">
-                <label htmlFor="address" className="form-label">
-                  Full Address (Optional)
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Enter your full address (optional)"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="gender" className="form-label">
-                  Gender
-                </label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender || ""}
-                  onChange={handleInputChange}
-                  className="input"
-                >
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Parent Contact Information */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Parent/Guardian Contact Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="form-group">
-                <label htmlFor="parentName" className="form-label">
-                  <UserIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  Parent/Guardian Name
-                </label>
-                <input
-                  type="text"
-                  id="parentName"
-                  name="parentName"
-                  value={formData.parentName}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Enter parent/guardian name"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="parentPhone" className="form-label">
-                  <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  Parent/Guardian Phone
-                </label>
-                <input
-                  type="tel"
-                  id="parentPhone"
-                  name="parentPhone"
-                  value={formData.parentPhone}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Enter parent/guardian phone number"
-                />
-              </div>
-
-              <div className="form-group md:col-span-2">
-                <label htmlFor="parentEmail" className="form-label">
-                  <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  Parent/Guardian Email
-                </label>
-                <input
-                  type="email"
-                  id="parentEmail"
-                  name="parentEmail"
-                  value={formData.parentEmail}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Enter parent/guardian email address"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Learning Needs */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              <HeartIcon className="h-5 w-5 text-red-500 inline mr-2" />
-              Learning Preferences & Special Needs
-            </h3>
-
-            {/* Learning Disabilities Checkbox */}
-            <div className="form-group">
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="hasLearningDisabilities"
-                  name="hasLearningDisabilities"
-                  checked={formData.hasLearningDisabilities}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-1"
-                />
-                <div className="ml-3">
-                  <label
-                    htmlFor="hasLearningDisabilities"
-                    className="text-sm font-medium text-gray-900 cursor-pointer"
-                  >
-                    I have learning disabilities or special needs
-                  </label>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Check this box if you have any learning challenges that we
-                    should be aware of
-                  </p>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label
+                      htmlFor="schoolName"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      School Name{" "}
+                      <Badge variant="secondary" className="ml-2 bg-slate-100">
+                        Optional
+                      </Badge>
+                    </Label>
+                    <Input
+                      id="schoolName"
+                      name="schoolName"
+                      value={formData.schoolName}
+                      onChange={handleInputChange}
+                      placeholder="Enter your school name"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Learning Needs Description - Conditional */}
-            {formData.hasLearningDisabilities && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                className="form-group mt-4"
-              >
-                <label
-                  htmlFor="learningNeedsDescription"
-                  className="form-label"
+              <Separator />
+
+              {/* Contact Information */}
+              <div className="space-y-6">
+                <div className="flex items-center mb-6">
+                  <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
+                    <EnvelopeIcon className="h-5 w-5 text-emerald-900" />
+                  </div>
+                  <h3 className="text-xl font-medium text-slate-900">
+                    Contact Information
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="phone"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Phone Number
+                    </Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="Enter your phone number"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="emergencyContact"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Emergency Contact
+                    </Label>
+                    <Input
+                      id="emergencyContact"
+                      name="emergencyContact"
+                      type="tel"
+                      value={formData.emergencyContact}
+                      onChange={handleInputChange}
+                      placeholder="Emergency contact number"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="city"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      City
+                    </Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      placeholder="Enter your city"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="postcode"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Postcode
+                    </Label>
+                    <Input
+                      id="postcode"
+                      name="postcode"
+                      value={formData.postcode}
+                      onChange={handleInputChange}
+                      placeholder="Enter your postcode"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label
+                      htmlFor="address"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Full Address{" "}
+                      <Badge variant="secondary" className="ml-2 bg-slate-100">
+                        Optional
+                      </Badge>
+                    </Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      placeholder="Enter your full address (optional)"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="gender"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Gender
+                    </Label>
+                    <Select
+                      value={formData.gender || ""}
+                      onValueChange={(value) =>
+                        handleSelectChange("gender", value)
+                      }
+                    >
+                      <SelectTrigger className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900">
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Parent Contact Information */}
+              <div className="space-y-6">
+                <div className="flex items-center mb-6">
+                  <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
+                    <UserIcon className="h-5 w-5 text-emerald-900" />
+                  </div>
+                  <h3 className="text-xl font-medium text-slate-900">
+                    Parent/Guardian Contact Information
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="parentName"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Parent/Guardian Name
+                    </Label>
+                    <Input
+                      id="parentName"
+                      name="parentName"
+                      value={formData.parentName}
+                      onChange={handleInputChange}
+                      placeholder="Enter parent/guardian name"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="parentPhone"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Parent/Guardian Phone
+                    </Label>
+                    <Input
+                      id="parentPhone"
+                      name="parentPhone"
+                      type="tel"
+                      value={formData.parentPhone}
+                      onChange={handleInputChange}
+                      placeholder="Enter parent/guardian phone number"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label
+                      htmlFor="parentEmail"
+                      className="text-base font-medium text-slate-700"
+                    >
+                      Parent/Guardian Email
+                    </Label>
+                    <Input
+                      id="parentEmail"
+                      name="parentEmail"
+                      type="email"
+                      value={formData.parentEmail}
+                      onChange={handleInputChange}
+                      placeholder="Enter parent/guardian email address"
+                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Learning Needs */}
+              <div className="space-y-6">
+                <div className="flex items-center mb-6">
+                  <div className="p-2 bg-red-50 rounded-xl mr-3">
+                    <HeartIcon className="h-5 w-5 text-red-500" />
+                  </div>
+                  <h3 className="text-xl font-medium text-slate-900">
+                    Learning Preferences & Special Needs
+                  </h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3 p-4 bg-slate-50 rounded-2xl">
+                    <Checkbox
+                      id="hasLearningDisabilities"
+                      checked={formData.hasLearningDisabilities}
+                      onCheckedChange={(checked) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          hasLearningDisabilities: checked as boolean,
+                          ...(!(checked as boolean)
+                            ? { learningNeedsDescription: "" }
+                            : {}),
+                        }));
+                      }}
+                      className="mt-1 data-[state=checked]:bg-emerald-900 data-[state=checked]:border-emerald-900"
+                    />
+                    <div className="flex-1">
+                      <Label
+                        htmlFor="hasLearningDisabilities"
+                        className="text-base font-medium text-slate-900 cursor-pointer"
+                      >
+                        I have learning disabilities or special needs
+                      </Label>
+                      <p className="text-sm text-slate-500 mt-1">
+                        Check this box if you have any learning challenges that
+                        we should be aware of
+                      </p>
+                    </div>
+                  </div>
+
+                  {formData.hasLearningDisabilities && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-2"
+                    >
+                      <Label
+                        htmlFor="learningNeedsDescription"
+                        className="text-base font-medium text-slate-700"
+                      >
+                        Describe Your Learning Needs
+                      </Label>
+                      <Textarea
+                        id="learningNeedsDescription"
+                        name="learningNeedsDescription"
+                        value={formData.learningNeedsDescription}
+                        onChange={handleInputChange}
+                        rows={4}
+                        placeholder="Please describe your specific learning challenges, accommodations needed, or any other information that would help us provide better support..."
+                        className="resize-none rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      />
+                      <p className="text-sm text-slate-500">
+                        This information will help us provide personalized
+                        learning support and accommodations.
+                      </p>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+
+              {/* Save Status Messages */}
+              {saveStatus === "success" && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
                 >
-                  Describe Your Learning Needs
-                </label>
-                <textarea
-                  id="learningNeedsDescription"
-                  name="learningNeedsDescription"
-                  value={formData.learningNeedsDescription}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="input resize-none"
-                  placeholder="Please describe your specific learning challenges, accommodations needed, or any other information that would help us provide better support..."
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  This information will help us provide personalized learning
-                  support and accommodations.
-                </p>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Save Status Messages */}
-          {saveStatus === "success" && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center p-3 bg-green-50 border border-green-200 rounded-lg"
-            >
-              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-              <p className="text-sm text-green-600">
-                Profile updated successfully!
-              </p>
-            </motion.div>
-          )}
-
-          {saveStatus === "error" && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center p-3 bg-red-50 border border-red-200 rounded-lg"
-            >
-              <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
-              <p className="text-sm text-red-600">{errorMessage}</p>
-            </motion.div>
-          )}
-
-          {/* Submit Button */}
-          <div className="flex justify-end pt-6 border-t border-gray-200">
-            <button
-              type="submit"
-              disabled={isSaving || gradeLevelsLoading}
-              className="btn btn-primary min-w-[140px]"
-            >
-              {isSaving ? (
-                <>
-                  <LoadingSpinner size="sm" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
+                  <Alert className="border-emerald-200 bg-emerald-50 rounded-2xl">
+                    <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
+                    <AlertDescription className="text-emerald-700">
+                      Profile updated successfully!
+                    </AlertDescription>
+                  </Alert>
+                </motion.div>
               )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </motion.div>
+
+              {saveStatus === "error" && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                >
+                  <Alert className="border-red-200 bg-red-50 rounded-2xl">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+                    <AlertDescription className="text-red-700">
+                      {errorMessage}
+                    </AlertDescription>
+                  </Alert>
+                </motion.div>
+              )}
+
+              {/* Submit Button */}
+              <div className="flex justify-end pt-6">
+                <Button
+                  type="submit"
+                  disabled={isSaving || gradeLevelsLoading}
+                  className="min-w-[140px] h-12 bg-emerald-900 hover:bg-emerald-800 text-white rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  {isSaving ? (
+                    <>
+                      <LoadingSpinner size="sm" />
+                      <span className="ml-2">Saving...</span>
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
   );
 };
 

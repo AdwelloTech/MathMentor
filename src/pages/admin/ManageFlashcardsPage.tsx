@@ -7,6 +7,7 @@ import {
   BookOpenIcon,
   AcademicCapIcon,
   UserIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import {
   AdminFlashcardService,
@@ -28,6 +29,7 @@ const ManageFlashcardsPage: React.FC = () => {
   const [showSetModal, setShowSetModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewingSetId, setViewingSetId] = useState<string | null>(null);
   const [stats, setStats] = useState<FlashcardStats>({
     total: 0,
     active: 0,
@@ -89,7 +91,13 @@ const ManageFlashcardsPage: React.FC = () => {
   }, [flashcardSets, searchTerm, filterSubject]);
 
   const handleViewSet = async (set: AdminFlashcardSet) => {
+    // Prevent multiple simultaneous requests for the same set
+    if (viewingSetId === set.id) {
+      return;
+    }
+
     try {
+      setViewingSetId(set.id);
       const detailedSet = await AdminFlashcardService.getFlashcardSetDetails(
         set.id
       );
@@ -100,6 +108,8 @@ const ManageFlashcardsPage: React.FC = () => {
     } catch (error) {
       console.error("Error loading flashcard set details:", error);
       toast.error("Failed to load flashcard set details");
+    } finally {
+      setViewingSetId(null);
     }
   };
 
@@ -294,10 +304,19 @@ const ManageFlashcardsPage: React.FC = () => {
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => handleViewSet(set)}
-                          className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-100 transition-colors"
+                          disabled={viewingSetId === set.id}
+                          className={`p-1 rounded-full transition-colors ${
+                            viewingSetId === set.id
+                              ? "text-gray-400 cursor-not-allowed"
+                              : "text-green-600 hover:text-green-900 hover:bg-green-100"
+                          }`}
                           title="View Details"
                         >
-                          <EyeIcon className="h-4 w-4" />
+                          {viewingSetId === set.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                          ) : (
+                            <EyeIcon className="h-4 w-4" />
+                          )}
                         </button>
                         <button
                           onClick={() => {

@@ -65,6 +65,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       href: "/admin/id-verifications",
       icon: IdentificationIcon,
     },
+    {
+      name: "Manage Quizzes",
+      href: "/admin/quizzes",
+      icon: DocumentTextIcon,
+    },
+    {
+      name: "Manage Flash Cards",
+      href: "/admin/flashcards",
+      icon: BookOpenIcon,
+    },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];

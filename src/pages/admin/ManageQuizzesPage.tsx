@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   MagnifyingGlassIcon,
@@ -11,6 +11,7 @@ import {
   AcademicCapIcon,
   ClockIcon,
   UserIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import { AdminQuizService, AdminQuiz, QuizStats } from "@/lib/adminQuizService";
 import toast from "react-hot-toast";
@@ -26,6 +27,7 @@ const ManageQuizzesPage: React.FC = () => {
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewingQuizId, setViewingQuizId] = useState<string | null>(null);
   const [stats, setStats] = useState<QuizStats>({
     total: 0,
     active: 0,
@@ -37,6 +39,24 @@ const ManageQuizzesPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Debug state changes
+  useEffect(() => {
+    console.log(
+      "State changed - showQuizModal:",
+      showQuizModal,
+      "selectedQuiz:",
+      selectedQuiz?.id
+    );
+  }, [showQuizModal, selectedQuiz]);
+
+  // Prevent modal from closing unexpectedly
+  useEffect(() => {
+    if (showQuizModal && !selectedQuiz) {
+      console.warn("Modal is open but no quiz selected, closing modal");
+      setShowQuizModal(false);
+    }
+  }, [showQuizModal, selectedQuiz]);
 
   const loadData = async () => {
     try {
@@ -84,24 +104,46 @@ const ManageQuizzesPage: React.FC = () => {
     setFilteredQuizzes(filtered);
   }, [quizzes, searchTerm, filterSubject]);
 
-  const handleViewQuiz = async (quiz: AdminQuiz) => {
-    try {
-      console.log("Attempting to view quiz:", quiz);
-      console.log("Quiz ID being passed:", quiz.id, "Type:", typeof quiz.id);
-      const detailedQuiz = await AdminQuizService.getQuizDetails(quiz.id);
-      console.log("Detailed quiz returned:", detailedQuiz);
-      if (detailedQuiz) {
-        setSelectedQuiz(detailedQuiz);
-        setShowQuizModal(true);
-      } else {
-        console.error("No detailed quiz returned");
-        toast.error("No quiz details found");
+  const handleViewQuiz = useCallback(
+    async (quiz: AdminQuiz) => {
+      // Prevent multiple simultaneous requests for the same quiz
+      if (viewingQuizId === quiz.id) {
+        return;
       }
-    } catch (error) {
-      console.error("Error loading quiz details:", error);
-      toast.error("Failed to load quiz details");
-    }
-  };
+
+      try {
+        setViewingQuizId(quiz.id);
+        console.log("Attempting to view quiz:", quiz);
+        console.log("Quiz ID being passed:", quiz.id, "Type:", typeof quiz.id);
+
+        const detailedQuiz = await AdminQuizService.getQuizDetails(quiz.id);
+        console.log("Detailed quiz returned:", detailedQuiz);
+
+        if (detailedQuiz) {
+          console.log("Setting selected quiz and opening modal...");
+          // Use a function to ensure we're working with the latest state
+          setSelectedQuiz(detailedQuiz);
+          // Small delay to ensure selectedQuiz is set before opening modal
+          requestAnimationFrame(() => {
+            setShowQuizModal(true);
+            console.log(
+              "Modal state set to true, selectedQuiz:",
+              detailedQuiz.id
+            );
+          });
+        } else {
+          console.error("No detailed quiz returned");
+          toast.error("No quiz details found");
+        }
+      } catch (error) {
+        console.error("Error loading quiz details:", error);
+        toast.error("Failed to load quiz details");
+      } finally {
+        setViewingQuizId(null);
+      }
+    },
+    [viewingQuizId]
+  );
 
   const handleDeleteQuiz = async () => {
     if (!deletingId) return;
@@ -311,10 +353,19 @@ const ManageQuizzesPage: React.FC = () => {
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => handleViewQuiz(quiz)}
-                          className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-100 transition-colors"
+                          disabled={viewingQuizId === quiz.id}
+                          className={`p-1 rounded-full transition-colors ${
+                            viewingQuizId === quiz.id
+                              ? "text-gray-400 cursor-not-allowed"
+                              : "text-green-600 hover:text-green-900 hover:bg-green-100"
+                          }`}
                           title="View Details"
                         >
-                          <EyeIcon className="h-4 w-4" />
+                          {viewingQuizId === quiz.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                          ) : (
+                            <EyeIcon className="h-4 w-4" />
+                          )}
                         </button>
                         <button
                           onClick={() => {
@@ -351,8 +402,17 @@ const ManageQuizzesPage: React.FC = () => {
       </div>
 
       {/* Quiz Details Modal */}
+      {console.log(
+        "Modal render check - showQuizModal:",
+        showQuizModal,
+        "selectedQuiz:",
+        selectedQuiz?.id
+      )}
       {showQuizModal && selectedQuiz && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]"
+          style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
+        >
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-start">

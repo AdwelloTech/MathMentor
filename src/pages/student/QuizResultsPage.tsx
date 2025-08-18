@@ -58,13 +58,28 @@ const QuizResultsPage: React.FC = () => {
   const loadAttemptDetails = async (attemptId: string) => {
     try {
       setLoading(true);
+      console.log("Loading attempt details for ID:", attemptId);
+
       const details = await quizService.studentQuizzes.getAttemptDetails(
         attemptId
       );
+
+      console.log("Attempt details loaded:", details);
       setSelectedAttempt(details);
     } catch (error) {
       console.error("Error loading attempt details:", error);
-      toast.error("Failed to load attempt details");
+
+      // Check if it's a "not found" error
+      if (error instanceof Error && error.message.includes("not found")) {
+        toast.error("Quiz attempt not found. It may have been deleted.");
+      } else {
+        toast.error("Failed to load attempt details. Please try again.");
+      }
+
+      // Navigate back to quiz dashboard if attempt not found
+      setTimeout(() => {
+        navigate("/student/quizzes");
+      }, 2000);
     } finally {
       setLoading(false);
     }

@@ -143,7 +143,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Description Card */}
                     {material.description && (
-                      <Card className="lg:col-span-2 border-green-900/10 shadow-sm">
+                      <Card className="lg:col-span-2 border-green-900/60 border-2 shadow-sm">
                         <CardHeader className="pb-3">
                           <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
                             <BookOpen className="h-5 w-5" />
@@ -159,7 +159,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                     )}
 
                     {/* Info Card */}
-                    <Card className="border-green-900/10 shadow-sm">
+                    <Card className=" border-green-900/60 border-2 shadow-sm">
                       <CardHeader className="pb-3">
                         <h3 className="text-lg font-semibold text-green-900">
                           Material Info
@@ -201,7 +201,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
                   {/* File Info Card */}
                   {hasFile && (
-                    <Card className="border-green-900/10 shadow-sm">
+                    <Card className="border-green-900/60 border-2 shadow-sm">
                       <CardHeader className="pb-3">
                         <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
                           <FileText className="h-5 w-5" />
@@ -256,7 +256,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                 {/* PDF Viewer */}
                 {isPdfFile && (
                   <div className="px-6 pb-6">
-                    <Card className="border-green-900/10 shadow-sm">
+                    <Card className="border-green-900/60 border-2 shadow-sm">
                       <CardHeader className="pb-3">
                         <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
                           <FileText className="h-5 w-5" />
@@ -280,7 +280,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                 {/* Content */}
                 {hasContent && (
                   <div className="px-6 pb-6">
-                    <Card className="border-green-900/10 shadow-sm">
+                    <Card className="border-green-900/60 border-2 shadow-sm">
                       <CardHeader className="pb-3">
                         <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
                           <BookOpen className="h-5 w-5" />

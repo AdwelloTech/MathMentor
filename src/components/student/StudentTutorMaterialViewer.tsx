@@ -248,7 +248,9 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                     </h3>
                     <div
                       className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: material.content }}
+                      dangerouslySetInnerHTML={{
+                        __html: material.content || "",
+                      }}
                     />
                   </div>
                 )}

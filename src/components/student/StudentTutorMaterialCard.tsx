@@ -1,16 +1,17 @@
 import React, { useRef } from "react";
-import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
-  StarIcon,
-  EyeIcon,
-  ArrowDownTrayIcon,
-  DocumentTextIcon,
-  DocumentArrowUpIcon,
-  LockClosedIcon,
-  UserIcon,
-} from "@heroicons/react/24/outline";
+  Star,
+  Eye,
+  Download,
+  FileText,
+  Upload,
+  Lock,
+  User,
+  Calendar,
+  Sparkles,
+} from "lucide-react";
 import {
   formatStudentTutorMaterialDate,
   formatFileSize,
@@ -20,6 +21,14 @@ import {
   incrementStudentTutorMaterialDownloadCount,
   type StudentTutorMaterialCardProps,
 } from "@/lib/studentTutorMaterials";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 
 interface StudentTutorMaterialCardComponentProps
   extends StudentTutorMaterialCardProps {
@@ -33,7 +42,6 @@ const StudentTutorMaterialCard: React.FC<
   id,
   title,
   description,
-  subjectName,
   subjectDisplayName,
   subjectColor,
   gradeLevelDisplay,
@@ -54,11 +62,8 @@ const StudentTutorMaterialCard: React.FC<
   const hasFile = fileUrl && fileName;
   const hasTrackedView = useRef(false);
 
-  // Remove automatic view tracking - only track when user clicks View button
-
   const handleView = async () => {
     if (!hasAccess) {
-      // This should be handled by the parent component, but as a fallback
       return;
     }
 
@@ -121,152 +126,163 @@ const StudentTutorMaterialCard: React.FC<
   };
 
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group ${
+    <Card
+      className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg bg-gradient-to-br from-white via-white to-green-50/30 h-[420px] flex flex-col overflow-hidden ${
         !hasAccess ? "opacity-75" : ""
-      }`}
+      } ${isPremium ? "ring-2 ring-yellow-400/20" : ""}`}
       onClick={handleView}
     >
-      {/* Header */}
-      <div className="p-6 border-b border-gray-100 group-hover:bg-gray-50 transition-colors duration-200">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center space-x-2">
+      {/* Premium Indicator */}
+      {isPremium && (
+        <div className="absolute top-0 right-0 w-0 h-0 border-l-[40px] border-l-transparent border-t-[40px] border-t-yellow-400 z-10">
+          <Star className="absolute -top-8 -right-7 h-4 w-4 text-green-900 transform rotate-45" />
+        </div>
+      )}
+
+      <CardHeader className="pb-3 relative">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-green-900 to-green-800 shadow-lg shrink-0">
             {hasFile ? (
-              <DocumentArrowUpIcon className="h-5 w-5 text-blue-600" />
+              <Upload className="h-5 w-5 text-white" />
             ) : (
-              <DocumentTextIcon className="h-5 w-5 text-green-600" />
+              <FileText className="h-5 w-5 text-white" />
             )}
-            <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-xl font-bold text-green-900 line-clamp-2 leading-tight mb-1">
               {title || "Untitled Material"}
             </h3>
+            {isPremium && (
+              <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-green-900 border-0 text-xs font-bold">
+                <Sparkles className="h-3 w-3 mr-1" />
+                PREMIUM
+              </Badge>
+            )}
           </div>
-          {isPremium && (
-            <div className="flex items-center space-x-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-              <StarIcon className="h-3 w-3" />
-              <span>PREMIUM</span>
-            </div>
-          )}
         </div>
 
         {(description || !title) && (
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+          <p className="text-slate-600 text-sm line-clamp-3 leading-relaxed">
             {description
-              ? truncateStudentTutorMaterialText(description, 100)
+              ? truncateStudentTutorMaterialText(description, 120)
               : "No description provided"}
           </p>
         )}
+      </CardHeader>
 
+      <CardContent className="flex-1 space-y-4">
         {/* Tutor Name */}
         {tutorName && (
-          <div className="flex items-center space-x-2 mb-3">
-            <UserIcon className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600 font-medium">
-              {tutorName}
-            </span>
+          <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg">
+            <div className="p-2 rounded-lg bg-white shadow-sm">
+              <User className="h-4 w-4 text-green-900" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 font-medium">Instructor</p>
+              <p className="text-sm text-green-900 font-semibold">
+                {tutorName}
+              </p>
+            </div>
           </div>
         )}
 
         {/* Subject and Grade */}
-        <div className="flex items-center space-x-3 mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
           {subjectDisplayName && (
-            <span
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+            <Badge
+              variant="outline"
+              className="text-xs font-semibold border-2 px-3 py-1"
               style={{
                 backgroundColor: `${getStudentTutorMaterialSubjectColor(
                   subjectColor
-                )}20`,
+                )}15`,
+                borderColor: `${getStudentTutorMaterialSubjectColor(
+                  subjectColor
+                )}40`,
                 color: getStudentTutorMaterialSubjectColor(subjectColor),
               }}
             >
               {subjectDisplayName}
-            </span>
+            </Badge>
           )}
           {gradeLevelDisplay && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <Badge
+              variant="secondary"
+              className="text-xs font-semibold bg-slate-100 text-slate-700 px-3 py-1"
+            >
               {gradeLevelDisplay}
-            </span>
+            </Badge>
           )}
         </div>
 
         {/* File Info */}
-        {hasFile && (
-          <div className="flex items-center space-x-2 text-sm text-gray-500 mb-3">
-            <DocumentArrowUpIcon className="h-4 w-4" />
-            <span className="text-blue-600 font-medium">{fileName}</span>
-            <span>•</span>
-            <span>{formatFileSize(fileSize)}</span>
-          </div>
-        )}
 
         {/* Stats */}
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
-          <div className="flex items-center space-x-1">
-            <EyeIcon className="h-4 w-4" />
-            <span>{viewCount} views</span>
-          </div>
-          {hasFile && (
-            <div className="flex items-center space-x-1">
-              <ArrowDownTrayIcon className="h-4 w-4" />
-              <span>{downloadCount} downloads</span>
+        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded bg-green-100">
+                <Eye className="h-3 w-3 text-green-700" />
+              </div>
+              <span className="text-xs font-semibold text-green-700">
+                {viewCount} views
+              </span>
             </div>
-          )}
+            {hasFile && (
+              <div className="flex items-center gap-2">
+                <div className="p-1 rounded bg-green-100">
+                  <Download className="h-3 w-3 text-green-700" />
+                </div>
+                <span className="text-xs font-semibold text-green-700">
+                  {downloadCount} downloads
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </CardContent>
 
-      {/* Footer */}
-      <div className="p-4 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            {formatStudentTutorMaterialDate(createdAt)}
-          </span>
+      <CardFooter className="pt-4 border-t border-slate-100 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-3 w-3 text-slate-400" />
+            <span className="text-xs text-slate-500 font-medium">
+              {formatStudentTutorMaterialDate(createdAt)}
+            </span>
+          </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             {!hasAccess ? (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <Button
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate("/student/packages");
                 }}
-                className="flex items-center space-x-1 px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg font-medium text-sm hover:from-yellow-600 hover:to-orange-600 transition-all duration-200"
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-green-900 text-xs font-bold shadow-lg border-0"
               >
-                <LockClosedIcon className="h-4 w-4" />
-                <span>Upgrade to Access</span>
-              </motion.button>
+                <Lock className="h-3 w-3 mr-1" />
+                Upgrade
+              </Button>
             ) : (
               <>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <Button
+                  size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleView();
                   }}
-                  className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition-all duration-200"
+                  className="bg-gradient-to-r from-green-900 to-green-800 hover:from-green-800 hover:to-green-700 text-white text-xs font-semibold shadow-lg"
                 >
-                  <EyeIcon className="h-4 w-4" />
-                  <span>View</span>
-                </motion.button>
-
-                {hasFile && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleDownload}
-                    className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-all duration-200"
-                  >
-                    <ArrowDownTrayIcon className="h-4 w-4" />
-                    <span>Download</span>
-                  </motion.button>
-                )}
+                  <Eye className="h-3 w-3 mr-1" />
+                  View
+                </Button>
               </>
             )}
           </div>
         </div>
-      </div>
-    </motion.div>
+      </CardFooter>
+    </Card>
   );
 };
 

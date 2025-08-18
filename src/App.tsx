@@ -16,6 +16,8 @@ import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
 import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
 import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
+import ManageQuizzesPage from "./pages/admin/ManageQuizzesPage";
+import AdminManageFlashcardsPage from "./pages/admin/ManageFlashcardsPage";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
@@ -43,6 +45,7 @@ import StudentDashboard from "./pages/dashboards/StudentDashboard";
 import BookSessionPage from "./pages/BookSessionPage";
 import BookConsultationPage from "./pages/BookConsultationPage";
 import ManageSessionsPage from "./pages/ManageSessionsPage";
+import InstantSessionPage from "./pages/student/InstantSessionPage";
 import PackagesPage from "./pages/PackagesPage";
 import NotesPage from "./pages/notes/NotesPage";
 import CreateNotePage from "./pages/notes/CreateNotePage";
@@ -58,7 +61,7 @@ import IDVerificationPage from "./pages/IDVerificationPage";
 
 function App() {
   const { user, loading } = useAuth();
-  const { adminSession, isAdminLoggedIn, loading: adminLoading } = useAdmin();
+  const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
 
   // Show loading spinner while checking authentication
   if (loading || adminLoading) {
@@ -177,6 +180,22 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="admin/quizzes"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <ManageQuizzesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/flashcards"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminManageFlashcardsPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Principal routes */}
               <Route
@@ -219,6 +238,10 @@ function App() {
               >
                 <Route index element={<StudentDashboard />} />
                 <Route path="book-session" element={<BookSessionPage />} />
+                <Route
+                  path="instant-session"
+                  element={<InstantSessionPage />}
+                />
                 <Route
                   path="book-consultation"
                   element={<BookConsultationPage />}

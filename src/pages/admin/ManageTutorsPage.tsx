@@ -624,14 +624,14 @@ const ManageTutorsPage: React.FC = () => {
                         </div>
                       </div>
                       
-                      {classItem.zoom_meeting && (
+                      {classItem.jitsi_meeting && (
                         <div className="mt-3 pt-3 border-t border-gray-200">
                           <div className="flex items-center space-x-1 text-sm text-gray-600">
                             <VideoCameraIcon className="h-4 w-4" />
-                            <span>Zoom Meeting Available</span>
+                            <span>Jitsi Meeting Available</span>
                           </div>
                           <a
-                            href={classItem.zoom_meeting.join_url}
+                            href={classItem.jitsi_meeting.meeting_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm mt-1"

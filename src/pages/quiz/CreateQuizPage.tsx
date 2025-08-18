@@ -12,7 +12,7 @@ import {
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
 import { getNoteSubjects } from "@/lib/notes";
-import { generateAIQuestions } from "@/lib/ai";
+import { generateAIQuestions, uploadPdfForAI } from "@/lib/ai";
 import type {
   CreateQuizData,
   CreateQuestionData,
@@ -44,6 +44,9 @@ const CreateQuizPage: React.FC = () => {
   const [questionFilter, setQuestionFilter] = useState<"all" | "manual" | "ai">(
     "all"
   );
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [pdfName, setPdfName] = useState<string | null>(null);
+  const [pdfSize, setPdfSize] = useState<number | null>(null);
 
   // Quiz basic info
   const [quizData, setQuizData] = useState({
@@ -177,6 +180,7 @@ const CreateQuizPage: React.FC = () => {
         difficulty: aiDifficulty,
         questionType: aiQuestionType,
         title: quizData.title || undefined,
+        pdfBase64: pdfBase64 || undefined,
       });
       const mapped = ai.map((q, idx) => ({
         question_text: q.question_text,
@@ -585,6 +589,67 @@ const CreateQuizPage: React.FC = () => {
                   )}
                 </button>
               </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Optional: Upload syllabus PDF for context
+              </label>
+              <div className="flex items-center justify-between rounded-md border-2 border-dashed border-gray-300 bg-gray-50 px-3 py-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    id="quiz-create-pdf"
+                    type="file"
+                    accept="application/pdf"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const { pdfBase64, fileName, fileSize } =
+                          await uploadPdfForAI(file);
+                        setPdfBase64(pdfBase64);
+                        setPdfName(fileName);
+                        setPdfSize(fileSize);
+                        toast.success("Syllabus loaded as AI context");
+                      } catch (err: any) {
+                        console.error(err);
+                        toast.error(err?.message || "Failed to read PDF");
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="quiz-create-pdf"
+                    className="inline-flex items-center px-3 py-2 bg-white border rounded-md text-sm cursor-pointer hover:bg-gray-50"
+                  >
+                    Choose PDF
+                  </label>
+                  {pdfName ? (
+                    <span className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1">
+                      {pdfName}
+                      {pdfSize && ` (${(pdfSize / 1024).toFixed(1)} KB)`}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-500">
+                      No file selected
+                    </span>
+                  )}
+                </div>
+                {pdfName && (
+                  <button
+                    onClick={() => {
+                      setPdfBase64(null);
+                      setPdfName(null);
+                      setPdfSize(null);
+                    }}
+                    className="text-xs text-gray-600 hover:text-gray-900"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                PDF up to 10MB. We'll use its text as AI context.
+              </p>
             </div>
           </div>
           {/* Quiz Summary */}

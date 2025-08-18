@@ -225,53 +225,8 @@ const TakeQuizPage: React.FC = () => {
   ).length;
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-green-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={() => navigate("/student/quizzes")}
-                variant="ghost"
-                size="sm"
-                className="text-green-700 hover:text-green-900 hover:bg-green-100"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <div>
-                <h1 className="text-xl font-semibold text-green-900">
-                  {quiz.title}
-                </h1>
-                <p className="text-sm text-green-700 flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  by {quiz.tutor?.full_name}
-                </p>
-              </div>
-            </div>
-
-            {/* Timer and Progress */}
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <Timer className="h-5 w-5 text-green-600" />
-                <span
-                  className={`font-mono text-lg font-semibold ${
-                    timeRemaining < 300 ? "text-red-600" : "text-green-900"
-                  }`}
-                >
-                  {formatTime(timeRemaining)}
-                </span>
-              </div>
-
-              <Badge className="bg-green-100 text-green-800 border-green-200">
-                <Target className="h-3 w-3 mr-1" />
-                {answeredQuestions}/{totalQuestions} answered
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!showResults ? (
@@ -284,10 +239,6 @@ const TakeQuizPage: React.FC = () => {
                     <BookOpen className="h-5 w-5" />
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </CardTitle>
-                  <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                    <Award className="h-3 w-3 mr-1" />
-                    {currentQuestion?.points} points
-                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -388,9 +339,8 @@ const TakeQuizPage: React.FC = () => {
                 onClick={handlePreviousQuestion}
                 disabled={currentQuestionIndex === 0}
                 variant="outline"
-                className="text-green-700 hover:text-green-900 hover:bg-green-100 border-green-200"
+                className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 border-green-900/60 "
               >
-                <ChevronLeft className="h-4 w-4 mr-2" />
                 Previous
               </Button>
 
@@ -401,7 +351,6 @@ const TakeQuizPage: React.FC = () => {
                     className="bg-green-900 hover:bg-green-800 text-white"
                   >
                     Next
-                    <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 ) : (
                   <Button
@@ -428,16 +377,13 @@ const TakeQuizPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card className="border-green-200 bg-white">
+            <Card className="border-green-900/60 border-2 bg-white max-w-2xl mx-auto justify-center items-center flex flex-col">
               <CardContent className="p-8">
                 <div className="text-center mb-8">
-                  <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <CheckCircle className="h-8 w-8 text-green-600" />
-                  </div>
                   <h2 className="text-2xl font-bold text-green-900 mb-2">
                     Quiz Completed!
                   </h2>
-                  <p className="text-green-700">Here are your results</p>
+                  <p className="text-gray-700">Here are your results</p>
                 </div>
 
                 {results && (
@@ -445,13 +391,13 @@ const TakeQuizPage: React.FC = () => {
                     <div className="text-4xl font-bold text-green-600 mb-2">
                       {results.correctAnswers}/{results.totalQuestions}
                     </div>
-                    <div className="text-sm text-green-700 mb-2">
+                    <div className="text-sm text-gray-700 mb-2">
                       Questions Correct
                     </div>
-                    <div className="text-xl text-green-700 mb-4">
+                    <div className="text-xl text-gray-700 mb-4">
                       {results.percentage}%
                     </div>
-                    <div className="text-sm text-green-600">
+                    <div className="text-sm text-gray-700">
                       {results.percentage >= 80
                         ? "Excellent!"
                         : results.percentage >= 60
@@ -476,10 +422,10 @@ const TakeQuizPage: React.FC = () => {
                       navigate(`/student/quiz-results/${attemptId}`)
                     }
                     variant="outline"
-                    className="border-green-200 text-green-700 hover:bg-green-100"
+                    className="border-green-900 text-gray-700 hover:bg-gray-300"
                   >
                     <Target className="h-4 w-4 mr-2" />
-                    View Detailed Results
+                    View Results
                   </Button>
                 </div>
               </CardContent>

@@ -268,11 +268,11 @@ const StudentQuizDashboard: React.FC = () => {
           <Card className="border-green-200 bg-white">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <BookOpen className="h-6 w-6 text-green-600" />
+                <div className="p-3 bg-green-900 rounded-lg">
+                  <BookOpen className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-green-600">
+                  <p className="text-sm font-medium text-black">
                     Available Quizzes
                   </p>
                   <p className="text-2xl font-bold text-green-900">
@@ -286,13 +286,11 @@ const StudentQuizDashboard: React.FC = () => {
           <Card className="border-green-200 bg-white">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-3 bg-yellow-100 rounded-lg">
-                  <GraduationCap className="h-6 w-6 text-yellow-600" />
+                <div className="p-3 bg-green-900 rounded-lg">
+                  <GraduationCap className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-yellow-600">
-                    Subjects
-                  </p>
+                  <p className="text-sm font-medium text-black">Subjects</p>
                   <p className="text-2xl font-bold text-green-900">
                     {new Set(quizzes.map((q) => q.subject)).size}
                   </p>
@@ -304,11 +302,11 @@ const StudentQuizDashboard: React.FC = () => {
           <Card className="border-green-200 bg-white">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <Clock className="h-6 w-6 text-green-600" />
+                <div className="p-3 bg-green-900 rounded-lg">
+                  <Clock className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-green-600">
+                  <p className="text-sm font-medium text-black">
                     Avg Time Limit
                   </p>
                   <p className="text-2xl font-bold text-green-900">
@@ -366,41 +364,36 @@ const StudentQuizDashboard: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="border-green-200 bg-white hover:shadow-lg transition-all duration-200 h-full flex flex-col">
+                  <Card className="border-green-900/60 border-2 bg-white hover:shadow-lg transition-all duration-200 h-[320px] flex flex-col p-2">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-green-900 text-xl line-clamp-2 mb-2">
                         {quiz.title}
                       </CardTitle>
-                      {quiz.description && (
-                        <CardDescription className="text-green-700 line-clamp-2">
-                          {quiz.description}
-                        </CardDescription>
-                      )}
                     </CardHeader>
 
                     <CardContent className="flex-1 space-y-4">
                       {/* Quiz Details */}
                       <div className="space-y-3">
-                        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                          <User className="h-4 w-4 text-green-600" />
-                          <span className="text-sm text-green-800 font-medium">
+                        <div className="flex items-center gap-3 rounded-lg">
+                          <User className="h-4 w-4 text-gray-700" />
+                          <span className="text-sm text-gray-700 font-medium">
                             {quiz.tutor?.full_name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-green-700">
-                          <BookOpen className="h-4 w-4 text-green-600" />
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <BookOpen className="h-4 w-4 text-gray-700" />
                           <span className="text-sm font-medium">
                             {quiz.subject}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-green-700">
-                          <Clock className="h-4 w-4 text-green-600" />
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <Clock className="h-4 w-4 text-gray-700" />
                           <span className="text-sm font-medium">
                             {quiz.time_limit_minutes} minutes
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-green-700">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <CheckCircle className="h-4 w-4 text-gray-700" />
                           <span className="text-sm font-medium">
                             {quiz.total_questions} questions
                           </span>
@@ -411,40 +404,13 @@ const StudentQuizDashboard: React.FC = () => {
                       <div className="mt-auto pt-4">
                         {quiz.attempt_status === "completed" ? (
                           <div className="space-y-3">
-                            <div className="text-center p-3 bg-green-50 rounded-lg">
-                              <div className="text-sm text-green-800 font-semibold">
-                                {quiz.attempt_correct_answers}/
-                                {quiz.attempt_total_questions} Questions Correct
-                              </div>
-                              <div className="text-lg font-bold text-green-900">
-                                {Math.round(
-                                  ((quiz.attempt_score || 0) /
-                                    (quiz.attempt_max_score || 1)) *
-                                    100
-                                )}
-                                %
-                              </div>
-                            </div>
-
-                            {quiz.attempt_tutor_feedback ? (
-                              <Badge className="w-full justify-center bg-green-100 text-green-800 border-green-200 hover:bg-green-200">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Feedback received
-                              </Badge>
-                            ) : (
-                              <Badge className="w-full justify-center bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200">
-                                <Clock className="w-3 h-3 mr-1" />
-                                Feedback pending
-                              </Badge>
-                            )}
-
                             <Button
                               onClick={() =>
                                 navigate(
                                   `/student/quiz-results/${quiz.attempt_id}`
                                 )
                               }
-                              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                              className="w-full bg-green-900 hover:bg-green-800 text-white font-semibold"
                             >
                               <CheckCircle className="h-4 w-4 mr-2" />
                               View Results
@@ -455,7 +421,7 @@ const StudentQuizDashboard: React.FC = () => {
                             onClick={() =>
                               navigate(`/student/take-quiz/${quiz.attempt_id}`)
                             }
-                            className="w-full bg-yellow-500 hover:bg-yellow-600 text-green-900 font-semibold"
+                            className="w-full bg-green-900 hover:bg-green-800 text-white font-semibold"
                           >
                             <Clock className="h-4 w-4 mr-2" />
                             Continue Quiz

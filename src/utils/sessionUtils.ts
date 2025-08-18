@@ -87,12 +87,12 @@ export const sessionUtils = {
     return { status: "upcoming", label: "Upcoming", color: "text-gray-600" };
   },
 
-  // Open Zoom meeting in new tab
-  joinZoomMeeting: (session: StudentUpcomingSession): void => {
-    if (session.zoom_link) {
-      window.open(session.zoom_link, "_blank");
+  // Open Jitsi meeting in new tab
+  joinJitsiMeeting: (session: StudentUpcomingSession): void => {
+    if (session.jitsi_meeting_url) {
+      window.open(session.jitsi_meeting_url, "_blank");
     } else {
-      console.error("No Zoom link available for this session");
+      console.error("No Jitsi meeting link available for this session");
     }
   },
 };

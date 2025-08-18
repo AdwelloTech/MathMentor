@@ -27,9 +27,9 @@ export interface TutorClass {
   max_students: number;
   current_students: number;
   price_per_session: number;
-  zoom_link?: string;
-  zoom_meeting_id?: string;
-  zoom_password?: string;
+  jitsi_meeting_url?: string;
+  jitsi_room_name?: string;
+  jitsi_password?: string;
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
   is_recurring: boolean;
   recurring_pattern?: 'daily' | 'weekly' | 'biweekly' | 'monthly';
@@ -80,14 +80,17 @@ export interface TutorAvailability {
   updated_at: string;
 }
 
-// Zoom Meetings
-export interface ZoomMeeting {
+// Jitsi Meetings
+export interface JitsiMeeting {
   id: string;
+  tutor_id: string;
   class_id: string;
-  meeting_id: string;
-  join_url: string;
-  start_url: string;
+  room_name: string;
+  meeting_url: string;
   password?: string;
+  topic?: string;
+  start_time?: string;
+  duration_minutes?: number;
   settings: Record<string, any>;
   created_at: string;
   updated_at: string;
@@ -248,19 +251,19 @@ export interface PaymentIntent {
   payment_method_types: string[];
 }
 
-// Zoom Integration Types
-export interface ZoomMeetingSettings {
+// Jitsi Integration Types
+export interface JitsiMeetingSettings {
   topic: string;
   start_time: string;
   duration: number;
   timezone: string;
   settings: {
-    host_video: boolean;
-    participant_video: boolean;
-    join_before_host: boolean;
-    mute_upon_entry: boolean;
-    waiting_room: boolean;
-    auto_recording: string;
+    startWithAudioMuted: boolean;
+    startWithVideoMuted: boolean;
+    enableWelcomePage: boolean;
+    enableClosePage: boolean;
+    prejoinPageEnabled: boolean;
+    requireDisplayName: boolean;
   };
 }
 
@@ -297,4 +300,27 @@ export interface ClassSearchResult {
   };
   available_slots: number;
   is_bookable: boolean;
+}
+
+// Student Session Types
+export interface StudentUpcomingSession {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  jitsi_meeting_url?: string;
+  jitsi_room_name?: string;
+  jitsi_password?: string;
+  class_status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  booking_status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+  payment_status: 'pending' | 'paid' | 'refunded' | 'failed';
+  class_type: string;
+  tutor: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
 } 

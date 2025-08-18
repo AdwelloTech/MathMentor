@@ -1,8 +1,35 @@
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+// PDF processing temporarily simplified
+import multer from "multer";
+
+// Lazy PDF text extraction to avoid type issues
+async function extractPdfTextFromBase64(
+  pdfBase64: string
+): Promise<{ text: string; truncated: boolean }> {
+  try {
+    const buffer = Buffer.from(pdfBase64, "base64");
+    // Dynamic import keeps build happy without types
+    const pdfParse = (await import("pdf-parse")).default as any;
+    const data = await pdfParse(buffer);
+    let text: string = String(data?.text || "");
+    // Normalize whitespace and remove odd chars
+    text = text.replace(/\u0000/g, " ").replace(/[\t\r]+/g, " ");
+    // Trim excessively long context to keep prompt size bounded
+    const MAX_LEN = 18000;
+    const truncated = text.length > MAX_LEN;
+    if (truncated) {
+      text = text.slice(0, MAX_LEN);
+    }
+    return { text: text.trim(), truncated };
+  } catch (err) {
+    console.error("PDF text extraction failed:", err);
+    return { text: "", truncated: false };
+  }
+}
 
 // Types
 interface GenerateAIRequest {
@@ -12,6 +39,7 @@ interface GenerateAIRequest {
   difficulty?: "easy" | "medium" | "hard";
   questionType?: "multiple_choice" | "true_false";
   title?: string;
+  pdfText?: string;
 }
 
 interface GenerateAIFlashcardsRequest {
@@ -20,6 +48,7 @@ interface GenerateAIFlashcardsRequest {
   numCards?: number;
   title?: string;
   difficulty?: "easy" | "medium" | "hard";
+  pdfText?: string;
 }
 
 interface AIAnswer {
@@ -77,14 +106,54 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "4mb" }));
+app.use(express.urlencoded({ extended: true, limit: "4mb" }));
+
+// File upload (PDF) - in memory
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 // Health
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// Generate AI questions via OpenRouter Gemma 3n 2B
+// Extract text from uploaded PDF (used as AI context)
+app.post(
+  "/api/ai/pdf/upload",
+  upload.single("file"),
+  async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Missing PDF file" });
+      }
+
+      console.log("📄 PDF Upload Details:");
+      console.log("- File name:", req.file.originalname);
+      console.log("- File size:", req.file.size, "bytes");
+      console.log("- MIME type:", req.file.mimetype);
+
+      // Convert PDF to base64 for sending directly to DeepSeek R1
+      const pdfBase64 = req.file.buffer.toString("base64");
+
+      console.log("📄 PDF prepared for AI model:");
+      console.log("- Base64 length:", pdfBase64.length, "characters");
+
+      res.json({
+        pdfBase64,
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+      });
+    } catch (err) {
+      console.error("PDF extract error", err);
+      res.status(500).json({ error: "Failed to extract PDF text" });
+    }
+  }
+);
+
+// Generate AI questions via OpenRouter (DeepSeek R1)
 app.post("/api/ai/generate", async (req: Request, res: Response) => {
   try {
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -99,17 +168,47 @@ app.post("/api/ai/generate", async (req: Request, res: Response) => {
       difficulty = "medium",
       questionType = "multiple_choice",
       title,
-    }: GenerateAIRequest = req.body || {};
+      pdfText,
+      pdfBase64,
+    }: GenerateAIRequest & { pdfBase64?: string } = req.body || {};
 
     if (!subject) {
       return res.status(400).json({ error: "subject is required" });
     }
 
-    // Some providers for Gemma free disallow system/developer messages.
-    // Use a single user message with all instructions inline.
+    // Build context lines inline (single user message)
     const contextLine = title ? `Quiz title: ${title}.` : "";
+    // If we only have base64, extract text on the server
+    let effectivePdfText: string | undefined = pdfText;
+    if (!effectivePdfText && pdfBase64) {
+      const extracted = await extractPdfTextFromBase64(pdfBase64);
+      effectivePdfText = extracted.text || undefined;
+      console.log(
+        "- Extracted PDF text length:",
+        (effectivePdfText || "").length
+      );
+      if (effectivePdfText) {
+        const preview = effectivePdfText.replace(/\s+/g, " ").slice(0, 200);
+        console.log("- PDF text preview (first 200 chars):", preview);
+      }
+    }
+    const pdfContext =
+      effectivePdfText && effectivePdfText.trim()
+        ? `\n\nContext - Syllabus Excerpt:\n"""\n${effectivePdfText.trim()}\n"""\nUse this context to align style, terminology, and scope. Prefer this context over generic knowledge when possible.`
+        : "";
 
-    // Generate different prompts based on question type
+    // Log what context is being used
+    console.log("🧠 AI Quiz Generation Request:");
+    console.log("- Subject:", subject);
+    console.log("- Grade Level:", gradeLevel);
+    console.log("- Number of Questions:", numQuestions);
+    console.log("- Difficulty:", difficulty);
+    console.log("- Question Type:", questionType);
+    console.log("- PDF Base64 provided:", !!pdfBase64);
+    console.log("- PDF text used as context:", !!effectivePdfText);
+    if (pdfBase64)
+      console.log("- PDF Base64 length:", pdfBase64.length, "characters");
+
     let userPrompt: string;
     if (questionType === "multiple_choice") {
       userPrompt = `You are an assistant that generates clear, unambiguous ${questionType} quiz questions with exactly 4 options and one correct answer. Return ONLY valid JSON that matches the schema: {"questions":[{"question_text":string,"question_type":"multiple_choice","points":number,"answers":[{"answer_text":string,"is_correct":boolean},{...4 total}]}]}. Do not include any prose before or after the JSON.
@@ -118,13 +217,13 @@ IMPORTANT: All answer options must be meaningful and complete. Do NOT use placeh
 
 ${contextLine} Create ${numQuestions} ${difficulty} ${questionType} questions for subject: ${subject}${
         gradeLevel ? `, grade: ${gradeLevel}` : ""
-      }. Ensure exactly one correct answer per question, and set points to 10 by default.`;
+      }. Ensure exactly one correct answer per question, and set points to 10 by default.${pdfContext}`;
     } else if (questionType === "true_false") {
       userPrompt = `You are an assistant that generates clear, unambiguous ${questionType} quiz questions with exactly 2 options (True and False) and one correct answer. Return ONLY valid JSON that matches the schema: {"questions":[{"question_text":string,"question_type":"true_false","points":number,"answers":[{"answer_text":"True","is_correct":boolean},{"answer_text":"False","is_correct":boolean}]}]}. Do not include any prose before or after the JSON.
 
 ${contextLine} Create ${numQuestions} ${difficulty} ${questionType} questions for subject: ${subject}${
         gradeLevel ? `, grade: ${gradeLevel}` : ""
-      }. Ensure exactly one correct answer per question, and set points to 10 by default.`;
+      }. Ensure exactly one correct answer per question, and set points to 10 by default.${pdfContext}`;
     } else {
       userPrompt = `You are an assistant that generates clear, unambiguous multiple choice quiz questions with exactly 4 options and one correct answer. Return ONLY valid JSON that matches the schema: {"questions":[{"question_text":string,"question_type":"multiple_choice","points":number,"answers":[{"answer_text":string,"is_correct":boolean},{...4 total}]}]}. Do not include any prose before or after the JSON.
 
@@ -132,20 +231,32 @@ IMPORTANT: All answer options must be meaningful and complete. Do NOT use placeh
 
 ${contextLine} Create ${numQuestions} ${difficulty} multiple choice questions for subject: ${subject}${
         gradeLevel ? `, grade: ${gradeLevel}` : ""
-      }. Ensure exactly one correct answer per question, and set points to 10 by default.`;
+      }. Ensure exactly one correct answer per question, and set points to 10 by default.${pdfContext}`;
     }
+
+    const hostValue = String(
+      (req.headers["x-forwarded-host"] as string | string[] | undefined) ??
+        req.headers.host ??
+        "localhost:3000"
+    );
+    const httpReferer = hostValue.startsWith("http")
+      ? hostValue
+      : `http://${hostValue}`;
+
+    // Always use DeepSeek R1 and pass extracted PDF text as context
+    const modelId = "deepseek/deepseek-r1:free";
+    console.log("- Using model:", modelId, "(text-only, PDF text as context)");
 
     const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer":
-          req.headers["x-forwarded-host"] || req.headers.host || "localhost",
+        "HTTP-Referer": httpReferer,
         "X-Title": "MathMentor",
       },
       body: JSON.stringify({
-        model: "google/gemma-3n-e2b-it:free",
+        model: modelId,
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.4,
       }),
@@ -159,7 +270,10 @@ ${contextLine} Create ${numQuestions} ${difficulty} multiple choice questions fo
     }
 
     const data = await resp.json();
-    const content = data?.choices?.[0]?.message?.content || "";
+    const rawContent = data?.choices?.[0]?.message?.content || "";
+    const content = String(rawContent)
+      .replace(/<think>[\s\S]*?<\/think>/g, "")
+      .trim();
 
     // Attempt to parse JSON from the model output
     let parsed: AIResponse;
@@ -252,7 +366,7 @@ ${contextLine} Create ${numQuestions} ${difficulty} multiple choice questions fo
             gradeLevel,
             difficulty,
             provider: "openrouter",
-            model: "google/gemma-3n-e2b-it:free",
+            model: modelId,
           },
         };
       });
@@ -264,7 +378,7 @@ ${contextLine} Create ${numQuestions} ${difficulty} multiple choice questions fo
   }
 });
 
-// Generate AI flashcards via OpenRouter Gemma 3n 2B
+// Generate AI flashcards via OpenRouter (DeepSeek R1)
 app.post("/api/ai/flashcards", async (req: Request, res: Response) => {
   try {
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -278,7 +392,9 @@ app.post("/api/ai/flashcards", async (req: Request, res: Response) => {
       numCards = 10,
       title,
       difficulty = "medium",
-    }: GenerateAIFlashcardsRequest = req.body || {};
+      pdfText,
+      pdfBase64,
+    }: GenerateAIFlashcardsRequest & { pdfBase64?: string } = req.body || {};
 
     if (!subject) {
       return res.status(400).json({ error: "subject is required" });
@@ -289,8 +405,37 @@ app.post("/api/ai/flashcards", async (req: Request, res: Response) => {
     }
 
     const contextLine = title ? `Set title: ${title}.` : "";
+    // If we only have base64, extract text on the server
+    let effectivePdfText: string | undefined = pdfText;
+    if (!effectivePdfText && pdfBase64) {
+      const extracted = await extractPdfTextFromBase64(pdfBase64);
+      effectivePdfText = extracted.text || undefined;
+      console.log(
+        "- Extracted PDF text length:",
+        (effectivePdfText || "").length
+      );
+      if (effectivePdfText) {
+        const preview = effectivePdfText.replace(/\s+/g, " ").slice(0, 200);
+        console.log("- PDF text preview (first 200 chars):", preview);
+      }
+    }
+    const pdfContext =
+      effectivePdfText && effectivePdfText.trim()
+        ? `\n\nContext - Syllabus Excerpt:\n"""\n${effectivePdfText.trim()}\n"""\nUse this context to align style, terminology, and scope. Prefer this context over generic knowledge when possible.`
+        : "";
 
-    const userPrompt = `You are an assistant that generates concise, high‑quality study flashcards for mathematics as term–definition pairs.
+    // Log what context is being used
+    console.log("🧠 AI Flashcard Generation Request:");
+    console.log("- Subject:", subject);
+    console.log("- Grade Level:", gradeLevel);
+    console.log("- Number of Cards:", numCards);
+    console.log("- Difficulty:", difficulty);
+    console.log("- PDF Base64 provided:", !!pdfBase64);
+    console.log("- PDF text used as context:", !!effectivePdfText);
+    if (pdfBase64)
+      console.log("- PDF Base64 length:", pdfBase64.length, "characters");
+
+    const userPrompt = `You are an assistant that generates concise, high‑quality study flashcards as term–definition pairs.
 
 Return ONLY valid JSON matching exactly this format:
 {"cards":[{"front_text":"term or question","back_text":"definition or answer"}]}
@@ -302,13 +447,13 @@ IMPORTANT:
 - Each card must have exactly "front_text" and "back_text" fields
 
 Context:
-- Subject: Mathematics
+- Subject: ${subject}
 - Grade: ${gradeLevel}
 - Difficulty: ${difficulty}
-${contextLine}
+${contextLine}${pdfContext}
 
-Requirements:
-- Generate exactly ${numCards} mathematics flashcards.
+ Requirements:
+ - Generate exactly ${numCards} ${subject} flashcards.
 - front_text: a short mathematical term, concept, or question (5–12 words) at a(n) ${difficulty} difficulty level.
 - back_text: a clear, complete definition, formula, or solution with explanation and answer separated.
 - Format back_text as: "Explanation: [step-by-step explanation] Answer: [final answer]"
@@ -322,6 +467,23 @@ Requirements:
 
     let content = "";
     try {
+      const hostValue = String(
+        (req.headers["x-forwarded-host"] as string | string[] | undefined) ??
+          req.headers.host ??
+          "localhost:3000"
+      );
+      const httpReferer = hostValue.startsWith("http")
+        ? hostValue
+        : `http://${hostValue}`;
+
+      // Always use DeepSeek R1 and pass extracted PDF text as context
+      const modelId = "deepseek/deepseek-r1:free";
+      console.log(
+        "- Using model:",
+        modelId,
+        "(text-only, PDF text as context)"
+      );
+
       const resp = await fetch(
         "https://openrouter.ai/api/v1/chat/completions",
         {
@@ -329,14 +491,11 @@ Requirements:
           headers: {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
-            "HTTP-Referer":
-              req.headers["x-forwarded-host"] ||
-              req.headers.host ||
-              "localhost",
+            "HTTP-Referer": httpReferer,
             "X-Title": "MathMentor",
           },
           body: JSON.stringify({
-            model: "google/gemma-3n-e2b-it:free",
+            model: modelId,
             messages: [{ role: "user", content: userPrompt }],
             temperature: 0.4,
           }),
@@ -350,7 +509,10 @@ Requirements:
       }
 
       const data = await resp.json();
-      content = data?.choices?.[0]?.message?.content || "";
+      const rawContent = data?.choices?.[0]?.message?.content || "";
+      content = String(rawContent)
+        .replace(/<think>[\s\S]*?<\/think>/g, "")
+        .trim();
 
       if (!content) {
         throw new Error("Empty response from AI model");
@@ -527,7 +689,7 @@ Requirements:
     }
 
     // Sanitize and validate flashcards
-    const cards: AIFlashcard[] = parsed.cards
+    let cards: AIFlashcard[] = parsed.cards
       .slice(0, numCards)
       .map((card, idx) => ({
         front_text: String(card.front_text || `Term ${idx + 1}`),
@@ -540,6 +702,103 @@ Requirements:
           !card.front_text.includes("undefined") &&
           !card.back_text.includes("undefined")
       );
+
+    // If model returned fewer than requested, top-up with a follow-up call
+    if (cards.length < numCards) {
+      const remaining = numCards - cards.length;
+      try {
+        const avoidList = cards
+          .map((c) => c.front_text)
+          .slice(0, 50)
+          .join(", ");
+        const followUpPrompt = `${userPrompt}\n\nGenerate exactly ${remaining} additional cards. Avoid duplicates of these terms: [${avoidList}]`;
+
+        const followResp = await fetch(
+          "https://openrouter.ai/api/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": httpReferer,
+              "X-Title": "MathMentor",
+            },
+            body: JSON.stringify({
+              model: modelId,
+              messages: pdfBase64
+                ? [
+                    {
+                      role: "user",
+                      content: [
+                        { type: "text", text: followUpPrompt },
+                        {
+                          type: "image_url",
+                          image_url: {
+                            url: `data:application/pdf;base64,${pdfBase64}`,
+                          },
+                        },
+                      ],
+                    },
+                  ]
+                : [{ role: "user", content: followUpPrompt }],
+              temperature: 0.4,
+            }),
+          }
+        );
+
+        if (followResp.ok) {
+          const followData = await followResp.json();
+          let followContent = String(
+            followData?.choices?.[0]?.message?.content || ""
+          )
+            .replace(/<think>[\s\S]*?<\/think>/g, "")
+            .trim();
+
+          if (followContent.startsWith("```")) {
+            const openFence = followContent.match(/^```[a-zA-Z]*\s*\n?/);
+            if (openFence)
+              followContent = followContent.slice(openFence[0].length);
+            const lastFenceIdx = followContent.lastIndexOf("```");
+            if (lastFenceIdx !== -1)
+              followContent = followContent.slice(0, lastFenceIdx);
+            followContent = followContent.trim();
+          }
+
+          let followParsed: AIFlashcardsResponse | undefined;
+          try {
+            followParsed = JSON.parse(followContent);
+          } catch {
+            const m = followContent.match(/\{[\s\S]*\}/);
+            if (m) {
+              try {
+                followParsed = JSON.parse(m[0]);
+              } catch {}
+            }
+          }
+
+          if (followParsed && Array.isArray(followParsed.cards)) {
+            const extra = followParsed.cards
+              .map((card, idx) => ({
+                front_text: String(card.front_text || `Extra Term ${idx + 1}`),
+                back_text: String(
+                  card.back_text || `Extra Definition ${idx + 1}`
+                ),
+              }))
+              .filter(
+                (card) =>
+                  card.front_text.trim() &&
+                  card.back_text.trim() &&
+                  !card.front_text.includes("undefined") &&
+                  !card.back_text.includes("undefined") &&
+                  !cards.some((c) => c.front_text === card.front_text)
+              );
+            cards = cards.concat(extra).slice(0, numCards);
+          }
+        }
+      } catch (topUpErr) {
+        console.warn("Top-up generation failed:", topUpErr);
+      }
+    }
 
     res.json({ cards });
   } catch (err) {
@@ -584,4 +843,13 @@ Requirements:
 
 app.listen(PORT, () => {
   console.log(`AI server listening on http://localhost:${PORT}`);
+});
+
+// Global error handler (handles multer errors and others)
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  if (err && err.code === "LIMIT_FILE_SIZE") {
+    return res.status(413).json({ error: "PDF too large. Max 10MB." });
+  }
+  console.error("Unhandled error:", err);
+  res.status(500).json({ error: "Server error" });
 });

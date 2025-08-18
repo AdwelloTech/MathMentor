@@ -737,11 +737,11 @@ export const classSchedulingService = {
     },
   },
 
-  // Zoom Integration
-  zoom: {
-    getMeetingDetails: async (classId: string): Promise<ZoomMeeting | null> => {
+  // Jitsi Integration
+  jitsi: {
+    getMeetingDetails: async (classId: string): Promise<JitsiMeeting | null> => {
       const { data, error } = await supabase
-        .from("zoom_meetings")
+        .from("jitsi_meetings")
         .select("*")
         .eq("class_id", classId)
         .single();
@@ -751,14 +751,25 @@ export const classSchedulingService = {
     },
 
     generateMeeting: async (
+      tutorId: string,
       classId: string,
       title: string,
-      startTime: string
+      durationMinutes: number = 60
     ): Promise<any> => {
-      const { data, error } = await supabase.rpc("generate_zoom_meeting", {
+      const { data, error } = await supabase.rpc("generate_jitsi_meeting", {
+        p_tutor_id: tutorId,
         p_class_id: classId,
-        p_title: title,
-        p_start_time: startTime,
+        p_topic: title,
+        p_duration_minutes: durationMinutes,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+
+    generateManualMeeting: async (classId: string): Promise<any> => {
+      const { data, error } = await supabase.rpc("manual_generate_jitsi_for_class", {
+        class_uuid: classId,
       });
 
       if (error) throw error;

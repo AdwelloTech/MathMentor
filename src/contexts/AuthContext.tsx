@@ -433,14 +433,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign out function
   const signOut = async () => {
     try {
+      // Always attempt to sign out, but catch any session-related errors
       await auth.signOut();
-      clearAuthState();
-      toast.success("Signed out successfully");
     } catch (error: any) {
-      console.error("Sign out error:", error);
-      toast.error("Error signing out");
-      throw error;
+      console.warn("Sign out API call failed (this is often normal):", error);
+      // Continue with local cleanup regardless of API call result
     }
+    
+    // Always clear local state - this is the most important part
+    clearAuthState();
+    toast.success("Signed out successfully");
   };
 
   // Update profile function

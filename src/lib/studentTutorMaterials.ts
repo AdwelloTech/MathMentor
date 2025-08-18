@@ -164,8 +164,8 @@ export const truncateStudentTutorMaterialText = (
 export const incrementStudentTutorMaterialViewCount = async (
   materialId: string
 ): Promise<void> => {
-  const { error } = await supabase.rpc("increment_tutor_note_view_count", {
-    note_id: materialId,
+  const { error } = await supabase.rpc("increment_tutor_material_view_count", {
+    material_id: materialId,
   });
 
   if (error) {
@@ -181,9 +181,9 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
   try {
     // Try the unique view tracking first
     const { error } = await supabase.rpc(
-      "increment_tutor_note_view_count_unique",
+      "increment_tutor_material_view_count_unique",
       {
-        note_id: materialId,
+        material_id: materialId,
         user_id: studentId,
       }
     );
@@ -195,9 +195,9 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
       );
       // Fallback to simple view tracking
       const { error: simpleError } = await supabase.rpc(
-        "increment_tutor_note_view_count",
+        "increment_tutor_material_view_count",
         {
-          note_id: materialId,
+          material_id: materialId,
         }
       );
 
@@ -215,9 +215,12 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
 export const incrementStudentTutorMaterialDownloadCount = async (
   materialId: string
 ): Promise<void> => {
-  const { error } = await supabase.rpc("increment_tutor_note_download_count", {
-    note_id: materialId,
-  });
+  const { error } = await supabase.rpc(
+    "increment_tutor_material_download_count",
+    {
+      material_id: materialId,
+    }
+  );
 
   if (error) {
     console.error("Error incrementing download count:", error);

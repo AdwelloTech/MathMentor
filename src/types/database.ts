@@ -313,7 +313,7 @@ export interface Database {
           start_time: string;
           end_time: string;
           status: string;
-          zoom_link: string | null;
+          jitsi_meeting_url: string | null;
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -327,7 +327,7 @@ export interface Database {
           start_time: string;
           end_time: string;
           status?: string;
-          zoom_link?: string | null;
+          jitsi_meeting_url?: string | null;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -341,7 +341,7 @@ export interface Database {
           start_time?: string;
           end_time?: string;
           status?: string;
-          zoom_link?: string | null;
+          jitsi_meeting_url?: string | null;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;

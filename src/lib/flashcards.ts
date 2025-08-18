@@ -19,6 +19,7 @@ export const flashcards = {
           tutor_id: tutorProfileId,
           title: input.title,
           subject: input.subject,
+          ...(input.topic !== undefined ? { topic: input.topic } : {}),
           grade_level: input.grade_level,
           is_active: input.is_active ?? true,
         })
@@ -80,6 +81,7 @@ export const flashcards = {
         .update({
           ...(input.title !== undefined ? { title: input.title } : {}),
           ...(input.subject !== undefined ? { subject: input.subject } : {}),
+          ...(input.topic !== undefined ? { topic: input.topic } : {}),
           grade_level: input.grade_level,
           ...(input.is_active !== undefined
             ? { is_active: input.is_active }
@@ -146,14 +148,16 @@ export const flashcards = {
   // Student-side queries
   student: {
     async listAvailable(subject?: string): Promise<FlashcardSet[]> {
-      const query = supabase
+      let query = supabase
         .from("flashcard_sets")
         .select("*, tutor:profiles(id, full_name, email)")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
+
       if (subject) {
-        (query as any).eq("subject", subject);
+        query = query.eq("subject", subject);
       }
+
       const { data, error } = await query;
       if (error) throw error;
       return (data || []) as FlashcardSet[];

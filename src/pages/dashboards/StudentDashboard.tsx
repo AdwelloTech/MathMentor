@@ -567,7 +567,7 @@ const StudentDashboard: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Upcoming Sessions */}
             <motion.div variants={itemVariants}>
-              <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+              <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-[530px]">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">

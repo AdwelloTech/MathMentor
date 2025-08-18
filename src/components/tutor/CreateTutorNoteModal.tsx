@@ -7,6 +7,8 @@ import {
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   createTutorNote,
   uploadTutorNoteFile,
@@ -224,7 +226,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                   >
                     Material Title *
                   </label>
-                  <input
+                  <Input
                     type="text"
                     id="title"
                     value={formData.title}
@@ -234,6 +236,8 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter the title of your study material"
                     required
+                    maxLength={100}
+                    showCharCount
                   />
                 </div>
 
@@ -245,7 +249,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                   >
                     Description
                   </label>
-                  <textarea
+                  <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) =>
@@ -254,6 +258,8 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                     rows={3}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Brief description of the material"
+                    maxLength={500}
+                    showCharCount
                   />
                 </div>
 

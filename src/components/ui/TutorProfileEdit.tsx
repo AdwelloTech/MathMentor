@@ -11,6 +11,8 @@ import {
   CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
 
 interface TutorProfileEditProps {
@@ -256,7 +258,7 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                 >
                   Full Name *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="full_name"
                   value={formData.full_name}
@@ -266,6 +268,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                   className="input w-full"
                   placeholder="Enter your full name"
                   required
+                  maxLength={100}
+                  showCharCount
                 />
               </div>
 
@@ -298,7 +302,7 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                 >
                   Bio/Introduction *
                 </label>
-                <textarea
+                <Textarea
                   id="bio"
                   value={formData.bio}
                   onChange={(e) => handleInputChange("bio", e.target.value)}
@@ -306,6 +310,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                   className="input w-full"
                   placeholder="Write a short description about yourself, your teaching style, and experience..."
                   required
+                  maxLength={1000}
+                  showCharCount
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Students will see this when choosing a tutor
@@ -376,7 +382,7 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                 >
                   Qualification *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="qualification"
                   value={formData.qualification}
@@ -386,6 +392,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                   className="input w-full"
                   placeholder="e.g., Bachelor's in Mathematics, Master's in Education"
                   required
+                  maxLength={200}
+                  showCharCount
                 />
               </div>
 
@@ -443,7 +451,7 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                 >
                   Availability
                 </label>
-                <textarea
+                <Textarea
                   id="availability"
                   value={formData.availability}
                   onChange={(e) =>
@@ -452,6 +460,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                   rows={2}
                   className="input w-full"
                   placeholder="e.g., Monday-Friday 6PM-9PM, Weekends 9AM-5PM"
+                  maxLength={300}
+                  showCharCount
                 />
               </div>
             </div>

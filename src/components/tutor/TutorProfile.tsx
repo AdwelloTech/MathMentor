@@ -20,6 +20,8 @@ import { supabase } from "@/lib/supabase";
 import { getActiveProfileImage } from "@/lib/profileImages";
 import ProfileImageUpload from "@/components/ui/ProfileImageUpload";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface TutorProfileFormData {
   email: string;
@@ -447,7 +449,7 @@ const TutorProfile: React.FC = () => {
                 <UserIcon className="h-4 w-4 text-gray-500 mr-1" />
                 First Name
               </label>
-              <input
+              <Input
                 type="text"
                 id="firstName"
                 name="firstName"
@@ -456,6 +458,8 @@ const TutorProfile: React.FC = () => {
                 className="input"
                 placeholder="Enter your first name"
                 required
+                maxLength={50}
+                showCharCount
               />
             </div>
 
@@ -464,7 +468,7 @@ const TutorProfile: React.FC = () => {
                 <UserIcon className="h-4 w-4 text-gray-500 mr-1" />
                 Last Name
               </label>
-              <input
+              <Input
                 type="text"
                 id="lastName"
                 name="lastName"
@@ -473,6 +477,8 @@ const TutorProfile: React.FC = () => {
                 className="input"
                 placeholder="Enter your last name"
                 required
+                maxLength={50}
+                showCharCount
               />
             </div>
 
@@ -524,7 +530,7 @@ const TutorProfile: React.FC = () => {
                   <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
                   Phone Number
                 </label>
-                <input
+                <Input
                   type="tel"
                   id="phone"
                   name="phone"
@@ -532,6 +538,8 @@ const TutorProfile: React.FC = () => {
                   onChange={handleInputChange}
                   className="input"
                   placeholder="Enter your phone number"
+                  maxLength={20}
+                  showCharCount
                 />
               </div>
 
@@ -540,7 +548,7 @@ const TutorProfile: React.FC = () => {
                   <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
                   Emergency Contact
                 </label>
-                <input
+                <Input
                   type="tel"
                   id="emergencyContact"
                   name="emergencyContact"
@@ -548,6 +556,8 @@ const TutorProfile: React.FC = () => {
                   onChange={handleInputChange}
                   className="input"
                   placeholder="Emergency contact number"
+                  maxLength={20}
+                  showCharCount
                 />
               </div>
 
@@ -556,7 +566,7 @@ const TutorProfile: React.FC = () => {
                   <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
                   Address
                 </label>
-                <input
+                <Input
                   type="text"
                   id="address"
                   name="address"
@@ -564,6 +574,8 @@ const TutorProfile: React.FC = () => {
                   onChange={handleInputChange}
                   className="input"
                   placeholder="Enter your address"
+                  maxLength={200}
+                  showCharCount
                 />
               </div>
 
@@ -600,7 +612,7 @@ const TutorProfile: React.FC = () => {
                   <AcademicCapIcon className="h-4 w-4 text-gray-500 mr-1" />
                   Qualification
                 </label>
-                <input
+                <Input
                   type="text"
                   id="qualification"
                   name="qualification"
@@ -608,6 +620,8 @@ const TutorProfile: React.FC = () => {
                   onChange={handleInputChange}
                   className="input"
                   placeholder="e.g., Bachelor's in Mathematics, Teaching Certificate"
+                  maxLength={200}
+                  showCharCount
                 />
               </div>
 
@@ -652,7 +666,7 @@ const TutorProfile: React.FC = () => {
                   <CalendarIcon className="h-4 w-4 text-gray-500 mr-1" />
                   Availability
                 </label>
-                <input
+                <Input
                   type="text"
                   id="availability"
                   name="availability"
@@ -660,6 +674,8 @@ const TutorProfile: React.FC = () => {
                   onChange={handleInputChange}
                   className="input"
                   placeholder="e.g., Weekdays 3-8 PM, Weekends 9 AM-5 PM"
+                  maxLength={200}
+                  showCharCount
                 />
               </div>
 
@@ -668,7 +684,7 @@ const TutorProfile: React.FC = () => {
                   <AcademicCapIcon className="h-4 w-4 text-gray-500 mr-1" />
                   Specializations
                 </label>
-                <input
+                <Input
                   type="text"
                   id="specializations"
                   name="specializations"
@@ -678,6 +694,8 @@ const TutorProfile: React.FC = () => {
                   }
                   className="input"
                   placeholder="e.g., Algebra, Calculus, SAT Prep, Special Education"
+                  maxLength={300}
+                  showCharCount
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Separate multiple specializations with commas
@@ -689,7 +707,7 @@ const TutorProfile: React.FC = () => {
                   <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-1" />
                   Certifications
                 </label>
-                <input
+                <Input
                   type="text"
                   id="certifications"
                   name="certifications"
@@ -699,6 +717,8 @@ const TutorProfile: React.FC = () => {
                   }
                   className="input"
                   placeholder="e.g., Teaching License, Math Specialist, ESL Certificate"
+                  maxLength={300}
+                  showCharCount
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Separate multiple certifications with commas
@@ -710,7 +730,7 @@ const TutorProfile: React.FC = () => {
                   <GlobeAltIcon className="h-4 w-4 text-gray-500 mr-1" />
                   Languages Spoken
                 </label>
-                <input
+                <Input
                   type="text"
                   id="languages"
                   name="languages"
@@ -720,6 +740,8 @@ const TutorProfile: React.FC = () => {
                   }
                   className="input"
                   placeholder="e.g., English, Spanish, French"
+                  maxLength={200}
+                  showCharCount
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Separate multiple languages with commas
@@ -731,7 +753,7 @@ const TutorProfile: React.FC = () => {
                   <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-1" />
                   Bio
                 </label>
-                <textarea
+                <Textarea
                   id="bio"
                   name="bio"
                   value={formData.bio}
@@ -739,6 +761,8 @@ const TutorProfile: React.FC = () => {
                   rows={4}
                   className="input resize-none"
                   placeholder="Tell us about your teaching philosophy, experience, and what makes you a great tutor..."
+                  maxLength={1000}
+                  showCharCount
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   This will be visible to potential students

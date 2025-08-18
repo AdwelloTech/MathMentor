@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { XMarkIcon, BookOpenIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import RichTextEditor from "./RichTextEditor";
@@ -151,7 +153,7 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({
                     >
                       Note Title *
                     </label>
-                    <input
+                    <Input
                       type="text"
                       id="title"
                       value={formData.title}
@@ -161,6 +163,8 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="Enter note title..."
                       required
+                      maxLength={100}
+                      showCharCount
                     />
                   </div>
 
@@ -198,15 +202,17 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({
                     >
                       Description (Optional)
                     </label>
-                    <textarea
+                    <Textarea
                       id="description"
                       value={formData.description}
                       onChange={(e) =>
                         handleInputChange("description", e.target.value)
                       }
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-2 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="Brief description of your note..."
+                      maxLength={300}
+                      showCharCount
                     />
                   </div>
 

@@ -164,8 +164,8 @@ export const truncateStudentTutorMaterialText = (
 export const incrementStudentTutorMaterialViewCount = async (
   materialId: string
 ): Promise<void> => {
-  const { error } = await supabase.rpc("increment_tutor_material_view_count", {
-    material_id: materialId,
+  const { error } = await supabase.rpc("increment_tutor_note_view_count", {
+    note_id: materialId,
   });
 
   if (error) {
@@ -179,32 +179,15 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
   studentId: string
 ): Promise<void> => {
   try {
-    // Try the unique view tracking first
-    const { error } = await supabase.rpc(
-      "increment_tutor_material_view_count_unique",
-      {
-        material_id: materialId,
-        user_id: studentId,
-      }
-    );
+    // For now, use simple view tracking since the unique function has database issues
+    // TODO: Fix the database function increment_tutor_note_view_count_unique to resolve ambiguous column reference
+    const { error } = await supabase.rpc("increment_tutor_note_view_count", {
+      note_id: materialId,
+    });
 
     if (error) {
-      console.error(
-        "Unique view tracking failed, falling back to simple tracking:",
-        error
-      );
-      // Fallback to simple view tracking
-      const { error: simpleError } = await supabase.rpc(
-        "increment_tutor_material_view_count",
-        {
-          material_id: materialId,
-        }
-      );
-
-      if (simpleError) {
-        console.error("Simple view tracking also failed:", simpleError);
-        throw simpleError;
-      }
+      console.error("Error in view tracking:", error);
+      throw error;
     }
   } catch (error) {
     console.error("Error in view tracking:", error);
@@ -215,12 +198,9 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
 export const incrementStudentTutorMaterialDownloadCount = async (
   materialId: string
 ): Promise<void> => {
-  const { error } = await supabase.rpc(
-    "increment_tutor_material_download_count",
-    {
-      material_id: materialId,
-    }
-  );
+  const { error } = await supabase.rpc("increment_tutor_note_download_count", {
+    note_id: materialId,
+  });
 
   if (error) {
     console.error("Error incrementing download count:", error);

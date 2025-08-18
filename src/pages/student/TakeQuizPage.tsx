@@ -13,6 +13,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Textarea } from "@/components/ui/textarea";
 import { quizService } from "@/lib/quizService";
 import type { Quiz, Question, Answer, QuizAttempt } from "@/types/quiz";
 import toast from "react-hot-toast";
@@ -360,7 +361,7 @@ const TakeQuizPage: React.FC = () => {
                   )}
 
                   {currentQuestion.question_type === "short_answer" && (
-                    <textarea
+                    <Textarea
                       value={getCurrentAnswer()?.answerText || ""}
                       onChange={(e) =>
                         handleAnswerChange(
@@ -372,6 +373,8 @@ const TakeQuizPage: React.FC = () => {
                       placeholder="Type your answer here..."
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       rows={4}
+                      maxLength={500}
+                      showCharCount
                     />
                   )}
                 </div>

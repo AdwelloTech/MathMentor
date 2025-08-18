@@ -19,6 +19,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
 import type { Quiz, QuizStats } from "@/types/quiz";
 import toast from "react-hot-toast";
+import { getGradeLevelDisplayName } from "@/lib/gradeLevels";
 
 const QuizManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -266,7 +267,7 @@ const QuizManagementPage: React.FC = () => {
                         {quiz.subject}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {quiz.grade_level || "All grades"}
+                        {getGradeLevelDisplayName(quiz.grade_level)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

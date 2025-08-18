@@ -423,6 +423,8 @@ const StudentProfile: React.FC = () => {
                       onChange={handleInputChange}
                       placeholder="Enter your first name"
                       required
+                      maxLength={50}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -441,6 +443,8 @@ const StudentProfile: React.FC = () => {
                       onChange={handleInputChange}
                       placeholder="Enter your last name"
                       required
+                      maxLength={50}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -585,6 +589,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.schoolName}
                       onChange={handleInputChange}
                       placeholder="Enter your school name"
+                      maxLength={100}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -619,6 +625,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.phone}
                       onChange={handleInputChange}
                       placeholder="Enter your phone number"
+                      maxLength={20}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -637,6 +645,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.emergencyContact}
                       onChange={handleInputChange}
                       placeholder="Emergency contact number"
+                      maxLength={20}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -654,6 +664,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.city}
                       onChange={handleInputChange}
                       placeholder="Enter your city"
+                      maxLength={50}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -671,6 +683,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.postcode}
                       onChange={handleInputChange}
                       placeholder="Enter your postcode"
+                      maxLength={20}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -691,6 +705,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.address}
                       onChange={handleInputChange}
                       placeholder="Enter your full address (optional)"
+                      maxLength={200}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -748,6 +764,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.parentName}
                       onChange={handleInputChange}
                       placeholder="Enter parent/guardian name"
+                      maxLength={100}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -766,6 +784,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.parentPhone}
                       onChange={handleInputChange}
                       placeholder="Enter parent/guardian phone number"
+                      maxLength={20}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -784,6 +804,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.parentEmail}
                       onChange={handleInputChange}
                       placeholder="Enter parent/guardian email address"
+                      maxLength={100}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -854,6 +876,8 @@ const StudentProfile: React.FC = () => {
                         onChange={handleInputChange}
                         rows={4}
                         placeholder="Please describe your specific learning challenges, accommodations needed, or any other information that would help us provide better support..."
+                        maxLength={500}
+                        showCharCount
                         className="resize-none rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                       />
                       <p className="text-sm text-slate-500">

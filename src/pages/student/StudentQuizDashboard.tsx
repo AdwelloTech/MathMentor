@@ -166,7 +166,7 @@ const StudentQuizDashboard: React.FC = () => {
               <h1 className="text-3xl md:text-4xl font-bold text-green-900 mb-3">
                 Study
               </h1>
-              <p className="text-lg text-green-700">
+              <p className="text-lg text-gray-700">
                 Quizzes and flash cards from your tutors
               </p>
             </div>
@@ -180,9 +180,9 @@ const StudentQuizDashboard: React.FC = () => {
           transition={{ delay: 0.1 }}
           className="mb-8"
         >
-          <Card className="border-green-200 bg-white">
+          <Card className="border-green-900/60 border-2 bg-white">
             <CardHeader>
-              <CardTitle className="text-green-900 flex items-center gap-2">
+              <CardTitle className="text-gray-900 flex items-center gap-2">
                 <Filter className="w-5 h-5" />
                 Search & Filter
               </CardTitle>
@@ -191,21 +191,18 @@ const StudentQuizDashboard: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Search */}
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="search"
-                    className="text-green-800 font-medium"
-                  >
+                  <Label htmlFor="search" className="text-gray-700 font-medium">
                     Search Quizzes
                   </Label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-600" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-900" />
                     <Input
                       id="search"
                       type="text"
                       placeholder="Search quizzes..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 border-green-200 focus:border-green-900 focus:ring-green-900"
+                      className="pl-10 border-gray-700 focus:border-gray-900 focus:ring-gray-900"
                     />
                   </div>
                 </div>
@@ -214,7 +211,7 @@ const StudentQuizDashboard: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="subject"
-                    className="text-green-800 font-medium"
+                    className="text-gray-900 font-medium"
                   >
                     Filter by Subject
                   </Label>
@@ -222,7 +219,7 @@ const StudentQuizDashboard: React.FC = () => {
                     value={selectedSubject}
                     onValueChange={setSelectedSubject}
                   >
-                    <SelectTrigger className="border-green-200 focus:border-green-900 focus:ring-green-900">
+                    <SelectTrigger className="border-gray-700 focus:border-gray-900 focus:ring-gray-900">
                       <SelectValue placeholder="All Subjects" />
                     </SelectTrigger>
                     <SelectContent>
@@ -265,7 +262,7 @@ const StudentQuizDashboard: React.FC = () => {
           transition={{ delay: 0.2 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
         >
-          <Card className="border-green-200 bg-white">
+          <Card className="border-green-900/60 border-2 bg-white">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-green-900 rounded-lg">
@@ -283,7 +280,7 @@ const StudentQuizDashboard: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-green-200 bg-white">
+          <Card className="border-green-900/60 border-2 bg-white">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-green-900 rounded-lg">
@@ -299,7 +296,7 @@ const StudentQuizDashboard: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-green-200 bg-white">
+          <Card className="border-green-900/60 border-2 bg-white">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-green-900 rounded-lg">

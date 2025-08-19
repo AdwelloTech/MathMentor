@@ -234,7 +234,7 @@ const BookSessionPage: React.FC = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-green-900 mb-3">
             Book a Session
           </h1>
-          <p className="text-lg text-green-700">
+          <p className="text-lg text-gray-700">
             Find and book upcoming sessions with our expert tutors
           </p>
         </motion.div>
@@ -258,14 +258,14 @@ const BookSessionPage: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="session-type"
-                    className="text-green-800 font-medium"
+                    className="text-gray-900 font-medium"
                   >
                     Session Type
                   </Label>
                   <Select value={filterType} onValueChange={setFilterType}>
                     <SelectTrigger
                       id="session-type"
-                      className="border-green-200 focus:border-green-900 focus:ring-green-900"
+                      className="border-green-900/60 focus:border-green-900 focus:ring-green-900"
                     >
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
@@ -282,7 +282,7 @@ const BookSessionPage: React.FC = () => {
 
                 {/* Date Filter */}
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="text-green-800 font-medium">
+                  <Label htmlFor="date" className="text-gray-900 font-medium">
                     Date
                   </Label>
                   <Input
@@ -290,7 +290,7 @@ const BookSessionPage: React.FC = () => {
                     type="date"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
-                    className="border-green-200 focus:border-green-900 focus:ring-green-900"
+                    className="border-green-900/60 focus:border-green-900 focus:ring-green-900"
                   />
                 </div>
 
@@ -298,7 +298,7 @@ const BookSessionPage: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="subject"
-                    className="text-green-800 font-medium"
+                    className="text-gray-900 font-medium"
                   >
                     Subject
                   </Label>
@@ -308,27 +308,24 @@ const BookSessionPage: React.FC = () => {
                     placeholder="e.g., Math, Physics"
                     value={filterSubject}
                     onChange={(e) => setFilterSubject(e.target.value)}
-                    className="border-green-200 focus:border-green-900 focus:ring-green-900"
+                    className="border-green-900/60 focus:border-green-900 focus:ring-green-900"
                   />
                 </div>
 
                 {/* Search */}
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="search"
-                    className="text-green-800 font-medium"
-                  >
+                  <Label htmlFor="search" className="text-gray-900 font-medium">
                     Search
                   </Label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-600" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-900" />
                     <Input
                       id="search"
                       type="text"
                       placeholder="Search sessions or tutors..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 border-green-200 focus:border-green-900 focus:ring-green-900"
+                      className="pl-10 border-green-900/60 focus:border-green-900 focus:ring-green-900"
                     />
                   </div>
                 </div>
@@ -348,7 +345,7 @@ const BookSessionPage: React.FC = () => {
                       setFilterSubject("");
                       setSearchTerm("");
                     }}
-                    className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
+                    className="border-green-900/60 text-gray-700 hover:bg-gray-50 hover:text-gray-800"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Clear all filters
@@ -388,22 +385,19 @@ const BookSessionPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="h-full flex flex-col border-green-200 hover:border-green-300 transition-all duration-200 hover:shadow-lg bg-white">
+                <Card className="h-full flex flex-col border-green-900/60  transition-all duration-200 hover:shadow-lg bg-white">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between mb-3">
                       <Badge
                         variant="secondary"
-                        className="bg-green-100 text-green-800 hover:bg-green-200 flex items-center gap-1"
+                        className="bg-green-900 hover:bg-green-900 text-white flex items-center gap-1"
                       >
-                        {getClassTypeIcon(
-                          getClassTypeName(session.class_type_id)
-                        )}
                         {getClassTypeName(session.class_type_id)}
                       </Badge>
                       <div className="text-right">
                         <Badge
                           variant="outline"
-                          className="border-yellow-400 text-yellow-600 bg-yellow-50 text-lg font-bold px-3 py-1"
+                          className="border-yellow-400 border-2 text-black  text-lg font-bold px-3 py-1"
                         >
                           <DollarSign className="w-4 h-4 mr-1" />
                           {session.price_per_session}
@@ -416,7 +410,7 @@ const BookSessionPage: React.FC = () => {
                     </CardTitle>
 
                     {session.description && (
-                      <CardDescription className="text-green-700 line-clamp-2">
+                      <CardDescription className="text-gray-700 line-clamp-2">
                         {session.description}
                       </CardDescription>
                     )}
@@ -424,22 +418,22 @@ const BookSessionPage: React.FC = () => {
 
                   <CardContent className="flex-1 space-y-4">
                     {/* Tutor Info */}
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-3 p-3 rounded-lg">
                       <Avatar className="w-12 h-12">
-                        <AvatarFallback className="bg-green-200 text-green-800 font-semibold">
+                        <AvatarFallback className=" text-gray-900 font-semibold">
                           {tutor.full_name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-semibold text-green-900">
+                        <p className="font-semibold text-gray-900">
                           {tutor.full_name}
                         </p>
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm text-green-700 font-medium">
+                          <span className="text-sm text-gray-700 font-medium">
                             {tutor.rating.toFixed(1)}
                           </span>
-                          <span className="text-sm text-green-600">
+                          <span className="text-sm text-gray-600">
                             ({tutor.total_reviews} reviews)
                           </span>
                         </div>
@@ -448,21 +442,21 @@ const BookSessionPage: React.FC = () => {
 
                     {/* Session Details */}
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-green-700">
-                        <CalendarDays className="w-4 h-4 text-green-600" />
+                      <div className="flex items-center gap-3 text-gray-700">
+                        <CalendarDays className="w-4 h-4 text-gray-600" />
                         <span className="font-medium">
                           {formatDate(session.date)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-green-700">
-                        <Clock className="w-4 h-4 text-green-600" />
+                      <div className="flex items-center gap-3 text-gray-700">
+                        <Clock className="w-4 h-4 text-gray-600" />
                         <span className="font-medium">
                           {formatTime(session.start_time)} -{" "}
                           {formatTime(session.end_time)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-green-700">
-                        <Users className="w-4 h-4 text-green-600" />
+                      <div className="flex items-center gap-3 text-gray-700">
+                        <Users className="w-4 h-4 text-gray-600" />
                         <span className="font-medium">
                           {sessionResult.available_slots} of{" "}
                           {session.max_students} spots available

@@ -127,7 +127,7 @@ const StudentTutorMaterialCard: React.FC<
 
   return (
     <Card
-      className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg bg-gradient-to-br from-white via-white to-green-50/30 h-[420px] flex flex-col overflow-hidden ${
+      className={`group  transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg h-[245px] w-[400px] flex flex-col overflow-hidden ${
         !hasAccess ? "opacity-75" : ""
       } ${isPremium ? "ring-2 ring-yellow-400/20" : ""}`}
       onClick={handleView}
@@ -153,21 +153,20 @@ const StudentTutorMaterialCard: React.FC<
               {title || "Untitled Material"}
             </h3>
             {isPremium && (
-              <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-green-900 border-0 text-xs font-bold">
-                <Sparkles className="h-3 w-3 mr-1" />
+              <Badge className="bg-yellow-400 text-black border-0 text-xs font-bold">
                 PREMIUM
               </Badge>
             )}
           </div>
         </div>
 
-        {(description || !title) && (
+        {/*{(description || !title) && (
           <p className="text-slate-600 text-sm line-clamp-3 leading-relaxed">
             {description
               ? truncateStudentTutorMaterialText(description, 120)
               : "No description provided"}
           </p>
-        )}
+        )} */}
       </CardHeader>
 
       <CardContent className="flex-1 space-y-4">
@@ -186,63 +185,6 @@ const StudentTutorMaterialCard: React.FC<
           </div>
         )}
 
-        {/* Subject and Grade */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {subjectDisplayName && (
-            <Badge
-              variant="outline"
-              className="text-xs font-semibold border-2 px-3 py-1"
-              style={{
-                backgroundColor: `${getStudentTutorMaterialSubjectColor(
-                  subjectColor
-                )}15`,
-                borderColor: `${getStudentTutorMaterialSubjectColor(
-                  subjectColor
-                )}40`,
-                color: getStudentTutorMaterialSubjectColor(subjectColor),
-              }}
-            >
-              {subjectDisplayName}
-            </Badge>
-          )}
-          {gradeLevelDisplay && (
-            <Badge
-              variant="secondary"
-              className="text-xs font-semibold bg-slate-100 text-slate-700 px-3 py-1"
-            >
-              {gradeLevelDisplay}
-            </Badge>
-          )}
-        </div>
-
-        {/* File Info */}
-
-        {/* Stats */}
-        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1 rounded bg-green-100">
-                <Eye className="h-3 w-3 text-green-700" />
-              </div>
-              <span className="text-xs font-semibold text-green-700">
-                {viewCount} views
-              </span>
-            </div>
-            {hasFile && (
-              <div className="flex items-center gap-2">
-                <div className="p-1 rounded bg-green-100">
-                  <Download className="h-3 w-3 text-green-700" />
-                </div>
-                <span className="text-xs font-semibold text-green-700">
-                  {downloadCount} downloads
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-
-      <CardFooter className="pt-4 border-t border-slate-100 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
             <Calendar className="h-3 w-3 text-slate-400" />
@@ -274,14 +216,38 @@ const StudentTutorMaterialCard: React.FC<
                   }}
                   className="bg-gradient-to-r from-green-900 to-green-800 hover:from-green-800 hover:to-green-700 text-white text-xs font-semibold shadow-lg"
                 >
-                  <Eye className="h-3 w-3 mr-1" />
                   View
                 </Button>
               </>
             )}
           </div>
         </div>
-      </CardFooter>
+      </CardContent>
+
+      {/*<CardFooter className="pt-4 border-t border-slate-100 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded bg-green-100">
+                <Eye className="h-3 w-3 text-green-700" />
+              </div>
+              <span className="text-xs font-semibold text-green-700">
+                {viewCount} views
+              </span>
+            </div>
+            {hasFile && (
+              <div className="flex items-center gap-2">
+                <div className="p-1 rounded bg-green-100">
+                  <Download className="h-3 w-3 text-green-700" />
+                </div>
+                <span className="text-xs font-semibold text-green-700">
+                  {downloadCount} downloads
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardFooter> */}
     </Card>
   );
 };

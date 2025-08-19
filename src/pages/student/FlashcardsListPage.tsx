@@ -79,7 +79,7 @@ const FlashcardsListPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen  p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Error Display */}
         {error && (
@@ -160,7 +160,7 @@ const FlashcardsListPage: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge
                         variant="secondary"
-                        className="bg-green-900 text-white hover:bg-green-900 rounded-md px-3 py-1"
+                        className="bg-yellow-300 text-black border-2 border-black/40 hover:bg-yellow-400 rounded-md px-3 py-1"
                       >
                         {s.subject}
                       </Badge>
@@ -190,7 +190,7 @@ const FlashcardsListPage: React.FC = () => {
 
                 <Button
                   onClick={() => navigate(`/student/flashcards/${s.id}`)}
-                  className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                  className="w-full bg-green-900 text-white hover:bg-green-800 font-semibold py-3 rounded-xl shadow-lg "
                 >
                   Start Studying
                 </Button>

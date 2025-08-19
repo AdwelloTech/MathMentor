@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -34,6 +34,7 @@ interface StudentTutorMaterialCardComponentProps
   extends StudentTutorMaterialCardProps {
   onView: () => void;
   onViewCountUpdate?: (materialId: string, newCount: number) => void;
+  onDownloadCountUpdate?: (materialId: string, newCount: number) => void;
 }
 
 const StudentTutorMaterialCard: React.FC<
@@ -56,36 +57,47 @@ const StudentTutorMaterialCard: React.FC<
   hasAccess,
   onView,
   onViewCountUpdate,
+  onDownloadCountUpdate,
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const hasFile = fileUrl && fileName;
-  const hasTrackedView = useRef(false);
+
+  // Track view when component mounts (student views the material)
+  useEffect(() => {
+    const trackView = async () => {
+      // Check if we've already tracked this view in this session
+      const viewKey = `view_tracked_${id}_${user?.id}`;
+      const hasTrackedInSession = sessionStorage.getItem(viewKey);
+
+      if (user && !hasTrackedInSession && hasAccess) {
+        try {
+          console.log("Tracking view for material:", id);
+          await incrementStudentTutorMaterialViewCountUnique(id, user.id);
+          console.log("View tracking completed successfully");
+
+          // Update the local view count after successful tracking
+          if (onViewCountUpdate) {
+            console.log("Updating local view count by 1");
+            onViewCountUpdate(id, 1);
+          }
+
+          // Mark that we've tracked this view in this session
+          sessionStorage.setItem(viewKey, "true");
+        } catch (error) {
+          console.error("Error tracking view:", error);
+          // Don't throw error - view tracking failure shouldn't break the component
+        }
+      }
+    };
+
+    // Only track view once when component mounts and user has access
+    trackView();
+  }, [id, user, hasAccess]); // Keep minimal dependencies
 
   const handleView = async () => {
     if (!hasAccess) {
       return;
-    }
-
-    // Track the view when user clicks View button
-    if (user && !hasTrackedView.current) {
-      try {
-        console.log("Tracking view for material:", id);
-        await incrementStudentTutorMaterialViewCountUnique(id, user.id);
-        console.log("View tracking completed successfully");
-
-        // Update the local view count after successful tracking
-        if (onViewCountUpdate) {
-          console.log("Updating local view count by 1");
-          onViewCountUpdate(id, 1);
-        }
-
-        // Mark that we've tracked this view
-        hasTrackedView.current = true;
-      } catch (error) {
-        console.error("Error tracking view:", error);
-        // Don't throw error - view tracking failure shouldn't break the component
-      }
     }
 
     onView();
@@ -99,6 +111,12 @@ const StudentTutorMaterialCard: React.FC<
     try {
       // Increment download count
       await incrementStudentTutorMaterialDownloadCount(id);
+
+      // Update the local download count after successful tracking
+      if (onDownloadCountUpdate) {
+        console.log("Updating local download count by 1");
+        onDownloadCountUpdate(id, 1);
+      }
 
       // Force download by fetching the file and creating a blob
       const response = await fetch(fileUrl);
@@ -127,7 +145,7 @@ const StudentTutorMaterialCard: React.FC<
 
   return (
     <Card
-      className={`group  transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg h-[245px] w-[400px] flex flex-col overflow-hidden ${
+      className={`group transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg h-[245px] w-[400px] flex flex-col overflow-hidden ${
         !hasAccess ? "opacity-75" : ""
       } ${isPremium ? "ring-2 ring-yellow-400/20" : ""}`}
       onClick={handleView}
@@ -159,14 +177,6 @@ const StudentTutorMaterialCard: React.FC<
             )}
           </div>
         </div>
-
-        {/*{(description || !title) && (
-          <p className="text-slate-600 text-sm line-clamp-3 leading-relaxed">
-            {description
-              ? truncateStudentTutorMaterialText(description, 120)
-              : "No description provided"}
-          </p>
-        )} */}
       </CardHeader>
 
       <CardContent className="flex-1 space-y-4">
@@ -207,47 +217,22 @@ const StudentTutorMaterialCard: React.FC<
                 Upgrade
               </Button>
             ) : (
-              <>
-                <Button
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleView();
-                  }}
-                  className="bg-gradient-to-r from-green-900 to-green-800 hover:from-green-800 hover:to-green-700 text-white text-xs font-semibold shadow-lg"
-                >
-                  View
-                </Button>
-              </>
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleView();
+                }}
+                className="bg-gradient-to-r from-green-900 to-green-800 hover:from-green-800 hover:to-green-700 text-white text-xs font-semibold shadow-lg"
+              >
+                View
+              </Button>
             )}
           </div>
         </div>
       </CardContent>
 
-      {/*<CardFooter className="pt-4 border-t border-slate-100 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm">
-        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1 rounded bg-green-100">
-                <Eye className="h-3 w-3 text-green-700" />
-              </div>
-              <span className="text-xs font-semibold text-green-700">
-                {viewCount} views
-              </span>
-            </div>
-            {hasFile && (
-              <div className="flex items-center gap-2">
-                <div className="p-1 rounded bg-green-100">
-                  <Download className="h-3 w-3 text-green-700" />
-                </div>
-                <span className="text-xs font-semibold text-green-700">
-                  {downloadCount} downloads
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardFooter> */}
+      {/* Remove the Stats Footer - not needed on the card */}
     </Card>
   );
 };

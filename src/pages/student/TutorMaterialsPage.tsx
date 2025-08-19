@@ -162,6 +162,36 @@ const TutorMaterialsPage: React.FC = () => {
     );
   };
 
+  const handleDownloadCountUpdate = (materialId: string, increment: number) => {
+    console.log("handleDownloadCountUpdate called with:", {
+      materialId,
+      increment,
+    });
+
+    setMaterials((prevMaterials) => {
+      console.log("Previous materials state:", prevMaterials);
+      const updatedMaterials = prevMaterials.map((material) =>
+        material.id === materialId
+          ? { ...material, download_count: material.download_count + increment }
+          : material
+      );
+      console.log("Updated materials state:", updatedMaterials);
+      return updatedMaterials;
+    });
+
+    // Also update allMaterials to keep filtering working correctly
+    setAllMaterials((prevAllMaterials) => {
+      console.log("Previous allMaterials state:", prevAllMaterials);
+      const updatedAllMaterials = prevAllMaterials.map((material) =>
+        material.id === materialId
+          ? { ...material, download_count: material.download_count + increment }
+          : material
+      );
+      console.log("Updated allMaterials state:", updatedAllMaterials);
+      return updatedAllMaterials;
+    });
+  };
+
   const clearFilters = () => {
     setSearchTerm("");
     setSelectedSubject("all");
@@ -441,6 +471,7 @@ const TutorMaterialsPage: React.FC = () => {
                     )}
                     onView={() => handleViewMaterial(material)}
                     onViewCountUpdate={handleViewCountUpdate}
+                    onDownloadCountUpdate={handleDownloadCountUpdate}
                   />
                 </div>
               ))}
@@ -456,6 +487,8 @@ const TutorMaterialsPage: React.FC = () => {
             isOpen={isViewerOpen}
             onClose={handleCloseViewer}
             material={selectedMaterial}
+            onViewCountUpdate={handleViewCountUpdate}
+            onDownloadCountUpdate={handleDownloadCountUpdate}
           />
         )}
       </AnimatePresence>

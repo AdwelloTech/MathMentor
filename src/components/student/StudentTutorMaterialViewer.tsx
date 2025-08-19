@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -16,8 +16,10 @@ import {
   formatFileSize,
   getStudentTutorMaterialSubjectColor,
   incrementStudentTutorMaterialDownloadCount,
+  incrementStudentTutorMaterialViewCountUnique,
   type StudentTutorMaterial,
 } from "@/lib/studentTutorMaterials";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -26,18 +28,55 @@ interface StudentTutorMaterialViewerProps {
   isOpen: boolean;
   onClose: () => void;
   material: StudentTutorMaterial;
+  onViewCountUpdate?: (materialId: string, newCount: number) => void;
+  onDownloadCountUpdate?: (materialId: string, newCount: number) => void;
 }
 
 const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
   isOpen,
   onClose,
   material,
+  onViewCountUpdate,
+  onDownloadCountUpdate,
 }) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const hasFile = material.file_url && material.file_name;
   const hasContent = material.content && material.content.trim().length > 0;
   const isPdfFile =
     hasFile && material.file_name?.toLowerCase().endsWith(".pdf");
+
+  // Track view when viewer opens (only once per session)
+  useEffect(() => {
+    const trackView = async () => {
+      // Check if we've already tracked this view in this session
+      const viewKey = `view_tracked_${material.id}_${user?.id}`;
+      const hasTrackedInSession = sessionStorage.getItem(viewKey);
+
+      if (isOpen && user && !hasTrackedInSession) {
+        try {
+          await incrementStudentTutorMaterialViewCountUnique(
+            material.id,
+            user.id
+          );
+
+          // Update the local view count after successful tracking
+          if (onViewCountUpdate) {
+            console.log("Updating local view count by 1");
+            onViewCountUpdate(material.id, 1);
+          }
+
+          // Mark that we've tracked this view in this session
+          sessionStorage.setItem(viewKey, "true");
+        } catch (error) {
+          console.warn("Error tracking view:", error);
+          // Don't throw error - view tracking failure shouldn't break the component
+        }
+      }
+    };
+
+    trackView();
+  }, [isOpen, material.id, user]); // Keep minimal dependencies
 
   const handleClose = () => {
     if (!loading) {
@@ -50,8 +89,24 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
     try {
       setLoading(true);
+      console.log("Starting download process for material:", material.id);
+
       // Increment download count
+      console.log("Calling incrementStudentTutorMaterialDownloadCount...");
       await incrementStudentTutorMaterialDownloadCount(material.id);
+      console.log("Download count increment completed");
+
+      // Update the local download count after successful tracking
+      if (onDownloadCountUpdate) {
+        console.log(
+          "Calling onDownloadCountUpdate with material ID:",
+          material.id
+        );
+        onDownloadCountUpdate(material.id, 1);
+        console.log("Local download count update completed");
+      } else {
+        console.warn("onDownloadCountUpdate callback is not provided!");
+      }
 
       // Force download by fetching the file and creating a blob
       const response = await fetch(material.file_url!);
@@ -65,6 +120,8 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+
+      console.log("File download completed successfully");
     } catch (error) {
       console.error("Error downloading file:", error);
       // Fallback: try direct download

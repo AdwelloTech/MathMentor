@@ -541,22 +541,30 @@ const StudentDashboard: React.FC = () => {
                 variants={itemVariants}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D]">
+                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
                   <CardHeader className="pb-2">
-                    <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200">
-                      <stat.icon className="w-6 h-6 text-white" />
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                        <stat.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="">
+                        <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                          {stat.name}
+                        </CardTitle>
+                      </div>
                     </div>
-                    <CardTitle className="text-2xl font-bold">
-                      {stat.value}
-                    </CardTitle>
-                    <CardDescription className="text-sm font-medium">
-                      {stat.name}
-                    </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground">
-                      {stat.description}
-                    </p>
+                  <CardContent className="pt-0">
+                    <div className="pl-0">
+                      <div className="flex items-start space-x-2">
+                        <div className="text-3xl font-bold text-gray-900 ml-3">
+                          {stat.value}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-3 px-6">
+                          {stat.description}
+                        </p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>

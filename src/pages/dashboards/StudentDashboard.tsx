@@ -407,28 +407,28 @@ const StudentDashboard: React.FC = () => {
                 name: "Total Sessions",
                 value: data.stats?.total_bookings || 0,
                 icon: VideoCameraIcon,
-                color: "from-green-600 to-green-700",
+                color: "green-900",
                 description: "All time bookings",
               },
               {
                 name: "Hours Learned",
                 value: calculateHoursLearned(),
                 icon: ClockIcon,
-                color: "from-yellow-500 to-yellow-600",
+                color: "green-900",
                 description: "Estimated learning time",
               },
               {
                 name: "Tutors Worked With",
                 value: data.stats?.total_tutors || 0,
                 icon: UserGroupIcon,
-                color: "from-green-700 to-green-800",
+                color: "green-900",
                 description: "Unique tutors",
               },
               {
                 name: "This Month",
                 value: data.stats?.bookings_this_month || 0,
                 icon: TrendingUpIcon,
-                color: "from-yellow-600 to-yellow-700",
+                color: "yellow-900",
                 description: "Sessions booked",
               },
             ].map((stat, index) => (
@@ -440,7 +440,7 @@ const StudentDashboard: React.FC = () => {
                 <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50">
                   <CardHeader className="pb-2">
                     <div
-                      className={`bg-gradient-to-r ${stat.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}
+                      className={`bg-${stat.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}
                     >
                       <stat.icon className="w-6 h-6 text-white" />
                     </div>
@@ -664,28 +664,28 @@ const StudentDashboard: React.FC = () => {
                       title: "Book Session",
                       description: "Schedule a tutoring session",
                       icon: PlayIcon,
-                      color: "from-green-600 to-green-700",
+                      color: "from-green-900 to-green-900",
                       action: () => navigate("/student/book-session"),
                     },
                     {
                       title: "Take Quiz",
                       description: "Test your knowledge",
                       icon: AcademicCapIcon,
-                      color: "from-yellow-500 to-yellow-600",
+                      color: "from-green-900 to-green-900",
                       action: () => navigate("/student/quizzes"),
                     },
                     {
                       title: "Study Notes",
                       description: "Review study materials",
                       icon: BookOpenIcon,
-                      color: "from-green-700 to-green-800",
+                      color: "from-green-900 to-green-900",
                       action: () => navigate("/student/notes"),
                     },
                     {
                       title: "Flashcards",
                       description: "Practice with flashcards",
                       icon: CogIcon,
-                      color: "from-yellow-600 to-yellow-700",
+                      color: "from-green-900 to-green-900",
                       action: () => navigate("/student/flashcards"),
                     },
                   ].map((action, index) => (

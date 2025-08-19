@@ -12,44 +12,28 @@ const ProfileHeader = () => {
       transition={{ duration: 0.5 }}
       className="mb-8"
     >
-      <div className="bg-gradient-to-r from-emerald-900 to-emerald-800 rounded-2xl p-8 shadow-lg max-w-full mx-auto">
+      <div className="  max-w-full mx-auto">
         <div className="flex items-center space-x-4">
-          {/* Icon Container */}
-          <div className="relative">
-            <div className="p-4 bg-yellow-400 rounded-2xl shadow-md">
-              <UserIcon className="h-8 w-8 text-emerald-900" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-
           {/* Content */}
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
-              <h1 className="text-3xl font-bold text-white">My Profile</h1>
-              <Badge
-                variant="secondary"
-                className="bg-yellow-400/20 text-yellow-400 border-yellow-400/30 rounded-xl px-3 py-1"
-              >
-                Active
-              </Badge>
+              <h1 className="text-3xl font-bold text-black">My Profile</h1>
             </div>
-            <p className="text-emerald-100 text-base leading-relaxed">
+            <p className="text-gray-900 text-base leading-relaxed">
               Manage your personal information and learning preferences with our
               modern, secure profile system.
             </p>
 
             {/* Feature Pills */}
             <div className="flex flex-wrap gap-2 mt-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1.5 text-sm text-white border border-white/20">
-                📚 Learning Preferences
+              <div className="bg-green-900 backdrop-blur-sm rounded-xl px-3 py-1.5 text-sm text-white border border-white/20">
+                Learning Preferences
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1.5 text-sm text-white border border-white/20">
-                🔒 Secure Data
+              <div className="bg-green-900 backdrop-blur-sm rounded-xl px-3 py-1.5 text-sm text-white border border-white/20">
+                Secure Data
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1.5 text-sm text-white border border-white/20">
-                ⚡ Real-time Sync
+              <div className="bg-green-900 backdrop-blur-sm rounded-xl px-3 py-1.5 text-sm text-white border border-white/20">
+                Real-time Sync
               </div>
             </div>
           </div>

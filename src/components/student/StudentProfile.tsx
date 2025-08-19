@@ -343,7 +343,7 @@ const StudentProfile: React.FC = () => {
   }
 
   return (
-    <div className="max-w-full mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

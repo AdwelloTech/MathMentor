@@ -1,4 +1,5 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "./supabase";
+import type { InstantRequest } from "../types/instantSession";
 
 // Shared broadcast channel (singleton) to minimize latency when sending events
 // We subscribe once and reuse the same channel for .send() calls
@@ -22,18 +23,6 @@ function getInstantSharedChannel() {
   }
   return { channel: __instantSharedChannel, ready: __instantSharedReady! };
 }
-
-type InstantRequest = {
-  id: string;
-  student_id: string;
-  subject_id: string;
-  duration_minutes: number;
-  status: "pending" | "accepted" | "cancelled";
-  accepted_by_tutor_id: string | null;
-  jitsi_meeting_url: string | null;
-  created_at: string;
-  updated_at: string;
-};
 
 export const instantSessionService = {
   // Student creates a new instant request (fixed 15 minutes)
@@ -196,6 +185,8 @@ export const instantSessionService = {
     if (acceptError) throw acceptError;
     if (!accepted) throw new Error("Request was already accepted or cancelled");
 
+    console.log("[Instant] Request accepted, original data:", accepted);
+
     // Proactively broadcast acceptance so other tutors immediately remove the card
     try {
       const { channel, ready } = getInstantSharedChannel();
@@ -211,18 +202,24 @@ export const instantSessionService = {
     }
 
     // Ensure a meeting URL exists (fallback to deterministic)
-    const jitsiMeetingUrl =
-      accepted.jitsi_meeting_url ||
-      `https://meet.jit.si/instant-${accepted.id}`;
-
-    // If URL was missing for some reason, persist it once
-    if (!accepted.jitsi_meeting_url) {
+    let jitsiMeetingUrl = accepted.jitsi_meeting_url;
+    
+    if (!jitsiMeetingUrl) {
+      jitsiMeetingUrl = `https://meet.jit.si/instant-${accepted.id}`;
+      console.log("[Instant] Generated fallback Jitsi URL:", jitsiMeetingUrl);
+      
+      // If URL was missing for some reason, persist it once
       const { error: setUrlError } = await (supabase as any)
         .from("instant_requests")
         .update({ jitsi_meeting_url: jitsiMeetingUrl })
         .eq("id", accepted.id);
-      if (setUrlError)
+      if (setUrlError) {
         console.warn("[Instant] failed to set meeting url", setUrlError);
+      } else {
+        console.log("[Instant] Successfully updated Jitsi URL in database");
+      }
+    } else {
+      console.log("[Instant] Using existing Jitsi URL:", jitsiMeetingUrl);
     }
 
     // Create audit booking (best-effort)
@@ -247,12 +244,17 @@ export const instantSessionService = {
         "Booking insert failed (will not block acceptance)",
         bookingError
       );
+    } else {
+      console.log("[Instant] Successfully created audit booking");
     }
 
-    return {
+    const finalResult = {
       ...(accepted as any),
       jitsi_meeting_url: jitsiMeetingUrl,
-    } as InstantRequest;
+    };
+    
+    console.log("[Instant] Returning final result:", finalResult);
+    return finalResult as InstantRequest;
   },
 };
 

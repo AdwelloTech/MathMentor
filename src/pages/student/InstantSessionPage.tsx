@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { instantSessionService } from "../../lib/instantSessionService";
 import { useAuth } from "../../contexts/AuthContext";
+import type { InstantRequest } from "../../types/instantSession";
 import {
   ClockIcon,
   AcademicCapIcon,
@@ -20,28 +21,12 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 
-interface InstantRequest {
-  id: string;
-  student_id: string;
-  subject_id: string;
-  duration_minutes: number;
-  status: "pending" | "accepted" | "cancelled";
-  accepted_by_tutor_id: string | null;
-  jitsi_meeting_url: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 interface NoteSubject {
   id: string;
   name: string;
   display_name: string;
-  description: string | null;
-  color: string;
-  is_active: boolean;
   sort_order: number;
-  created_at: string;
-  updated_at: string;
+  is_active: boolean;
 }
 
 export default function InstantSessionPage() {
@@ -201,6 +186,8 @@ export default function InstantSessionPage() {
   useEffect(() => {
     if (!requestId) return;
 
+    console.log("[Student] Setting up real-time listener for request:", requestId);
+
     // Realtime listener
     const channel = (supabase as any)
       .channel(`instant_requests:student:${requestId}`)
@@ -212,56 +199,143 @@ export default function InstantSessionPage() {
           table: "instant_requests",
           filter: `id=eq.${requestId}`,
         } as any,
-        (payload: any) => {
-          console.log("[Student] UPDATE payload", payload.new);
+        async (payload: any) => {
+          console.log("[Student] UPDATE payload received:", payload);
+          console.log("[Student] Payload new:", payload.new);
+          console.log("[Student] Payload old:", payload.old);
+          
           const next = payload.new;
-          if (next.status === "accepted" && next.jitsi_meeting_url) {
-            setJitsiUrl(next.jitsi_meeting_url);
-            setStatus("accepted");
-            setAcceptedAt(new Date()); // Start the timer
+          
+          if (next.status === "accepted") {
+            console.log("[Student] Request accepted, processing...");
+            // If we have the Jitsi URL in the payload, use it immediately
+            if (next.jitsi_meeting_url) {
+              console.log("[Student] Using Jitsi URL from payload:", next.jitsi_meeting_url);
+              const validatedUrl = validateJitsiUrl(next.jitsi_meeting_url);
+              if (validatedUrl) {
+                setJitsiUrl(validatedUrl);
+                setStatus("accepted");
+                setAcceptedAt(new Date()); // Start the timer
+              } else {
+                console.warn("[Student] Invalid Jitsi URL in payload, will use fallback");
+              }
+            }
+            
+            // If URL is still not set (either missing from payload or invalid), fetch from database
+            if (!jitsiUrl) {
+              console.log("[Student] No valid Jitsi URL, fetching from database...");
+              // If URL is missing, fetch the full record to get the URL
+              try {
+                const { data, error } = await (supabase as any)
+                  .from("instant_requests")
+                  .select("*")
+                  .eq("id", requestId)
+                  .single();
+                
+                if (!error && data && data.jitsi_meeting_url) {
+                  console.log("[Student] Retrieved Jitsi URL from database:", data.jitsi_meeting_url);
+                  const validatedUrl = validateJitsiUrl(data.jitsi_meeting_url);
+                  if (validatedUrl) {
+                    setJitsiUrl(validatedUrl);
+                    setStatus("accepted");
+                    setAcceptedAt(new Date()); // Start the timer
+                  }
+                } else {
+                  console.log("[Student] No Jitsi URL in database, using fallback");
+                  // Fallback: generate the URL deterministically
+                  const fallbackUrl = `https://meet.jit.si/instant-${requestId}`;
+                  setJitsiUrl(fallbackUrl);
+                  setStatus("accepted");
+                  setAcceptedAt(new Date()); // Start the timer
+                  console.log("[Student] Using fallback Jitsi URL:", fallbackUrl);
+                }
+              } catch (fetchError) {
+                console.error("[Student] Error fetching request details:", fetchError);
+                // Final fallback: generate the URL deterministically
+                const fallbackUrl = `https://meet.jit.si/instant-${requestId}`;
+                setJitsiUrl(fallbackUrl);
+                setStatus("accepted");
+                setAcceptedAt(new Date()); // Start the timer
+                console.log("[Student] Using final fallback Jitsi URL:", fallbackUrl);
+              }
+            }
           } else if (next.status === "cancelled") {
+            console.log("[Student] Request cancelled");
             setStatus("cancelled");
             setJitsiUrl(null);
             setAcceptedAt(null);
             setTimeLeft(null);
+          } else {
+            console.log("[Student] Status update (not accepted/cancelled):", next.status);
           }
         }
       )
-      .subscribe();
+      .subscribe((status: any) => {
+        console.log("[Student] Channel subscription status:", status);
+        if (status === "SUBSCRIBED") {
+          console.log("[Student] Successfully subscribed to real-time updates");
+        } else if (status === "CHANNEL_ERROR") {
+          console.error("[Student] Channel subscription error");
+        } else if (status === "TIMED_OUT") {
+          console.error("[Student] Channel subscription timed out");
+        }
+      });
 
-    // Polling fallback
+    // Polling fallback - more aggressive for instant sessions
     const pollInterval = setInterval(async () => {
       console.log("[Student] Polling for request status...");
-      const { data, error } = await (supabase as any)
-        .from("instant_requests")
-        .select("*")
-        .eq("id", requestId)
-        .single();
+      try {
+        const { data, error } = await (supabase as any)
+          .from("instant_requests")
+          .select("*")
+          .eq("id", requestId)
+          .single();
 
-      if (error && error.code !== "PGRST116") {
-        console.error("[Student] Polling error:", error);
-        return;
-      }
-
-      if (data) {
-        if (data.status === "accepted" && data.jitsi_meeting_url) {
-          setJitsiUrl(data.jitsi_meeting_url);
-          setStatus("accepted");
-          if (!acceptedAt) {
-            setAcceptedAt(new Date()); // Start the timer if not already started
-          }
-          clearInterval(pollInterval); // Stop polling once accepted
-        } else if (data.status === "cancelled") {
-          setStatus("cancelled");
-          setJitsiUrl(null);
-          setAcceptedAt(null);
-          setTimeLeft(null);
-          clearInterval(pollInterval); // Stop polling once cancelled
+        if (error && error.code !== "PGRST116") {
+          console.error("[Student] Polling error:", error);
+          return;
         }
+
+        if (data) {
+          console.log("[Student] Polling data received:", data);
+          if (data.status === "accepted") {
+            console.log("[Student] Request accepted via polling");
+            // Ensure we have a Jitsi URL
+            let finalJitsiUrl = data.jitsi_meeting_url;
+            if (!finalJitsiUrl) {
+              // Generate fallback URL if missing
+              finalJitsiUrl = `https://meet.jit.si/instant-${requestId}`;
+              console.log("[Student] Generated fallback Jitsi URL via polling:", finalJitsiUrl);
+            }
+            
+            // Validate the URL before setting it
+            const validatedUrl = validateJitsiUrl(finalJitsiUrl);
+            if (validatedUrl) {
+              setJitsiUrl(validatedUrl);
+              setStatus("accepted");
+              if (!acceptedAt) {
+                setAcceptedAt(new Date()); // Start the timer if not already started
+              }
+              clearInterval(pollInterval); // Stop polling once accepted
+            } else {
+              console.error("[Student] Invalid Jitsi URL from polling:", finalJitsiUrl);
+            }
+          } else if (data.status === "cancelled") {
+            console.log("[Student] Request cancelled via polling");
+            setStatus("cancelled");
+            setJitsiUrl(null);
+            setAcceptedAt(null);
+            setTimeLeft(null);
+            clearInterval(pollInterval); // Stop polling once cancelled
+          }
+        }
+      } catch (pollError) {
+        console.error("[Student] Polling exception:", pollError);
       }
-    }, 3000); // Poll every 3 seconds
+    }, 2000); // Poll every 2 seconds for faster response
 
     return () => {
+      console.log("[Student] Cleaning up real-time listener and polling");
       (supabase as any).removeChannel(channel);
       clearInterval(pollInterval);
     };
@@ -291,15 +365,84 @@ export default function InstantSessionPage() {
     return () => clearInterval(timer);
   }, [status, acceptedAt]);
 
+  // Debug effect to log status changes
+  useEffect(() => {
+    console.log("[Student] Status changed:", { 
+      status, 
+      jitsiUrl, 
+      requestId, 
+      acceptedAt: acceptedAt?.toISOString() 
+    });
+  }, [status, jitsiUrl, requestId, acceptedAt]);
+
   const formatTime = (milliseconds: number) => {
     const minutes = Math.floor(milliseconds / (1000 * 60));
     const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
+  // Utility function to validate and sanitize Jitsi URL
+  const validateJitsiUrl = (url: string): string | null => {
+    if (!url) return null;
+    
+    // Check if it's a valid Jitsi URL
+    if (url.startsWith('https://meet.jit.si/')) {
+      return url;
+    }
+    
+    // If it's just a meeting ID, construct the full URL
+    if (url.match(/^[a-zA-Z0-9_-]+$/)) {
+      return `https://meet.jit.si/${url}`;
+    }
+    
+    // If it's a relative path, construct the full URL
+    if (url.startsWith('/')) {
+      return `https://meet.jit.si${url}`;
+    }
+    
+    console.warn("[Student] Invalid Jitsi URL format:", url);
+    return null;
+  };
+
   const handleJoin = () => {
-    if (jitsiUrl && timeLeft && timeLeft > 0) {
-      window.open(jitsiUrl, "_blank");
+    console.log("[Student] handleJoin called", { jitsiUrl, timeLeft });
+    
+    if (!jitsiUrl) {
+      console.error("[Student] No Jitsi URL available");
+      alert("Error: No meeting link available. Please refresh the page and try again.");
+      return;
+    }
+    
+    if (!timeLeft || timeLeft <= 0) {
+      console.error("[Student] Session has expired or no time left");
+      alert("Session has expired. Please request a new session.");
+      return;
+    }
+    
+    // Validate and sanitize the Jitsi URL
+    const validatedUrl = validateJitsiUrl(jitsiUrl);
+    if (!validatedUrl) {
+      console.error("[Student] Invalid Jitsi URL format:", jitsiUrl);
+      alert("Error: Invalid meeting link format. Please refresh the page and try again.");
+      return;
+    }
+    
+    try {
+      console.log("[Student] Opening validated Jitsi meeting:", validatedUrl);
+      const newWindow = window.open(validatedUrl, "_blank");
+      
+      if (!newWindow) {
+        console.error("[Student] Popup blocked by browser");
+        alert("Popup blocked! Please allow popups for this site and try again.");
+        return;
+      }
+      
+      // Focus the new window
+      newWindow.focus();
+      console.log("[Student] Jitsi meeting opened successfully");
+    } catch (error) {
+      console.error("[Student] Error opening Jitsi meeting:", error);
+      alert("Error opening meeting. Please try again or copy the link manually.");
     }
   };
 
@@ -563,6 +706,66 @@ export default function InstantSessionPage() {
             </p>
           </div>
         </div>
+
+        {/* Debug Section - Only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-gray-100 rounded-xl p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Debug Info</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="font-medium">Status:</span>
+                <span className="ml-2 text-gray-600">{status}</span>
+              </div>
+              <div>
+                <span className="font-medium">Request ID:</span>
+                <span className="ml-2 text-gray-600">{requestId || 'None'}</span>
+              </div>
+              <div>
+                <span className="font-medium">Jitsi URL:</span>
+                <span className="ml-2 text-gray-600 break-all">
+                  {jitsiUrl ? jitsiUrl.substring(0, 30) + '...' : 'None'}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium">Time Left:</span>
+                <span className="ml-2 text-gray-600">
+                  {timeLeft ? formatTime(timeLeft) : 'None'}
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 space-x-2">
+              {jitsiUrl && (
+                <>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(jitsiUrl)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+                  >
+                    Copy Jitsi URL
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log("[Debug] Testing Jitsi URL opening:", jitsiUrl);
+                      try {
+                        const newWindow = window.open(jitsiUrl, "_blank");
+                        if (newWindow) {
+                          newWindow.focus();
+                          console.log("[Debug] Jitsi URL opened successfully");
+                        } else {
+                          console.error("[Debug] Popup blocked");
+                        }
+                      } catch (error) {
+                        console.error("[Debug] Error opening Jitsi URL:", error);
+                      }
+                    }}
+                    className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600"
+                  >
+                    Test Open Jitsi
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

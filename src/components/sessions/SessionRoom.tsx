@@ -1,3 +1,7 @@
+// This component is deprecated. Use JitsiMeetingRoom instead.
+// Keeping for backward compatibility
+export { default } from "./JitsiMeetingRoom";
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -50,12 +54,12 @@ const SessionRoom: React.FC<SessionRoomProps> = ({ session, onClose }) => {
     return () => clearInterval(interval);
   }, [session]);
 
-  const handleJoinZoom = async () => {
+  const handleJoinJitsi = async () => {
     setLoading(true);
     try {
-      sessionUtils.joinZoomMeeting(session);
+      sessionUtils.joinJitsiMeeting(session);
     } catch (error) {
-      console.error("Error joining Zoom meeting:", error);
+      console.error("Error joining Jitsi meeting:", error);
     } finally {
       setLoading(false);
     }
@@ -150,7 +154,7 @@ const SessionRoom: React.FC<SessionRoomProps> = ({ session, onClose }) => {
           <div className="space-y-4">
             {canJoin ? (
               <motion.button
-                onClick={handleJoinZoom}
+                onClick={handleJoinJitsi}
                 disabled={loading}
                 className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 whileHover={{ scale: 1.02 }}
@@ -161,7 +165,7 @@ const SessionRoom: React.FC<SessionRoomProps> = ({ session, onClose }) => {
                 ) : (
                   <>
                     <PlayIcon className="w-6 h-6" />
-                    <span>Join Zoom Meeting</span>
+                    <span>Join Jitsi Meeting</span>
                   </>
                 )}
               </motion.button>
@@ -184,7 +188,7 @@ const SessionRoom: React.FC<SessionRoomProps> = ({ session, onClose }) => {
           <div className="bg-blue-50 rounded-xl p-4">
             <h4 className="font-semibold text-blue-900 mb-2">Instructions:</h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Click "Join Zoom Meeting" to open the session</li>
+              <li>• Click "Join Jitsi Meeting" to open the session</li>
               <li>• Make sure your microphone and camera are working</li>
               <li>• Be on time and ready to learn!</li>
             </ul>

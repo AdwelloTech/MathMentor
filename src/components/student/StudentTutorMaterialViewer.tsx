@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  XMarkIcon,
-  DocumentArrowUpIcon,
-  DocumentTextIcon,
-  ArrowDownTrayIcon,
-  StarIcon,
-  UserIcon,
-  EyeIcon,
-} from "@heroicons/react/24/outline";
+  X,
+  FileText,
+  Download,
+  Eye,
+  Calendar,
+  User,
+  BookOpen,
+  GraduationCap,
+  Sparkles,
+} from "lucide-react";
 import {
   formatStudentTutorMaterialDate,
   formatFileSize,
@@ -16,23 +18,26 @@ import {
   incrementStudentTutorMaterialDownloadCount,
   type StudentTutorMaterial,
 } from "@/lib/studentTutorMaterials";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface StudentTutorMaterialViewerProps {
   isOpen: boolean;
   onClose: () => void;
   material: StudentTutorMaterial;
-  hasPremiumAccess: boolean;
 }
 
 const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
   isOpen,
   onClose,
   material,
-  hasPremiumAccess,
 }) => {
   const [loading, setLoading] = useState(false);
   const hasFile = material.file_url && material.file_name;
   const hasContent = material.content && material.content.trim().length > 0;
+  const isPdfFile =
+    hasFile && material.file_name?.toLowerCase().endsWith(".pdf");
 
   const handleClose = () => {
     if (!loading) {
@@ -90,7 +95,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
             onClick={handleClose}
           />
 
@@ -99,187 +104,223 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-10"
           >
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gray-200 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden border border-green-900/10">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <div className="flex items-center space-x-3">
-                  {hasFile ? (
-                    <DocumentArrowUpIcon className="h-6 w-6 text-blue-600" />
-                  ) : (
-                    <DocumentTextIcon className="h-6 w-6 text-green-600" />
-                  )}
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      {material.title || "Untitled Material"}
-                    </h2>
-                    <div className="flex items-center space-x-2 mt-1">
-                      {material.is_premium && (
-                        <div className="flex items-center space-x-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                          <StarIcon className="h-3 w-3" />
-                          <span>PREMIUM</span>
-                        </div>
-                      )}
-                      <span className="text-sm text-gray-500">
-                        by {material.tutor_name || "Unknown Tutor"}
-                      </span>
+              <div className="relative bg-gradient-to-r from-green-900 to-green-800 text-white p-6">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center space-x-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-white mb-1">
+                        {material.title || "Untitled Material"}
+                      </h2>
+                      <div className="flex flex-col items-start space-x-3">
+                        {material.is_premium && (
+                          <Badge className="bg-yellow-400 text-black border-0 text-xs font-bold hover:bg-yellow-400">
+                            PREMIUM
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <Button
+                    onClick={handleClose}
+                    disabled={loading}
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:bg-white/20 hover:text-white h-10 w-10 p-0"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
                 </div>
-                <button
-                  onClick={handleClose}
-                  disabled={loading}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
               </div>
 
               {/* Content */}
-              <div className="p-6">
-                {/* Material Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  {/* Left Column */}
-                  <div className="space-y-4">
-                    {/* Description */}
+              <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
+                {/* Material Info Cards */}
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Description Card */}
                     {material.description && (
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-700 mb-2">
-                          Description
-                        </h3>
-                        <p className="text-gray-600 text-sm leading-relaxed">
-                          {material.description}
-                        </p>
-                      </div>
+                      <Card className="lg:col-span-2 border-green-900/60 border-2 shadow-sm">
+                        <CardHeader className="pb-3">
+                          <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
+                            <BookOpen className="h-5 w-5" />
+                            Description
+                          </h3>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-slate-700 leading-relaxed">
+                            {material.description}
+                          </p>
+                        </CardContent>
+                      </Card>
                     )}
 
-                    {/* Subject and Grade */}
-                    <div className="flex items-center space-x-3">
-                      {material.subject_display_name && (
-                        <span
-                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                          style={{
-                            backgroundColor: `${getStudentTutorMaterialSubjectColor(
-                              material.subject_color
-                            )}20`,
-                            color: getStudentTutorMaterialSubjectColor(
-                              material.subject_color
-                            ),
-                          }}
-                        >
-                          {material.subject_display_name}
-                        </span>
-                      )}
-                      {material.grade_level_display && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                          {material.grade_level_display}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Stats */}
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <EyeIcon className="h-4 w-4" />
-                        <span>{material.view_count} views</span>
-                      </div>
-                      {hasFile && (
-                        <div className="flex items-center space-x-1">
-                          <ArrowDownTrayIcon className="h-4 w-4" />
-                          <span>{material.download_count} downloads</span>
+                    {/* Info Card */}
+                    <Card className=" border-green-900/60 border-2 shadow-sm">
+                      <CardHeader className="pb-3">
+                        <h3 className="text-lg font-semibold text-green-900">
+                          Material Info
+                        </h3>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Stats */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Eye className="h-4 w-4 text-black" />
+                              <span className="text-sm font-semibold text-black">
+                                Views
+                              </span>
+                            </div>
+                            <span className="text-sm font-bold text-black">
+                              {material.view_count}
+                            </span>
+                          </div>
+                          {hasFile && (
+                            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <Download className="h-4 w-4 text-black" />
+                                <span className="text-sm font-semibold text-black">
+                                  Downloads
+                                </span>
+                              </div>
+                              <span className="text-sm font-bold text-black">
+                                {material.download_count}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    {/* Date */}
-                    <div className="text-sm text-gray-500">
-                      Created{" "}
-                      {formatStudentTutorMaterialDate(material.created_at)}
-                    </div>
+                        {/* Date */}
+                      </CardContent>
+                    </Card>
                   </div>
 
-                  {/* Right Column - File Info */}
+                  {/* File Info Card */}
                   {hasFile && (
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h3 className="text-sm font-medium text-gray-700 mb-3">
-                        Attached File
-                      </h3>
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <DocumentArrowUpIcon className="h-5 w-5 text-blue-600" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {material.file_name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {formatFileSize(material.file_size)}
-                            </p>
+                    <Card className="border-green-900/60 border-2 shadow-sm">
+                      <CardHeader className="pb-3">
+                        <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          Attached File
+                        </h3>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between p-4  rounded-xl border border-green-900">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-green-900">
+                              <FileText className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-black truncate">
+                                {material.file_name}
+                              </p>
+                              <p className="text-xs text-gray-700 font-medium">
+                                {formatFileSize(material.file_size)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {!isPdfFile && (
+                              <Button
+                                onClick={handleViewFile}
+                                disabled={loading}
+                                size="sm"
+                                className="bg-green-900 hover:bg-green-900 text-white"
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                View File
+                              </Button>
+                            )}
+                            {isPdfFile && (
+                              <Button
+                                onClick={handleDownload}
+                                disabled={loading}
+                                size="sm"
+                                className="bg-green-900 hover:bg-green-900  text-white"
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={handleViewFile}
-                            disabled={loading}
-                            className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50"
-                          >
-                            <EyeIcon className="h-4 w-4" />
-                            <span>View File</span>
-                          </button>
-                          <button
-                            onClick={handleDownload}
-                            disabled={loading}
-                            className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-colors duration-200 disabled:opacity-50"
-                          >
-                            <ArrowDownTrayIcon className="h-4 w-4" />
-                            <span>Download</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
 
+                {/* PDF Viewer */}
+                {isPdfFile && (
+                  <div className="px-6 pb-6">
+                    <Card className="border-green-900/60 border-2 shadow-sm">
+                      <CardHeader className="pb-3">
+                        <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          PDF Document
+                        </h3>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
+                          <iframe
+                            src={material.file_url || ""}
+                            title={`PDF: ${material.file_name || "document"}`}
+                            className="w-full h-[700px] border border-slate-300 rounded-lg shadow-inner"
+                            style={{ minHeight: "700px" }}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
                 {/* Content */}
                 {hasContent && (
-                  <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Content
-                    </h3>
-                    <div
-                      className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: material.content }}
-                    />
+                  <div className="px-6 pb-6">
+                    <Card className="border-green-900/60 border-2 shadow-sm">
+                      <CardHeader className="pb-3">
+                        <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
+                          <BookOpen className="h-5 w-5" />
+                          Content
+                        </h3>
+                      </CardHeader>
+                      <CardContent>
+                        <div
+                          className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
+                          dangerouslySetInnerHTML={{
+                            __html: material.content || "",
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
 
                 {/* No Content Message */}
                 {!hasContent && !hasFile && (
-                  <div className="border-t border-gray-200 pt-6">
-                    <div className="text-center py-8">
-                      <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        No content available
-                      </h3>
-                      <p className="text-gray-600">
-                        This material doesn't have any text content or attached
-                        files.
-                      </p>
-                    </div>
+                  <div className="px-6 pb-6">
+                    <Card className="border-green-900/10 shadow-sm">
+                      <CardContent className="text-center py-12">
+                        <div className="p-4 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                          <FileText className="h-10 w-10 text-slate-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                          No content available
+                        </h3>
+                        <p className="text-slate-600 max-w-md mx-auto">
+                          This material doesn't have any text content or
+                          attached files yet.
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200">
-                <button
-                  onClick={handleClose}
-                  disabled={loading}
-                  className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
-                >
-                  Close
-                </button>
-              </div>
             </div>
           </motion.div>
         </>

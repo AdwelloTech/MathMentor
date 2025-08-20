@@ -6,7 +6,7 @@ import type { CreateFlashcardSetData, FlashcardSet } from "@/types/flashcards";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { subjectsService } from "@/lib/subjects";
-import { generateAIFlashcards } from "@/lib/ai";
+import { generateAIFlashcards, uploadPdfForAI } from "@/lib/ai";
 
 // Local type to track AI workflow in UI
 type DraftCard = {
@@ -35,6 +35,9 @@ const CreateEditFlashcardSetPage: React.FC = () => {
   const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium"
   );
+  const [pdfBase64, setPdfBase64] = useState("");
+  const [pdfName, setPdfName] = useState<string | null>(null);
+  const [pdfSize, setPdfSize] = useState(0);
 
   useEffect(() => {
     if (!isEdit || !setId) return;
@@ -209,16 +212,17 @@ const CreateEditFlashcardSetPage: React.FC = () => {
     setAiLoading(true);
     try {
       // Use dedicated flashcards AI generator
-      const aiCards = await generateAIFlashcards(
+      const aiCards = await generateAIFlashcards({
         subject,
         gradeLevel,
-        aiNumCards,
+        numCards: aiNumCards,
         title,
-        aiDifficulty
-      );
+        difficulty: aiDifficulty,
+        pdfText: pdfBase64 || undefined,
+      });
 
       // Map AI cards directly to flashcard format with pending status
-      const mapped: DraftCard[] = aiCards.map((card) => ({
+      const mapped: DraftCard[] = aiCards.map((card: any) => ({
         front: card.front_text,
         back: card.back_text,
         aiGenerated: true,
@@ -348,6 +352,65 @@ const CreateEditFlashcardSetPage: React.FC = () => {
               "Generate with AI"
             )}
           </button>
+        </div>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Optional: Upload syllabus PDF for context
+          </label>
+          <div className="flex items-center justify-between rounded-md border-2 border-dashed border-gray-300 bg-gray-50 px-3 py-3">
+            <div className="flex items-center gap-3">
+              <input
+                id="flashcards-pdf"
+                type="file"
+                accept="application/pdf"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const { pdfBase64, fileName, fileSize } =
+                      await uploadPdfForAI(file);
+                    setPdfBase64(pdfBase64);
+                    setPdfName(fileName);
+                    setPdfSize(fileSize);
+                    toast.success("PDF uploaded for AI context");
+                  } catch (err: any) {
+                    console.error(err);
+                    toast.error(err?.message || "Failed to upload PDF");
+                  }
+                }}
+                className="hidden"
+              />
+              <label
+                htmlFor="flashcards-pdf"
+                className="inline-flex items-center px-3 py-2 bg-white border rounded-md text-sm cursor-pointer hover:bg-gray-50"
+              >
+                Choose PDF
+              </label>
+              {pdfName ? (
+                <span className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1">
+                  {pdfName} ({pdfSize ? Math.round(pdfSize / 1024) : 0}KB)
+                </span>
+              ) : (
+                <span className="text-xs text-gray-500">No file selected</span>
+              )}
+            </div>
+            {pdfName && (
+              <button
+                onClick={() => {
+                  setPdfBase64("");
+                  setPdfName(null);
+                  setPdfSize(0);
+                }}
+                className="text-xs text-gray-600 hover:text-gray-900"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            PDF up to 10MB. We'll use its text as AI context.
+          </p>
         </div>
 
         <div className="space-y-4">

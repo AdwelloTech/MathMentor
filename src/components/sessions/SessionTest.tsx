@@ -15,9 +15,9 @@ const mockSession: StudentUpcomingSession = {
   start_time: new Date(Date.now() + 10 * 60 * 1000).toTimeString().slice(0, 5),
   end_time: new Date(Date.now() + 25 * 60 * 1000).toTimeString().slice(0, 5), // 15 minutes later
   duration_minutes: 15,
-  zoom_link: "https://zoom.us/j/123456789?pwd=test123",
-  zoom_meeting_id: "123456789",
-  zoom_password: "test123",
+  jitsi_meeting_url: "https://meet.jit.si/jitsi_room_test_123456789",
+  jitsi_room_name: "jitsi_room_test_123456789",
+  jitsi_password: "test123",
   class_status: "scheduled",
   booking_status: "confirmed",
   payment_status: "paid",

@@ -17,7 +17,30 @@ import {
   BookOpen,
   Video,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const BookSessionPage: React.FC = () => {
   const { user } = useAuth();
@@ -137,14 +160,14 @@ const BookSessionPage: React.FC = () => {
   const getClassTypeIcon = (classTypeName: string) => {
     switch (classTypeName.toLowerCase()) {
       case "group":
-        return <Users className="w-5 h-5" />;
+        return <Users className="w-4 h-4" />;
       case "consultation":
-        return <BookOpen className="w-5 h-5" />;
+        return <BookOpen className="w-4 h-4" />;
       case "one-on-one":
       case "one-on-one extended":
-        return <Video className="w-5 h-5" />;
+        return <Video className="w-4 h-4" />;
       default:
-        return <BookOpen className="w-5 h-5" />;
+        return <BookOpen className="w-4 h-4" />;
     }
   };
 
@@ -190,25 +213,28 @@ const BookSessionPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-green-900 mx-auto mb-4" />
+          <p className="text-green-800 font-medium">Loading sessions...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-full mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-green-900 mb-3">
             Book a Session
           </h1>
-          <p className="text-gray-600">
+          <p className="text-lg text-green-700">
             Find and book upcoming sessions with our expert tutors
           </p>
         </motion.div>
@@ -217,98 +243,120 @@ const BookSessionPage: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm p-6 mb-6"
+          className="mb-8"
         >
-          <div className="flex items-center gap-4 mb-4">
-            <Filter className="w-5 h-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-          </div>
+          <Card className="border-green-200 bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-green-900 flex items-center gap-2">
+                <Filter className="w-5 h-5" />
+                Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Session Type Filter */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="session-type"
+                    className="text-green-800 font-medium"
+                  >
+                    Session Type
+                  </Label>
+                  <Select value={filterType} onValueChange={setFilterType}>
+                    <SelectTrigger
+                      id="session-type"
+                      className="border-green-200 focus:border-green-900 focus:ring-green-900"
+                    >
+                      <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      {classTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Session Type Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Session Type
-              </label>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Types</option>
-                {classTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {/* Date Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="date" className="text-green-800 font-medium">
+                    Date
+                  </Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    className="border-green-200 focus:border-green-900 focus:ring-green-900"
+                  />
+                </div>
 
-            {/* Date Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date
-              </label>
-              <input
-                type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+                {/* Subject Filter */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="subject"
+                    className="text-green-800 font-medium"
+                  >
+                    Subject
+                  </Label>
+                  <Input
+                    id="subject"
+                    type="text"
+                    placeholder="e.g., Math, Physics"
+                    value={filterSubject}
+                    onChange={(e) => setFilterSubject(e.target.value)}
+                    className="border-green-200 focus:border-green-900 focus:ring-green-900"
+                  />
+                </div>
 
-            {/* Subject Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subject
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Math, Physics"
-                value={filterSubject}
-                onChange={(e) => setFilterSubject(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Search */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Search
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search sessions or tutors..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                {/* Search */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="search"
+                    className="text-green-800 font-medium"
+                  >
+                    Search
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-600" />
+                    <Input
+                      id="search"
+                      type="text"
+                      placeholder="Search sessions or tutors..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 border-green-200 focus:border-green-900 focus:ring-green-900"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Clear Filters */}
-          {(filterType !== "all" ||
-            filterDate ||
-            filterSubject ||
-            searchTerm) && (
-            <div className="mt-4">
-              <button
-                onClick={() => {
-                  setFilterType("all");
-                  setFilterDate("");
-                  setFilterSubject("");
-                  setSearchTerm("");
-                }}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
-              >
-                <X className="w-4 h-4" />
-                Clear all filters
-              </button>
-            </div>
-          )}
+              {/* Clear Filters */}
+              {(filterType !== "all" ||
+                filterDate ||
+                filterSubject ||
+                searchTerm) && (
+                <div className="mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFilterType("all");
+                      setFilterDate("");
+                      setFilterSubject("");
+                      setSearchTerm("");
+                    }}
+                    className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear all filters
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Error Message */}
@@ -316,9 +364,13 @@ const BookSessionPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-red-50 border border-red-200 rounded-md p-4 mb-6"
+            className="mb-6"
           >
-            <p className="text-red-800">{error}</p>
+            <Alert className="border-red-200 bg-red-50">
+              <AlertDescription className="text-red-800">
+                {error}
+              </AlertDescription>
+            </Alert>
           </motion.div>
         )}
 
@@ -329,139 +381,130 @@ const BookSessionPage: React.FC = () => {
             const tutor = sessionResult.tutor;
             const isBooking = bookingLoading === session.id;
 
+            // ... existing code ...
             return (
               <motion.div
                 key={session.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between h-full"
               >
-                {/* Session Header */}
-                <div className="p-6 pb-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      {getClassTypeIcon(
-                        getClassTypeName(session.class_type_id)
-                      )}
-                      <span className="text-sm font-medium text-blue-600">
+                <Card className="h-full flex flex-col border-green-200 hover:border-green-300 transition-all duration-200 hover:shadow-lg bg-white">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between mb-3">
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-100 text-green-800 hover:bg-green-200 flex items-center gap-1"
+                      >
+                        {getClassTypeIcon(
+                          getClassTypeName(session.class_type_id)
+                        )}
                         {getClassTypeName(session.class_type_id)}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-green-600">
-                        ${session.price_per_session}
+                      </Badge>
+                      <div className="text-right">
+                        <Badge
+                          variant="outline"
+                          className="border-yellow-400 text-yellow-600 bg-yellow-50 text-lg font-bold px-3 py-1"
+                        >
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          {session.price_per_session}
+                        </Badge>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Subject pill */}
-                  {session.subject && (
-                    <div className="mb-2">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {session.subject.display_name}
-                      </span>
-                    </div>
-                  )}
-                  {session.description && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {session.description}
-                    </p>
-                  )}
-                </div>
+                    {/* Title & Subject */}
+                    <h3 className="text-lg font-semibold text-gray-900 mt-2">
+                      {session.title}
+                    </h3>
+                    {session.subject && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {session.subject.display_name}
+                        </span>
+                      </div>
+                    )}
+                    {session.description && (
+                      <CardDescription className="text-green-700 line-clamp-2">
+                        {session.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
 
-                {/* Tutor Info */}
-                <div className="px-6 pb-4 flex flex-col min-h-[120px] justify-start">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">
-                        {tutor.full_name.charAt(0)}
-                      </span>
+                  <CardContent className="flex-1 space-y-4">
+                    {/* Tutor Info */}
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <Avatar className="w-12 h-12">
+                        <AvatarFallback className="bg-green-200 text-green-800 font-semibold">
+                          {tutor.full_name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-semibold text-green-900">
+                          {tutor.full_name}
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <span className="text-sm text-green-700 font-medium">
+                            {tutor.rating.toFixed(1)}
+                          </span>
+                          <span className="text-sm text-green-600">
+                            ({tutor.total_reviews} reviews)
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {tutor.full_name}
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm text-gray-600">
-                          {tutor.rating.toFixed(1)} ({tutor.total_reviews}{" "}
-                          reviews)
+
+                    {/* Session Details */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 text-green-700">
+                        <CalendarDays className="w-4 h-4 text-green-600" />
+                        <span className="font-medium">
+                          {formatDate(session.date)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-green-700">
+                        <Clock className="w-4 h-4 text-green-600" />
+                        <span className="font-medium">
+                          {formatTime(session.start_time)} -{" "}
+                          {formatTime(session.end_time)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-green-700">
+                        <Users className="w-4 h-4 text-green-600" />
+                        <span className="font-medium">
+                          {sessionResult.available_slots} of{" "}
+                          {session.max_students} spots available
                         </span>
                       </div>
                     </div>
-                  </div>
-                  {/* Title & Subject */}
-                  <h3 className="text-lg font-semibold text-gray-900 mt-2">
-                    {session.title}
-                  </h3>
-                  {session.subject && (
-                    <div className="mt-1">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {session.subject.display_name}
-                      </span>
-                    </div>
-                  )}
-                  {session.description ? (
-                    <p className="text-sm text-gray-600 mt-1 mb-0 line-clamp-2">
-                      {session.description}
-                    </p>
-                  ) : (
-                    <span
-                      className="block h-8 mt-1 mb-0"
-                      aria-hidden="true"
-                    ></span>
-                  )}
-                </div>
+                  </CardContent>
 
-                {/* Session Details */}
-                <div className="px-6 pb-4 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <CalendarDays className="w-4 h-4" />
-                    <span>{formatDate(session.date)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock className="w-4 h-4" />
-                    <span>
-                      {formatTime(session.start_time)} -{" "}
-                      {formatTime(session.end_time)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Users className="w-4 h-4" />
-                    <span>
-                      {sessionResult.available_slots} of {session.max_students}{" "}
-                      spots available
-                    </span>
-                  </div>
-                </div>
-
-                {/* Book Button */}
-                <div className="px-6 pb-6 mt-auto">
-                  <button
-                    onClick={() => handleBookSession(sessionResult)}
-                    disabled={isBooking || !sessionResult.is_bookable}
-                    className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
-                      sessionResult.is_bookable
-                        ? "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                        : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    }`}
-                  >
-                    {isBooking ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Booking...
-                      </div>
-                    ) : sessionResult.is_bookable ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <CheckCircle className="w-4 h-4" />
-                        Book Now
-                      </div>
-                    ) : (
-                      "Fully Booked"
-                    )}
-                  </button>
-                </div>
+                  <CardFooter>
+                    <Button
+                      onClick={() => handleBookSession(sessionResult)}
+                      disabled={isBooking || !sessionResult.is_bookable}
+                      className={`w-full font-semibold ${
+                        sessionResult.is_bookable
+                          ? "bg-green-900 hover:bg-green-800 text-white"
+                          : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      }`}
+                    >
+                      {isBooking ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Booking...
+                        </div>
+                      ) : sessionResult.is_bookable ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <CheckCircle className="w-4 h-4" />
+                          Book Now
+                        </div>
+                      ) : (
+                        "Fully Booked"
+                      )}
+                    </Button>
+                  </CardFooter>
+                </Card>
               </motion.div>
             );
           })}
@@ -472,28 +515,25 @@ const BookSessionPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12"
+            className="text-center py-16"
           >
-            <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No sessions found
-            </h3>
-            <p className="text-gray-600">
-              Try adjusting your filters or check back later for new sessions.
-            </p>
+            <div className="max-w-md mx-auto">
+              <BookOpen className="w-20 h-20 text-green-300 mx-auto mb-6" />
+              <h3 className="text-2xl font-semibold text-green-900 mb-3">
+                No sessions found
+              </h3>
+              <p className="text-green-700 text-lg">
+                Try adjusting your filters or check back later for new sessions.
+              </p>
+            </div>
           </motion.div>
         )}
       </div>
 
       {/* Payment Modal */}
-      {showPaymentModal && selectedSession && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
-          >
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
+          {selectedSession && (
             <SessionPaymentForm
               sessionTitle={selectedSession.class.title}
               tutorName={selectedSession.tutor.full_name}
@@ -505,9 +545,9 @@ const BookSessionPage: React.FC = () => {
               onPaymentError={handlePaymentError}
               onCancel={handlePaymentCancel}
             />
-          </motion.div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

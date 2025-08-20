@@ -375,16 +375,16 @@ const TutorManageClassesPage: React.FC = () => {
                         {selectedClass.status}
                       </span>
                     </div>
-                    {selectedClass.zoom_link && (
+                    {selectedClass.jitsi_meeting_url && (
                       <div>
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Zoom Link</h3>
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">Jitsi Meeting Link</h3>
                         <a
-                          href={selectedClass.zoom_link}
+                          href={selectedClass.jitsi_meeting_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-700 text-sm break-all"
                         >
-                          {selectedClass.zoom_link}
+                          {selectedClass.jitsi_meeting_url}
                         </a>
                       </div>
                     )}

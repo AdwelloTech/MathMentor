@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import SessionTimer from "@/components/sessions/SessionTimer";
 
 const ManageSessionsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -221,68 +222,69 @@ const ManageSessionsPage: React.FC = () => {
               >
                 <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-900">
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      {/* Session Info */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-green-900 to-green-700 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold text-lg">
+                    <div className="flex flex-col lg:flex-row gap-6">
+                      {/* Left Section - Session Details */}
+                      <div className="flex-1 space-y-4">
+                        {/* Tutor Info */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-r from-green-900 to-green-700 rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold text-sm">
                               {session.tutor?.full_name?.charAt(0) || "T"}
                             </span>
                           </div>
-                          <div>
-                            <p className="font-semibold text-green-900 text-lg">
+                          <div className="flex-1">
+                            <p className="font-semibold text-green-900">
                               {session.tutor?.full_name || "Tutor"}
                             </p>
-                            <p className="text-sm text-gray-600">Tutor</p>
-                          </div>
-                          <Badge
-                            className={getStatusColor(booking.booking_status)}
-                          >
-                            <span className="mr-1">
+                            <Badge
+                              className={`${getStatusColor(
+                                booking.booking_status
+                              )} text-xs`}
+                            >
                               {getStatusIcon(booking.booking_status)}
-                            </span>
-                            <span className="capitalize font-medium">
-                              {booking.booking_status}
-                            </span>
-                          </Badge>
+                              <span className="ml-1 capitalize">
+                                {booking.booking_status}
+                              </span>
+                            </Badge>
+                          </div>
                         </div>
 
-                        {/* Subject */}
-                        <h3 className="text-xl font-bold text-green-900 mb-2">
-                          {session.title}
-                        </h3>
-                        {session.description && (
-                          <p className="text-gray-700 mb-4 leading-relaxed">
-                            {session.description}
-                          </p>
-                        )}
+                        {/* Class Title */}
+                        <div>
+                          <h3 className="text-lg font-bold text-green-900 mb-1">
+                            {session.title}
+                          </h3>
+                          {session.description && (
+                            <p className="text-sm text-gray-600 line-clamp-2">
+                              {session.description}
+                            </p>
+                          )}
+                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                          <div className="flex items-center gap-3 text-gray-700">
-                            <CalendarDays className="w-5 h-5 text-green-700" />
-                            <span className="font-medium">
-                              {formatDate(session.date)}
-                            </span>
+                        {/* Session Details */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <CalendarDays className="w-4 h-4 text-green-600" />
+                            <span>{formatDate(session.date)}</span>
                           </div>
-                          <div className="flex items-center gap-3 text-gray-700">
-                            <Clock className="w-5 h-5 text-green-700" />
-                            <span className="font-medium">
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <Clock className="w-4 h-4 text-green-600" />
+                            <span>
                               {formatTime(session.start_time)} -{" "}
                               {formatTime(session.end_time)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-gray-700">
-                            <DollarSign className="w-5 h-5 text-yellow-500" />
-                            <span className="font-bold text-yellow-600">
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <DollarSign className="w-4 h-4 text-yellow-500" />
+                            <span className="font-semibold text-yellow-600">
                               ${booking.payment_amount}
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex flex-col gap-3 ml-6">
+                      {/* Right Section - Action Buttons + Session Timer */}
+                      <div className="flex flex-col gap-3 lg:w-64">
                         {/* Join Session Button */}
                         {booking.booking_status === "confirmed" && (
                           <Button
@@ -290,8 +292,8 @@ const ManageSessionsPage: React.FC = () => {
                             disabled={!isJoinable}
                             className={
                               isJoinable
-                                ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full"
+                                : "bg-gray-300 text-gray-500 cursor-not-allowed w-full"
                             }
                             size="lg"
                           >
@@ -308,11 +310,42 @@ const ManageSessionsPage: React.FC = () => {
                           }}
                           variant="outline"
                           size="lg"
-                          className="border-2 border-green-900 text-green-900 hover:bg-green-50 hover:border-green-800 transition-all duration-200"
+                          className="border-2 border-green-900 text-green-900 hover:bg-green-50 hover:border-green-800 transition-all duration-200 w-full"
                         >
                           <Eye className="w-5 h-5 mr-2" />
                           Details
                         </Button>
+
+                        {/* Session Timer - Below the action buttons */}
+                        {booking.booking_status === "confirmed" && (
+                          <div className="mt-3">
+                            <SessionTimer
+                              session={{
+                                id: session.id,
+                                title: session.title,
+                                description: session.description || "",
+                                date: session.date,
+                                start_time: session.start_time,
+                                end_time: session.end_time,
+                                duration_minutes: session.duration_minutes,
+                                jitsi_meeting_url: session.jitsi_meeting_url,
+                                jitsi_room_name: session.jitsi_room_name,
+                                jitsi_password: session.jitsi_password,
+                                class_status: session.status,
+                                booking_status: booking.booking_status,
+                                payment_status: booking.payment_status,
+                                class_type: session.class_type?.name || "",
+                                tutor: {
+                                  id: session.tutor?.id || session.tutor_id,
+                                  full_name: session.tutor?.full_name || "",
+                                  email: session.tutor?.email || "",
+                                },
+                              }}
+                              onSessionEnd={loadBookings}
+                              className="w-full"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -489,6 +522,53 @@ const ManageSessionsPage: React.FC = () => {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Session Timer */}
+                {selectedBooking.class?.jitsi_meeting_url &&
+                  selectedBooking.booking_status === "confirmed" && (
+                    <Card>
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold text-green-900 mb-3">
+                          Session Timer
+                        </h3>
+                        <SessionTimer
+                          session={{
+                            id: selectedBooking.class!.id,
+                            title: selectedBooking.class!.title,
+                            description:
+                              selectedBooking.class!.description || "",
+                            date: selectedBooking.class!.date,
+                            start_time: selectedBooking.class!.start_time,
+                            end_time: selectedBooking.class!.end_time,
+                            duration_minutes:
+                              selectedBooking.class!.duration_minutes,
+                            jitsi_meeting_url:
+                              selectedBooking.class!.jitsi_meeting_url,
+                            jitsi_room_name:
+                              selectedBooking.class!.jitsi_room_name,
+                            jitsi_password:
+                              selectedBooking.class!.jitsi_password,
+                            class_status: selectedBooking.class!.status,
+                            booking_status: selectedBooking.booking_status,
+                            payment_status: selectedBooking.payment_status,
+                            class_type:
+                              selectedBooking.class!.class_type?.name || "",
+                            tutor: {
+                              id: selectedBooking.class!.tutor_id,
+                              full_name:
+                                selectedBooking.class!.tutor?.full_name || "",
+                              email: selectedBooking.class!.tutor?.email || "",
+                            },
+                          }}
+                          onSessionEnd={() => {
+                            loadBookings();
+                            setShowDetails(false);
+                          }}
+                          className="max-w-md"
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
 
                 {/* Join Session */}
                 {selectedBooking.class?.jitsi_meeting_url &&

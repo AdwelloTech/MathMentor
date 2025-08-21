@@ -94,7 +94,7 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles!user_id(id, full_name, email)
         `
         )
         .eq("id", classRecord.id)
@@ -112,7 +112,7 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles!user_id(id, full_name, email)
         `
         )
         .eq("id", id)
@@ -132,7 +132,7 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles!user_id(id, full_name, email)
         `
         )
         .eq("tutor_id", tutorId)
@@ -167,7 +167,7 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles!user_id(id, full_name, email)
         `
         )
         .eq("tutor_id", tutorId)
@@ -235,7 +235,7 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles!user_id(id, full_name, email)
         `
         )
         .eq("status", "scheduled")
@@ -274,11 +274,11 @@ export const classSchedulingService = {
       // Transform to search results with additional info
       const results: ClassSearchResult[] = await Promise.all(
         data.map(async (classRecord) => {
-          // Get tutor rating and reviews
+          // Get tutor rating and reviews from session_ratings table
           const { data: reviews } = await supabase
-            .from("class_reviews")
+            .from("session_ratings")
             .select("rating")
-            .eq("tutor_id", classRecord.tutor_id);
+            .eq("tutor_id", classRecord.tutor?.id || classRecord.tutor_id);
 
           const ratings = reviews?.map((r) => r.rating) || [];
           const averageRating =
@@ -290,7 +290,7 @@ export const classSchedulingService = {
           const { data: tutorProfile } = await supabase
             .from("profiles")
             .select("subjects")
-            .eq("user_id", classRecord.tutor_id)
+            .eq("id", classRecord.tutor?.id || classRecord.tutor_id)
             .single();
 
           const subjects = tutorProfile?.subjects || [];
@@ -298,7 +298,7 @@ export const classSchedulingService = {
           return {
             class: classRecord,
             tutor: {
-              id: classRecord.tutor_id,
+              id: classRecord.tutor?.id || classRecord.tutor_id,
               full_name: classRecord.tutor?.full_name || "",
               rating: averageRating,
               total_reviews: ratings.length,
@@ -349,7 +349,7 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles!user_id(id, full_name, email)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -379,7 +379,7 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles!user_id(id, full_name, email)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -408,7 +408,7 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles!user_id(id, full_name, email)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -434,7 +434,7 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles!user_id(id, full_name, email)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -739,7 +739,9 @@ export const classSchedulingService = {
 
   // Jitsi Integration
   jitsi: {
-    getMeetingDetails: async (classId: string): Promise<JitsiMeeting | null> => {
+    getMeetingDetails: async (
+      classId: string
+    ): Promise<JitsiMeeting | null> => {
       const { data, error } = await supabase
         .from("jitsi_meetings")
         .select("*")
@@ -768,9 +770,12 @@ export const classSchedulingService = {
     },
 
     generateManualMeeting: async (classId: string): Promise<any> => {
-      const { data, error } = await supabase.rpc("manual_generate_jitsi_for_class", {
-        class_uuid: classId,
-      });
+      const { data, error } = await supabase.rpc(
+        "manual_generate_jitsi_for_class",
+        {
+          class_uuid: classId,
+        }
+      );
 
       if (error) throw error;
       return data;

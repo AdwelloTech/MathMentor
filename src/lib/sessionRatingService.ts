@@ -10,6 +10,23 @@ export interface SessionRating {
   is_anonymous: boolean;
   created_at: string;
   updated_at: string;
+
+  // Joined fields from profiles table
+  student?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+  };
+
+  // Joined fields from tutor_classes table
+  session?: {
+    id: string;
+    title: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+    duration_minutes: number;
+  };
 }
 
 export interface CreateRatingData {

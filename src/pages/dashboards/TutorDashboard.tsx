@@ -22,6 +22,7 @@ import {
   XMarkIcon,
   CheckIcon,
 } from "@heroicons/react/24/outline";
+import { Star } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
 import { db } from "@/lib/db";
@@ -849,18 +850,18 @@ const TutorDashboard: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/quizzes")}
+            onClick={() => navigate("/tutor/ratings")}
             disabled={!isActiveTutor}
             className={`p-6 border-2 rounded-lg transition-colors ${
               isActiveTutor
-                ? "bg-indigo-50 border-indigo-200 hover:border-indigo-300"
+                ? "bg-purple-50 border-purple-200 hover:border-purple-300"
                 : "bg-gray-50 border-gray-200 cursor-not-allowed opacity-50"
             }`}
           >
             <div className="flex items-center space-x-3">
-              <DocumentTextIcon
+              <Star
                 className={`h-8 w-8 ${
-                  isActiveTutor ? "text-indigo-600" : "text-gray-400"
+                  isActiveTutor ? "text-purple-600" : "text-gray-400"
                 }`}
               />
               <div className="text-left">
@@ -869,7 +870,7 @@ const TutorDashboard: React.FC = () => {
                     isActiveTutor ? "text-gray-900" : "text-gray-500"
                   }`}
                 >
-                  Quizzes
+                  Ratings
                 </h3>
                 <p
                   className={`text-sm ${
@@ -877,7 +878,9 @@ const TutorDashboard: React.FC = () => {
                   }`}
                 >
                   {isActiveTutor
-                    ? "Create and manage quizzes"
+                    ? `View your ${
+                        dashboardStats?.average_rating?.toFixed(1) || 0
+                      }★ rating`
                     : "Unavailable - Account inactive"}
                 </p>
               </div>
@@ -911,7 +914,7 @@ const TutorDashboard: React.FC = () => {
 
         {/* Dashboard Stats */}
         {dashboardStats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <div className="flex items-center">
                 <AcademicCapIcon className="h-8 w-8 text-blue-600 mr-3" />
@@ -963,7 +966,43 @@ const TutorDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <Star className="h-8 w-8 text-yellow-600 mr-3" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Rating</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-2xl font-bold text-gray-900">
+                      {dashboardStats.average_rating?.toFixed(1) || "0.0"}
+                    </p>
+                    <span className="text-sm text-gray-500">
+                      ({dashboardStats.total_reviews || 0})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Quick Actions */}
+        {dashboardStats && dashboardStats.total_reviews > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-6 text-center"
+          >
+            <Button
+              onClick={() => navigate("/tutor/ratings")}
+              variant="outline"
+              className="bg-white hover:bg-gray-50 border-purple-200 text-purple-700 hover:border-purple-300"
+            >
+              <Star className="w-4 h-4 mr-2" />
+              View All Ratings & Feedback
+            </Button>
+          </motion.div>
         )}
 
         {/* Recent Classes Summary */}

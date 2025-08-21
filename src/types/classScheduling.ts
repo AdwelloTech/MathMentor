@@ -30,13 +30,13 @@ export interface TutorClass {
   jitsi_meeting_url?: string;
   jitsi_room_name?: string;
   jitsi_password?: string;
-  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
   is_recurring: boolean;
-  recurring_pattern?: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  recurring_pattern?: "daily" | "weekly" | "biweekly" | "monthly";
   recurring_end_date?: string;
   created_at: string;
   updated_at: string;
-  
+
   // Joined fields
   class_type?: ClassType;
   tutor?: {
@@ -51,14 +51,19 @@ export interface ClassBooking {
   id: string;
   class_id: string;
   student_id: string;
-  booking_status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
-  payment_status: 'pending' | 'paid' | 'refunded' | 'failed';
+  booking_status:
+    | "pending"
+    | "confirmed"
+    | "cancelled"
+    | "completed"
+    | "no_show";
+  payment_status: "pending" | "paid" | "refunded" | "failed";
   payment_amount: number;
   stripe_payment_intent_id?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
-  
+
   // Joined fields
   class?: TutorClass;
   student?: {
@@ -107,7 +112,7 @@ export interface ClassReview {
   is_anonymous: boolean;
   created_at: string;
   updated_at: string;
-  
+
   // Joined fields
   student?: {
     id: string;
@@ -130,7 +135,7 @@ export interface CreateClassFormData {
   max_students: number;
   price_per_session: number;
   is_recurring: boolean;
-  recurring_pattern?: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  recurring_pattern?: "daily" | "weekly" | "biweekly" | "monthly";
   recurring_end_date?: string;
 }
 
@@ -139,7 +144,7 @@ export interface UpdateClassFormData {
   description?: string;
   max_students?: number;
   price_per_session?: number;
-  status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  status?: "scheduled" | "in_progress" | "completed" | "cancelled";
 }
 
 export interface AvailabilityFormData {
@@ -213,6 +218,7 @@ export interface TutorDashboardStats {
   completed_classes: number;
   total_earnings: number;
   average_rating: number;
+  total_reviews: number;
   total_students: number;
   classes_this_month: number;
   earnings_this_month: number;
@@ -232,7 +238,12 @@ export interface StudentDashboardStats {
 // Notification Types
 export interface ClassNotification {
   id: string;
-  type: 'class_reminder' | 'class_cancelled' | 'class_updated' | 'booking_confirmed' | 'payment_received';
+  type:
+    | "class_reminder"
+    | "class_cancelled"
+    | "class_updated"
+    | "booking_confirmed"
+    | "payment_received";
   title: string;
   message: string;
   class_id?: string;
@@ -269,7 +280,7 @@ export interface JitsiMeetingSettings {
 
 // Recurring Class Types
 export interface RecurringClassPattern {
-  pattern: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  pattern: "daily" | "weekly" | "biweekly" | "monthly";
   end_date: string;
   skip_dates?: string[];
   include_dates?: string[];
@@ -314,13 +325,18 @@ export interface StudentUpcomingSession {
   jitsi_meeting_url?: string;
   jitsi_room_name?: string;
   jitsi_password?: string;
-  class_status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
-  booking_status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
-  payment_status: 'pending' | 'paid' | 'refunded' | 'failed';
+  class_status: "scheduled" | "in_progress" | "completed" | "cancelled";
+  booking_status:
+    | "pending"
+    | "confirmed"
+    | "cancelled"
+    | "completed"
+    | "no_show";
+  payment_status: "pending" | "paid" | "refunded" | "failed";
   class_type: string;
   tutor: {
     id: string;
     full_name: string;
     email: string;
   };
-} 
+}

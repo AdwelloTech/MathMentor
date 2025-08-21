@@ -586,9 +586,9 @@ export const classSchedulingService = {
         .select("id, status, price_per_session, current_students")
         .eq("tutor_id", tutorId);
 
-      // Get review statistics
+      // Get review statistics from session_ratings table
       const { data: reviews } = await supabase
-        .from("class_reviews")
+        .from("session_ratings")
         .select("rating")
         .eq("tutor_id", tutorId);
 
@@ -668,6 +668,7 @@ export const classSchedulingService = {
         completed_classes: completedClasses,
         total_earnings: totalEarnings,
         average_rating: averageRating,
+        total_reviews: ratings.length,
         total_students: totalStudents,
         classes_this_month: classesThisMonth,
         earnings_this_month: earningsThisMonth,

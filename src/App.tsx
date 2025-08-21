@@ -37,6 +37,7 @@ import QuizResultsPage from "./pages/student/QuizResultsPage";
 import ManageMaterialsPage from "./pages/tutor/ManageMaterialsPage";
 import ManageFlashcardsPage from "./pages/tutor/ManageFlashcardsPage";
 import CreateEditFlashcardSetPage from "./pages/tutor/CreateEditFlashcardSetPage";
+import TutorRatingsPage from "./pages/tutor/TutorRatingsPage";
 import FlashcardsListPage from "./pages/student/FlashcardsListPage";
 import FlashcardStudyPage from "./pages/student/FlashcardStudyPage";
 
@@ -128,6 +129,7 @@ function App() {
                 path="tutor/flashcards/edit/:setId"
                 element={<CreateEditFlashcardSetPage />}
               />
+              <Route path="tutor/ratings" element={<TutorRatingsPage />} />
 
               {/* View flashcards set - accessible to any logged-in role */}
               <Route

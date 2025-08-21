@@ -13,6 +13,19 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSessionRating } from "@/hooks/useSessionRating";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -251,32 +264,38 @@ const TutorRatingsPage: React.FC = () => {
                       )}
                       {showAnonymous ? "Hide" : "Show"} Anonymous
                     </Button>
-                    <select
-                      value={filterRating || ""}
-                      onChange={(e) =>
-                        setFilterRating(
-                          e.target.value ? Number(e.target.value) : null
-                        )
+                    <Select
+                      value={filterRating?.toString() || "all"}
+                      onValueChange={(value) =>
+                        setFilterRating(value === "all" ? null : Number(value))
                       }
-                      className="border rounded-md px-3 py-1 text-sm"
                     >
-                      <option value="">All Ratings</option>
-                      <option value="5">5 Stars</option>
-                      <option value="4">4 Stars</option>
-                      <option value="3">3 Stars</option>
-                      <option value="2">2 Stars</option>
-                      <option value="1">1 Star</option>
-                    </select>
-                    <select
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="All Ratings" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Ratings</SelectItem>
+                        <SelectItem value="5">5 Stars</SelectItem>
+                        <SelectItem value="4">4 Stars</SelectItem>
+                        <SelectItem value="3">3 Stars</SelectItem>
+                        <SelectItem value="2">2 Stars</SelectItem>
+                        <SelectItem value="1">1 Star</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
                       value={sortBy}
-                      onChange={(e) =>
-                        setSortBy(e.target.value as "date" | "rating")
+                      onValueChange={(value) =>
+                        setSortBy(value as "date" | "rating")
                       }
-                      className="border rounded-md px-3 py-1 text-sm"
                     >
-                      <option value="date">Sort by Date</option>
-                      <option value="rating">Sort by Rating</option>
-                    </select>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Sort by Date" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date">Sort by Date</SelectItem>
+                        <SelectItem value="rating">Sort by Rating</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardHeader>

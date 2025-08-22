@@ -463,20 +463,20 @@ const TutorDashboard: React.FC = () => {
           className="px-6 pb-16 relative z-10"
         >
           <div className="space-y-8">
-        <div className="text-center py-8">
+            <div className="text-center py-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-2xl mx-auto"
               >
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Complete Your Tutor Application
-          </h1>
+                  Complete Your Tutor Application
+                </h1>
                 <p className="text-lg text-gray-600 mb-8">
                   Please provide your details and qualifications to start
                   tutoring with us.
                 </p>
-        <TutorApplicationForm onSuccess={handleApplicationSuccess} />
+                <TutorApplicationForm onSuccess={handleApplicationSuccess} />
               </motion.div>
             </div>
           </div>
@@ -512,49 +512,49 @@ const TutorDashboard: React.FC = () => {
         >
           <div className="space-y-8">
             <div className="text-center py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 className="max-w-2xl mx-auto"
-        >
+              >
                 <Card className="shadow-[0_2px_2px_0_#16803D] border-0 p-8">
-          <ClockIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Application Under Review
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Thank you for submitting your tutor application. Our team is
-            currently reviewing your qualifications and experience.
-          </p>
+                  <ClockIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    Application Under Review
+                  </h1>
+                  <p className="text-gray-600 mb-6">
+                    Thank you for submitting your tutor application. Our team is
+                    currently reviewing your qualifications and experience.
+                  </p>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
-            <h3 className="font-medium text-gray-900 mb-2">
-              Application Details:
-            </h3>
-            <div className="space-y-1 text-sm text-gray-600">
-              <p>
-                <span className="font-medium">Submitted:</span>{" "}
+                    <h3 className="font-medium text-gray-900 mb-2">
+                      Application Details:
+                    </h3>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <p>
+                        <span className="font-medium">Submitted:</span>{" "}
                         {new Date(
                           application.submitted_at
                         ).toLocaleDateString()}
-              </p>
-              <p>
-                <span className="font-medium">Subjects:</span>{" "}
-                {application.subjects.join(", ")}
-              </p>
-              <p>
-                <span className="font-medium">CV:</span>{" "}
-                {application.cv_file_name}
-              </p>
-            </div>
-          </div>
+                      </p>
+                      <p>
+                        <span className="font-medium">Subjects:</span>{" "}
+                        {application.subjects.join(", ")}
+                      </p>
+                      <p>
+                        <span className="font-medium">CV:</span>{" "}
+                        {application.cv_file_name}
+                      </p>
+                    </div>
+                  </div>
 
-          <div className="space-y-2 text-sm text-gray-600 mb-6">
-            <p>Review typically takes 2-3 business days.</p>
-            <p>
-              We'll notify you via email once your application has been
-              reviewed.
-            </p>
+                  <div className="space-y-2 text-sm text-gray-600 mb-6">
+                    <p>Review typically takes 2-3 business days.</p>
+                    <p>
+                      We'll notify you via email once your application has been
+                      reviewed.
+                    </p>
                   </div>
                 </Card>
               </motion.div>
@@ -776,7 +776,7 @@ const TutorDashboard: React.FC = () => {
           animate={{ opacity: 1 }}
           className="px-6 pb-16 relative z-10"
         >
-      <div className="space-y-8">
+          <div className="space-y-8">
             {/* Header Section */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -787,12 +787,12 @@ const TutorDashboard: React.FC = () => {
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
                     Tutor Dashboard
-          </h1>
+                  </h1>
                   <p className="text-lg text-gray-600">
                     Welcome back, {profile?.full_name}! Manage your tutoring
                     sessions and students.
-          </p>
-        </div>
+                  </p>
+                </div>
                 <div className="flex items-center space-x-4">
                   <Button
                     onClick={() => navigate("/schedule-class")}
@@ -807,48 +807,48 @@ const TutorDashboard: React.FC = () => {
             </motion.div>
 
             {/* Status Alerts */}
-        {!isActiveTutor && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
+            {!isActiveTutor && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
                 className="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm"
-          >
-            <div className="flex items-start">
-              <XCircleIcon className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-red-800">
-                  Account Temporarily Inactive
-                </h3>
+              >
+                <div className="flex items-start">
+                  <XCircleIcon className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-red-800">
+                      Account Temporarily Inactive
+                    </h3>
                     <p className="text-sm text-red-700 mt-1">
                       Your tutor account has been temporarily deactivated. You
                       can still view your dashboard and profile, but you cannot
                       schedule new classes or accept new students.
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-        {isActiveTutor && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
+            {isActiveTutor && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
                 className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm"
-          >
-            <div className="flex items-start">
-              <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-green-800">
-                  Setup Complete!
-                </h3>
+              >
+                <div className="flex items-start">
+                  <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-green-800">
+                      Setup Complete!
+                    </h3>
                     <p className="text-sm text-green-700 mt-1">
                       Your tutor application and ID verification have been
                       approved. You can now schedule classes and start teaching!
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Stats Grid */}
             <motion.div
@@ -892,32 +892,31 @@ const TutorDashboard: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                 
                 >
                   <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
                     <CardHeader className="pb-2">
                       <div className="flex items-start space-x-3">
                         <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
                           <stat.icon className="w-6 h-6 text-white" />
-              </div>
+                        </div>
                         <div>
                           <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
                             {stat.name}
                           </CardTitle>
-            </div>
-              </div>
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="pl-0">
                         <div className="flex items-start space-x-2">
                           <div className="text-3xl font-bold text-gray-900 ml-3">
                             {stat.value}
-            </div>
+                          </div>
                           <p className="text-sm text-muted-foreground mt-3 px-6">
                             {stat.description}
-                </p>
-              </div>
-            </div>
+                          </p>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -938,9 +937,9 @@ const TutorDashboard: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
                           <CalendarDaysIcon className="w-4 h-4 text-white" />
-              </div>
+                        </div>
                         <CardTitle>Upcoming Classes</CardTitle>
-            </div>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -950,7 +949,7 @@ const TutorDashboard: React.FC = () => {
                         View all
                         <ArrowRightIcon className="w-4 h-4 ml-1" />
                       </Button>
-              </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {upcomingClasses.length > 0 ? (
@@ -964,19 +963,19 @@ const TutorDashboard: React.FC = () => {
                         >
                           <div className="bg-gradient-to-r from-green-600 to-green-700 w-10 h-10 rounded-full flex items-center justify-center">
                             <VideoCameraIcon className="w-5 h-5 text-white" />
-            </div>
+                          </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-900 truncate">
                               {classItem.title}
                             </h4>
-                <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600">
                               {classItem.subject} •{" "}
                               {classItem.student?.full_name || "Student"}
                             </p>
                             <p className="text-xs text-gray-500">
                               {classItem.date} at {classItem.start_time}
-                  </p>
-                </div>
+                            </p>
+                          </div>
                           <div className="text-right">
                             <p className="font-medium text-gray-900 text-sm">
                               {classItem.duration_minutes} min
@@ -984,14 +983,14 @@ const TutorDashboard: React.FC = () => {
                             <Badge className="bg-green-100 text-green-800">
                               Confirmed
                             </Badge>
-                </div>
+                          </div>
                         </motion.div>
                       ))
                     ) : (
                       <div className="text-center py-28">
                         <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                           <CalendarDaysIcon className="w-8 h-8 text-gray-400" />
-              </div>
+                        </div>
                         <h4 className="text-lg font-medium text-gray-900 mb-2">
                           No upcoming classes
                         </h4>
@@ -1006,8 +1005,8 @@ const TutorDashboard: React.FC = () => {
                           <PlusIcon className="w-4 h-4 mr-2" />
                           Schedule Class
                         </Button>
-          </div>
-        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -1024,9 +1023,9 @@ const TutorDashboard: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
                           <SparklesIcon className="w-4 h-4 text-white" />
-              </div>
+                        </div>
                         <CardTitle>Instant Requests</CardTitle>
-            </div>
+                      </div>
                       <Badge className="bg-orange-100 text-orange-800">
                         {instantRequests.length} pending
                       </Badge>
@@ -1044,7 +1043,7 @@ const TutorDashboard: React.FC = () => {
                         >
                           <div className="bg-gradient-to-r from-orange-600 to-orange-700 w-10 h-10 rounded-full flex items-center justify-center">
                             <ClockIcon className="w-5 h-5 text-white" />
-                    </div>
+                          </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-900 truncate">
                               {getSubjectName(request.subject_id)}
@@ -1054,8 +1053,8 @@ const TutorDashboard: React.FC = () => {
                             </p>
                             <p className="text-xs text-gray-500">
                               Requested just now
-                      </p>
-                    </div>
+                            </p>
+                          </div>
                           <div className="text-right">
                             <Button
                               size="sm"
@@ -1064,14 +1063,14 @@ const TutorDashboard: React.FC = () => {
                             >
                               Accept
                             </Button>
-                  </div>
+                          </div>
                         </motion.div>
                       ))
                     ) : (
                       <div className="text-center py-16">
                         <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                           <SparklesIcon className="w-8 h-8 text-gray-400" />
-              </div>
+                        </div>
                         <h4 className="text-lg font-medium text-gray-900 mb-2">
                           No instant requests
                         </h4>
@@ -1079,8 +1078,8 @@ const TutorDashboard: React.FC = () => {
                           Students will appear here when they need immediate
                           help
                         </p>
-          </div>
-        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -1098,7 +1097,7 @@ const TutorDashboard: React.FC = () => {
                   <CardTitle className="flex items-center space-x-2">
                     <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
                       <LightBulbIcon className="w-4 h-4 text-white" />
-                              </div>
+                    </div>
                     <span>Quick Actions</span>
                   </CardTitle>
                 </CardHeader>
@@ -1156,7 +1155,7 @@ const TutorDashboard: React.FC = () => {
                               className={`bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg`}
                             >
                               <action.icon className="w-6 h-6 text-white" />
-            </div>
+                            </div>
                             <h3 className="font-semibold text-gray-900 mb-2">
                               {action.title}
                             </h3>
@@ -1165,12 +1164,12 @@ const TutorDashboard: React.FC = () => {
                             </p>
                             <div className="bg-yellow-300 text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-all duration-200 shadow-md hover:shadow-lg">
                               {action.disabled ? "Unavailable" : "Get Started"}
-              </div>
+                            </div>
                           </CardContent>
                         </Card>
                       </motion.div>
                     ))}
-          </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -1203,7 +1202,7 @@ const TutorDashboard: React.FC = () => {
           animate={{ opacity: 1 }}
           className="px-6 pb-16 relative z-10"
         >
-      <div className="space-y-8">
+          <div className="space-y-8">
             {/* Header Section */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -1213,369 +1212,369 @@ const TutorDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome, {profile?.full_name}
-          </h1>
+                    Welcome, {profile?.full_name}
+                  </h1>
                   <p className="text-lg text-gray-600">
-            Tutor Dashboard - Manage your tutoring profile and sessions.
-          </p>
-        </div>
+                    Tutor Dashboard - Manage your tutoring profile and sessions.
+                  </p>
+                </div>
               </div>
             </motion.div>
 
-        {/* Application Status Notice */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+            {/* Application Status Notice */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
               className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm"
-        >
-          <div className="flex items-start">
-            <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
-            <div className="flex-1">
-              <h3 className="text-sm font-medium text-blue-800">
-                Application Under Review
-              </h3>
-              <p className="mt-1 text-sm text-blue-700">
+            >
+              <div className="flex items-start">
+                <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-blue-800">
+                    Application Under Review
+                  </h3>
+                  <p className="mt-1 text-sm text-blue-700">
                     Your tutor application is currently under review. You'll
                     have full access to the dashboard once approved by our team.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Profile Completion Alert */}
-        {!isProfileComplete && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-                className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm"
-          >
-            <div className="flex items-start">
-              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-yellow-800">
-                  Complete Your Profile
-                </h3>
-                <p className="mt-1 text-sm text-yellow-700">
-                      You need to upload your CV and complete your profile to
-                      start accepting tutoring sessions.
-                </p>
-                <div className="mt-2">
-                  <div className="bg-yellow-200 rounded-full h-2">
-                    <div
-                      className="bg-yellow-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${profileCompletion}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-yellow-600 mt-1 block">
-                    {profileCompletion}% complete
-                  </span>
+                  </p>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Profile Information */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* CV Upload Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="card"
-            >
-              <div className="card-body">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <DocumentArrowUpIcon className="h-6 w-6 mr-2 text-blue-600" />
-                  Curriculum Vitae
-                </h2>
-
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
-                    <div className="flex-1">
-                      <h3 className="text-sm font-medium text-green-800">
-                        CV Uploaded Successfully
-                      </h3>
-                      <p className="text-sm text-green-700 mt-1">
-                        File: {application?.cv_file_name || "CV file"}
-                      </p>
+            {/* Profile Completion Alert */}
+            {!isProfileComplete && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm"
+              >
+                <div className="flex items-start">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-yellow-800">
+                      Complete Your Profile
+                    </h3>
+                    <p className="mt-1 text-sm text-yellow-700">
+                      You need to upload your CV and complete your profile to
+                      start accepting tutoring sessions.
+                    </p>
+                    <div className="mt-2">
+                      <div className="bg-yellow-200 rounded-full h-2">
+                        <div
+                          className="bg-yellow-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${profileCompletion}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-yellow-600 mt-1 block">
+                        {profileCompletion}% complete
+                      </span>
                     </div>
                   </div>
                 </div>
+              </motion.div>
+            )}
 
-                {profile?.cv_url ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center">
-                      <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
-                      <div className="flex-1">
-                        <h3 className="text-sm font-medium text-green-800">
-                          CV Uploaded Successfully
-                        </h3>
-                        <p className="text-sm text-green-700 mt-1">
-                          File: {profile.cv_file_name}
-                        </p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column - Profile Information */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* CV Upload Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="card"
+                >
+                  <div className="card-body">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <DocumentArrowUpIcon className="h-6 w-6 mr-2 text-blue-600" />
+                      Curriculum Vitae
+                    </h2>
+
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
+                        <div className="flex-1">
+                          <h3 className="text-sm font-medium text-green-800">
+                            CV Uploaded Successfully
+                          </h3>
+                          <p className="text-sm text-green-700 mt-1">
+                            File: {application?.cv_file_name || "CV file"}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <label className="btn btn-secondary btn-sm cursor-pointer">
-                        <DocumentArrowUpIcon className="h-4 w-4 mr-1" />
-                        Update CV
-                        <input
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          onChange={handleCVUpload}
-                          className="hidden"
-                          disabled={isUploading}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <DocumentArrowUpIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Upload Your CV
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Upload your curriculum vitae to complete your tutor
-                      profile
-                    </p>
 
-                    {uploadError && (
-                      <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+                    {profile?.cv_url ? (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
+                          <div className="flex-1">
+                            <h3 className="text-sm font-medium text-green-800">
+                              CV Uploaded Successfully
+                            </h3>
+                            <p className="text-sm text-green-700 mt-1">
+                              File: {profile.cv_file_name}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <label className="btn btn-secondary btn-sm cursor-pointer">
+                            <DocumentArrowUpIcon className="h-4 w-4 mr-1" />
+                            Update CV
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx"
+                              onChange={handleCVUpload}
+                              className="hidden"
+                              disabled={isUploading}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <DocumentArrowUpIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Upload Your CV
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                          Upload your curriculum vitae to complete your tutor
+                          profile
+                        </p>
+
+                        {uploadError && (
+                          <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
                             <p className="text-sm text-red-600">
                               {uploadError}
                             </p>
+                          </div>
+                        )}
+
+                        <label className="btn btn-primary cursor-pointer">
+                          {isUploading ? (
+                            <>
+                              <LoadingSpinner size="sm" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <DocumentArrowUpIcon className="h-4 w-4 mr-1" />
+                              Choose File
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            onChange={handleCVUpload}
+                            className="hidden"
+                            disabled={isUploading}
+                          />
+                        </label>
+                        <p className="text-xs text-gray-500 mt-2">
+                          PDF or Word documents only, max 5MB
+                        </p>
                       </div>
                     )}
-
-                    <label className="btn btn-primary cursor-pointer">
-                      {isUploading ? (
-                        <>
-                          <LoadingSpinner size="sm" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <DocumentArrowUpIcon className="h-4 w-4 mr-1" />
-                          Choose File
-                        </>
-                      )}
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        onChange={handleCVUpload}
-                        className="hidden"
-                        disabled={isUploading}
-                      />
-                    </label>
-                    <p className="text-xs text-gray-500 mt-2">
-                      PDF or Word documents only, max 5MB
-                    </p>
                   </div>
-                )}
+                </motion.div>
+
+                {/* Tutor Information */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="card"
+                >
+                  <div className="card-body">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <UserIcon className="h-6 w-6 mr-2 text-blue-600" />
+                      Profile Information
+                    </h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Subjects
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {application?.subjects?.map((subject, index) => (
+                            <span
+                              key={index}
+                              className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded"
+                            >
+                              {subject}
+                            </span>
+                          )) || (
+                            <span className="text-gray-500 text-sm">
+                              No subjects listed
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Phone Number
+                        </label>
+                        <p className="text-gray-900">
+                          {application?.phone_number || "Not specified"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Experience
+                        </label>
+                        <p className="text-gray-900">
+                          {profile?.experience_years
+                            ? `${profile.experience_years} years`
+                            : "Not specified"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Qualification
+                        </label>
+                        <p className="text-gray-900">
+                          {profile?.qualification || "Not specified"}
+                        </p>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Application Status
+                        </label>
+                        <p className="text-gray-900">
+                          {application?.application_status ===
+                          ("pending" as TutorApplicationStatus)
+                            ? "Under Review"
+                            : application?.application_status ===
+                              ("approved" as TutorApplicationStatus)
+                            ? "Approved"
+                            : application?.application_status ===
+                              ("rejected" as TutorApplicationStatus)
+                            ? "Rejected"
+                            : "Unknown"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <button className="btn btn-secondary" disabled>
+                        Edit Profile (Available after approval)
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
 
-            {/* Tutor Information */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="card"
-            >
-              <div className="card-body">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <UserIcon className="h-6 w-6 mr-2 text-blue-600" />
-                  Profile Information
-                </h2>
+              {/* Right Column - Quick Stats */}
+              <div className="space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="card"
+                >
+                  <div className="card-body">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Quick Stats
+                    </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Subjects
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {application?.subjects?.map((subject, index) => (
+                    <div className="space-y-4">
+                      <div className="flex items-center">
+                        <AcademicCapIcon className="h-5 w-5 text-blue-600 mr-3" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Sessions
+                          </p>
+                          <p className="text-sm text-gray-500">0 completed</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center">
+                        <ClockIcon className="h-5 w-5 text-green-600 mr-3" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Hours Taught
+                          </p>
+                          <p className="text-sm text-gray-500">0 hours</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center">
+                        <CurrencyDollarIcon className="h-5 w-5 text-yellow-600 mr-3" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Earnings
+                          </p>
+                          <p className="text-sm text-gray-500">$0.00</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Action Items */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="card"
+                >
+                  <div className="card-body">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Next Steps
+                    </h3>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center text-sm">
+                        <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
+                        <span className="text-gray-500 line-through">
+                          Complete application
+                        </span>
+                      </div>
+
+                      <div className="flex items-center text-sm">
+                        <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
+                        <span className="text-gray-900">Wait for approval</span>
+
+                        {profile?.cv_url ? (
+                          <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
+                        ) : (
+                          <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
+                        )}
                         <span
-                          key={index}
-                          className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded"
+                          className={
+                            profile?.cv_url
+                              ? "text-gray-500 line-through"
+                              : "text-gray-900"
+                          }
                         >
-                          {subject}
+                          Upload CV
                         </span>
-                      )) || (
-                        <span className="text-gray-500 text-sm">
-                          No subjects listed
-                        </span>
-                      )}
+                      </div>
+
+                      <div className="flex items-center text-sm">
+                        <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
+                        <span className="text-gray-900">Set availability</span>
+                      </div>
+
+                      <div className="flex items-center text-sm">
+                        <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
+                        <span className="text-gray-900">Set hourly rate</span>
+                      </div>
+
+                      <div className="flex items-center text-sm">
+                        <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
+                        <span className="text-gray-900">Add bio</span>
+                      </div>
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number
-                    </label>
-                    <p className="text-gray-900">
-                      {application?.phone_number || "Not specified"}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Experience
-                    </label>
-                    <p className="text-gray-900">
-                      {profile?.experience_years
-                        ? `${profile.experience_years} years`
-                        : "Not specified"}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Qualification
-                    </label>
-                    <p className="text-gray-900">
-                      {profile?.qualification || "Not specified"}
-                    </p>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Application Status
-                    </label>
-                    <p className="text-gray-900">
-                      {application?.application_status ===
-                      ("pending" as TutorApplicationStatus)
-                        ? "Under Review"
-                        : application?.application_status ===
-                          ("approved" as TutorApplicationStatus)
-                        ? "Approved"
-                        : application?.application_status ===
-                          ("rejected" as TutorApplicationStatus)
-                        ? "Rejected"
-                        : "Unknown"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <button className="btn btn-secondary" disabled>
-                    Edit Profile (Available after approval)
-                  </button>
-                </div>
+                </motion.div>
               </div>
-            </motion.div>
-          </div>
-
-          {/* Right Column - Quick Stats */}
-          <div className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="card"
-            >
-              <div className="card-body">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Quick Stats
-                </h3>
-
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <AcademicCapIcon className="h-5 w-5 text-blue-600 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Sessions
-                      </p>
-                      <p className="text-sm text-gray-500">0 completed</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <ClockIcon className="h-5 w-5 text-green-600 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Hours Taught
-                      </p>
-                      <p className="text-sm text-gray-500">0 hours</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <CurrencyDollarIcon className="h-5 w-5 text-yellow-600 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Earnings
-                      </p>
-                      <p className="text-sm text-gray-500">$0.00</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Action Items */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="card"
-            >
-              <div className="card-body">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Next Steps
-                </h3>
-
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm">
-                    <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
-                    <span className="text-gray-500 line-through">
-                      Complete application
-                    </span>
-                  </div>
-
-                  <div className="flex items-center text-sm">
-                    <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
-                    <span className="text-gray-900">Wait for approval</span>
-
-                    {profile?.cv_url ? (
-                      <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />
-                    ) : (
-                      <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
-                    )}
-                    <span
-                      className={
-                        profile?.cv_url
-                          ? "text-gray-500 line-through"
-                          : "text-gray-900"
-                      }
-                    >
-                      Upload CV
-                    </span>
-                  </div>
-
-                  <div className="flex items-center text-sm">
-                    <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
-                    <span className="text-gray-900">Set availability</span>
-                  </div>
-
-                  <div className="flex items-center text-sm">
-                    <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
-                    <span className="text-gray-900">Set hourly rate</span>
-                  </div>
-
-                  <div className="flex items-center text-sm">
-                    <div className="h-4 w-4 border-2 border-gray-300 rounded-full mr-2"></div>
-                    <span className="text-gray-900">Add bio</span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
+            </div>
           </div>
         </motion.div>
       </div>

@@ -102,7 +102,7 @@ const ClassSchedulingPage: React.FC = () => {
         classSchedulingService.classTypes.getAll(),
         classSchedulingService.classes.getByTutorId(user!.id),
       ]);
-      
+
       setClassTypes(types);
       setExistingClasses(classes);
       generateCalendar();
@@ -116,21 +116,21 @@ const ClassSchedulingPage: React.FC = () => {
 
   const generateCalendar = () => {
     const days: CalendarDay[] = [];
-    
+
     // Get the first day of the current month
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-    
+
     // Get the start of the week that contains the first day of the month
     const startOfWeek = new Date(firstDayOfMonth);
     const dayOfWeek = firstDayOfMonth.getDay(); // 0 = Sunday, 6 = Saturday
     startOfWeek.setDate(firstDayOfMonth.getDate() - dayOfWeek);
-    
+
     // Generate calendar days (6 weeks to ensure we cover the entire month)
     for (let i = 0; i < 42; i++) {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
-      
+
       // Use timezone-safe date formatting to avoid UTC conversion issues
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -139,15 +139,15 @@ const ClassSchedulingPage: React.FC = () => {
       const today = new Date();
       const isPastDate =
         date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      
+
       // Only show classes for the current month being viewed
       const dayClasses = existingClasses.filter(
         (c) =>
-        c.date === dateString && 
-        new Date(c.date).getMonth() === currentMonth &&
-        new Date(c.date).getFullYear() === currentYear
+          c.date === dateString &&
+          new Date(c.date).getMonth() === currentMonth &&
+          new Date(c.date).getFullYear() === currentYear
       );
-      
+
       days.push({
         date: dateString,
         day: date.getDate(),
@@ -161,7 +161,7 @@ const ClassSchedulingPage: React.FC = () => {
         isCurrentMonth: date.getMonth() === currentMonth,
       });
     }
-    
+
     setCalendarDays(days);
   };
 
@@ -169,47 +169,46 @@ const ClassSchedulingPage: React.FC = () => {
     const slots: TimeSlot[] = [];
     const startHour = 7; // 7 AM - earlier start for early birds
     const endHour = 22; // 10 PM - later end for evening classes
-    
+
     for (let hour = startHour; hour < endHour; hour++) {
       // Add 15-minute intervals for more flexibility
       for (let minute = 0; minute < 60; minute += 15) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute
           .toString()
           .padStart(2, "0")}`;
-        
+
         // Check if this time slot conflicts with existing classes
         const conflictingClass = existingClasses.find(
           (c) =>
-          c.date === date && 
-          c.start_time === timeString &&
+            c.date === date &&
+            c.start_time === timeString &&
             c.status !== "cancelled"
         );
-        
+
         // Check if time slot fits the class duration
         const slotEndTime = new Date(`2000-01-01T${timeString}`);
         slotEndTime.setMinutes(
           slotEndTime.getMinutes() + classType.duration_minutes
         );
         const slotEndString = slotEndTime.toTimeString().slice(0, 5);
-        
+
         const hasConflict = existingClasses.some(
           (c) =>
-          c.date === date && 
+            c.date === date &&
             c.status !== "cancelled" &&
             c.start_time < slotEndString &&
             c.end_time > timeString
         );
-        
+
         slots.push({
           time: timeString,
           isAvailable: !hasConflict && !conflictingClass,
           isSelected: false,
           isDisabled: hasConflict || !!conflictingClass,
-          existingClass: conflictingClass,
         });
       }
     }
-    
+
     setTimeSlots(slots);
   };
 
@@ -220,7 +219,6 @@ const ClassSchedulingPage: React.FC = () => {
       class_type_id: classType.id,
       max_students: classType.max_students,
       price_per_session: classType.price_per_session,
-      duration_minutes: classType.duration_minutes,
     }));
     setShowTimeSelection(false);
     setSelectedDate("");
@@ -229,16 +227,16 @@ const ClassSchedulingPage: React.FC = () => {
 
   const handleDateSelect = (date: string) => {
     if (!selectedClassType) return;
-    
+
     console.log("Selected date:", date); // Debug log
     setSelectedDate(date);
     setCalendarDays((prev) =>
       prev.map((day) => ({
-      ...day,
+        ...day,
         isSelected: day.date === date,
       }))
     );
-    
+
     generateTimeSlots(selectedClassType, date);
     setShowTimeSelection(true);
   };
@@ -247,11 +245,11 @@ const ClassSchedulingPage: React.FC = () => {
     setSelectedTime(time);
     setTimeSlots((prev) =>
       prev.map((slot) => ({
-      ...slot,
+        ...slot,
         isSelected: slot.time === time,
       }))
     );
-    
+
     // Use the current selectedDate state directly
     setFormData((prev) => ({
       ...prev,
@@ -268,7 +266,7 @@ const ClassSchedulingPage: React.FC = () => {
 
     try {
       setLoading(true);
-      
+
       // Calculate end time
       const startTime = new Date(`2000-01-01T${selectedTime}`);
       const endTime = new Date(
@@ -276,7 +274,7 @@ const ClassSchedulingPage: React.FC = () => {
           (selectedClassType?.duration_minutes || 60) * 60000
       );
       const endTimeString = endTime.toTimeString().slice(0, 5);
-      
+
       const classData: CreateClassFormData & { tutor_id: string } = {
         ...formData,
         tutor_id: user!.id,
@@ -284,28 +282,24 @@ const ClassSchedulingPage: React.FC = () => {
         start_time: selectedTime,
         end_time: endTimeString,
         max_students: selectedClassType?.max_students || 1,
-        price_per_session:
-          formData.price_per_session ||
-          selectedClassType?.price_per_session ||
-          25.0,
       };
 
       await classSchedulingService.classes.create(classData);
-      
+
       toast.success("Class created successfully!");
       setShowClassForm(false);
       setSelectedClassType(null);
       setSelectedDate("");
       setSelectedTime("");
       setShowTimeSelection(false);
-      
+
       // Reload data
       await loadData();
     } catch (error) {
       console.error("Error creating class:", error);
       // Show more detailed error message
-      let errorMessage = "Failed to create class";
-      
+      let errorMessage = "An unexpected error occurred";
+
       if (error instanceof Error) {
         errorMessage = error.message;
       } else if (error && typeof error === "object") {
@@ -320,7 +314,7 @@ const ClassSchedulingPage: React.FC = () => {
           errorMessage = JSON.stringify(error);
         }
       }
-      
+
       toast.error(`Failed to create class: ${errorMessage}`);
     } finally {
       setLoading(false);
@@ -331,13 +325,13 @@ const ClassSchedulingPage: React.FC = () => {
     switch (name.toLowerCase()) {
       case "one-to-one":
       case "one-to-one extended":
-        return <UserIcon className="h-6 w-6" />;
+        return <UserIcon className="h-6 w-6 text-white" />;
       case "group class":
-        return <UserGroupIcon className="h-6 w-6" />;
+        return <UserGroupIcon className="h-6 w-6 text-white" />;
       case "consultation":
-        return <ChatBubbleLeftRightIcon className="h-6 w-6" />;
+        return <ChatBubbleLeftRightIcon className="h-6 w-6 text-white" />;
       default:
-        return <CalendarDaysIcon className="h-6 w-6" />;
+        return <CalendarDaysIcon className="h-6 w-6 text-white" />;
     }
   };
 
@@ -390,21 +384,21 @@ const ClassSchedulingPage: React.FC = () => {
       ></div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 space-y-8">
-      {/* Header */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Schedule Your Classes
-        </h1>
+            Schedule Your Classes
+          </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Choose your class type, select a date and time, and start teaching!
-        </p>
+            Choose your class type, select a date and time, and start teaching!
+          </p>
         </motion.div>
 
-      {/* Class Type Selection */}
+        {/* Class Type Selection */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -412,220 +406,194 @@ const ClassSchedulingPage: React.FC = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           {classTypes.map((classType, index) => (
-          <motion.div
-            key={classType.id}
+            <motion.div
+              key={classType.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ scale: 1.02, y: -5 }}
-            whileTap={{ scale: 0.98 }}
-              className={`relative group cursor-pointer transition-all duration-300 ${
-              selectedClassType?.id === classType.id
-                  ? "transform -translate-y-2"
+              whileTap={{ scale: 0.98 }}
+              className={`cursor-pointer p-6 bg-white rounded-xl shadow-[0_2px_2px_0_#16803D] border-0 transition-all hover:shadow-xl hover:-translate-y-1 duration-300 ${
+                selectedClassType?.id === classType.id
+                  ? "ring-2 ring-[#16803D] ring-offset-2"
                   : ""
-            }`}
-            onClick={() => handleClassTypeSelect(classType)}
+              }`}
+              onClick={() => handleClassTypeSelect(classType)}
             >
-              <div
-                className={`bg-white rounded-xl p-6 shadow-[0_4px_4px_0_#16803D] border-0 h-full ${
-                  selectedClassType?.id === classType.id
-                    ? "ring-2 ring-[#16803D] ring-opacity-50"
-                    : "hover:shadow-xl"
-                }`}
-          >
-            <div className="flex items-center justify-between mb-4">
-                  <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                    {getClassTypeIcon(classType.name)}
-                    <div className="absolute inset-0 flex items-center justify-center text-white">
-                {getClassTypeIcon(classType.name)}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2 text-[#16803D]">
+                  <div className="bg-[#16803D] w-10 h-10 rounded-lg flex items-center justify-center">
+                    <div className="text-white">
+                      {getClassTypeIcon(classType.name)}
                     </div>
+                  </div>
+                </div>
+                {selectedClassType?.id === classType.id && (
+                  <div className="bg-[#16803D] w-6 h-6 rounded-full flex items-center justify-center">
+                    <CheckIcon className="h-4 w-4 text-white" />
+                  </div>
+                )}
               </div>
-              {selectedClassType?.id === classType.id && (
-                    <div className="bg-[#16803D] w-6 h-6 rounded-full flex items-center justify-center">
-                      <CheckIcon className="h-4 w-4 text-white" />
-                    </div>
-              )}
-            </div>
-            
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {classType.name}
                 </h3>
-
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                <p className="text-sm text-gray-600 mb-4">
                   {classType.description}
                 </p>
 
-                <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                    <div className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center">
-                      <ClockIcon className="h-3 w-3 text-gray-600" />
+                <div className="space-y-3 text-sm text-gray-600">
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-green-100 w-6 h-6 rounded-md flex items-center justify-center">
+                      <ClockIcon className="h-3 w-3 text-[#16803D]" />
                     </div>
-                    <span className="text-sm text-gray-700 font-medium">
+                    <span className="font-medium">
                       {classType.duration_minutes} minutes
                     </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                    <div className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center">
-                      <UserGroupIcon className="h-3 w-3 text-gray-600" />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-yellow-100 w-6 h-6 rounded-md flex items-center justify-center">
+                      <UserGroupIcon className="h-3 w-3 text-yellow-600" />
                     </div>
-                    <span className="text-sm text-gray-700 font-medium">
+                    <span className="font-medium">
                       Max {classType.max_students} student
                       {classType.max_students > 1 ? "s" : ""}
                     </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                    <div className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center">
-                      <CurrencyDollarIcon className="h-3 w-3 text-gray-600" />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-blue-100 w-6 h-6 rounded-md flex items-center justify-center">
+                      <CurrencyDollarIcon className="h-3 w-3 text-blue-600" />
                     </div>
-                    <span className="text-sm font-bold text-[#16803D]">
+                    <span className="font-medium">
                       ${classType.price_per_session}/session
                     </span>
                   </div>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))}
         </motion.div>
 
-      {/* Calendar and Time Selection */}
-      {selectedClassType && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-8"
+        {/* Calendar and Time Selection */}
+        {selectedClassType && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl shadow-[0_2px_2px_0_#16803D] border-0 p-6"
           >
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-[#16803D] w-10 h-10 rounded-xl flex items-center justify-center">
-                <CalendarDaysIcon className="h-5 w-5 text-white" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center space-x-2">
+              <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                <CalendarDaysIcon className="w-4 h-4 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">
-            Select Date and Time for {selectedClassType?.name}
-          </h2>
-            </div>
+              <span>Select Date and Time for {selectedClassType?.name}</span>
+            </h2>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Calendar */}
-              <div className="bg-gradient-to-br from-green-50 to-yellow-50 rounded-xl p-6 border border-green-100">
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="bg-[#16803D] w-6 h-6 rounded-lg flex items-center justify-center">
-                    <CalendarDaysIcon className="h-3 w-3 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    Select Date
-                  </h3>
-                </div>
-                <div className="flex items-center justify-between mb-6">
-                <button
-                  onClick={goToPreviousMonth}
-                    className="bg-white hover:bg-gray-50 w-10 h-10 rounded-lg flex items-center justify-center text-gray-600 hover:text-[#16803D] transition-colors shadow-md"
-                  title="Previous Month"
-                >
-                    <span className="text-lg font-bold">&lt;</span>
-                </button>
-                  <span className="text-xl font-bold text-gray-900 px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Calendar */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Select Date
+                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    onClick={goToPreviousMonth}
+                    className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Previous Month"
+                  >
+                    &lt;
+                  </button>
+                  <span className="text-lg font-semibold text-gray-900">
                     {new Date(currentYear, currentMonth, 1).toLocaleDateString(
                       "en-US",
                       { month: "long", year: "numeric" }
                     )}
-                </span>
-                <button
-                  onClick={goToNextMonth}
-                    className="bg-white hover:bg-gray-50 w-10 h-10 rounded-lg flex items-center justify-center text-gray-600 hover:text-[#16803D] transition-colors shadow-md"
-                  title="Next Month"
-                >
-                    <span className="text-lg font-bold">&gt;</span>
-                </button>
-              </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="grid grid-cols-7 gap-2">
-                {/* Day headers */}
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                      (day) => (
-                        <div
-                          key={day}
-                          className="p-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wide"
-                        >
-                    {day}
-                  </div>
-                      )
-                    )}
-                
-                {/* Calendar days */}
-                {calendarDays.map((day) => (
-                  <motion.button
-                    key={day.date}
-                        whileHover={{ scale: day.isDisabled ? 1 : 1.1 }}
-                        whileTap={{ scale: day.isDisabled ? 1 : 0.9 }}
-                        className={`relative p-3 text-center rounded-lg transition-all duration-200 ${
-                      day.isToday
-                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold shadow-lg"
-                        : day.isSelected
-                            ? "bg-gradient-to-r from-[#16803D] to-green-600 text-white font-bold shadow-lg"
-                        : day.hasClasses
-                            ? "bg-gradient-to-r from-green-100 to-yellow-100 text-green-800 hover:from-green-200 hover:to-yellow-200 font-semibold"
-                        : day.isCurrentMonth
-                            ? "bg-gray-50 hover:bg-gradient-to-r hover:from-green-50 hover:to-yellow-50 text-gray-700 hover:text-gray-900"
-                            : "bg-gray-100 text-gray-400"
-                        } ${
-                          day.isDisabled
-                            ? "opacity-50 cursor-not-allowed"
-                            : "cursor-pointer hover:shadow-md"
-                        }`}
-                        onClick={() =>
-                          !day.isDisabled && handleDateSelect(day.date)
-                        }
-                    disabled={day.isDisabled}
+                  </span>
+                  <button
+                    onClick={goToNextMonth}
+                    className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Next Month"
                   >
-                    <div className="text-sm font-medium">{day.day}</div>
-                    {day.hasClasses && (
-                          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          </div>
-                    )}
-                  </motion.button>
-                ))}
-                  </div>
+                    &gt;
+                  </button>
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {/* Day headers */}
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                    (day) => (
+                      <div
+                        key={day}
+                        className="p-2 text-center text-sm font-medium text-gray-500"
+                      >
+                        {day}
+                      </div>
+                    )
+                  )}
+                  {/* Calendar days */}
+                  {calendarDays.map((day) => (
+                    <motion.button
+                      key={day.date}
+                      whileHover={{ scale: day.isDisabled ? 1 : 1.05 }}
+                      whileTap={{ scale: day.isDisabled ? 1 : 0.95 }}
+                      className={`p-2 text-center rounded-lg transition-all ${
+                        day.isToday
+                          ? "bg-[#16803D] text-white font-semibold"
+                          : day.isSelected
+                          ? "bg-[#199421] text-white ring-2 ring-[#16803D] ring-offset-2"
+                          : day.hasClasses
+                          ? "bg-green-100 text-green-700 hover:bg-green-200"
+                          : day.isCurrentMonth
+                          ? "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                          : "bg-gray-100 text-gray-400"
+                      } ${
+                        day.isDisabled
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }`}
+                      onClick={() =>
+                        !day.isDisabled && handleDateSelect(day.date)
+                      }
+                      disabled={day.isDisabled}
+                    >
+                      <div className="text-sm font-medium">{day.day}</div>
+                      {day.hasClasses && (
+                        <div className="w-1 h-1 bg-green-500 rounded-full mx-auto mt-1"></div>
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Time Selection */}
-            {showTimeSelection && (
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <div className="bg-[#16803D] w-6 h-6 rounded-lg flex items-center justify-center">
-                      <ClockIcon className="h-3 w-3 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900">
-                   Select Time
-                 </h3>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 shadow-sm max-h-80 overflow-y-auto">
-                  {/* Group time slots by hour */}
-                  {Array.from({ length: 16 }, (_, hourIndex) => {
-                    const hour = hourIndex + 7; // Start from 7 AM
+              {/* Time Selection */}
+              {showTimeSelection && (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    Select Time
+                  </h3>
+                  <div className="max-h-80 overflow-y-auto">
+                    {/* Group time slots by hour */}
+                    {Array.from({ length: 16 }, (_, hourIndex) => {
+                      const hour = hourIndex + 7; // Start from 7 AM
                       const hourSlots = timeSlots.filter((slot) => {
                         const slotHour = parseInt(slot.time.split(":")[0]);
-                      return slotHour === hour;
-                    });
-                    
-                    if (hourSlots.length === 0) return null;
-                    
-                    return (
-                      <div key={hour} className="mb-4">
-                        <div className="grid grid-cols-4 gap-2">
-                          {hourSlots.map((slot) => (
-                            <motion.button
-                              key={slot.time}
-                                whileHover={{
-                                  scale: slot.isDisabled ? 1 : 1.05,
-                                }}
-                                whileTap={{ scale: slot.isDisabled ? 1 : 0.95 }}
-                                className={`p-3 text-center rounded-lg transition-all duration-200 text-xs font-medium ${
-                                slot.isSelected
-                                    ? "bg-gradient-to-r from-[#16803D] to-green-600 text-white shadow-lg"
-                                  : slot.isAvailable
-                                    ? "bg-gradient-to-r from-gray-50 to-gray-100 hover:from-green-50 hover:to-yellow-50 text-gray-700 hover:text-gray-900 hover:shadow-md"
+                        return slotHour === hour;
+                      });
+
+                      if (hourSlots.length === 0) return null;
+
+                      return (
+                        <div key={hour} className="mb-4">
+                          <div className="grid grid-cols-4 gap-2">
+                            {hourSlots.map((slot) => (
+                              <motion.button
+                                key={slot.time}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className={`p-2 text-center rounded-lg transition-all text-xs ${
+                                  slot.isSelected
+                                    ? "bg-[#16803D] text-white ring-2 ring-[#199421] ring-offset-1"
+                                    : slot.isAvailable
+                                    ? "bg-gray-50 hover:bg-gray-100 text-gray-700 hover:bg-[#16803D] hover:text-white"
                                     : "bg-red-50 text-red-500 cursor-not-allowed"
                                 } ${
                                   slot.isDisabled
@@ -636,702 +604,64 @@ const ClassSchedulingPage: React.FC = () => {
                                   slot.isAvailable &&
                                   handleTimeSelect(slot.time)
                                 }
-                              disabled={slot.isDisabled}
-                            >
-                                <div className="font-bold">
+                                disabled={slot.isDisabled}
+                              >
+                                <div className="font-medium">
                                   {new Date(
                                     `2000-01-01T${slot.time}`
                                   ).toLocaleTimeString([], {
                                     hour: "numeric",
                                     minute: "2-digit",
                                     hour12: true,
-                                })}
-                              </div>
-                              {slot.existingClass && (
-                                  <div className="text-xs mt-1 opacity-75 font-medium">
+                                  })}
+                                </div>
+                                {!slot.isAvailable && (
+                                  <div className="text-xs mt-1 opacity-75">
                                     Booked
                                   </div>
-                              )}
-                            </motion.button>
-                          ))}
+                                )}
+                              </motion.button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Create Class Button */}
-          {selectedDate && selectedTime && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-                className="mt-8 flex justify-center"
-            >
-              <button
-                onClick={() => setShowClassForm(true)}
-                  className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-[#16803D] to-green-600 text-white font-bold text-lg rounded-xl hover:from-[#0F5A2A] hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#16803D] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                  <PlusIcon className="h-6 w-6 mr-3" />
-                Create Class
-              </button>
-            </motion.div>
-          )}
-        </motion.div>
-      )}
-
-      {/* Class Creation Form Modal */}
-      {showClassForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-[#16803D] w-10 h-10 rounded-xl flex items-center justify-center">
-                    <PlusIcon className="h-5 w-5 text-white" />
+                      );
+                    })}
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">
-                Create {selectedClassType?.name}
-              </h3>
-                </div>
-              <button
-                onClick={() => setShowClassForm(false)}
-                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-              >
-                  <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
-
-              <div className="space-y-6">
-              <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-2">
-                  Class Title
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        title: e.target.value,
-                      }))
-                    }
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
-                  placeholder="Enter class title"
-                />
-              </div>
-
-              <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-2">
-                  Description (Optional)
-                </label>
-                <textarea
-                    value={formData.description || ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all resize-none"
-                  rows={3}
-                  placeholder="Enter class description"
-                />
-              </div>
-
-              {selectedClassType && selectedClassType.max_students > 1 && (
-                <div>
-                    <label className="block text-sm font-bold text-gray-900 mb-2">
-                    Max Students
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max={selectedClassType.max_students}
-                    value={formData.max_students}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          max_students: parseInt(e.target.value),
-                        }))
-                      }
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
-                  />
                 </div>
               )}
+            </div>
 
-              <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-2">
-                  Price per Session ($)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.price_per_session}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        price_per_session: parseFloat(e.target.value),
-                      }))
-                    }
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
-                />
-              </div>
-
-                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+            {/* Create Class Button */}
+            {selectedDate && selectedTime && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 flex justify-center"
+              >
                 <button
                   onClick={handleCreateClass}
-                  disabled={loading || !formData.title}
-                    className="flex-1 bg-gradient-to-r from-[#16803D] to-green-600 text-white py-3 px-6 rounded-lg hover:from-[#0F5A2A] hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-[#16803D] disabled:opacity-50 disabled:cursor-not-allowed font-bold transition-all duration-200 shadow-lg hover:shadow-xl"
+                  disabled={loading}
+                  className="bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white px-8 py-3 rounded-xl font-semibold shadow-[0_2px_2px_0_#16803D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {loading ? "Creating..." : "Create Class"}
+                  {loading ? (
+                    <div className="flex items-center space-x-2">
+                      <LoadingSpinner size="sm" />
+                      <span>Creating Class...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <PlusIcon className="w-5 h-5" />
+                      <span>Create Class</span>
+                    </div>
+                  )}
                 </button>
-                <button
-                  onClick={() => setShowClassForm(false)}
-                    className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 font-bold transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+              </motion.div>
+            )}
           </motion.div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );
 };
 
-              <div className="flex items-center space-x-2">
-
-                <ClockIcon className="h-4 w-4 text-gray-500" />
-
-                <span>{classType.duration_minutes} minutes</span>
-
-              </div>
-
-              <div className="flex items-center space-x-2">
-
-                <UserGroupIcon className="h-4 w-4 text-gray-500" />
-
-                <span>Max {classType.max_students} student{classType.max_students > 1 ? 's' : ''}</span>
-
-              </div>
-
-              <div className="flex items-center space-x-2">
-
-                <CurrencyDollarIcon className="h-4 w-4 text-gray-500" />
-
-                <span>${classType.price_per_session}/session</span>
-
-              </div>
-
-            </div>
-
-          </motion.div>
-
-        ))}
-
-      </div>
-
-
-
-      {/* Calendar and Time Selection */}
-
-      {selectedClassType && (
-
-        <motion.div
-
-          initial={{ opacity: 0, y: 20 }}
-
-          animate={{ opacity: 1, y: 0 }}
-
-          className="bg-white rounded-lg shadow-lg p-6"
-
-        >
-
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-
-            Select Date and Time for {selectedClassType?.name}
-
-          </h2>
-
-
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-            {/* Calendar */}
-
-            <div>
-
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Select Date</h3>
-
-              <div className="flex items-center justify-between mb-4">
-
-                <button
-
-                  onClick={goToPreviousMonth}
-
-                  className="p-2 text-gray-600 hover:text-gray-800"
-
-                  title="Previous Month"
-
-                >
-
-                  &lt;
-
-                </button>
-
-                <span className="text-lg font-semibold text-gray-900">
-
-                  {new Date(currentYear, currentMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-
-                </span>
-
-                <button
-
-                  onClick={goToNextMonth}
-
-                  className="p-2 text-gray-600 hover:text-gray-800"
-
-                  title="Next Month"
-
-                >
-
-                  &gt;
-
-                </button>
-
-              </div>
-
-              <div className="grid grid-cols-7 gap-1">
-
-                {/* Day headers */}
-
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-
-                  <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
-
-                    {day}
-
-                  </div>
-
-                ))}
-
-                
-
-                {/* Calendar days */}
-
-                {calendarDays.map((day) => (
-
-                  <motion.button
-
-                    key={day.date}
-
-                    whileHover={{ scale: day.isDisabled ? 1 : 1.05 }}
-
-                    whileTap={{ scale: day.isDisabled ? 1 : 0.95 }}
-
-                    className={`p-2 text-center rounded-lg transition-all ${
-
-                      day.isToday
-
-                        ? 'bg-blue-100 text-blue-700 font-semibold'
-
-                        : day.isSelected
-
-                        ? 'bg-blue-500 text-white'
-
-                        : day.hasClasses
-
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-
-                        : day.isCurrentMonth
-
-                        ? 'bg-gray-50 hover:bg-gray-100 text-gray-700'
-
-                        : 'bg-gray-100 text-gray-400'
-
-                    } ${day.isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-
-                    onClick={() => !day.isDisabled && handleDateSelect(day.date)}
-
-                    disabled={day.isDisabled}
-
-                  >
-
-                    <div className="text-sm font-medium">{day.day}</div>
-
-                    {day.hasClasses && (
-
-                      <div className="w-1 h-1 bg-green-500 rounded-full mx-auto mt-1"></div>
-
-                    )}
-
-                  </motion.button>
-
-                ))}
-
-              </div>
-
-            </div>
-
-
-
-            {/* Time Selection */}
-
-            {showTimeSelection && (
-
-              <div>
-
-                                 <h3 className="text-lg font-medium text-gray-900 mb-4">
-
-                   Select Time
-
-                 </h3>
-
-                <div className="max-h-80 overflow-y-auto">
-
-                  {/* Group time slots by hour */}
-
-                  {Array.from({ length: 16 }, (_, hourIndex) => {
-
-                    const hour = hourIndex + 7; // Start from 7 AM
-
-                    const hourSlots = timeSlots.filter(slot => {
-
-                      const slotHour = parseInt(slot.time.split(':')[0]);
-
-                      return slotHour === hour;
-
-                    });
-
-                    
-
-                    if (hourSlots.length === 0) return null;
-
-                    
-
-                    return (
-
-                      <div key={hour} className="mb-4">
-
-                        <div className="grid grid-cols-4 gap-2">
-
-                          {hourSlots.map((slot) => (
-
-                            <motion.button
-
-                              key={slot.time}
-
-                              whileHover={{ scale: 1.05 }}
-
-                              whileTap={{ scale: 0.95 }}
-
-                              className={`p-2 text-center rounded-lg transition-all text-xs ${
-
-                                slot.isSelected
-
-                                  ? 'bg-blue-500 text-white'
-
-                                  : slot.isAvailable
-
-                                  ? 'bg-gray-50 hover:bg-gray-100 text-gray-700'
-
-                                  : 'bg-red-50 text-red-500 cursor-not-allowed'
-
-                              } ${slot.isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-
-                              onClick={() => slot.isAvailable && handleTimeSelect(slot.time)}
-
-                              disabled={slot.isDisabled}
-
-                            >
-
-                              <div className="font-medium">
-
-                                {new Date(`2000-01-01T${slot.time}`).toLocaleTimeString([], {
-
-                                  hour: 'numeric',
-
-                                  minute: '2-digit',
-
-                                  hour12: true
-
-                                })}
-
-                              </div>
-
-                              {slot.existingClass && (
-
-                                <div className="text-xs mt-1 opacity-75">Booked</div>
-
-                              )}
-
-                            </motion.button>
-
-                          ))}
-
-                        </div>
-
-                      </div>
-
-                    );
-
-                  })}
-
-                </div>
-
-              </div>
-
-            )}
-
-          </div>
-
-
-
-          {/* Create Class Button */}
-
-          {selectedDate && selectedTime && (
-
-            <motion.div
-
-              initial={{ opacity: 0, y: 20 }}
-
-              animate={{ opacity: 1, y: 0 }}
-
-              className="mt-6 flex justify-center"
-
-            >
-
-              <button
-
-                onClick={() => setShowClassForm(true)}
-
-                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-
-              >
-
-                <PlusIcon className="h-5 w-5 mr-2" />
-
-                Create Class
-
-              </button>
-
-            </motion.div>
-
-          )}
-
-        </motion.div>
-
-      )}
-
-
-
-      {/* Class Creation Form Modal */}
-
-      {showClassForm && (
-
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-
-          <motion.div
-
-            initial={{ opacity: 0, scale: 0.9 }}
-
-            animate={{ opacity: 1, scale: 1 }}
-
-            className="bg-white rounded-lg p-6 w-full max-w-md mx-4"
-
-          >
-
-            <div className="flex items-center justify-between mb-4">
-
-              <h3 className="text-lg font-semibold text-gray-900">
-
-                Create {selectedClassType?.name}
-
-              </h3>
-
-              <button
-
-                onClick={() => setShowClassForm(false)}
-
-                className="text-gray-400 hover:text-gray-600"
-
-              >
-
-                <XMarkIcon className="h-6 w-6" />
-
-              </button>
-
-            </div>
-
-
-
-            <div className="space-y-4">
-
-              <div>
-
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-
-                  Class Title
-
-                </label>
-
-                <input
-
-                  type="text"
-
-                  value={formData.title}
-
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-
-                  placeholder="Enter class title"
-
-                />
-
-              </div>
-
-
-
-              <div>
-
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-
-                  Description (Optional)
-
-                </label>
-
-                <textarea
-
-                  value={formData.description || ''}
-
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-
-                  rows={3}
-
-                  placeholder="Enter class description"
-
-                />
-
-              </div>
-
-
-
-              {selectedClassType && selectedClassType.max_students > 1 && (
-
-                <div>
-
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-
-                    Max Students
-
-                  </label>
-
-                  <input
-
-                    type="number"
-
-                    min="1"
-
-                    max={selectedClassType.max_students}
-
-                    value={formData.max_students}
-
-                    onChange={(e) => setFormData(prev => ({ ...prev, max_students: parseInt(e.target.value) }))}
-
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-
-                  />
-
-                </div>
-
-              )}
-
-
-
-              <div>
-
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-
-                  Price per Session ($)
-
-                </label>
-
-                <input
-
-                  type="number"
-
-                  min="0"
-
-                  step="0.01"
-
-                  value={formData.price_per_session}
-
-                  onChange={(e) => setFormData(prev => ({ ...prev, price_per_session: parseFloat(e.target.value) }))}
-
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-
-                />
-
-              </div>
-
-
-
-              <div className="flex items-center space-x-4 pt-4">
-
-                <button
-
-                  onClick={handleCreateClass}
-
-                  disabled={loading || !formData.title}
-
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-
-                >
-
-                  {loading ? 'Creating...' : 'Create Class'}
-
-                </button>
-
-                <button
-
-                  onClick={() => setShowClassForm(false)}
-
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-
-                >
-
-                  Cancel
-
-                </button>
-
-              </div>
-
-            </div>
-
-          </motion.div>
-
-        </div>
-
-      )}
-
-    </div>
-
-  );
-
-};
-
-
-
-export default ClassSchedulingPage; 
+export default ClassSchedulingPage;

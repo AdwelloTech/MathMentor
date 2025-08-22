@@ -2,27 +2,140 @@ import { supabase } from "./supabase";
 import type { InstantRequest } from "../types/instantSession";
 
 // Shared broadcast channel (singleton) to minimize latency when sending events
-// We subscribe once and reuse the same channel for .send() calls
 let __instantSharedChannel: any | null = null;
 let __instantSharedReady: Promise<void> | null = null;
 
 function getInstantSharedChannel() {
-  const channelId = `instant_requests:pending:shared`;
+  const channelId = `instant_requests:shared:${Date.now()}`;
   if (!__instantSharedChannel) {
     __instantSharedChannel = (supabase as any).channel(channelId);
     __instantSharedReady = new Promise<void>((resolve) => {
       try {
         __instantSharedChannel.subscribe((status: any) => {
-          if (status === "SUBSCRIBED") resolve();
+          console.log("[Instant] Shared channel status:", status);
+          if (status === "SUBSCRIBED") {
+            console.log("[Instant] Shared channel subscribed successfully");
+            resolve();
+          } else if (status === "CHANNEL_ERROR") {
+            console.error("[Instant] Shared channel error");
+            resolve(); // Resolve anyway to prevent hanging
+          } else if (status === "TIMED_OUT") {
+            console.error("[Instant] Shared channel timed out");
+            resolve(); // Resolve anyway to prevent hanging
+          }
         });
       } catch (_) {
         // Best-effort; if subscribe throws, we'll still try to send later
+        console.warn("[Instant] Shared channel setup error, resolving anyway");
         resolve();
       }
     });
   }
   return { channel: __instantSharedChannel, ready: __instantSharedReady! };
 }
+
+// Cleanup function for shared channel
+export const cleanupSharedChannel = () => {
+  if (__instantSharedChannel) {
+    try {
+      (supabase as any).removeChannel(__instantSharedChannel);
+      __instantSharedChannel = null;
+      __instantSharedReady = null;
+      console.log("[Instant] Shared channel cleaned up");
+    } catch (error) {
+      console.error("[Instant] Error cleaning up shared channel:", error);
+    }
+  }
+};
+
+// Test function to verify subscription is working
+export const testSubscription = async () => {
+  console.log("[Instant] Testing subscription...");
+  
+  return new Promise<void>((resolve, reject) => {
+    const testChannel = (supabase as any).channel(`test:${Date.now()}`);
+    
+    testChannel
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "instant_requests",
+        } as any,
+        (payload: any) => {
+          console.log("[Instant] Test subscription received INSERT:", payload);
+          resolve();
+        }
+      )
+      .subscribe((status: any) => {
+        console.log("[Instant] Test channel status:", status);
+        if (status === "SUBSCRIBED") {
+          console.log("[Instant] Test subscription successful");
+          // Clean up test channel after 5 seconds
+          setTimeout(() => {
+            try {
+              (supabase as any).removeChannel(testChannel);
+            } catch (e) {
+              console.warn("[Instant] Error cleaning up test channel:", e);
+            }
+          }, 5000);
+        } else if (status === "CHANNEL_ERROR") {
+          console.error("[Instant] Test subscription failed");
+          reject(new Error("Test subscription failed"));
+        }
+      });
+  });
+};
+
+// Comprehensive test function to verify real-time functionality
+export const testRealTimeComprehensive = async () => {
+  console.log("[Instant] Starting comprehensive real-time test...");
+  
+  try {
+    // Test 1: Basic channel creation
+    console.log("[Instant] Test 1: Creating test channel...");
+    const testChannel = (supabase as any).channel(`comprehensive-test:${Date.now()}`);
+    
+    // Test 2: Subscription setup
+    console.log("[Instant] Test 2: Setting up subscription...");
+    const subscriptionPromise = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("Subscription test timeout"));
+      }, 10000);
+      
+      testChannel.subscribe((status: any) => {
+        clearTimeout(timeout);
+        console.log("[Instant] Test channel status:", status);
+        if (status === "SUBSCRIBED") {
+          console.log("[Instant] Test subscription successful");
+          resolve();
+        } else if (status === "CHANNEL_ERROR") {
+          reject(new Error("Real-time subscription failed"));
+        } else if (status === "TIMED_OUT") {
+          reject(new Error("Real-time subscription timed out"));
+        }
+      });
+    });
+    
+    await subscriptionPromise;
+    
+    // Test 3: Cleanup
+    console.log("[Instant] Test 3: Cleaning up test channel...");
+    try {
+      (supabase as any).removeChannel(testChannel);
+    } catch (e) {
+      console.warn("[Instant] Error cleaning up test channel:", e);
+    }
+    
+    console.log("[Instant] Comprehensive real-time test passed!");
+    return true;
+    
+  } catch (error) {
+    console.error("[Instant] Comprehensive real-time test failed:", error);
+    throw error;
+  }
+};
 
 export const instantSessionService = {
   // Student creates a new instant request (fixed 15 minutes)
@@ -62,7 +175,7 @@ export const instantSessionService = {
     }) => void,
     _subjectId?: string
   ) => {
-    const channelId = `instant_requests:pending:shared`;
+    const channelId = `instant_requests:pending:${Date.now()}:${Math.random().toString(36).slice(2)}`;
     const channel = (supabase as any).channel(channelId);
     console.log("[Instant] subscribeToPending start", channelId);
 
@@ -95,7 +208,12 @@ export const instantSessionService = {
         table: "instant_requests",
       } as any,
       (payload: any) => {
-        console.log("[Instant] INSERT payload", payload?.new?.id);
+        console.log("[Instant] INSERT payload received:", {
+          id: payload?.new?.id,
+          status: payload?.new?.status,
+          student_id: payload?.new?.student_id,
+          timestamp: new Date().toISOString()
+        });
         callback({
           new: payload.new,
           old: payload.old,
@@ -115,8 +233,9 @@ export const instantSessionService = {
         console.log("[Instant] UPDATE payload received:", {
           id: payload?.new?.id,
           status: payload?.new?.status,
-          channel: channelId,
-          eventType: payload.eventType,
+          old_status: payload?.old?.status,
+          student_id: payload?.new?.student_id,
+          timestamp: new Date().toISOString()
         });
         callback({
           new: payload.new,
@@ -126,18 +245,46 @@ export const instantSessionService = {
       }
     );
 
+    // Subscribe with better error handling and retry logic
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    const attemptSubscribe = () => {
+      console.log("[Instant] Attempting subscription, attempt:", retryCount + 1);
+
     channel.subscribe((status: any) => {
-      console.log("[Instant] channel status", status, channelId);
+        console.log("[Instant] channel status", status, channelId, "retry:", retryCount);
       if (status === "SUBSCRIBED") {
         console.log(
           "[Instant] Successfully subscribed to instant_requests changes"
         );
+          retryCount = 0; // Reset retry count on success
       } else if (status === "CHANNEL_ERROR") {
         console.error("[Instant] Channel subscription error");
+          if (retryCount < maxRetries) {
+            retryCount++;
+            console.log(`[Instant] Retrying subscription (${retryCount}/${maxRetries})...`);
+            setTimeout(attemptSubscribe, 1000 * retryCount); // Exponential backoff
+          } else {
+            console.error("[Instant] Max retries reached, subscription failed");
+          }
       } else if (status === "TIMED_OUT") {
         console.error("[Instant] Channel subscription timed out");
-      }
-    });
+          if (retryCount < maxRetries) {
+            retryCount++;
+            console.log(`[Instant] Retrying subscription after timeout (${retryCount}/${maxRetries})...`);
+            setTimeout(attemptSubscribe, 1000 * retryCount); // Exponential backoff
+          } else {
+            console.error("[Instant] Max retries reached after timeout, subscription failed");
+          }
+        } else if (status === "CLOSED") {
+          console.log("[Instant] Channel closed");
+        }
+      });
+    };
+    
+    attemptSubscribe();
+
     return () => {
       console.log("[Instant] unsubscribe channel", channelId);
       try {
@@ -207,8 +354,8 @@ export const instantSessionService = {
     if (!jitsiMeetingUrl) {
       jitsiMeetingUrl = `https://meet.jit.si/instant-${accepted.id}`;
       console.log("[Instant] Generated fallback Jitsi URL:", jitsiMeetingUrl);
-      
-      // If URL was missing for some reason, persist it once
+
+    // If URL was missing for some reason, persist it once
       const { error: setUrlError } = await (supabase as any)
         .from("instant_requests")
         .update({ jitsi_meeting_url: jitsiMeetingUrl })

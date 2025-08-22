@@ -21,6 +21,9 @@ import {
   SparklesIcon,
   XMarkIcon,
   CheckIcon,
+  ArrowRightIcon,
+  LightBulbIcon,
+  BookOpenIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
@@ -439,17 +442,45 @@ const TutorDashboard: React.FC = () => {
   // Show application form for new tutors
   if (!application) {
     return (
-      <div className="space-y-6">
+      <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
+
+        {/* Floating decorative elements */}
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+        <div
+          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        ></div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="px-6 pb-16 relative z-10"
+        >
+          <div className="space-y-8">
         <div className="text-center py-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-2xl mx-auto"
+              >
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
             Complete Your Tutor Application
           </h1>
-          <p className="text-gray-600">
-            Please provide your details and qualifications to start tutoring
-            with us.
-          </p>
-        </div>
+                <p className="text-lg text-gray-600 mb-8">
+                  Please provide your details and qualifications to start
+                  tutoring with us.
+                </p>
         <TutorApplicationForm onSuccess={handleApplicationSuccess} />
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -459,12 +490,34 @@ const TutorDashboard: React.FC = () => {
     application.application_status === ("pending" as TutorApplicationStatus)
   ) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-12">
+      <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
+
+        {/* Floating decorative elements */}
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+        <div
+          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        ></div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="px-6 pb-16 relative z-10"
+        >
+          <div className="space-y-8">
+            <div className="text-center py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-50 border border-blue-200 rounded-lg p-8"
+                className="max-w-2xl mx-auto"
         >
+                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 p-8">
           <ClockIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Application Under Review
@@ -474,14 +527,16 @@ const TutorDashboard: React.FC = () => {
             currently reviewing your qualifications and experience.
           </p>
 
-          <div className="bg-white border border-blue-200 rounded-lg p-4 mb-6 text-left">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
             <h3 className="font-medium text-gray-900 mb-2">
               Application Details:
             </h3>
             <div className="space-y-1 text-sm text-gray-600">
               <p>
                 <span className="font-medium">Submitted:</span>{" "}
-                {new Date(application.submitted_at).toLocaleDateString()}
+                        {new Date(
+                          application.submitted_at
+                        ).toLocaleDateString()}
               </p>
               <p>
                 <span className="font-medium">Subjects:</span>{" "}
@@ -500,6 +555,10 @@ const TutorDashboard: React.FC = () => {
               We'll notify you via email once your application has been
               reviewed.
             </p>
+                  </div>
+                </Card>
+              </motion.div>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -697,22 +756,62 @@ const TutorDashboard: React.FC = () => {
   // If approved, show the main tutor dashboard
   if (areTutorFeaturesEnabled) {
     return (
+      <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
+
+        {/* Floating decorative elements */}
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+        <div
+          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        ></div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="px-6 pb-16 relative z-10"
+        >
       <div className="space-y-8">
-        <div className="border-b border-gray-200 pb-5">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome, {profile?.full_name}
+            {/* Header Section */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="pt-6 relative"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    Tutor Dashboard
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Tutor Dashboard - Manage your tutoring profile and sessions.
+                  <p className="text-lg text-gray-600">
+                    Welcome back, {profile?.full_name}! Manage your tutoring
+                    sessions and students.
           </p>
         </div>
+                <div className="flex items-center space-x-4">
+                  <Button
+                    onClick={() => navigate("/schedule-class")}
+                    disabled={!isActiveTutor}
+                    className="bg-[#16803D] hover:bg-[#0F5A2A] text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    <PlusIcon className="w-5 h-5 mr-2" />
+                    Schedule Class
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
 
-        {/* Inactive Status Warning */}
+            {/* Status Alerts */}
         {!isActiveTutor && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-50 border border-red-200 rounded-lg p-4"
+                className="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm"
           >
             <div className="flex items-start">
               <XCircleIcon className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
@@ -720,23 +819,21 @@ const TutorDashboard: React.FC = () => {
                 <h3 className="text-sm font-medium text-red-800">
                   Account Temporarily Inactive
                 </h3>
-                <p className="mt-1 text-sm text-red-700">
-                  Your tutor account has been temporarily deactivated by the
-                  admin. You can still view your dashboard and profile, but you
-                  cannot schedule new classes or accept new students. Please
-                  contact support for more information.
+                    <p className="text-sm text-red-700 mt-1">
+                      Your tutor account has been temporarily deactivated. You
+                      can still view your dashboard and profile, but you cannot
+                      schedule new classes or accept new students.
                 </p>
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* Success Notice - Only show if active */}
         {isActiveTutor && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-green-50 border border-green-200 rounded-lg p-4"
+                className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm"
           >
             <div className="flex items-start">
               <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
@@ -744,454 +841,341 @@ const TutorDashboard: React.FC = () => {
                 <h3 className="text-sm font-medium text-green-800">
                   Setup Complete!
                 </h3>
-                <p className="mt-1 text-sm text-green-700">
-                  Your tutor application and ID verification have been approved.
-                  You can now schedule classes and start teaching!
+                    <p className="text-sm text-green-700 mt-1">
+                      Your tutor application and ID verification have been
+                      approved. You can now schedule classes and start teaching!
                 </p>
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/schedule-class")}
-            disabled={!isActiveTutor}
-            className={`p-6 border-2 rounded-lg transition-colors ${
-              isActiveTutor
-                ? "bg-blue-50 border-blue-200 hover:border-blue-300"
-                : "bg-gray-50 border-gray-200 cursor-not-allowed opacity-50"
-            }`}
-          >
-            <div className="flex items-center space-x-3">
-              <PlusIcon
-                className={`h-8 w-8 ${
-                  isActiveTutor ? "text-blue-600" : "text-gray-400"
-                }`}
-              />
-              <div className="text-left">
-                <h3
-                  className={`font-semibold ${
-                    isActiveTutor ? "text-gray-900" : "text-gray-500"
-                  }`}
+            {/* Stats Grid */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-center"
+            >
+              {[
+                {
+                  name: "Total Classes",
+                  value: dashboardStats?.total_classes || 0,
+                  icon: VideoCameraIcon,
+                  color: "from-green-600 to-green-700",
+                  description: "All time classes",
+                },
+                {
+                  name: "Students Taught",
+                  value: dashboardStats?.total_students || 0,
+                  icon: UserGroupIcon,
+                  color: "from-blue-500 to-blue-600",
+                  description: "Unique students",
+                },
+                {
+                  name: "This Month",
+                  value: dashboardStats?.classes_this_month || 0,
+                  icon: CalendarDaysIcon,
+                  color: "from-yellow-500 to-yellow-600",
+                  description: "Classes this month",
+                },
+                {
+                  name: "Earnings",
+                  value: `$${dashboardStats?.total_earnings || 0}`,
+                  icon: CurrencyDollarIcon,
+                  color: "from-green-700 to-green-800",
+                  description: "Total earnings",
+                },
+              ].map((stat, index) => (
+                <motion.div
+                  key={stat.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                 
                 >
-                  Schedule Class
-                </h3>
-                <p
-                  className={`text-sm ${
-                    isActiveTutor ? "text-gray-600" : "text-gray-400"
-                  }`}
-                >
-                  {isActiveTutor
-                    ? "Create new tutoring sessions"
-                    : "Unavailable - Account inactive"}
+                  <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                          <stat.icon className="w-6 h-6 text-white" />
+              </div>
+                        <div>
+                          <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                            {stat.name}
+                          </CardTitle>
+            </div>
+              </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="pl-0">
+                        <div className="flex items-start space-x-2">
+                          <div className="text-3xl font-bold text-gray-900 ml-3">
+                            {stat.value}
+            </div>
+                          <p className="text-sm text-muted-foreground mt-3 px-6">
+                            {stat.description}
                 </p>
               </div>
             </div>
-          </motion.button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/profile")}
-            className="p-6 bg-purple-50 border-2 border-purple-200 rounded-lg hover:border-purple-300 transition-colors"
-          >
-            <div className="flex items-center space-x-3">
-              <UserIcon className="h-8 w-8 text-purple-600" />
-              <div className="text-left">
-                <h3 className="font-semibold text-gray-900">Edit Profile</h3>
-                <p className="text-sm text-gray-600">Update your information</p>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Upcoming Classes */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-[530px]">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                          <CalendarDaysIcon className="w-4 h-4 text-white" />
               </div>
+                        <CardTitle>Upcoming Classes</CardTitle>
             </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/manage-classes")}
-            disabled={!isActiveTutor}
-            className={`p-6 border-2 rounded-lg transition-colors ${
-              isActiveTutor
-                ? "bg-orange-50 border-orange-200 hover:border-orange-300"
-                : "bg-gray-50 border-gray-200 cursor-not-allowed opacity-50"
-            }`}
-          >
-            <div className="flex items-center space-x-3">
-              <CalendarDaysIcon
-                className={`h-8 w-8 ${
-                  isActiveTutor ? "text-orange-600" : "text-gray-400"
-                }`}
-              />
-              <div className="text-left">
-                <h3
-                  className={`font-semibold ${
-                    isActiveTutor ? "text-gray-900" : "text-gray-500"
-                  }`}
-                >
-                  Manage Classes
-                </h3>
-                <p
-                  className={`text-sm ${
-                    isActiveTutor ? "text-gray-600" : "text-gray-400"
-                  }`}
-                >
-                  {isActiveTutor
-                    ? "View and edit your classes"
-                    : "Unavailable - Account inactive"}
-                </p>
-              </div>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/quizzes")}
-            disabled={!isActiveTutor}
-            className={`p-6 border-2 rounded-lg transition-colors ${
-              isActiveTutor
-                ? "bg-indigo-50 border-indigo-200 hover:border-indigo-300"
-                : "bg-gray-50 border-gray-200 cursor-not-allowed opacity-50"
-            }`}
-          >
-            <div className="flex items-center space-x-3">
-              <DocumentTextIcon
-                className={`h-8 w-8 ${
-                  isActiveTutor ? "text-indigo-600" : "text-gray-400"
-                }`}
-              />
-              <div className="text-left">
-                <h3
-                  className={`font-semibold ${
-                    isActiveTutor ? "text-gray-900" : "text-gray-500"
-                  }`}
-                >
-                  Quizzes
-                </h3>
-                <p
-                  className={`text-sm ${
-                    isActiveTutor ? "text-gray-600" : "text-gray-400"
-                  }`}
-                >
-                  {isActiveTutor
-                    ? "Create and manage quizzes"
-                    : "Unavailable - Account inactive"}
-                </p>
-              </div>
-            </div>
-          </motion.button>
-
-          <motion.div className="p-6 bg-green-50 border-2 border-green-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <VideoCameraIcon className="h-8 w-8 text-green-600" />
-              <div className="text-left">
-                <h3 className="font-semibold text-gray-900">My Classes</h3>
-                <p className="text-sm text-gray-600">
-                  {dashboardStats?.upcoming_classes || 0} upcoming
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div className="p-6 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
-              <div className="text-left">
-                <h3 className="font-semibold text-gray-900">Earnings</h3>
-                <p className="text-sm text-gray-600">
-                  ${dashboardStats?.total_earnings || 0}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Dashboard Stats */}
-        {dashboardStats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <AcademicCapIcon className="h-8 w-8 text-blue-600 mr-3" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    Total Classes
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardStats.total_classes}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <ClockIcon className="h-8 w-8 text-green-600 mr-3" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Upcoming</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardStats.upcoming_classes}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <CurrencyDollarIcon className="h-8 w-8 text-yellow-600 mr-3" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    Total Earnings
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    ${dashboardStats.total_earnings}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <UserGroupIcon className="h-8 w-8 text-purple-600 mr-3" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Students</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardStats.total_students}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Recent Classes Summary */}
-        {upcomingClasses.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Recent Classes
-                </h2>
-                <button
-                  onClick={() => navigate("/manage-classes")}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  View All Classes →
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {upcomingClasses.slice(0, 6).map((classItem) => (
-                  <div
-                    key={classItem.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-medium text-gray-900 text-sm truncate">
-                        {classItem.title}
-                      </h3>
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          classItem.status === "scheduled"
-                            ? "bg-green-100 text-green-800"
-                            : classItem.status === "in_progress"
-                            ? "bg-blue-100 text-blue-800"
-                            : classItem.status === "completed"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50 font-medium"
+                        onClick={() => navigate("/manage-classes")}
                       >
-                        {classItem.status.replace("_", " ")}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>
-                        {(() => {
-                          const [year, month, day] = classItem.date
-                            .split("-")
-                            .map(Number);
-                          const date = new Date(year, month - 1, day);
-                          return date.toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                          });
-                        })()}{" "}
-                        at {classItem.start_time}
-                      </p>
-                      <p>
-                        {classItem.class_type?.name} • $
-                        {classItem.price_per_session}
-                      </p>
-                      <p>
-                        {classItem.current_students}/{classItem.max_students}{" "}
-                        students
-                      </p>
-                    </div>
-                    {classItem.jitsi_meeting_url && (
-                      <a
-                        href={classItem.jitsi_meeting_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center mt-3 text-xs text-blue-600 hover:text-blue-700"
-                      >
-                        <VideoCameraIcon className="h-3 w-3 mr-1" />
-                        Join Meeting
-                      </a>
-                    )}
-                  </div>
-                ))}
+                        View all
+                        <ArrowRightIcon className="w-4 h-4 ml-1" />
+                      </Button>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Upcoming Classes */}
-        {upcomingClasses.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Upcoming Classes
-              </h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Class Details
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date & Time
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Students
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Zoom Meeting
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {upcomingClasses.slice(0, 10).map((classItem) => (
-                    <tr key={classItem.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            {classItem.class_type?.name === "One-to-One" ||
-                            classItem.class_type?.name ===
-                              "One-to-One Extended" ? (
-                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                <UserIcon className="h-5 w-5 text-blue-600" />
-                              </div>
-                            ) : classItem.class_type?.name === "Group Class" ? (
-                              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                                <UserGroupIcon className="h-5 w-5 text-green-600" />
-                              </div>
-                            ) : (
-                              <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                                <ChatBubbleLeftRightIcon className="h-5 w-5 text-purple-600" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {classItem.title}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {classItem.class_type?.name}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {(() => {
-                            // Parse the date string to avoid timezone issues
-                            const [year, month, day] = classItem.date
-                              .split("-")
-                              .map(Number);
-                            const date = new Date(year, month - 1, day); // month is 0-indexed
-                            return date.toLocaleDateString("en-US", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                            });
-                          })()}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {classItem.start_time} - {classItem.end_time}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {classItem.current_students}/{classItem.max_students}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          ${classItem.price_per_session}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {classItem.jitsi_meeting_url ? (
-                          <div className="space-y-1">
-                            <a
-                              href={classItem.jitsi_meeting_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            >
-                              Join Meeting
-                            </a>
-                            {classItem.jitsi_room_name && (
-                              <div className="text-xs text-gray-500">
-                                Room: {classItem.jitsi_room_name}
-                              </div>
-                            )}
-                            {classItem.jitsi_password && (
-                              <div className="text-xs text-gray-500">
-                                Pass: {classItem.jitsi_password}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-400">
-                            Generating...
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            classItem.status === "scheduled"
-                              ? "bg-green-100 text-green-800"
-                              : classItem.status === "in_progress"
-                              ? "bg-blue-100 text-blue-800"
-                              : classItem.status === "completed"
-                              ? "bg-gray-100 text-gray-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {upcomingClasses.length > 0 ? (
+                      upcomingClasses.slice(0, 3).map((classItem, index) => (
+                        <motion.div
+                          key={classItem.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-yellow-50 rounded-xl border shadow-md shadow-gray-100/50"
                         >
-                          {classItem.status.replace("_", " ")}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          <div className="bg-gradient-to-r from-green-600 to-green-700 w-10 h-10 rounded-full flex items-center justify-center">
+                            <VideoCameraIcon className="w-5 h-5 text-white" />
             </div>
-            {upcomingClasses.length > 10 && (
-              <div className="px-6 py-3 bg-gray-50 text-sm text-gray-500">
-                Showing 10 of {upcomingClasses.length} upcoming classes
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-900 truncate">
+                              {classItem.title}
+                            </h4>
+                <p className="text-sm text-gray-600">
+                              {classItem.subject} •{" "}
+                              {classItem.student?.full_name || "Student"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {classItem.date} at {classItem.start_time}
+                  </p>
+                </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-900 text-sm">
+                              {classItem.duration_minutes} min
+                            </p>
+                            <Badge className="bg-green-100 text-green-800">
+                              Confirmed
+                            </Badge>
+                </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="text-center py-28">
+                        <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <CalendarDaysIcon className="w-8 h-8 text-gray-400" />
               </div>
-            )}
+                        <h4 className="text-lg font-medium text-gray-900 mb-2">
+                          No upcoming classes
+                        </h4>
+                        <p className="text-gray-600 mb-4">
+                          Schedule your first class to get started!
+                        </p>
+                        <Button
+                          className="bg-yellow-300 text-black hover:bg-yellow-200 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+                          onClick={() => navigate("/schedule-class")}
+                          disabled={!isActiveTutor}
+                        >
+                          <PlusIcon className="w-4 h-4 mr-2" />
+                          Schedule Class
+                        </Button>
           </div>
         )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Instant Session Requests */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                          <SparklesIcon className="w-4 h-4 text-white" />
+              </div>
+                        <CardTitle>Instant Requests</CardTitle>
+            </div>
+                      <Badge className="bg-orange-100 text-orange-800">
+                        {instantRequests.length} pending
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {instantRequests.length > 0 ? (
+                      instantRequests.slice(0, 3).map((request, index) => (
+                        <motion.div
+                          key={request.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center space-x-4 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl border shadow-md shadow-gray-100/50"
+                        >
+                          <div className="bg-gradient-to-r from-orange-600 to-orange-700 w-10 h-10 rounded-full flex items-center justify-center">
+                            <ClockIcon className="w-5 h-5 text-white" />
+                    </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-900 truncate">
+                              {getSubjectName(request.subject_id)}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              Student needs help • 15 min session
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Requested just now
+                      </p>
+                    </div>
+                          <div className="text-right">
+                            <Button
+                              size="sm"
+                              className="bg-orange-600 hover:bg-orange-700 text-white"
+                              onClick={() => handleAcceptInstant(request.id)}
+                            >
+                              Accept
+                            </Button>
+                  </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <SparklesIcon className="w-8 h-8 text-gray-400" />
+              </div>
+                        <h4 className="text-lg font-medium text-gray-900 mb-2">
+                          No instant requests
+                        </h4>
+                        <p className="text-gray-600">
+                          Students will appear here when they need immediate
+                          help
+                        </p>
+          </div>
+        )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mb-16"
+            >
+              <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                      <LightBulbIcon className="w-4 h-4 text-white" />
+                              </div>
+                    <span>Quick Actions</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      {
+                        title: "Schedule Class",
+                        description: "Create a new tutoring session",
+                        icon: PlusIcon,
+                        color: "from-green-600 to-green-700",
+                        action: () => navigate("/schedule-class"),
+                        disabled: !isActiveTutor,
+                      },
+                      {
+                        title: "Manage Classes",
+                        description: "View and edit your classes",
+                        icon: CalendarDaysIcon,
+                        color: "from-blue-500 to-blue-600",
+                        action: () => navigate("/manage-classes"),
+                        disabled: !isActiveTutor,
+                      },
+                      {
+                        title: "Create Quiz",
+                        description: "Build assessments for students",
+                        icon: DocumentTextIcon,
+                        color: "from-purple-500 to-purple-600",
+                        action: () => navigate("/quizzes"),
+                        disabled: !isActiveTutor,
+                      },
+                      {
+                        title: "Manage Materials",
+                        description: "Upload study resources",
+                        icon: BookOpenIcon,
+                        color: "from-yellow-500 to-yellow-600",
+                        action: () => navigate("/tutor/manage-materials"),
+                        disabled: !isActiveTutor,
+                      },
+                    ].map((action, index) => (
+                      <motion.div
+                        key={action.title}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Card
+                          className={`cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50 border-0 ${
+                            action.disabled
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
+                          onClick={action.disabled ? undefined : action.action}
+                        >
+                          <CardContent className="p-6 text-center">
+                            <div
+                              className={`bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg`}
+                            >
+                              <action.icon className="w-6 h-6 text-white" />
+            </div>
+                            <h3 className="font-semibold text-gray-900 mb-2">
+                              {action.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                              {action.description}
+                            </p>
+                            <div className="bg-yellow-300 text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-all duration-200 shadow-md hover:shadow-lg">
+                              {action.disabled ? "Unavailable" : "Get Started"}
+              </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+          </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -1199,20 +1183,50 @@ const TutorDashboard: React.FC = () => {
   // If pending, show pending status
   if (isPendingTutor) {
     return (
+      <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
+
+        {/* Floating decorative elements */}
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+        <div
+          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        ></div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="px-6 pb-16 relative z-10"
+        >
       <div className="space-y-8">
-        <div className="border-b border-gray-200 pb-5">
-          <h1 className="text-2xl font-bold text-gray-900">
+            {/* Header Section */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="pt-6 relative"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome, {profile?.full_name}
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+                  <p className="text-lg text-gray-600">
             Tutor Dashboard - Manage your tutoring profile and sessions.
           </p>
         </div>
+              </div>
+            </motion.div>
+
         {/* Application Status Notice */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-50 border border-blue-200 rounded-lg p-4"
+              className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm"
         >
           <div className="flex items-start">
             <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
@@ -1221,8 +1235,8 @@ const TutorDashboard: React.FC = () => {
                 Application Under Review
               </h3>
               <p className="mt-1 text-sm text-blue-700">
-                Your tutor application is currently under review. You'll have
-                full access to the dashboard once approved by our team.
+                    Your tutor application is currently under review. You'll
+                    have full access to the dashboard once approved by our team.
               </p>
             </div>
           </div>
@@ -1233,7 +1247,7 @@ const TutorDashboard: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
+                className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm"
           >
             <div className="flex items-start">
               <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
@@ -1242,8 +1256,8 @@ const TutorDashboard: React.FC = () => {
                   Complete Your Profile
                 </h3>
                 <p className="mt-1 text-sm text-yellow-700">
-                  You need to upload your CV and complete your profile to start
-                  accepting tutoring sessions.
+                      You need to upload your CV and complete your profile to
+                      start accepting tutoring sessions.
                 </p>
                 <div className="mt-2">
                   <div className="bg-yellow-200 rounded-full h-2">
@@ -1331,7 +1345,9 @@ const TutorDashboard: React.FC = () => {
 
                     {uploadError && (
                       <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
-                        <p className="text-sm text-red-600">{uploadError}</p>
+                            <p className="text-sm text-red-600">
+                              {uploadError}
+                            </p>
                       </div>
                     )}
 
@@ -1560,6 +1576,8 @@ const TutorDashboard: React.FC = () => {
             </motion.div>
           </div>
         </div>
+          </div>
+        </motion.div>
       </div>
     );
   }

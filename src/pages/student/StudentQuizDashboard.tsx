@@ -30,6 +30,8 @@ import {
   Play,
   GraduationCap,
   X,
+  Calendar,
+  Plus,
 } from "lucide-react";
 
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -148,21 +150,16 @@ const StudentQuizDashboard: React.FC = () => {
   if (loading) {
     return (
       <StudentPageWrapper backgroundClass="bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="flex items-center justify-center min-h-screen">
-          <LoadingSpinner />
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner />
+      </div>
       </StudentPageWrapper>
     );
   }
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-=======
     <StudentPageWrapper backgroundClass="bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
->>>>>>> student-dashboard-ui-change
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -197,25 +194,25 @@ const StudentQuizDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Search */}
+            {/* Search */}
                 <div className="space-y-2">
                   <Label htmlFor="search" className="text-gray-700 font-medium">
                     Search Quizzes
                   </Label>
-                  <div className="relative">
+            <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-900" />
                     <Input
                       id="search"
-                      type="text"
-                      placeholder="Search quizzes..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                type="text"
+                placeholder="Search quizzes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 border-gray-700 focus:border-gray-900 focus:ring-gray-900"
-                    />
+              />
                   </div>
-                </div>
+            </div>
 
-                {/* Subject Filter */}
+            {/* Subject Filter */}
                 <div className="space-y-2">
                   <Label
                     htmlFor="subject"
@@ -224,7 +221,7 @@ const StudentQuizDashboard: React.FC = () => {
                     Filter by Subject
                   </Label>
                   <Select
-                    value={selectedSubject}
+                value={selectedSubject}
                     onValueChange={setSelectedSubject}
                   >
                     <SelectTrigger className="border-gray-700 focus:border-gray-900 focus:ring-gray-900">
@@ -232,33 +229,33 @@ const StudentQuizDashboard: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Subjects</SelectItem>
-                      {subjects.map((subject) => (
+                {subjects.map((subject) => (
                         <SelectItem key={subject.id} value={subject.name}>
-                          {subject.display_name}
+                    {subject.display_name}
                         </SelectItem>
-                      ))}
+                ))}
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
+            </div>
+          </div>
 
-              {/* Clear Filters */}
-              {hasActiveFilters && (
+          {/* Clear Filters */}
+          {hasActiveFilters && (
                 <div className="mt-6 flex items-center justify-between p-3 bg-green-50 rounded-lg">
                   <span className="text-sm text-green-700 font-medium">
-                    Showing filtered results
-                  </span>
+                Showing filtered results
+              </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={clearFilters}
+                onClick={clearFilters}
                     className="border-green-200 text-green-700 hover:bg-green-100"
-                  >
+              >
                     <X className="w-4 h-4 mr-1" />
-                    Clear filters
+                Clear filters
                   </Button>
-                </div>
-              )}
+            </div>
+          )}
             </CardContent>
           </Card>
         </motion.div>
@@ -272,61 +269,61 @@ const StudentQuizDashboard: React.FC = () => {
         >
           <Card className="border-green-900/60 border-2 bg-white">
             <CardContent className="p-6">
-              <div className="flex items-center">
+            <div className="flex items-center">
                 <div className="p-3 bg-green-900 rounded-lg">
                   <BookOpen className="h-6 w-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-black">
-                    Available Quizzes
-                  </p>
-                  <p className="text-2xl font-bold text-green-900">
-                    {quizzes.length}
-                  </p>
-                </div>
               </div>
+              <div className="ml-4">
+                  <p className="text-sm font-medium text-black">
+                  Available Quizzes
+                </p>
+                  <p className="text-2xl font-bold text-green-900">
+                  {quizzes.length}
+                </p>
+              </div>
+            </div>
             </CardContent>
           </Card>
 
           <Card className="border-green-900/60 border-2 bg-white">
             <CardContent className="p-6">
-              <div className="flex items-center">
+            <div className="flex items-center">
                 <div className="p-3 bg-green-900 rounded-lg">
                   <GraduationCap className="h-6 w-6 text-white" />
-                </div>
-                <div className="ml-4">
+              </div>
+              <div className="ml-4">
                   <p className="text-sm font-medium text-black">Subjects</p>
                   <p className="text-2xl font-bold text-green-900">
-                    {new Set(quizzes.map((q) => q.subject)).size}
-                  </p>
-                </div>
+                  {new Set(quizzes.map((q) => q.subject)).size}
+                </p>
               </div>
+            </div>
             </CardContent>
           </Card>
 
           <Card className="border-green-900/60 border-2 bg-white">
             <CardContent className="p-6">
-              <div className="flex items-center">
+            <div className="flex items-center">
                 <div className="p-3 bg-green-900 rounded-lg">
                   <Clock className="h-6 w-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-black">
-                    Avg Time Limit
-                  </p>
-                  <p className="text-2xl font-bold text-green-900">
-                    {quizzes.length > 0
-                      ? Math.round(
-                          quizzes.reduce(
-                            (sum, q) => sum + q.time_limit_minutes,
-                            0
-                          ) / quizzes.length
-                        )
-                      : 0}{" "}
-                    min
-                  </p>
-                </div>
               </div>
+              <div className="ml-4">
+                  <p className="text-sm font-medium text-black">
+                  Avg Time Limit
+                </p>
+                  <p className="text-2xl font-bold text-green-900">
+                  {quizzes.length > 0
+                    ? Math.round(
+                        quizzes.reduce(
+                          (sum, q) => sum + q.time_limit_minutes,
+                          0
+                        ) / quizzes.length
+                      )
+                    : 0}{" "}
+                  min
+                </p>
+              </div>
+            </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -342,22 +339,22 @@ const StudentQuizDashboard: React.FC = () => {
               <CardContent className="p-12 text-center">
                 <BookOpen className="h-20 w-20 text-green-300 mx-auto mb-6" />
                 <CardTitle className="text-2xl text-green-900 mb-3">
-                  No quizzes available
+                No quizzes available
                 </CardTitle>
                 <CardDescription className="text-green-700 text-lg mb-6">
-                  {allQuizzes.length === 0
-                    ? "You haven't booked any sessions with tutors yet. Book a session to access their quizzes!"
-                    : "No quizzes match your search criteria. Try adjusting your filters."}
+                {allQuizzes.length === 0
+                  ? "You haven't booked any sessions with tutors yet. Book a session to access their quizzes!"
+                  : "No quizzes match your search criteria. Try adjusting your filters."}
                 </CardDescription>
-                {allQuizzes.length === 0 && (
+              {allQuizzes.length === 0 && (
                   <Button
-                    onClick={() => navigate("/student/book-session")}
+                  onClick={() => navigate("/student/book-session")}
                     className="bg-green-900 hover:bg-green-800 text-white font-semibold px-8 py-3"
-                  >
+                >
                     <Play className="h-5 w-5 mr-2" />
-                    Book Your First Session
+                  Book Your First Session
                   </Button>
-                )}
+              )}
               </CardContent>
             </Card>
           ) : (
@@ -372,75 +369,75 @@ const StudentQuizDashboard: React.FC = () => {
                   <Card className="border-green-900/60 border-2 bg-white hover:shadow-lg transition-all duration-200 h-[320px] flex flex-col p-2">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-green-900 text-xl line-clamp-2 mb-2">
-                        {quiz.title}
+                          {quiz.title}
                       </CardTitle>
                     </CardHeader>
 
                     <CardContent className="flex-1 space-y-4">
-                      {/* Quiz Details */}
+                    {/* Quiz Details */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-3 rounded-lg">
                           <User className="h-4 w-4 text-gray-700" />
                           <span className="text-sm text-gray-700 font-medium">
                             {quiz.tutor?.full_name}
                           </span>
-                        </div>
+                      </div>
                         <div className="flex items-center gap-3 text-gray-700">
                           <BookOpen className="h-4 w-4 text-gray-700" />
                           <span className="text-sm font-medium">
                             {quiz.subject}
                           </span>
-                        </div>
+                      </div>
                         <div className="flex items-center gap-3 text-gray-700">
                           <Clock className="h-4 w-4 text-gray-700" />
                           <span className="text-sm font-medium">
                             {quiz.time_limit_minutes} minutes
                           </span>
-                        </div>
+                      </div>
                         <div className="flex items-center gap-3 text-gray-700">
                           <CheckCircle className="h-4 w-4 text-gray-700" />
                           <span className="text-sm font-medium">
                             {quiz.total_questions} questions
                           </span>
-                        </div>
                       </div>
+                    </div>
 
                       {/* Quiz Status & Action */}
                       <div className="mt-auto pt-4">
-                        {quiz.attempt_status === "completed" ? (
+                    {quiz.attempt_status === "completed" ? (
                           <div className="space-y-3">
                             <Button
-                              onClick={() =>
+                          onClick={() =>
                                 navigate(
                                   `/student/quiz-results/${quiz.attempt_id}`
                                 )
-                              }
+                          }
                               className="w-full bg-green-900 hover:bg-green-800 text-white font-semibold"
-                            >
+                        >
                               <CheckCircle className="h-4 w-4 mr-2" />
-                              View Results
+                          View Results
                             </Button>
-                          </div>
-                        ) : quiz.attempt_status === "in_progress" ? (
-                          <Button
-                            onClick={() =>
-                              navigate(`/student/take-quiz/${quiz.attempt_id}`)
-                            }
-                            className="w-full bg-green-900 hover:bg-green-800 text-white font-semibold"
-                          >
-                            <Clock className="h-4 w-4 mr-2" />
-                            Continue Quiz
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={() => handleStartQuiz(quiz.id)}
-                            className="w-full bg-green-900 hover:bg-green-800 text-white font-semibold"
-                          >
-                            <Play className="h-4 w-4 mr-2" />
-                            Start Quiz
-                          </Button>
-                        )}
                       </div>
+                    ) : quiz.attempt_status === "in_progress" ? (
+                          <Button
+                        onClick={() =>
+                          navigate(`/student/take-quiz/${quiz.attempt_id}`)
+                        }
+                            className="w-full bg-green-900 hover:bg-green-800 text-white font-semibold"
+                      >
+                            <Clock className="h-4 w-4 mr-2" />
+                        Continue Quiz
+                          </Button>
+                    ) : (
+                          <Button
+                        onClick={() => handleStartQuiz(quiz.id)}
+                            className="w-full bg-green-900 hover:bg-green-800 text-white font-semibold"
+                      >
+                            <Play className="h-4 w-4 mr-2" />
+                        Start Quiz
+                          </Button>
+                    )}
+                  </div>
                     </CardContent>
                   </Card>
                 </motion.div>

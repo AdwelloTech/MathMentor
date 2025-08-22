@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 import { quizService } from "@/lib/quizService";
 import { getNoteSubjects } from "@/lib/notes";
 import type { Quiz } from "@/types/quiz";
@@ -146,15 +147,22 @@ const StudentQuizDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner />
-      </div>
+      <StudentPageWrapper backgroundClass="bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="flex items-center justify-center min-h-screen">
+          <LoadingSpinner />
+        </div>
+      </StudentPageWrapper>
     );
   }
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+=======
+    <StudentPageWrapper backgroundClass="bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+>>>>>>> student-dashboard-ui-change
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -441,7 +449,7 @@ const StudentQuizDashboard: React.FC = () => {
           )}
         </motion.div>
       </div>
-    </div>
+    </StudentPageWrapper>
   );
 };
 

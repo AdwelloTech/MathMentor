@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { getRoleDisplayName } from "@/utils/permissions";
+import { getRoleContainerClass } from "@/utils/roleStyles";
 import { db } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 import type { TutorApplication } from "@/types/auth";
@@ -318,7 +319,7 @@ const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#D5FFC5]">
+    <div className={getRoleContainerClass(profile?.role)}>
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}

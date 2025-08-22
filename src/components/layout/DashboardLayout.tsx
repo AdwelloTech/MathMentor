@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Bars3Icon,
@@ -35,11 +35,16 @@ const DashboardLayout: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const { isAdminLoggedIn, logoutAdmin } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
   const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
   const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+
+  // Hide the global header on the student dashboard only
+  const isStudentDashboardRoute =
+    location.pathname === "/student" || location.pathname === "/student/";
 
   // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
@@ -185,7 +190,9 @@ const DashboardLayout: React.FC = () => {
         if (error) return;
         if (!data) return;
         // Replace the list with current pending requests to avoid stale items lingering
-        setInstantRequests((data as any[]).filter((r: any) => r.status === "pending"));
+        setInstantRequests(
+          (data as any[]).filter((r: any) => r.status === "pending")
+        );
       } catch (_) {}
     }, 10000);
 
@@ -311,7 +318,7 @@ const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#D5FFC5]">
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -324,8 +331,8 @@ const DashboardLayout: React.FC = () => {
       />
 
       <div className="lg:pl-20">
-        {/* Header - Hidden for students */}
-        {profile?.role !== "student" && (
+        {/* Header (hidden on /student) */}
+        {!isStudentDashboardRoute && (
           <motion.div
             className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-blue-200 bg-gradient-to-r from-white via-blue-50 to-indigo-100 px-4 shadow-xl backdrop-blur-sm sm:gap-x-6 sm:px-6 lg:px-8"
             initial={{ opacity: 0, y: -20 }}

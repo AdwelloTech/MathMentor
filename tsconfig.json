@@ -35,6 +35,6 @@
     },
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["src", "server", "vite.config.ts"],
+  "include": ["src", "server"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

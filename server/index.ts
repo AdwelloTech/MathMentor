@@ -11,24 +11,106 @@ async function extractPdfTextFromBase64(
   pdfBase64: string
 ): Promise<{ text: string; truncated: boolean }> {
   try {
+    console.log("🔍 Starting PDF text extraction...");
+    
+    // Validate input
+    if (!pdfBase64 || typeof pdfBase64 !== 'string') {
+      console.error("❌ Invalid PDF base64 input:", typeof pdfBase64);
+      return { text: "", truncated: false };
+    }
+    
     const buffer = Buffer.from(pdfBase64, "base64");
+    console.log("🔍 PDF buffer created, size:", buffer.length, "bytes");
+    
+    // Validate buffer
+    if (buffer.length === 0) {
+      console.error("❌ Empty PDF buffer");
+      return { text: "", truncated: false };
+    }
+    
+    // Check if it's a valid PDF (should start with %PDF)
+    const header = buffer.toString('ascii', 0, 4);
+    if (!header.startsWith('%PDF')) {
+      console.error("❌ Invalid PDF header:", header);
+      return { text: "", truncated: false };
+    }
+    
+    console.log("🔍 Valid PDF header detected:", header);
 
     // Dynamic import of pdf.js-extract
+    console.log("🔍 Importing pdf.js-extract...");
     const { PDFExtract } = await import("pdf.js-extract");
+    console.log("🔍 PDFExtract imported successfully");
+    
     const pdfExtract = new PDFExtract();
+    console.log("🔍 PDFExtract instance created");
+    
+    // Set extraction options for better text extraction
+    const options = {
+      normalizeWhitespace: true,
+      disableCombineTextItems: false
+    };
+    console.log("🔍 Using extraction options:", options);
 
     // Extract text directly from PDF buffer
-    const data = await pdfExtract.extractBuffer(buffer);
+    console.log("🔍 Extracting text from PDF buffer...");
+    const data = await pdfExtract.extractBuffer(buffer, options);
+    console.log("🔍 Text extraction completed, pages found:", data.pages?.length || 0);
+    
+    // Debug: Log the structure of the extracted data
+    console.log("🔍 PDF data structure keys:", Object.keys(data));
+    if (data.pages && data.pages.length > 0) {
+      console.log("🔍 First page structure:", {
+        hasContent: !!data.pages[0].content,
+        contentType: typeof data.pages[0].content,
+        contentLength: Array.isArray(data.pages[0].content) ? data.pages[0].content.length : 'not array'
+      });
+      
+      if (data.pages[0].content && Array.isArray(data.pages[0].content) && data.pages[0].content.length > 0) {
+        console.log("🔍 First content item structure:", {
+          keys: Object.keys(data.pages[0].content[0]),
+          hasStr: 'str' in data.pages[0].content[0],
+          strType: typeof data.pages[0].content[0].str
+        });
+      }
+    }
+    
     let extractedText = "";
 
     // Combine text from all pages
     if (data.pages && data.pages.length > 0) {
+      console.log("🔍 Processing", data.pages.length, "pages...");
+      
       extractedText = data.pages
-        .map(
-          (page: any) =>
-            page.content?.map((item: any) => item.str).join(" ") || ""
-        )
+        .map((page: any, pageIndex: number) => {
+          console.log(`🔍 Page ${pageIndex + 1}:`, {
+            hasContent: !!page.content,
+            contentLength: page.content?.length || 0
+          });
+          
+          if (page.content && page.content.length > 0) {
+            const pageText = page.content
+              .map((item: any) => {
+                if (item && typeof item.str === 'string') {
+                  return item.str;
+                }
+                return '';
+              })
+              .filter(text => text.trim().length > 0)
+              .join(" ");
+            
+            console.log(`🔍 Page ${pageIndex + 1} text length:`, pageText.length);
+            return pageText;
+          }
+          return "";
+        })
+        .filter(pageText => pageText.trim().length > 0)
         .join("\n");
+      
+      console.log("🔍 Text extracted from pages, total length:", extractedText.length);
+    } else {
+      console.log("⚠️ No pages found in PDF data");
+      console.log("⚠️ PDF data structure:", JSON.stringify(data, null, 2));
     }
 
     // Normalize whitespace and remove odd characters
@@ -38,10 +120,74 @@ async function extractPdfTextFromBase64(
 
     // No character limit - use full PDF content
     const text = extractedText;
+    console.log("🔍 Final extracted text length:", text.trim().length);
 
-    return { text: text.trim(), truncated: false };
+    // If we got some text, return it
+    if (text.trim().length > 0) {
+      return { text: text.trim(), truncated: false };
+    }
+    
+    // Fallback: try to extract any text-like content from the PDF data
+    console.log("🔍 No text extracted, trying fallback method...");
+    try {
+      const fallbackText = JSON.stringify(data)
+        .replace(/[{}"\[\]]/g, ' ')
+        .replace(/[a-zA-Z]+:/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      if (fallbackText.length > 10) {
+        console.log("🔍 Fallback text extracted, length:", fallbackText.length);
+        return { text: fallbackText, truncated: false };
+      }
+    } catch (fallbackErr) {
+      console.log("🔍 Fallback method also failed:", fallbackErr.message);
+    }
+
+    return { text: "", truncated: false };
   } catch (err) {
-    console.error("PDF text extraction failed:", err);
+    console.error("❌ PDF text extraction failed:", err);
+    console.error("❌ Error details:", {
+      name: err.name,
+      message: err.message,
+      stack: err.stack
+    });
+    
+    // Try to provide more specific error information
+    if (err.message && err.message.includes('password')) {
+      console.error("❌ PDF appears to be password protected");
+    } else if (err.message && err.message.includes('corrupt')) {
+      console.error("❌ PDF appears to be corrupted");
+    } else if (err.message && err.message.includes('invalid')) {
+      console.error("❌ PDF format appears to be invalid");
+    }
+    
+    // Try alternative extraction method using pdfjs-dist
+    console.log("🔍 Trying alternative PDF extraction with pdfjs-dist...");
+    try {
+      const pdfjs = await import("pdfjs-dist");
+      const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+      console.log("🔍 Alternative PDF loaded, pages:", pdf.numPages);
+      
+      let alternativeText = "";
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str || "")
+          .join(" ");
+        alternativeText += pageText + "\n";
+        console.log(`🔍 Alternative extraction page ${i} text length:`, pageText.length);
+      }
+      
+      if (alternativeText.trim().length > 0) {
+        console.log("✅ Alternative PDF extraction succeeded, length:", alternativeText.trim().length);
+        return { text: alternativeText.trim(), truncated: false };
+      }
+    } catch (altErr) {
+      console.error("❌ Alternative PDF extraction also failed:", altErr);
+    }
+    
     return { text: "", truncated: false };
   }
 }
@@ -289,6 +435,11 @@ app.post("/api/ai/generate", async (req: Request, res: Response) => {
     console.log("- Single PDF Base64 provided:", !!pdfBase64);
     console.log("- Multiple PDFs provided:", pdfs ? pdfs.length : 0);
     console.log("- PDF text used as context:", !!effectivePdfText);
+    console.log("- PDF text length:", effectivePdfText?.length || 0);
+    if (effectivePdfText && effectivePdfText.length > 0) {
+      const preview = effectivePdfText.replace(/\s+/g, " ").slice(0, 300);
+      console.log("- PDF text preview (first 300 chars):", preview);
+    }
     if (pdfBase64)
       console.log(
         "- Single PDF Base64 length:",
@@ -571,6 +722,11 @@ app.post("/api/ai/flashcards", async (req: Request, res: Response) => {
     console.log("- Single PDF Base64 provided:", !!pdfBase64);
     console.log("- Multiple PDFs provided:", pdfs ? pdfs.length : 0);
     console.log("- PDF text used as context:", !!effectivePdfText);
+    console.log("- PDF text length:", effectivePdfText?.length || 0);
+    if (effectivePdfText && effectivePdfText.length > 0) {
+      const preview = effectivePdfText.replace(/\s+/g, " ").slice(0, 300);
+      console.log("- PDF text preview (first 300 chars):", preview);
+    }
     if (pdfBase64)
       console.log(
         "- Single PDF Base64 length:",

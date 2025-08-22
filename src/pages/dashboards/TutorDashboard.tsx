@@ -28,31 +28,43 @@ import { db } from "@/lib/db";
 import {
   instantSessionService,
   type InstantRequest,
+  testSubscription,
+  testRealTimeComprehensive,
 } from "@/lib/instantSessionService";
 import { classSchedulingService } from "@/lib/classSchedulingService";
 import { supabase } from "@/lib/supabase";
 import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
 import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, updateProfile } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [application, setApplication] = useState<TutorApplication | null>(null);
+  const [application, setApplication] = useState<any>(null);
   const [idVerification, setIdVerification] = useState<any>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [dashboardStats, setDashboardStats] =
-    useState<TutorDashboardStats | null>(null);
-  const [upcomingClasses, setUpcomingClasses] = useState<TutorClass[]>([]);
+  const [dashboardData, setDashboardData] = useState<TutorDashboardStats | null>(null);
   const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
-  const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
-  const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+  const [upcomingClasses, setUpcomingClasses] = useState<TutorClass[]>([]);
+
+  // Animation variants
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
 
   // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
@@ -166,8 +178,63 @@ const TutorDashboard: React.FC = () => {
       return;
     }
 
-    // Polling mechanism to fetch pending requests every 10 seconds
-    const poll = setInterval(async () => {
+    console.log(
+      `[TutorDashboard] Setting up subscription for tutor: ${profile?.id} enabled: ${isEnabled} application status: ${application?.application_status} id verification status: ${idVerification?.verification_status}`
+    );
+
+    // Clear any existing requests when setting up new subscription
+    setInstantRequests([]);
+    setDismissedIds(new Set());
+
+    // Set up real-time subscription for immediate updates
+    let unsubscribe: (() => void) | undefined;
+    try {
+      console.log("[TutorDashboard] Setting up real-time subscription...");
+      
+      // Set up the main subscription
+      unsubscribe = instantSessionService.subscribeToPending(
+        ({ new: req, eventType }) => {
+          console.log(
+            "[TutorDashboard] Real-time event received:",
+            eventType,
+            (req as any).id,
+            "status:",
+            (req as any).status
+          );
+          
+          if (eventType === "INSERT") {
+            const isFresh =
+              Date.now() - new Date((req as any).created_at).getTime() <=
+              5 * 60 * 1000; // Last 5 minutes
+            if (!isFresh) return; // ignore stale backlog
+            
+            console.log("[TutorDashboard] New request received via real-time:", (req as any).id);
+            setInstantRequests((prev) => {
+              const exists = prev.some((r) => r.id === (req as any).id);
+              if (exists) return prev;
+              return [req as InstantRequest, ...prev];
+            });
+          }
+          
+          if (eventType === "UPDATE") {
+            console.log("[TutorDashboard] Request updated via real-time:", (req as any).id, "status:", (req as any).status);
+            setInstantRequests((prev) => {
+              return (req as any).status !== "pending"
+                  ? prev.filter((r) => r.id !== (req as any).id)
+                  : prev;
+            });
+          }
+        }
+      );
+      
+    } catch (error) {
+      console.error("[TutorDashboard] Error setting up subscription:", error);
+      // If real-time fails, we'll rely on polling
+      console.log("[TutorDashboard] Falling back to polling-only mode");
+    }
+
+    // Initial fetch to get current pending requests
+    const fetchInitialRequests = async () => {
       try {
         const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // Last 5 minutes
         const { data, error } = await (supabase as any)
@@ -177,103 +244,140 @@ const TutorDashboard: React.FC = () => {
           .gte("created_at", sinceIso)
           .order("created_at", { ascending: false })
           .limit(20);
+        
+        if (error) {
+          console.error("[TutorDashboard] Initial fetch error:", error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          console.log("[TutorDashboard] Initial fetch found", data.length, "pending requests");
+          setInstantRequests(data);
+        } else {
+          console.log("[TutorDashboard] No pending requests found initially");
+        }
+      } catch (fetchError) {
+        console.error("[TutorDashboard] Initial fetch exception:", fetchError);
+      }
+    };
+
+    // Fetch initial requests immediately
+    fetchInitialRequests();
+
+    // Add focus event listener to check for new requests when user returns to tab
+    const handleFocus = async () => {
+      console.log("[TutorDashboard] Window focused, checking for new requests...");
+      try {
+        const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const { data, error } = await (supabase as any)
+          .from("instant_requests")
+          .select("*")
+          .eq("status", "pending")
+          .gte("created_at", sinceIso)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        
+        if (error) {
+          console.error("[TutorDashboard] Focus check error:", error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          console.log("[TutorDashboard] Focus check found", data.length, "pending requests");
+          // Only update if the data is actually different
+          setInstantRequests((prev) => {
+            if (prev.length === data.length && 
+                prev.every((item, index) => item.id === data[index].id)) {
+              return prev; // No change needed
+            }
+            console.log("[TutorDashboard] State update triggered:", {
+              previous: prev.length,
+              new: data.length,
+              data: data.map((r: any) => ({ id: r.id, status: r.status }))
+            });
+            return data;
+          });
+        }
+      } catch (focusError) {
+        console.error("[TutorDashboard] Focus check exception:", focusError);
+      }
+    };
+
+    // Add event listeners with debouncing to prevent multiple rapid calls
+    let focusTimeout: NodeJS.Timeout;
+    const debouncedFocusHandler = () => {
+      clearTimeout(focusTimeout);
+      focusTimeout = setTimeout(handleFocus, 100);
+    };
+
+    window.addEventListener('focus', debouncedFocusHandler);
+    window.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        debouncedFocusHandler();
+      }
+    });
+
+    // Aggressive polling as primary method - fetch pending requests every 2 seconds
+    const poll = setInterval(async () => {
+      try {
+        const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const { data, error } = await (supabase as any)
+          .from("instant_requests")
+          .select("*")
+          .eq("status", "pending")
+          .gte("created_at", sinceIso)
+          .order("created_at", { ascending: false })
+          .limit(20);
         if (error) return;
         if (!data) return;
+        
         setInstantRequests((prev) => {
           const map = new Map(prev.map((r) => [r.id, r]));
           for (const row of data as any) map.set(row.id, row);
           const merged = Array.from(map.values()).filter(
             (r: any) => r.status === "pending"
           );
-          console.log("[TutorDashboard] Polling update:", {
-            fetched: (data as any).length,
-            merged: merged.length,
-            current: prev.length,
-          });
+          
+          // Only log if there are actual changes
+          if (merged.length !== prev.length) {
+            console.log("[TutorDashboard] Polling update:", {
+              fetched: (data as any).length,
+              merged: merged.length,
+              current: prev.length,
+              timestamp: new Date().toISOString()
+            });
+            
+            // Force state update even if data looks the same
+            console.log("[TutorDashboard] Forcing state update with merged data:", {
+              merged: merged.map((r: any) => ({ id: r.id, status: r.status }))
+            });
+          }
+          
           return merged;
         });
       } catch (_) {}
-    }, 10000);
+    }, 2000); // Poll every 2 seconds for immediate response
 
-    console.log(
-      "[TutorDashboard] Setting up subscription for tutor:",
-      profile?.id,
-      "enabled:",
-      isEnabled,
-      "application status:",
-      application?.application_status,
-      "id verification status:",
-      idVerification?.verification_status
-    );
-    let unsubscribe: (() => void) | undefined;
-    try {
-      unsubscribe = instantSessionService.subscribeToPending(
-        ({ new: req, eventType }) => {
-          console.log(
-            "[TutorDashboard] Event received:",
-            eventType,
-            (req as any).id,
-            "status:",
-            (req as any).status
-          );
-          if (eventType === "INSERT") {
-            const isFresh =
-              Date.now() - new Date((req as any).created_at).getTime() <=
-              FRESH_WINDOW_MS;
-            if (!isFresh) return; // ignore stale backlog
-            playNotificationSound();
-            setInstantRequests((prev) => {
-              const exists = prev.some((r) => r.id === (req as any).id);
-              if (exists) return prev;
-              return [req as InstantRequest, ...prev];
-            });
-          }
-          if (eventType === "UPDATE") {
-            console.log("[TutorDashboard] UPDATE event received:", {
-              requestId: (req as any).id,
-              status: (req as any).status,
-              currentRequests: instantRequests.length,
-            });
-            setInstantRequests((prev) => {
-              const newList =
-                (req as any).status !== "pending"
-                  ? prev.filter((r) => r.id !== (req as any).id)
-                  : prev;
-              console.log("[TutorDashboard] After UPDATE filter:", {
-                beforeCount: prev.length,
-                afterCount: newList.length,
-                removed: prev.length - newList.length,
-              });
-              return newList;
-            });
-          }
-        }
-      );
-    } catch (error) {
-      console.error("[TutorDashboard] Error setting up subscription:", error);
-    }
+    // Cleanup function
     return () => {
-      console.log(
-        "[TutorDashboard] Cleaning up subscription for tutor:",
-        profile?.id
-      );
-      clearInterval(poll);
+      console.log("[TutorDashboard] Cleaning up subscription and polling");
       if (unsubscribe) {
         try {
           unsubscribe();
         } catch (error) {
-          console.error(
-            "[TutorDashboard] Error cleaning up subscription:",
-            error
-          );
+          console.error("[TutorDashboard] Error cleaning up subscription:", error);
         }
       }
+      clearInterval(poll);
+      clearTimeout(focusTimeout);
+      window.removeEventListener('focus', debouncedFocusHandler);
+      window.removeEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          debouncedFocusHandler();
+        }
+      });
     };
-  }, [
-    application?.application_status,
-    idVerification?.verification_status,
-    profile?.id,
-  ]);
+  }, [application?.application_status, idVerification?.verification_status, profile?.id]);
 
   const checkApplication = async () => {
     if (!user) {
@@ -331,7 +435,7 @@ const TutorDashboard: React.FC = () => {
         classSchedulingService.classes.getUpcomingByTutorId(profile.id), // Use profile.id instead of user.id
       ]);
 
-      setDashboardStats(stats);
+      setDashboardData(stats);
       setUpcomingClasses(classes);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
@@ -401,10 +505,44 @@ const TutorDashboard: React.FC = () => {
     }
   };
 
-  const handleRejectInstant = (requestId: string) => {
-    // Just remove from local state - no need to call service for local dismissal
+  const handleRejectInstant = (requestId: string) =>
     setDismissedIds((prev) => new Set(prev).add(requestId));
-    setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
+
+  // Manual refresh function for instant requests
+  const refreshInstantRequests = async () => {
+    console.log("[TutorDashboard] Manual refresh requested...");
+    try {
+      const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data, error } = await (supabase as any)
+        .from("instant_requests")
+        .select("*")
+        .eq("status", "pending")
+        .gte("created_at", sinceIso)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      
+      if (error) {
+        console.error("[TutorDashboard] Manual refresh error:", error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        console.log("[TutorDashboard] Manual refresh found", data.length, "pending requests");
+        // Only update if the data is actually different
+        setInstantRequests((prev) => {
+          if (prev.length === data.length && 
+              prev.every((item, index) => item.id === data[index].id)) {
+            return prev; // No change needed
+          }
+          return data;
+        });
+      } else {
+        console.log("[TutorDashboard] Manual refresh found no pending requests");
+        setInstantRequests([]);
+      }
+    } catch (refreshError) {
+      console.error("[TutorDashboard] Manual refresh exception:", refreshError);
+    }
   };
 
   const handleApplicationSuccess = () => {
@@ -890,7 +1028,7 @@ const TutorDashboard: React.FC = () => {
               <div className="text-left">
                 <h3 className="font-semibold text-gray-900">My Classes</h3>
                 <p className="text-sm text-gray-600">
-                  {dashboardStats?.upcoming_classes || 0} upcoming
+                  {dashboardData?.upcoming_classes || 0} upcoming
                 </p>
               </div>
             </div>
@@ -902,7 +1040,7 @@ const TutorDashboard: React.FC = () => {
               <div className="text-left">
                 <h3 className="font-semibold text-gray-900">Earnings</h3>
                 <p className="text-sm text-gray-600">
-                  ${dashboardStats?.total_earnings || 0}
+                  ${dashboardData?.total_earnings || 0}
                 </p>
               </div>
             </div>
@@ -910,7 +1048,7 @@ const TutorDashboard: React.FC = () => {
         </div>
 
         {/* Dashboard Stats */}
-        {dashboardStats && (
+        {dashboardData && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <div className="flex items-center">
@@ -920,7 +1058,7 @@ const TutorDashboard: React.FC = () => {
                     Total Classes
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {dashboardStats.total_classes}
+                    {dashboardData.total_classes}
                   </p>
                 </div>
               </div>
@@ -932,7 +1070,7 @@ const TutorDashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Upcoming</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {dashboardStats.upcoming_classes}
+                    {dashboardData.upcoming_classes}
                   </p>
                 </div>
               </div>
@@ -946,7 +1084,7 @@ const TutorDashboard: React.FC = () => {
                     Total Earnings
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    ${dashboardStats.total_earnings}
+                    ${dashboardData.total_earnings}
                   </p>
                 </div>
               </div>
@@ -958,7 +1096,7 @@ const TutorDashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Students</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {dashboardStats.total_students}
+                    {dashboardData.total_students}
                   </p>
                 </div>
               </div>
@@ -1560,9 +1698,358 @@ const TutorDashboard: React.FC = () => {
             </motion.div>
           </div>
         </div>
+
+        {/* Debug Section - Only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-gray-100 rounded-xl p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Debug Info</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="font-medium">Instant Requests:</span>
+                <span className="ml-2 text-gray-600">{instantRequests.length}</span>
+              </div>
+              <div>
+                <span className="font-medium">Dismissed:</span>
+                <span className="ml-2 text-gray-600">{dismissedIds.size}</span>
+              </div>
+              <div>
+                <span className="font-medium">Profile ID:</span>
+                <span className="ml-2 text-gray-600">{profile?.id || 'None'}</span>
+              </div>
+              <div>
+                <span className="font-medium">Status:</span>
+                <span className="ml-2 text-gray-600">
+                  {application?.application_status || 'None'} / {idVerification?.verification_status || 'None'}
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 space-x-2">
+              <button
+                onClick={async () => {
+                  console.log("[Debug] Testing database access and subscription...");
+                  try {
+                    // Test database access
+                    const { data, error } = await (supabase as any)
+                      .from("instant_requests")
+                      .select("*")
+                      .eq("status", "pending")
+                      .limit(5);
+                    
+                    if (error) {
+                      console.error("[Debug] Database access error:", error);
+                      alert(`Database Error: ${error.message}`);
+                    } else {
+                      console.log("[Debug] Database access successful:", data?.length || 0, "pending requests");
+                      alert(`Database OK: Found ${data?.length || 0} pending requests`);
+                    }
+                  } catch (testError) {
+                    console.error("[Debug] Test failed:", testError);
+                    alert(`Test failed: ${testError instanceof Error ? testError.message : 'Unknown error'}`);
+                  }
+                }}
+                className="bg-purple-500 text-white px-3 py-1 rounded text-xs hover:bg-purple-600"
+              >
+                Test Database
+              </button>
+              <button
+                onClick={() => {
+                  console.log("[Debug] Current instant requests:", instantRequests);
+                  console.log("[Debug] Dismissed IDs:", Array.from(dismissedIds));
+                  alert(`Current: ${instantRequests.length}, Dismissed: ${dismissedIds.size}`);
+                }}
+                className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+              >
+                Show State
+              </button>
+              <button
+                onClick={async () => {
+                  console.log("[Debug] Testing subscription...");
+                  try {
+                    await testSubscription();
+                    alert("Subscription test successful!");
+                  } catch (error) {
+                    console.error("[Debug] Subscription test failed:", error);
+                    alert(`Subscription test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                  }
+                }}
+                className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600"
+              >
+                Test Subscription
+              </button>
+              <button
+                onClick={async () => {
+                  console.log("[Debug] Testing real-time configuration...");
+                  try {
+                    // Test if we can create a channel and subscribe
+                    const testChannel = (supabase as any).channel(`realtime-test-${Date.now()}`);
+                    
+                    const subscriptionPromise = new Promise<void>((resolve, reject) => {
+                      const timeout = setTimeout(() => {
+                        reject(new Error("Real-time test timeout"));
+                      }, 5000);
+                      
+                      testChannel.subscribe((status: any) => {
+                        clearTimeout(timeout);
+                        if (status === "SUBSCRIBED") {
+                          console.log("[Debug] Real-time test successful");
+                          resolve();
+                        } else if (status === "CHANNEL_ERROR") {
+                          reject(new Error("Real-time channel error"));
+                        } else if (status === "TIMED_OUT") {
+                          reject(new Error("Real-time timeout"));
+                        }
+                      });
+                    });
+                    
+                    await subscriptionPromise;
+                    
+                    // Clean up test channel
+                    try {
+                      (supabase as any).removeChannel(testChannel);
+                    } catch (e) {
+                      console.warn("[Debug] Error cleaning up test channel:", e);
+                    }
+                    
+                    alert("Real-time configuration test successful!");
+                  } catch (error) {
+                    console.error("[Debug] Real-time test failed:", error);
+                    alert(`Real-time test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                  }
+                }}
+                className="bg-indigo-500 text-white px-3 py-1 rounded text-xs hover:bg-indigo-600"
+              >
+                Test Real-time Config
+              </button>
+              <button
+                onClick={async () => {
+                  console.log("[Debug] Running comprehensive real-time test...");
+                  try {
+                    await testRealTimeComprehensive();
+                    alert("Comprehensive real-time test passed! Real-time should be working.");
+                  } catch (error) {
+                    console.error("[Debug] Comprehensive test failed:", error);
+                    alert(`Comprehensive test failed: ${error instanceof Error ? error.message : 'Unknown error'}\n\nThis indicates a real-time configuration issue.`);
+                  }
+                }}
+                className="bg-pink-500 text-white px-3 py-1 rounded text-xs hover:bg-pink-600"
+              >
+                Comprehensive Test
+              </button>
+              <button
+                onClick={async () => {
+                  console.log("[Debug] Creating test instant request...");
+                  try {
+                    // Create a test instant request to verify real-time subscription
+                    const testRequest = {
+                      id: `test-${Date.now()}`,
+                      student_id: profile?.id || 'test-student',
+                      subject_id: 'test-subject',
+                      duration_minutes: 15,
+                      status: 'pending',
+                      accepted_by_tutor_id: null,
+                      jitsi_meeting_url: `https://meet.jit.si/test-${Date.now()}`,
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString()
+                    };
+                    
+                    const { data, error } = await (supabase as any)
+                      .from("instant_requests")
+                      .insert([testRequest])
+                      .select("*")
+                      .single();
+                    
+                    if (error) {
+                      throw new Error(`Failed to create test request: ${error.message}`);
+                    }
+                    
+                    console.log("[Debug] Test request created:", data);
+                    alert("Test request created! Check if it appears in real-time.");
+                    
+                    // Clean up test request after 10 seconds
+                    setTimeout(async () => {
+                      try {
+                        await (supabase as any)
+                          .from("instant_requests")
+                          .delete()
+                          .eq("id", testRequest.id);
+                        console.log("[Debug] Test request cleaned up");
+                      } catch (cleanupError) {
+                        console.error("[Debug] Error cleaning up test request:", cleanupError);
+                      }
+                    }, 10000);
+                    
+                  } catch (testError) {
+                    console.error("[Debug] Test request creation failed:", testError);
+                    alert(`Test failed: ${testError instanceof Error ? testError.message : 'Unknown error'}`);
+                  }
+                }}
+                className="bg-orange-500 text-white px-3 py-1 rounded text-xs hover:bg-orange-600"
+              >
+                Create Test Request
+              </button>
+              <button
+                onClick={async () => {
+                  console.log("[Debug] Manual refresh of instant requests...");
+                  try {
+                    const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+                    const { data, error } = await (supabase as any)
+                      .from("instant_requests")
+                      .select("*")
+                      .eq("status", "pending")
+                      .gte("created_at", sinceIso)
+                      .order("created_at", { ascending: false })
+                      .limit(20);
+                    
+                    if (error) {
+                      throw new Error(`Refresh failed: ${error.message}`);
+                    }
+                    
+                    setInstantRequests(data || []);
+                    console.log("[Debug] Manual refresh completed, found", data?.length || 0, "requests");
+                    alert(`Manual refresh completed! Found ${data?.length || 0} pending requests.`);
+                  } catch (refreshError) {
+                    console.error("[Debug] Manual refresh failed:", refreshError);
+                    alert(`Refresh failed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error'}`);
+                  }
+                }}
+                className="bg-teal-500 text-white px-3 py-1 rounded text-xs hover:bg-teal-600"
+              >
+                Manual Refresh
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Instant Session Requests Section */}
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-semibold text-gray-900">
+                    Instant Session Requests
+                  </CardTitle>
+                  <CardDescription>
+                    Help students who need immediate tutoring assistance
+                  </CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1 text-xs text-gray-500">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span>Live</span>
+                  </div>
+                  <Button
+                    onClick={refreshInstantRequests}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Debug: Show current state */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
+                  <strong>Debug State:</strong> {instantRequests.length} requests, {dismissedIds.size} dismissed
+                  <br />
+                  <strong>Requests:</strong> {JSON.stringify(instantRequests.map(r => ({ id: r.id, status: r.status })))}
+                </div>
+              )}
+              
+              {instantRequests.filter((req) => !dismissedIds.has(req.id)).length > 0 ? (
+                <div className="space-y-4">
+                  {instantRequests
+                    .filter((req) => !dismissedIds.has(req.id))
+                    .map((req) => (
+                      <div
+                        key={req.id}
+                        className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium text-gray-900">
+                              New Request
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {new Date(req.created_at).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-600 mb-2">
+                            Student needs help with a subject
+                          </p>
+                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <span>Duration: 15 minutes</span>
+                            <span>Type: Instant Session</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={() => handleAcceptInstant(req.id)}
+                            disabled={acceptingId === req.id}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            size="sm"
+                          >
+                            {acceptingId === req.id ? (
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Accepting...</span>
+                              </div>
+                            ) : (
+                              "Accept Request"
+                            )}
+                          </Button>
+                          <Button
+                            onClick={() => handleRejectInstant(req.id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-gray-600 hover:text-gray-800"
+                          >
+                            Dismiss
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">
+                    No pending requests
+                  </h4>
+                  <p className="text-gray-600">
+                    When students request instant tutoring, their requests will appear here.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     );
   }
+
+  // Debug: Log state changes to track UI updates
+  useEffect(() => {
+    console.log("[TutorDashboard] State changed - instantRequests:", {
+      length: instantRequests.length,
+      requests: instantRequests.map(r => ({ id: r.id, status: r.status, created_at: r.created_at }))
+    });
+  }, [instantRequests]);
 };
 
 // Helper function to calculate profile completion percentage

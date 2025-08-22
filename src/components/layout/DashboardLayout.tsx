@@ -21,6 +21,7 @@ import Sidebar from "./Sidebar";
 import {
   instantSessionService,
   type InstantRequest,
+  cleanupSharedChannel,
 } from "@/lib/instantSessionService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -144,6 +145,11 @@ const DashboardLayout: React.FC = () => {
   useEffect(() => {
     if (profile?.role !== "tutor") return;
 
+    console.log(
+      "[Realtime] Subscribing to instant_requests for tutor",
+      profile.id
+    );
+
     // Initial fetch to validate RLS and data visibility
     (async () => {
       try {
@@ -171,64 +177,34 @@ const DashboardLayout: React.FC = () => {
       }
     })();
 
-    // Fallback polling every 10s (until Realtime confirmed)
-    const poll = setInterval(async () => {
-      try {
-        const sinceIso = new Date(Date.now() - FRESH_WINDOW_MS).toISOString();
-        const { data, error } = await supabase
-          .from("instant_requests")
-          .select("*")
-          .eq("status", "pending")
-          .gte("created_at", sinceIso)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        if (error) return;
-        if (!data) return;
-        // Replace the list with current pending requests to avoid stale items lingering
-        setInstantRequests((data as any[]).filter((r: any) => r.status === "pending"));
-      } catch (_) {}
-    }, 10000);
+    // Set up real-time subscription for global tutor notifications
+    let unsubscribe: (() => void) | undefined;
+    try {
+      // Only subscribe to general notifications, not instant requests
+      // The TutorDashboard will handle instant request subscriptions
+      console.log("[DashboardLayout] Skipping instant request subscription to avoid conflicts");
+      
+      // We could add other subscriptions here if needed, but not instant requests
+      // to prevent conflicts with TutorDashboard
+      
+    } catch (error) {
+      console.error("[Instant] Error setting up subscription:", error);
+    }
 
-    console.log(
-      "[Realtime] Subscribing to instant_requests for tutor",
-      profile?.id
-    );
-    const unsubscribe = instantSessionService.subscribeToPending(
-      ({ new: req, eventType }) => {
-        console.log(
-          "[Realtime] instant_requests event",
-          eventType,
-          req?.id,
-          req?.status
-        );
-        const isFresh =
-          Date.now() - new Date((req as any).created_at).getTime() <=
-          FRESH_WINDOW_MS;
-        if (eventType === "INSERT") {
-          if (!isFresh) return; // ignore stale backlog
-          playNotificationSound();
-          setInstantRequests((prev) => {
-            const exists = prev.some((r) => r.id === (req as any).id);
-            if (exists) return prev;
-            return [req as InstantRequest, ...prev];
-          });
-        }
-        if (eventType === "UPDATE" || eventType === "BROADCAST_ACCEPTED") {
-          setInstantRequests((prev) =>
-            (req as any).status !== "pending"
-              ? prev.filter((r) => r.id !== (req as any).id)
-              : prev
-          );
-        }
-      }
-    );
-
+    // Cleanup function
     return () => {
       console.log("[Realtime] Unsubscribe instant_requests");
-      clearInterval(poll);
-      unsubscribe?.();
+      if (unsubscribe) {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error("[Instant] Error cleaning up subscription:", error);
+        }
+      }
+      // Clean up shared channel
+      cleanupSharedChannel();
     };
-  }, [profile?.role]);
+  }, [profile?.role, profile?.id]);
 
   const checkTutorApplication = async () => {
     if (!user) return;

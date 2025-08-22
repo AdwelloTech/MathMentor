@@ -216,6 +216,7 @@ export default function InstantSessionPage() {
                 setJitsiUrl(validatedUrl);
                 setStatus("accepted");
                 setAcceptedAt(new Date()); // Start the timer
+                return; // Exit early, no need for further processing
               } else {
                 console.warn("[Student] Invalid Jitsi URL in payload, will use fallback");
               }
@@ -239,6 +240,7 @@ export default function InstantSessionPage() {
                     setJitsiUrl(validatedUrl);
                     setStatus("accepted");
                     setAcceptedAt(new Date()); // Start the timer
+                    return; // Exit early, no need for further processing
                   }
                 } else {
                   console.log("[Student] No Jitsi URL in database, using fallback");
@@ -248,15 +250,17 @@ export default function InstantSessionPage() {
                   setStatus("accepted");
                   setAcceptedAt(new Date()); // Start the timer
                   console.log("[Student] Using fallback Jitsi URL:", fallbackUrl);
+                  return; // Exit early, no need for further processing
                 }
               } catch (fetchError) {
                 console.error("[Student] Error fetching request details:", fetchError);
                 // Final fallback: generate the URL deterministically
                 const fallbackUrl = `https://meet.jit.si/instant-${requestId}`;
                 setJitsiUrl(fallbackUrl);
-                setStatus("accepted");
-                setAcceptedAt(new Date()); // Start the timer
+            setStatus("accepted");
+            setAcceptedAt(new Date()); // Start the timer
                 console.log("[Student] Using final fallback Jitsi URL:", fallbackUrl);
+                return; // Exit early, no need for further processing
               }
             }
           } else if (next.status === "cancelled") {
@@ -265,6 +269,7 @@ export default function InstantSessionPage() {
             setJitsiUrl(null);
             setAcceptedAt(null);
             setTimeLeft(null);
+            return; // Exit early, no need for further processing
           } else {
             console.log("[Student] Status update (not accepted/cancelled):", next.status);
           }
@@ -283,20 +288,27 @@ export default function InstantSessionPage() {
 
     // Polling fallback - more aggressive for instant sessions
     const pollInterval = setInterval(async () => {
+      // Stop polling if already accepted or cancelled
+      if (status === "accepted" || status === "cancelled") {
+        console.log("[Student] Stopping polling - session already", status);
+        clearInterval(pollInterval);
+        return;
+      }
+
       console.log("[Student] Polling for request status...");
       try {
-        const { data, error } = await (supabase as any)
-          .from("instant_requests")
-          .select("*")
-          .eq("id", requestId)
-          .single();
+      const { data, error } = await (supabase as any)
+        .from("instant_requests")
+        .select("*")
+        .eq("id", requestId)
+        .single();
 
-        if (error && error.code !== "PGRST116") {
-          console.error("[Student] Polling error:", error);
-          return;
-        }
+      if (error && error.code !== "PGRST116") {
+        console.error("[Student] Polling error:", error);
+        return;
+      }
 
-        if (data) {
+      if (data) {
           console.log("[Student] Polling data received:", data);
           if (data.status === "accepted") {
             console.log("[Student] Request accepted via polling");
@@ -312,23 +324,25 @@ export default function InstantSessionPage() {
             const validatedUrl = validateJitsiUrl(finalJitsiUrl);
             if (validatedUrl) {
               setJitsiUrl(validatedUrl);
-              setStatus("accepted");
-              if (!acceptedAt) {
-                setAcceptedAt(new Date()); // Start the timer if not already started
-              }
-              clearInterval(pollInterval); // Stop polling once accepted
+          setStatus("accepted");
+          if (!acceptedAt) {
+            setAcceptedAt(new Date()); // Start the timer if not already started
+          }
+          clearInterval(pollInterval); // Stop polling once accepted
+              console.log("[Student] Polling stopped - session accepted");
             } else {
               console.error("[Student] Invalid Jitsi URL from polling:", finalJitsiUrl);
             }
-          } else if (data.status === "cancelled") {
+        } else if (data.status === "cancelled") {
             console.log("[Student] Request cancelled via polling");
-            setStatus("cancelled");
-            setJitsiUrl(null);
-            setAcceptedAt(null);
-            setTimeLeft(null);
-            clearInterval(pollInterval); // Stop polling once cancelled
-          }
+          setStatus("cancelled");
+          setJitsiUrl(null);
+          setAcceptedAt(null);
+          setTimeLeft(null);
+          clearInterval(pollInterval); // Stop polling once cancelled
+            console.log("[Student] Polling stopped - session cancelled");
         }
+      }
       } catch (pollError) {
         console.error("[Student] Polling exception:", pollError);
       }
@@ -339,7 +353,7 @@ export default function InstantSessionPage() {
       (supabase as any).removeChannel(channel);
       clearInterval(pollInterval);
     };
-  }, [requestId, acceptedAt]);
+  }, [requestId]); // Remove acceptedAt dependency to prevent re-triggering
 
   // Timer effect
   useEffect(() => {
@@ -374,6 +388,14 @@ export default function InstantSessionPage() {
       acceptedAt: acceptedAt?.toISOString() 
     });
   }, [status, jitsiUrl, requestId, acceptedAt]);
+
+  // Cleanup effect to ensure proper cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log("[Student] Component unmounting, cleaning up...");
+      // Any additional cleanup can go here
+    };
+  }, []);
 
   const formatTime = (milliseconds: number) => {
     const minutes = Math.floor(milliseconds / (1000 * 60));

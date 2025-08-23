@@ -6,13 +6,19 @@ import { sessionUtils } from "@/utils/sessionUtils";
 import SessionRoom from "./SessionRoom";
 
 // Mock session data for testing
+const start = new Date(Date.now() + 10 * 60 * 1000);
+const end = new Date(Date.now() + 25 * 60 * 1000);
+const pad = (n: number) => String(n).padStart(2, "0");
+const localDate = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+const localStart = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+const localEnd = `${pad(end.getHours())}:${pad(end.getMinutes())}`;
 const mockSession: StudentUpcomingSession = {
   id: "test-class-1",
   title: "Algebra Fundamentals",
   description: "Learn the basics of algebra with interactive examples",
-  date: new Date(Date.now() + 10 * 60 * 1000).toISOString().split("T")[0], // 10 minutes from now
-  start_time: new Date(Date.now() + 10 * 60 * 1000).toTimeString().slice(0, 5),
-  end_time: new Date(Date.now() + 25 * 60 * 1000).toTimeString().slice(0, 5), // 15 minutes later
+  date: localDate, // 10 minutes from now (local)
+  start_time: localStart,
+  end_time: localEnd, // 15 minutes later
   duration_minutes: 15,
   jitsi_meeting_url: "https://meet.jit.si/jitsi_room_test_123456789",
   jitsi_room_name: "jitsi_room_test_123456789",

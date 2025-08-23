@@ -197,13 +197,11 @@ export const classSchedulingService = {
         .from("tutor_classes")
         .update(updates)
         .eq("id", id)
-        .select(
-          `
+        .select(`
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
-        `
-        )
+          tutor:profiles!user_id(id, full_name, email)
+        `)
         .single();
 
       if (error) throw error;
@@ -274,11 +272,23 @@ export const classSchedulingService = {
       // Transform to search results with additional info
       const results: ClassSearchResult[] = await Promise.all(
         data.map(async (classRecord) => {
+          // Resolve a profiles.id for the tutor
+          const tutorProfileId =
+            classRecord.tutor?.id ??
+            (await (async () => {
+              const { data: p } = await supabase
+                .from("profiles")
+                .select("id")
+                .eq("user_id", classRecord.tutor_id)
+                .single();
+              return p?.id ?? null;
+            })());
+
           // Get tutor rating and reviews from session_ratings table
           const { data: reviews } = await supabase
             .from("session_ratings")
             .select("rating")
-            .eq("tutor_id", classRecord.tutor?.id || classRecord.tutor_id);
+            .eq("tutor_id", tutorProfileId);
 
           const ratings = reviews?.map((r) => r.rating) || [];
           const averageRating =
@@ -290,7 +300,7 @@ export const classSchedulingService = {
           const { data: tutorProfile } = await supabase
             .from("profiles")
             .select("subjects")
-            .eq("id", classRecord.tutor?.id || classRecord.tutor_id)
+            .eq("id", tutorProfileId)
             .single();
 
           const subjects = tutorProfile?.subjects || [];
@@ -298,7 +308,7 @@ export const classSchedulingService = {
           return {
             class: classRecord,
             tutor: {
-              id: classRecord.tutor?.id || classRecord.tutor_id,
+              id: tutorProfileId || classRecord.tutor?.id || classRecord.tutor_id,
               full_name: classRecord.tutor?.full_name || "",
               rating: averageRating,
               total_reviews: ratings.length,

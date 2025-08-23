@@ -137,7 +137,8 @@ const ManageSessionsPage: React.FC = () => {
 
   const handleJoinSession = (booking: ClassBooking) => {
     if (booking.class?.jitsi_meeting_url && isSessionJoinable(booking)) {
-      window.open(booking.class.jitsi_meeting_url, "_blank");
+      const win = window.open(booking.class.jitsi_meeting_url, "_blank", "noopener,noreferrer");
+      if (win) win.opener = null;
     } else {
       toast.error("Session is not available for joining yet");
     }

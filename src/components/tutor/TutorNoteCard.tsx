@@ -79,7 +79,7 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
     <motion.div
       whileHover={{ y: -4 }}
       onClick={handleCardClick}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group"
+      className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 overflow-hidden hover:shadow-xl transition-all duration-200 cursor-pointer group"
     >
       {/* Header */}
       <div className="p-6 border-b border-gray-100 group-hover:bg-gray-50 transition-colors duration-200">

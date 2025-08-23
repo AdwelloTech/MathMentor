@@ -215,7 +215,7 @@ const ManageMaterialsPage: React.FC = () => {
             transition={{ delay: 0.1 }}
             className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-8"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Search */}
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -245,14 +245,6 @@ const ManageMaterialsPage: React.FC = () => {
                   ))}
                 </select>
               </div>
-
-              {/* Search Button */}
-              <button
-                onClick={handleSearch}
-                className="px-8 py-4 bg-green-900 text-white font-bold rounded-2xl hover:bg-green-800 shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                Search
-              </button>
             </div>
           </motion.div>
 

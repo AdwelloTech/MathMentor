@@ -776,14 +776,9 @@ const TutorDashboard: React.FC = () => {
           animate={{ opacity: 1 }}
           className="px-6 pb-16 relative z-10"
         >
-          <div className="space-y-8">
-            {/* Header Section */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="pt-6 relative"
-            >
-              <div className="flex items-center justify-between">
+          {/* Status Indicator - Top Right */}
+          <div className="flex justify-between items-start mb-6">
+            {/* Dashboard Title and Welcome Message - Left Side */}
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
                     Tutor Dashboard
@@ -793,6 +788,8 @@ const TutorDashboard: React.FC = () => {
                     sessions and students.
                   </p>
                 </div>
+
+            {/* Action Buttons - Right Side */}
                 <div className="flex items-center space-x-4">
                   <Button
                     onClick={() => navigate("/schedule-class")}
@@ -802,10 +799,21 @@ const TutorDashboard: React.FC = () => {
                     <PlusIcon className="w-5 h-5 mr-2" />
                     Schedule Class
                   </Button>
-                </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 shadow-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <span>Approved</span>
               </div>
             </motion.div>
+            </div>
+          </div>
 
+          <div className="space-y-8">
             {/* Status Alerts */}
             {!isActiveTutor && (
               <motion.div
@@ -923,167 +931,7 @@ const TutorDashboard: React.FC = () => {
               ))}
             </motion.div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Upcoming Classes */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-[530px]">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                          <CalendarDaysIcon className="w-4 h-4 text-white" />
-                        </div>
-                        <CardTitle>Upcoming Classes</CardTitle>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50 font-medium"
-                        onClick={() => navigate("/manage-classes")}
-                      >
-                        View all
-                        <ArrowRightIcon className="w-4 h-4 ml-1" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {upcomingClasses.length > 0 ? (
-                      upcomingClasses.slice(0, 3).map((classItem, index) => (
-                        <motion.div
-                          key={classItem.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-yellow-50 rounded-xl border shadow-md shadow-gray-100/50"
-                        >
-                          <div className="bg-gradient-to-r from-green-600 to-green-700 w-10 h-10 rounded-full flex items-center justify-center">
-                            <VideoCameraIcon className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 truncate">
-                              {classItem.title}
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              {classItem.subject} •{" "}
-                              {classItem.student?.full_name || "Student"}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {classItem.date} at {classItem.start_time}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-gray-900 text-sm">
-                              {classItem.duration_minutes} min
-                            </p>
-                            <Badge className="bg-green-100 text-green-800">
-                              Confirmed
-                            </Badge>
-                          </div>
-                        </motion.div>
-                      ))
-                    ) : (
-                      <div className="text-center py-28">
-                        <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <CalendarDaysIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">
-                          No upcoming classes
-                        </h4>
-                        <p className="text-gray-600 mb-4">
-                          Schedule your first class to get started!
-                        </p>
-                        <Button
-                          className="bg-yellow-300 text-black hover:bg-yellow-200 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
-                          onClick={() => navigate("/schedule-class")}
-                          disabled={!isActiveTutor}
-                        >
-                          <PlusIcon className="w-4 h-4 mr-2" />
-                          Schedule Class
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Instant Session Requests */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                          <SparklesIcon className="w-4 h-4 text-white" />
-                        </div>
-                        <CardTitle>Instant Requests</CardTitle>
-                      </div>
-                      <Badge className="bg-orange-100 text-orange-800">
-                        {instantRequests.length} pending
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {instantRequests.length > 0 ? (
-                      instantRequests.slice(0, 3).map((request, index) => (
-                        <motion.div
-                          key={request.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="flex items-center space-x-4 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl border shadow-md shadow-gray-100/50"
-                        >
-                          <div className="bg-gradient-to-r from-orange-600 to-orange-700 w-10 h-10 rounded-full flex items-center justify-center">
-                            <ClockIcon className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 truncate">
-                              {getSubjectName(request.subject_id)}
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              Student needs help • 15 min session
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Requested just now
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <Button
-                              size="sm"
-                              className="bg-orange-600 hover:bg-orange-700 text-white"
-                              onClick={() => handleAcceptInstant(request.id)}
-                            >
-                              Accept
-                            </Button>
-                          </div>
-                        </motion.div>
-                      ))
-                    ) : (
-                      <div className="text-center py-16">
-                        <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <SparklesIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">
-                          No instant requests
-                        </h4>
-                        <p className="text-gray-600">
-                          Students will appear here when they need immediate
-                          help
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
+            {/* Main Content Grid - Removed Upcoming Classes and Instant Requests cards */}
 
             {/* Quick Actions */}
             <motion.div

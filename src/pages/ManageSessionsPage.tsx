@@ -42,12 +42,22 @@ const ManageSessionsPage: React.FC = () => {
     null
   );
   const [showDetails, setShowDetails] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     if (user) {
       loadBookings();
     }
   }, [user]);
+
+  // Real-time timer to automatically enable Join Now button
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000); // Update every second
+
+    return () => clearInterval(timer);
+  }, []);
 
   const loadBookings = async () => {
     try {
@@ -106,14 +116,13 @@ const ManageSessionsPage: React.FC = () => {
     ) {
       return false;
     }
-    const now = new Date();
     const sessionDate = new Date(
       `${booking.class.date}T${booking.class.start_time}`
     );
     const fiveMinutesBeforeSession = new Date(
       sessionDate.getTime() - 5 * 60 * 1000
     );
-    return now >= fiveMinutesBeforeSession;
+    return currentTime >= fiveMinutesBeforeSession;
   };
 
   const isSessionPast = (booking: ClassBooking) => {
@@ -122,9 +131,8 @@ const ManageSessionsPage: React.FC = () => {
     const sessionDate = booking.class.date;
     const sessionTime = booking.class.end_time;
     const sessionDateTime = new Date(`${sessionDate}T${sessionTime}`);
-    const now = new Date();
 
-    return now > sessionDateTime;
+    return currentTime > sessionDateTime;
   };
 
   const handleJoinSession = (booking: ClassBooking) => {

@@ -378,7 +378,7 @@ const TutorDashboard: React.FC = () => {
       console.error("CV upload error:", error);
       setUploadError("Failed to upload CV. Please try again.");
     } finally {
-      setLoading(false);
+      setIsUploading(false);
     }
   };
 

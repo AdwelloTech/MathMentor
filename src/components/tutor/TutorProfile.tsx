@@ -41,8 +41,8 @@ interface TutorProfileFormData {
   bio: string;
   certifications: string[];
   languages: string[];
-  cvUrl: string;
   cvFileName: string;
+  cvStoragePath?: string;
 }
 
 const TutorProfile: React.FC = () => {
@@ -76,7 +76,6 @@ const TutorProfile: React.FC = () => {
     bio: profile?.bio || "",
     certifications: profile?.certifications || [],
     languages: profile?.languages || [],
-    cvUrl: profile?.cv_url || "",
     cvFileName: profile?.cv_file_name || "",
   });
 
@@ -119,8 +118,8 @@ const TutorProfile: React.FC = () => {
             bio: profileData.bio || "",
             certifications: profileData.certifications || [],
             languages: profileData.languages || [],
-            cvUrl: profileData.cv_url || "",
             cvFileName: profileData.cv_file_name || "",
+            cvStoragePath: profileData.cv_storage_path || "",
           });
 
           // Set profile image URL
@@ -232,7 +231,7 @@ const TutorProfile: React.FC = () => {
       // Update the profile with CV information
       const updateData = {
         cv_file_name: file.name,
-        cv_url: signed.signedUrl,
+        cv_storage_path: filePath,
         updated_at: new Date().toISOString(),
       };
 
@@ -249,14 +248,14 @@ const TutorProfile: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         cvFileName: file.name,
-        cvUrl: signed.signedUrl,
+        cvStoragePath: filePath,
       }));
 
       // Update AuthContext
       if (updateProfile) {
         await updateProfile({
           cv_file_name: file.name,
-          cv_url: signed.signedUrl,
+          cv_storage_path: filePath,
         });
       }
 
@@ -331,7 +330,7 @@ const TutorProfile: React.FC = () => {
         bio: formData.bio || null,
         certifications: formData.certifications || null,
         languages: formData.languages || null,
-        cv_url: formData.cvUrl || null,
+        cv_storage_path: formData.cvStoragePath || null,
         cv_file_name: formData.cvFileName || null,
         updated_at: new Date().toISOString(),
       };
@@ -372,7 +371,7 @@ const TutorProfile: React.FC = () => {
           bio: updateData.bio || undefined,
           certifications: updateData.certifications || undefined,
           languages: updateData.languages || undefined,
-          cv_url: updateData.cv_url || undefined,
+          cv_storage_path: (updateData as any).cv_storage_path || undefined,
           cv_file_name: updateData.cv_file_name || undefined,
         });
       }
@@ -783,7 +782,7 @@ const TutorProfile: React.FC = () => {
             </h3>
 
             {/* Show existing CV if uploaded */}
-            {formData.cvFileName && formData.cvUrl && (
+            {formData.cvFileName && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -799,16 +798,29 @@ const TutorProfile: React.FC = () => {
                       <p className="text-sm text-green-700 mt-1">
                         File: {formData.cvFileName}
                       </p>
-                      {formData.cvUrl && (
-                        <a
-                          href={formData.cvUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-green-600 hover:text-green-800 underline mt-1 inline-block"
-                        >
-                          View CV
-                        </a>
-                      )}
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!formData.cvStoragePath) return;
+                          const { data, error } = await supabase.storage
+                            .from("cv-uploads")
+                            .createSignedUrl(formData.cvStoragePath, 60 * 10); // 10 min
+                          if (error || !data?.signedUrl) {
+                            setCvUploadError(
+                              "Failed to open CV. Please try again."
+                            );
+                            return;
+                          }
+                          window.open(
+                            data.signedUrl,
+                            "_blank",
+                            "noopener,noreferrer"
+                          );
+                        }}
+                        className="text-sm text-green-600 hover:text-green-800 underline mt-1 inline-block"
+                      >
+                        View CV
+                      </button>
                     </div>
                   </div>
                   <button
@@ -817,7 +829,7 @@ const TutorProfile: React.FC = () => {
                       setFormData((prev) => ({
                         ...prev,
                         cvFileName: "",
-                        cvUrl: "",
+                        cvStoragePath: "",
                       }));
                       try {
                         if (user?.id) {
@@ -825,7 +837,7 @@ const TutorProfile: React.FC = () => {
                             .from("profiles")
                             .update({
                               cv_file_name: null,
-                              cv_url: null,
+                              cv_storage_path: null,
                               updated_at: new Date().toISOString(),
                             })
                             .eq("user_id", user.id);
@@ -834,7 +846,7 @@ const TutorProfile: React.FC = () => {
                         if (updateProfile) {
                           await updateProfile({
                             cv_file_name: undefined,
-                            cv_url: undefined,
+                            cv_storage_path: undefined,
                           });
                         }
                       } catch (e) {

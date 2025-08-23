@@ -14,6 +14,8 @@ import {
 } from "@/lib/tutorNotes";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import toast from "react-hot-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { DESCRIPTION_MAX_LENGTH } from "@/constants/form";
 
 interface EditTutorNoteModalProps {
   isOpen: boolean;
@@ -56,6 +58,11 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
       });
     }
   }, [note]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,15 +266,16 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                   >
                     Description
                   </label>
-                  <textarea
+                  <Textarea
                     id="description"
+                    name="description"
+                    placeholder="Enter a detailed description of the study material..."
                     value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Brief description of the material (optional)"
+                    onChange={handleInputChange}
+                    maxLength={DESCRIPTION_MAX_LENGTH}
+                    className="w-full"
+                    rows={4}
+                    showCharCount
                   />
                 </div>
 

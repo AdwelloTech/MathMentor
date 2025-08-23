@@ -10,6 +10,11 @@ import {
   PlayIcon,
   PauseIcon,
   EyeIcon,
+  DocumentTextIcon,
+  AcademicCapIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import toast from "react-hot-toast";

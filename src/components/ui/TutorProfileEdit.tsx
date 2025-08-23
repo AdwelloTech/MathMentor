@@ -14,6 +14,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
+import { validateDocumentFile } from "@/constants/form";
 
 interface TutorProfileEditProps {
   isOpen: boolean;
@@ -120,8 +121,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
     if (!file) return;
 
     // Validate file type
-    if (!file.type.includes("pdf") && !file.type.includes("document")) {
-      setUploadError("Please upload a PDF or Word document");
+    if (!validateDocumentFile(file)) {
+      setUploadError("Please upload a PDF (.pdf) or Word (.doc, .docx) file");
       return;
     }
 
@@ -185,10 +186,10 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
         qualification: formData.qualification,
         experience_years: formData.experience_years
           ? parseInt(formData.experience_years)
-          : null,
+          : undefined,
         hourly_rate: formData.hourly_rate
           ? parseFloat(formData.hourly_rate)
-          : null,
+          : undefined,
         availability: formData.availability,
         languages: formData.languages,
         certifications: formData.certifications,

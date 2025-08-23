@@ -660,9 +660,13 @@ const EditQuizPage: React.FC = () => {
             <input
               type="number"
               value={quizData.time_limit_minutes}
-              onChange={(e) =>
-                updateQuizData("time_limit_minutes", parseInt(e.target.value))
-              }
+              onChange={(e) => {
+                const parsed = Number.parseInt(e.target.value, 10);
+                const next = Number.isNaN(parsed)
+                  ? 1
+                  : Math.min(180, Math.max(1, parsed));
+                updateQuizData("time_limit_minutes", next);
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="1"
               max="180"
@@ -776,13 +780,13 @@ const EditQuizPage: React.FC = () => {
                     <input
                       type="number"
                       value={question.points}
-                      onChange={(e) =>
-                        updateQuestion(
-                          questionIndex,
-                          "points",
-                          parseInt(e.target.value)
-                        )
-                      }
+                      onChange={(e) => {
+                        const parsed = Number.parseInt(e.target.value, 10);
+                        const next = Number.isNaN(parsed)
+                          ? 1
+                          : Math.min(100, Math.max(1, parsed));
+                        updateQuestion(questionIndex, "points", next);
+                      }}
                       className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"
                       min="1"
                       max="100"

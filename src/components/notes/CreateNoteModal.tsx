@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import RichTextEditor from "./RichTextEditor";
+import { DESCRIPTION_MAX_LENGTH } from "@/constants/form";
 
 interface CreateNoteModalProps {
   isOpen: boolean;
@@ -204,14 +205,15 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({
                     </label>
                     <Textarea
                       id="description"
+                      name="description"
+                      placeholder="Enter a detailed description of the note..."
                       value={formData.description}
                       onChange={(e) =>
                         handleInputChange("description", e.target.value)
                       }
-                      rows={3}
-                      className="w-full px-2 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      placeholder="Brief description of your note..."
-                      maxLength={300}
+                      maxLength={DESCRIPTION_MAX_LENGTH}
+                      className="w-full"
+                      rows={4}
                       showCharCount
                     />
                   </div>

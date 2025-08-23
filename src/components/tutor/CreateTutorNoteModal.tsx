@@ -17,6 +17,7 @@ import {
 import { getNoteSubjects } from "@/lib/notes";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import toast from "react-hot-toast";
+import { DESCRIPTION_MAX_LENGTH } from "@/constants/form";
 
 interface CreateTutorNoteModalProps {
   isOpen: boolean;
@@ -181,6 +182,14 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -251,15 +260,13 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                   </label>
                   <Textarea
                     id="description"
+                    name="description"
+                    placeholder="Enter a detailed description of the study material..."
                     value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Brief description of the material"
-                    maxLength={500}
-                    showCharCount
+                    onChange={handleInputChange}
+                    maxLength={DESCRIPTION_MAX_LENGTH}
+                    className="w-full"
+                    rows={4}
                   />
                 </div>
 

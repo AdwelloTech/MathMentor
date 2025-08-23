@@ -22,6 +22,7 @@ import ProfileImageUpload from "@/components/ui/ProfileImageUpload";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { validateDocumentFile } from "@/constants/form";
 
 interface TutorProfileFormData {
   email: string;
@@ -184,8 +185,8 @@ const TutorProfile: React.FC = () => {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.includes("pdf") && !file.type.includes("document")) {
-      setCvUploadError("Please upload a PDF or Word document");
+    if (!validateDocumentFile(file)) {
+      setCvUploadError("Please upload a PDF (.pdf) or Word (.doc, .docx) file");
       return;
     }
 
@@ -220,15 +221,18 @@ const TutorProfile: React.FC = () => {
         throw uploadError;
       }
 
-      // Get the public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("cv-uploads").getPublicUrl(filePath);
+      // Create a 7-day signed URL instead of a public URL
+      const { data: signed, error: signError } = await supabase.storage
+        .from("cv-uploads")
+        .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+      if (signError || !signed?.signedUrl) {
+        throw signError || new Error("Failed to create signed URL");
+      }
 
       // Update the profile with CV information
       const updateData = {
         cv_file_name: file.name,
-        cv_url: publicUrl,
+        cv_url: signed.signedUrl,
         updated_at: new Date().toISOString(),
       };
 
@@ -245,18 +249,18 @@ const TutorProfile: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         cvFileName: file.name,
-        cvUrl: publicUrl,
+        cvUrl: signed.signedUrl,
       }));
 
       // Update AuthContext
       if (updateProfile) {
         await updateProfile({
           cv_file_name: file.name,
-          cv_url: publicUrl,
+          cv_url: signed.signedUrl,
         });
       }
 
-      console.log("CV uploaded successfully:", publicUrl);
+      console.log("CV uploaded successfully:", signed.signedUrl);
     } catch (error: any) {
       console.error("CV upload error:", error);
       setCvUploadError(
@@ -809,18 +813,32 @@ const TutorProfile: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       setFormData((prev) => ({
                         ...prev,
                         cvFileName: "",
                         cvUrl: "",
                       }));
-                      // Clear from database
-                      if (updateProfile) {
-                        updateProfile({
-                          cv_file_name: undefined,
-                          cv_url: undefined,
-                        });
+                      try {
+                        if (user?.id) {
+                          const { error: dbErr } = await supabase
+                            .from("profiles")
+                            .update({
+                              cv_file_name: null,
+                              cv_url: null,
+                              updated_at: new Date().toISOString(),
+                            })
+                            .eq("user_id", user.id);
+                          if (dbErr) throw dbErr;
+                        }
+                        if (updateProfile) {
+                          await updateProfile({
+                            cv_file_name: undefined,
+                            cv_url: undefined,
+                          });
+                        }
+                      } catch (e) {
+                        console.error("Failed to clear CV fields:", e);
                       }
                     }}
                     className="text-red-600 hover:text-red-800"

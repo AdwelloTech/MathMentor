@@ -174,10 +174,15 @@ const CreateEditFlashcardSetPage: React.FC = () => {
           grade_level: gradeLevel,
         });
         // Remove existing cards
-        const { error } = await (await import("@/lib/supabase")).supabase
+        const { error: deleteError } = await (
+          await import("@/lib/supabase")
+        ).supabase
           .from("flashcards")
           .delete()
           .eq("set_id", setId);
+        if (deleteError) {
+          throw deleteError;
+        }
         // Reinsert with validation (only approved/manual)
         const validCardsForUpdate = includedCards.map((c, i) => ({
           set_id: setId,

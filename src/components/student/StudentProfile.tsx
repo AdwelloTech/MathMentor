@@ -110,13 +110,12 @@ const StudentProfile: React.FC = () => {
             email: user.email || "",
             firstName: profileData.first_name || "",
             lastName: profileData.last_name || "",
-            phone: profileData.phone ?? undefined,
-            address: profileData.address ?? undefined,
-
+            phone: profileData.phone || "",
+            address: profileData.address || "",
             gender: profileData.gender ?? undefined,
-            emergencyContact: profileData.emergency_contact ?? undefined,
-            age: profileData.age ?? undefined,
-            gradeLevelId: profileData.grade_level_id ?? undefined,
+            emergencyContact: profileData.emergency_contact || "",
+            age: profileData.age || undefined,
+            gradeLevelId: profileData.grade_level_id || undefined,
             currentGrade: profileData.current_grade || "",
             academicSet: profileData.academic_set || undefined,
             hasLearningDisabilities:
@@ -185,6 +184,9 @@ const StudentProfile: React.FC = () => {
           ? { learningNeedsDescription: "" }
           : {}),
       }));
+    } else if (type === "number") {
+      const numValue = value === "" ? undefined : Number(value);
+      setFormData((prev) => ({ ...prev, [name]: numValue as any }));
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -285,7 +287,6 @@ const StudentProfile: React.FC = () => {
           full_name: updateData.full_name,
           phone: updateData.phone || undefined,
           address: updateData.address || undefined,
-          date_of_birth: updateData.date_of_birth || undefined,
           gender: updateData.gender || undefined,
           emergency_contact: updateData.emergency_contact || undefined,
           age: updateData.age || undefined,

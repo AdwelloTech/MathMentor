@@ -4,7 +4,6 @@ import type {
   TutorClass,
   ClassBooking,
   TutorAvailability,
-  ZoomMeeting,
   ClassReview,
   CreateClassFormData,
   UpdateClassFormData,
@@ -443,7 +442,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -748,7 +748,7 @@ export const classSchedulingService = {
 
   // Jitsi Integration
   jitsi: {
-    getMeetingDetails: async (classId: string): Promise<JitsiMeeting | null> => {
+    getMeetingDetails: async (classId: string): Promise<any | null> => {
       const { data, error } = await supabase
         .from("jitsi_meetings")
         .select("*")

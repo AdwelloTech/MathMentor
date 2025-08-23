@@ -16,7 +16,7 @@ interface AdminContextType {
   adminSession: AdminSession | null;
   isAdminLoggedIn: boolean;
   loginAsAdmin: (email: string, password: string) => Promise<boolean>;
-  logoutAdmin: () => void;
+  logoutAdmin: () => Promise<void>;
   loading: boolean;
 }
 

@@ -117,13 +117,13 @@ export async function getTutorNoteById(
       .select(
         `
         *,
-        note_subjects!inner(
+        note_subjects(
           id,
           name,
           display_name,
           color
         ),
-        grade_levels!inner(
+        grade_levels(
           id,
           code,
           display_name

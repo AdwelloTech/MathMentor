@@ -779,26 +779,26 @@ const TutorDashboard: React.FC = () => {
           {/* Status Indicator - Top Right */}
           <div className="flex justify-between items-start mb-6">
             {/* Dashboard Title and Welcome Message - Left Side */}
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Tutor Dashboard
-                  </h1>
-                  <p className="text-lg text-gray-600">
-                    Welcome back, {profile?.full_name}! Manage your tutoring
-                    sessions and students.
-                  </p>
-                </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Tutor Dashboard
+              </h1>
+              <p className="text-lg text-gray-600">
+                Welcome back, {profile?.full_name}! Manage your tutoring
+                sessions and students.
+              </p>
+            </div>
 
             {/* Action Buttons - Right Side */}
-                <div className="flex items-center space-x-4">
-                  <Button
-                    onClick={() => navigate("/schedule-class")}
-                    disabled={!isActiveTutor}
-                    className="bg-[#16803D] hover:bg-[#0F5A2A] text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    <PlusIcon className="w-5 h-5 mr-2" />
-                    Schedule Class
-                  </Button>
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => navigate("/schedule-class")}
+                disabled={!isActiveTutor}
+                className="bg-[#16803D] hover:bg-[#0F5A2A] text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <PlusIcon className="w-5 h-5 mr-2" />
+                Schedule Class
+              </Button>
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -808,8 +808,8 @@ const TutorDashboard: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                   <span>Approved</span>
-              </div>
-            </motion.div>
+                </div>
+              </motion.div>
             </div>
           </div>
 

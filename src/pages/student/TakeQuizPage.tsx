@@ -52,6 +52,7 @@ const TakeQuizPage: React.FC = () => {
     correctAnswers: number;
     totalQuestions: number;
   } | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
     if (attemptId) {
@@ -65,7 +66,7 @@ const TakeQuizPage: React.FC = () => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
             // Auto-submit when time runs out
-            handleSubmitQuiz();
+            if (!hasSubmitted) handleSubmitQuiz();
             return 0;
           }
           return prev - 1;
@@ -74,7 +75,7 @@ const TakeQuizPage: React.FC = () => {
 
       return () => clearInterval(timer);
     }
-  }, [timeRemaining, showResults]);
+  }, [timeRemaining, showResults, hasSubmitted]);
 
   const loadQuizData = async () => {
     try {
@@ -138,7 +139,9 @@ const TakeQuizPage: React.FC = () => {
 
   const handleSubmitQuiz = async () => {
     try {
+      if (submitting || showResults || hasSubmitted) return;
       setSubmitting(true);
+      setHasSubmitted(true);
 
       // Filter out unanswered questions
       const submittedAnswers = answers.filter(

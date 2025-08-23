@@ -93,13 +93,18 @@ const StudentQuizDashboard: React.FC = () => {
       // Filter by search term
       if (searchTerm.trim()) {
         const term = searchTerm.toLowerCase().trim();
-        filtered = filtered.filter(
-          (quiz) =>
-            quiz.title?.toLowerCase().includes(term) ||
-            quiz.description?.toLowerCase().includes(term) ||
-            quiz.subject?.toLowerCase().includes(term) ||
-            quiz.tutor?.full_name?.toLowerCase().includes(term)
-        );
+        filtered = filtered.filter((quiz) => {
+          const title = (quiz.title ?? "").toLowerCase();
+          const desc = (quiz.description ?? "").toLowerCase();
+          const subj = (quiz.subject ?? "").toLowerCase();
+          const tutor = (quiz.tutor?.full_name ?? "").toLowerCase();
+          return (
+            title.includes(term) ||
+            desc.includes(term) ||
+            subj.includes(term) ||
+            tutor.includes(term)
+          );
+        });
       }
 
       // Filter by subject

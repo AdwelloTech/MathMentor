@@ -34,9 +34,9 @@ const CreateQuizPage: React.FC = () => {
   const [questionFilter, setQuestionFilter] = useState<"all" | "manual" | "ai">(
     "all"
   );
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
-  const [pdfName, setPdfName] = useState<string | null>(null);
-  const [pdfSize, setPdfSize] = useState<number | null>(null);
+  const [pdfs, setPdfs] = useState<
+    Array<{ pdfBase64: string; fileName: string; fileSize: number }>
+  >([]);
 
   // Quiz basic info
   const [quizData, setQuizData] = useState({
@@ -589,19 +589,43 @@ const CreateQuizPage: React.FC = () => {
                     id="quiz-create-pdf"
                     type="file"
                     accept="application/pdf"
+                    multiple
                     onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
+                      const files = Array.from(e.target.files || []);
+                      if (files.length === 0) return;
+
+                      if (files.length > 10) {
+                        toast.error(
+                          "Maximum 10 PDF files allowed per selection"
+                        );
+                        return;
+                      }
+
                       try {
-                        const { pdfBase64, fileName, fileSize } =
-                          await uploadPdfForAI(file);
-                        setPdfBase64(pdfBase64);
-                        setPdfName(fileName);
-                        setPdfSize(fileSize);
-                        toast.success("Syllabus loaded as AI context");
+                        const currentCount = pdfs.length;
+                        if (currentCount + files.length > 10) {
+                          toast.error("You can upload up to 10 PDFs in total");
+                          return;
+                        }
+
+                        const { pdfs: uploadedPdfs } = await uploadPdfForAI(
+                          files
+                        );
+                        setPdfs((prev) => [...prev, ...uploadedPdfs]);
+
+                        const newTotal = currentCount + uploadedPdfs.length;
+                        if (newTotal === 1) {
+                          toast.success("1 PDF loaded as AI context");
+                        } else {
+                          toast.success(
+                            `${uploadedPdfs.length} PDF${
+                              uploadedPdfs.length > 1 ? "s" : ""
+                            } added to AI context (Total: ${newTotal}/10)`
+                          );
+                        }
                       } catch (err: any) {
                         console.error(err);
-                        toast.error(err?.message || "Failed to read PDF");
+                        toast.error(err?.message || "Failed to read PDFs");
                       }
                     }}
                     className="hidden"
@@ -610,34 +634,49 @@ const CreateQuizPage: React.FC = () => {
                     htmlFor="quiz-create-pdf"
                     className="inline-flex items-center px-3 py-2 bg-white border rounded-md text-sm cursor-pointer hover:bg-gray-50"
                   >
-                    Choose PDF
+                    Choose PDFs (up to 10)
                   </label>
-                  {pdfName ? (
-                    <span className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1">
-                      {pdfName}
-                      {pdfSize && ` (${(pdfSize / 1024).toFixed(1)} KB)`}
-                    </span>
+                  {pdfs.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {pdfs.map((pdf, index) => (
+                        <span
+                          key={index}
+                          className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1 flex items-center gap-1"
+                        >
+                          {pdf.fileName} (${(pdf.fileSize / 1024).toFixed(1)}{" "}
+                          KB)
+                          <button
+                            onClick={() =>
+                              setPdfs((prev) =>
+                                prev.filter((_, i) => i !== index)
+                              )
+                            }
+                            className="ml-1 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center"
+                            title="Remove PDF"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
                   ) : (
                     <span className="text-xs text-gray-500">
-                      No file selected
+                      No files selected
                     </span>
                   )}
                 </div>
-                {pdfName && (
+                {pdfs.length > 0 && (
                   <button
-                    onClick={() => {
-                      setPdfBase64(null);
-                      setPdfName(null);
-                      setPdfSize(null);
-                    }}
+                    onClick={() => setPdfs([])}
                     className="text-xs text-gray-600 hover:text-gray-900"
                   >
-                    Clear
+                    Clear All
                   </button>
                 )}
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                PDF up to 10MB. We'll use its text as AI context.
+                PDFs up to 10MB each, maximum 10 files. We'll use their text as
+                AI context.
               </p>
             </div>
           </div>

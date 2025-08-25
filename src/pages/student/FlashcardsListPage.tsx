@@ -167,7 +167,7 @@ const FlashcardsListPage: React.FC = () => {
                       {s.topic && (
                         <Badge
                           variant="outline"
-                          className="border-yellow-400 text-white rounded-xl px-3 py-1"
+                          className="border-yellow-400 text-yellow-700 bg-yellow-50 rounded-xl px-3 py-1"
                         >
                           {s.topic}
                         </Badge>

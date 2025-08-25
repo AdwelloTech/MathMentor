@@ -84,8 +84,11 @@ const QuizResultsPage: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -245,16 +248,22 @@ const QuizResultsPage: React.FC = () => {
                               <Clock className="h-4 w-4 text-green-600" />
                               <span className="text-sm font-medium">
                                 {attempt.completed_at
-                                  ? `Completed in ${Math.round(
-                                      (new Date(
+                                  ? attempt.started_at
+                                    ? `Completed in ${Math.max(
+                                        0,
+                                        Math.round(
+                                          (new Date(
+                                            attempt.completed_at
+                                          ).getTime() -
+                                            new Date(
+                                              attempt.started_at
+                                            ).getTime()) /
+                                            60000
+                                        )
+                                      )} minutes`
+                                    : `Completed: ${formatDate(
                                         attempt.completed_at
-                                      ).getTime() -
-                                        new Date(
-                                          attempt.started_at
-                                        ).getTime()) /
-                                        1000 /
-                                        60
-                                    )} minutes`
+                                      )}`
                                   : "In progress"}
                               </span>
                             </div>
@@ -267,7 +276,10 @@ const QuizResultsPage: React.FC = () => {
                           </div>
 
                           <Button
-                            onClick={() => loadAttemptDetails(attempt.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              loadAttemptDetails(attempt.id);
+                            }}
                             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
                           >
                             <BarChart3 className="h-4 w-4 mr-2" />
@@ -344,8 +356,7 @@ const QuizResultsPage: React.FC = () => {
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>
-                      Started:{" "}
-                      {formatDate(selectedAttempt?.attempt.started_at || "")}
+                      Started: {formatDate(selectedAttempt?.attempt.started_at)}
                     </span>
                   </div>
                   {selectedAttempt?.attempt.completed_at && (
@@ -353,7 +364,7 @@ const QuizResultsPage: React.FC = () => {
                       <Clock className="h-4 w-4 mr-2" />
                       <span>
                         Completed:{" "}
-                        {formatDate(selectedAttempt.attempt.completed_at)}
+                        {formatDate(selectedAttempt?.attempt.completed_at)}
                       </span>
                     </div>
                   )}

@@ -21,13 +21,12 @@ import type { FlashcardSet } from "@/types/flashcards";
 
 import { useNavigate } from "react-router-dom";
 import { subjectsService } from "@/lib/subjects";
+import type { Subject } from "@/types/subject";
 
 const FlashcardsListPage: React.FC = () => {
   const [sets, setSets] = useState<FlashcardSet[]>([]);
   const [subject, setSubject] = useState("");
-  const [subjects, setSubjects] = useState<
-    { id: string; name: string; display_name: string }[]
-  >([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -54,8 +53,14 @@ const FlashcardsListPage: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const s = await subjectsService.listActive();
-      setSubjects(s as any);
+      try {
+        const s = await subjectsService.listActive();
+        setSubjects(s);
+      } catch (e) {
+        console.error("Failed to load subjects:", e);
+        // Keep UI usable with empty list on error
+        setSubjects([]);
+      }
     })();
   }, []);
 

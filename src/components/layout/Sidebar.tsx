@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { getActiveProfileImage, getProfileImageUrl } from "@/lib/profileImages";
 import type { ProfileImage } from "@/types/auth";
+import logoUrl from "@/assets/math-mentor-logo.png";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -47,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSignOut,
 }) => {
   const { profile } = useAuth();
-  const { isAdminLoggedIn } = useAdmin();
+  const { adminSession, loading: adminLoading } = useAdmin();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [profileImage, setProfileImage] = useState<ProfileImage | null>(null);
@@ -55,20 +56,30 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Fetch profile image when component mounts or profile changes
   useEffect(() => {
+    let cancelled = false;
+
     const fetchProfileImage = async () => {
-      if (profile?.user_id) {
-        try {
-          const activeImage = await getActiveProfileImage(profile.user_id);
-          if (activeImage) {
-            setProfileImage(activeImage);
-            const imageUrl = getProfileImageUrl(activeImage.file_path);
-            setProfileImageUrl(imageUrl);
-          } else {
-            setProfileImage(null);
-            setProfileImageUrl(null);
-          }
-        } catch (error) {
-          console.error("Error fetching profile image:", error);
+      if (!profile?.user_id) {
+        setProfileImage(null);
+        setProfileImageUrl(null);
+        return;
+      }
+
+      try {
+        const activeImage = await getActiveProfileImage(profile.user_id);
+        if (cancelled) return;
+
+        if (activeImage) {
+          setProfileImage(activeImage);
+          const imageUrl = getProfileImageUrl(activeImage.file_path);
+          setProfileImageUrl(imageUrl);
+        } else {
+          setProfileImage(null);
+          setProfileImageUrl(null);
+        }
+      } catch (error) {
+        console.error("Error fetching profile image:", error);
+        if (!cancelled) {
           setProfileImage(null);
           setProfileImageUrl(null);
         }
@@ -76,6 +87,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
 
     fetchProfileImage();
+
+    return () => {
+      cancelled = true;
+    };
   }, [profile?.user_id]);
 
   // Add admin-specific navigation
@@ -191,7 +206,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
       ];
     }
-    if (profile?.role === "admin" || isAdminLoggedIn) {
+    // Show admin nav only for validated admin sessions
+    if (adminSession || (profile?.role === "admin" && !adminLoading)) {
       return adminNavigation;
     }
 
@@ -229,7 +245,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     () => getNavigation(),
     [
       profile?.role,
-      isAdminLoggedIn,
+      adminSession,
+      adminLoading,
       tutorApplication?.application_status,
       idVerification?.verification_status,
       profile?.is_active,
@@ -290,7 +307,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               transition={{ duration: 0.2 }}
             >
               <img
-                src="/src/assets/math-mentor-logo.png"
+                src={logoUrl}
                 alt="Math Mentor Logo"
                 className="h-16 w-16 text-white"
               />
@@ -447,7 +464,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                 )}
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-3 border-white shadow-sm" />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm" />
             </motion.div>
 
             {/* Profile Details */}

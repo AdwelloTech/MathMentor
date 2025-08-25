@@ -16,6 +16,7 @@ import type {
   StudentDashboardStats,
   ClassSearchFilters,
   ClassSearchResult,
+  JitsiMeeting,
 } from "@/types/classScheduling";
 
 export const classSchedulingService = {
@@ -68,7 +69,7 @@ export const classSchedulingService = {
           {
             tutor_id: classData.tutor_id,
             class_type_id: classData.class_type_id,
-            subject_id: classData.subject_id || null,
+            subject_id: classData.subject_id ?? null,
             title: classData.title,
             description: classData.description,
             date: classData.date,
@@ -748,7 +749,7 @@ export const classSchedulingService = {
 
   // Jitsi Integration
   jitsi: {
-    getMeetingDetails: async (classId: string): Promise<any | null> => {
+    getMeetingDetails: async (classId: string): Promise<JitsiMeeting | null> => {
       const { data, error } = await supabase
         .from("jitsi_meetings")
         .select("*")

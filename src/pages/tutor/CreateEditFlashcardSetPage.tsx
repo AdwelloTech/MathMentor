@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { flashcards } from "@/lib/flashcards";
-import type { CreateFlashcardSetData, FlashcardSet } from "@/types/flashcards";
+import type { CreateFlashcardSetData } from "@/types/flashcards";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { subjectsService } from "@/lib/subjects";
-import { generateAIFlashcards, uploadPdfForAI } from "@/lib/ai";
+import { generateAIFlashcards, extractTextFromPdf } from "@/lib/ai";
 
 // Local type to track AI workflow in UI
 type DraftCard = {
@@ -36,7 +36,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
     "medium"
   );
   const [pdfs, setPdfs] = useState<
-    Array<{ pdfBase64: string; fileName: string; fileSize: number }>
+    Array<{ pdfText: string; fileName: string; fileSize: number }>
   >([]);
 
   useEffect(() => {
@@ -164,7 +164,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
           grade_level: gradeLevel,
         });
         // Remove existing cards
-        const { error } = await (await import("@/lib/supabase")).supabase
+        await (await import("@/lib/supabase")).supabase
           .from("flashcards")
           .delete()
           .eq("set_id", setId);
@@ -211,6 +211,11 @@ const CreateEditFlashcardSetPage: React.FC = () => {
     }
     setAiLoading(true);
     try {
+      // Combine all PDF texts for context
+      const combinedPdfText = pdfs.length > 0
+        ? pdfs.map(pdf => pdf.pdfText).join('\n\n')
+        : undefined;
+
       // Use dedicated flashcards AI generator
       const aiCards = await generateAIFlashcards({
         subject,
@@ -218,7 +223,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
         numCards: aiNumCards,
         title,
         difficulty: aiDifficulty,
-        pdfText: pdfBase64 || undefined,
+        pdfText: combinedPdfText,
       });
 
       // Map AI cards directly to flashcard format with pending status
@@ -381,22 +386,22 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                       return;
                     }
 
-                    const { pdfs: uploadedPdfs } = await uploadPdfForAI(files);
-                    setPdfs((prev) => [...prev, ...uploadedPdfs]);
+                    const { pdfs: extractedPdfs } = await extractTextFromPdf(files);
+                    setPdfs((prev) => [...prev, ...extractedPdfs]);
 
-                    const newTotal = currentCount + uploadedPdfs.length;
+                    const newTotal = currentCount + extractedPdfs.length;
                     if (newTotal === 1) {
-                      toast.success("1 PDF uploaded for AI context");
+                      toast.success("1 PDF processed for AI context");
                     } else {
                       toast.success(
-                        `${uploadedPdfs.length} PDF${
-                          uploadedPdfs.length > 1 ? "s" : ""
-                        } added to AI context (Total: ${newTotal}/10)`
+                        `${extractedPdfs.length} PDF${
+                          extractedPdfs.length > 1 ? "s" : ""
+                        } processed for AI context (Total: ${newTotal}/10)`
                       );
                     }
                   } catch (err: any) {
                     console.error(err);
-                    toast.error(err?.message || "Failed to upload PDFs");
+                    toast.error(err?.message || "Failed to extract text from PDFs");
                   }
                 }}
                 className="hidden"
@@ -414,7 +419,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                       key={index}
                       className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1 flex items-center gap-1"
                     >
-                      {pdf.fileName} (${Math.round(pdf.fileSize / 1024)} KB)
+                      {pdf.fileName} ({Math.round(pdf.fileSize / 1024)} KB, {pdf.pdfText.length} chars)
                       <button
                         onClick={() =>
                           setPdfs((prev) => prev.filter((_, i) => i !== index))

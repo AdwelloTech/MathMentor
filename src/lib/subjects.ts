@@ -5,6 +5,14 @@ import type {
   UpdateSubjectData,
 } from "@/types/subject";
 
+// RPC parameter types
+interface AdminCreateSubjectParams {
+  p_name: string;
+  p_display_name: string;
+  p_color: string | null;
+  p_is_active: boolean;
+}
+
 export const subjectsService = {
   async listActive(): Promise<Subject[]> {
     // Try RPC first (works even with strict RLS if function is SECURITY DEFINER)
@@ -41,8 +49,17 @@ export const subjectsService = {
       color: input.color ?? null,
       is_active: input.is_active ?? true,
     };
+
+    // Map payload to RPC parameter format
+    const rpcParams: AdminCreateSubjectParams = {
+      p_name: payload.name,
+      p_display_name: payload.display_name,
+      p_color: payload.color,
+      p_is_active: payload.is_active,
+    };
+
     // Try RPC first
-    let rpc = await supabase.rpc("admin_create_subject", payload as any);
+    let rpc = await supabase.rpc("admin_create_subject", rpcParams);
     if (!rpc.error && rpc.data) {
       return rpc.data as Subject;
     }
@@ -56,7 +73,7 @@ export const subjectsService = {
   },
 
   async update(id: string, input: UpdateSubjectData): Promise<Subject> {
-    const updates: any = {};
+    const updates: Partial<UpdateSubjectData> = {};
     if (input.name !== undefined) updates.name = input.name.trim().toLowerCase();
     if (input.display_name !== undefined)
       updates.display_name = input.display_name.trim();

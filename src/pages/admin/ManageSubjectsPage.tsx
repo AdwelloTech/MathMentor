@@ -23,20 +23,25 @@ const ManageSubjectsPage: React.FC = () => {
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState<string | "">("");
   const [editActive, setEditActive] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  const loadSubjects = async () => {
+    try {
+      setLoading(true);
+      setLoadError(false);
+      const data = await subjectsService.listAll();
+      setSubjects(data);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load subjects");
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        const data = await subjectsService.listAll();
-        setSubjects(data);
-      } catch (e) {
-        console.error(e);
-        toast.error("Failed to load subjects");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    loadSubjects();
   }, []);
 
   const filtered = useMemo(() => {
@@ -66,6 +71,13 @@ const ManageSubjectsPage: React.FC = () => {
       return;
     }
     const nameKey = newName.trim() || newDisplayName.trim().toLowerCase();
+
+    // Check for duplicate names using the same normalization as backend
+    if (subjects.some(s => s.name === nameKey)) {
+      toast.error(`A subject with the key "${nameKey}" already exists`);
+      return;
+    }
+
     try {
       const created = await subjectsService.create({
         name: nameKey,
@@ -126,7 +138,7 @@ const ManageSubjectsPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Manage Subjects</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Subjects</h1>
         {!creating ? (
           <button
             onClick={startCreate}
@@ -175,7 +187,25 @@ const ManageSubjectsPage: React.FC = () => {
         </div>
 
         <div className="divide-y">
-          {loading ? (
+          {loadError ? (
+            <div className="p-6 text-center">
+              <div className="text-red-600 mb-4">Failed to load subjects</div>
+              <button
+                onClick={loadSubjects}
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Retrying...
+                  </>
+                ) : (
+                  'Retry Loading'
+                )}
+              </button>
+            </div>
+          ) : loading ? (
             <div className="p-6 text-center text-gray-600">Loading…</div>
           ) : filtered.length === 0 ? (
             <div className="p-6 text-center text-gray-600">No subjects</div>

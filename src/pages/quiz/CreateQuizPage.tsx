@@ -52,7 +52,14 @@ const CreateQuizPage: React.FC = () => {
     const loadSubjects = async () => {
       try {
         const subjectsData = await subjectsService.listActive();
-        setSubjects(subjectsData as any);
+        // Map Subject[] to NoteSubject[] with proper type handling
+        const mappedSubjects: NoteSubject[] = subjectsData.map(s => ({
+          id: s.id,
+          name: s.name,
+          display_name: s.display_name,
+          color: s.color || '' // Handle null/undefined color by defaulting to empty string
+        }));
+        setSubjects(mappedSubjects);
       } catch (error) {
         console.error("Error loading subjects:", error);
       }
@@ -169,7 +176,9 @@ const CreateQuizPage: React.FC = () => {
         aiNumQuestions,
         aiDifficulty,
         aiQuestionType,
-        quizData.title || undefined
+        quizData.title || undefined,
+        undefined, // pdfText parameter - not currently used
+        pdfs // PDF files for AI context
       );
       const mapped = ai.map((q: any, idx: number) => ({
         question_text: q.question_text,

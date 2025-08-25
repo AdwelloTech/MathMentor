@@ -42,18 +42,27 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
   const checkIfRated = useCallback(async () => {
     if (!user) return;
 
+    // Require profile.id for rating checks - don't fall back to user.id
+    if (!user.profile?.id) {
+      console.log("Rating check skipped - no profile.id available:", {
+        sessionId: session.id,
+        sessionTitle: session.title,
+        hasProfileId: false,
+      });
+      setHasRated(false);
+      return;
+    }
+
     try {
       console.log("Checking if rated for this specific session:", {
         sessionId: session.id,
-        userId: user.profile?.id || user.id, // Fallback to user.id if profile.id doesn't exist
         sessionTitle: session.title,
-        sessionDate: session.date,
-        sessionTime: `${session.start_time} - ${session.end_time}`,
+        hasProfileId: true,
       });
 
       const hasRatedSession = await sessionRatingService.hasStudentRated(
         session.id,
-        user.profile?.id || user.id // Fallback to user.id if profile.id doesn't exist
+        user.profile.id
       );
 
       console.log("Rating check result for this session:", hasRatedSession);
@@ -101,25 +110,38 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
       const now = new Date();
       const sessionStart = new Date(`${session.date}T${session.start_time}`);
       const sessionEnd = new Date(`${session.date}T${session.end_time}`);
+      const joinWindowStart = new Date(sessionStart.getTime() - 5 * 60 * 1000); // 5 minutes before start
 
-      if (now < sessionStart) {
-        // Session hasn't started yet
+      if (now < joinWindowStart) {
+        // Before join window - countdown until join window starts
         const diff = Math.max(
           0,
-          Math.floor((sessionStart.getTime() - now.getTime()) / 1000)
+          Math.floor((joinWindowStart.getTime() - now.getTime()) / 1000)
         );
         setTimeRemaining(diff);
         setIsSessionActive(false);
         setIsSessionEnded(false);
-      } else if (now >= sessionStart && now <= sessionEnd) {
-        // Session is active
-        const diff = Math.max(
-          0,
-          Math.floor((sessionEnd.getTime() - now.getTime()) / 1000)
-        );
-        setTimeRemaining(diff);
-        setIsSessionActive(true);
-        setIsSessionEnded(false);
+      } else if (now >= joinWindowStart && now <= sessionEnd) {
+        // In join window or session is active
+        if (now <= sessionStart) {
+          // In join window but session hasn't started yet - countdown until session starts
+          const diff = Math.max(
+            0,
+            Math.floor((sessionStart.getTime() - now.getTime()) / 1000)
+          );
+          setTimeRemaining(diff);
+          setIsSessionActive(false);
+          setIsSessionEnded(false);
+        } else {
+          // Session is active
+          const diff = Math.max(
+            0,
+            Math.floor((sessionEnd.getTime() - now.getTime()) / 1000)
+          );
+          setTimeRemaining(diff);
+          setIsSessionActive(true);
+          setIsSessionEnded(false);
+        }
       } else {
         // Session has ended
         setTimeRemaining(0);
@@ -238,67 +260,65 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
 
         // We need to update the booking status, not the class status
         // First, we need to find the booking ID for this student and session
-        console.log("🔍 Full user object:", user);
-        console.log("🔍 Session object:", session);
 
-        if (user?.profile?.id || user?.id) {
-          const studentId = user.profile?.id || user.id;
+        // Require profile.id for cancellation - don't fall back to user.id
+        if (!user?.profile?.id) {
+          console.error("❌ No profile.id available for cancellation");
+          throw new Error("Profile ID not available for cancellation");
+        }
 
-          console.log("🔍 Cancelling booking for:", {
-            studentId,
-            classId: session.id,
-            userProfileId: user.profile?.id,
-            userId: user.id,
+        const studentId = user.profile.id;
+
+        console.log("🔍 Cancelling booking for session:", {
+          sessionId: session.id,
+          sessionTitle: session.title,
+          hasProfileId: true,
+        });
+
+        // Try to find the booking first to debug
+        try {
+          // First, let's try to find the booking to see what we're working with
+          const { data: existingBookings, error: findError } = await supabase
+            .from("class_bookings")
+            .select("*")
+            .eq("student_id", studentId)
+            .eq("class_id", session.id);
+
+          console.log("🔍 Direct database query result:", {
+            bookingCount: existingBookings?.length || 0,
+            hasError: !!findError,
           });
 
-          // Try to find the booking first to debug
-          try {
-            // First, let's try to find the booking to see what we're working with
-            const { data: existingBookings, error: findError } = await supabase
-              .from("class_bookings")
-              .select("*")
-              .eq("student_id", studentId)
-              .eq("class_id", session.id);
+          if (existingBookings && existingBookings.length > 0) {
+            const bookingId = existingBookings[0].id;
+            console.log("✅ Found booking for session:", session.id);
 
-            console.log("🔍 Direct database query result:", {
-              existingBookings,
-              findError,
-            });
+            // Try the simpler cancel method first
+            try {
+              const result = await classSchedulingService.bookings.cancel(
+                bookingId
+              );
+              console.log("✅ Cancellation via cancel method:", result);
+            } catch (cancelError) {
+              console.log(
+                "⚠️ Cancel method failed, trying updateByStudentAndClass:",
+                cancelError
+              );
 
-            if (existingBookings && existingBookings.length > 0) {
-              const bookingId = existingBookings[0].id;
-              console.log("✅ Found booking ID:", bookingId);
-
-              // Try the simpler cancel method first
-              try {
-                const result = await classSchedulingService.bookings.cancel(
-                  bookingId
-                );
-                console.log("✅ Cancellation via cancel method:", result);
-              } catch (cancelError) {
-                console.log(
-                  "⚠️ Cancel method failed, trying updateByStudentAndClass:",
-                  cancelError
-                );
-
-                // Fallback to direct update
-                const result = await classSchedulingService.bookings.update(
-                  bookingId,
-                  { booking_status: "cancelled" }
-                );
-                console.log("✅ Cancellation via direct update:", result);
-              }
-            } else {
-              console.error("❌ No booking found in direct query");
-              throw new Error("No booking found for this student and class");
+              // Fallback to direct update
+              const result = await classSchedulingService.bookings.update(
+                bookingId,
+                { booking_status: "cancelled" }
+              );
+              console.log("✅ Cancellation via direct update:", result);
             }
-          } catch (error) {
-            console.error("❌ Cancellation failed:", error);
-            throw error;
+          } else {
+            console.error("❌ No booking found in direct query");
+            throw new Error("No booking found for this student and class");
           }
-        } else {
-          console.error("❌ No user ID available for cancellation");
-          throw new Error("User ID not available");
+        } catch (error) {
+          console.error("❌ Cancellation failed:", error);
+          throw error;
         }
 
         console.log("✅ Session cancelled successfully in database!");
@@ -318,12 +338,10 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
           isSessionEnded: false,
         });
       } catch (error) {
-        console.error("❌ Failed to cancel session in database:", error);
-        console.error("Error details:", {
-          message: (error as any).message,
-          code: (error as any).code,
-          details: (error as any).details,
-          hint: (error as any).hint,
+        console.error("❌ Failed to cancel session in database:", {
+          sessionId: session.id,
+          sessionTitle: session.title,
+          errorMessage: (error as any).message,
         });
         toast.error("Failed to cancel session. Please try again.");
       } finally {

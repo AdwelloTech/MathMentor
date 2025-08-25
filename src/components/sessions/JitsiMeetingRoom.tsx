@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   VideoCameraIcon,
@@ -47,6 +47,17 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
     ? getRoomName(session.jitsi_meeting_url)
     : `room-${session.id}`;
 
+  // Cleanup function for Jitsi API and modal state
+  const cleanup = useCallback(() => {
+    if (jitsiApi) {
+      console.log("Cleaning up Jitsi API");
+      jitsiApi.dispose();
+      setJitsiApi(null);
+    }
+    setShowEmbedded(false);
+    setLoading(false);
+  }, [jitsiApi]);
+
   useEffect(() => {
     const updateTimeRemaining = () => {
       const sessionStart = new Date(`${session.date}T${session.start_time}`);
@@ -76,6 +87,13 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
 
     return () => clearInterval(interval);
   }, [session]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
 
   // Load Jitsi Meet External API
   useEffect(() => {
@@ -166,10 +184,13 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
     try {
       const api = new window.JitsiMeetExternalAPI("meet.jit.si", options);
 
-      api.addEventListener("ready", () => {
-        console.log("Jitsi Meet API is ready");
+      // Store API immediately—construction is synchronous
+      setJitsiApi(api);
+
+      // Clear loading once the local participant has joined
+      api.addEventListener("videoConferenceJoined", () => {
+        console.log("Jitsi: local user joined");
         setLoading(false);
-        setJitsiApi(api);
       });
 
       api.addEventListener("participantLeft", (participant: any) => {
@@ -247,16 +268,22 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
             </div>
             <div className="flex items-center space-x-2">
               {showEmbedded && (
-                <button
-                  onClick={() => setShowEmbedded(false)}
-                  className="text-white hover:text-gray-200 transition-colors"
-                  title="Minimize"
-                >
-                  <CogIcon className="w-5 h-5" />
-                </button>
+                                  <button
+                    onClick={() => {
+                      cleanup();
+                      setShowEmbedded(false);
+                    }}
+                    className="text-white hover:text-gray-200 transition-colors"
+                    title="Minimize"
+                  >
+                    <CogIcon className="w-5 h-5" />
+                  </button>
               )}
               <button
-                onClick={onClose}
+                onClick={() => {
+                  cleanup();
+                  onClose();
+                }}
                 className="text-white hover:text-gray-200 transition-colors"
               >
                 <XMarkIcon className="w-6 h-6" />
@@ -401,7 +428,10 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
 
                 <div className="flex justify-center space-x-4">
                   <button
-                    onClick={() => setShowEmbedded(false)}
+                    onClick={() => {
+                      cleanup();
+                      setShowEmbedded(false);
+                    }}
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                   >
                     Minimize

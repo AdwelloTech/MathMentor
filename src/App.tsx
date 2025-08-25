@@ -113,23 +113,7 @@ function App() {
                 element={<QuizAttemptReviewPage />}
               />
 
-              <Route
-                path="tutor/manage-materials"
-                element={<ManageMaterialsPage />}
-              />
-              <Route
-                path="tutor/flashcards"
-                element={<ManageFlashcardsPage />}
-              />
-              <Route
-                path="tutor/flashcards/create"
-                element={<CreateEditFlashcardSetPage />}
-              />
-              <Route
-                path="tutor/flashcards/edit/:setId"
-                element={<CreateEditFlashcardSetPage />}
-              />
-              <Route path="tutor/ratings" element={<TutorRatingsPage />} />
+
 
               {/* View flashcards set - accessible to any logged-in role */}
               <Route
@@ -227,7 +211,13 @@ function App() {
                     <TutorDashboard />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route path="manage-materials" element={<ManageMaterialsPage />} />
+                <Route path="flashcards" element={<ManageFlashcardsPage />} />
+                <Route path="flashcards/create" element={<CreateEditFlashcardSetPage />} />
+                <Route path="flashcards/edit/:setId" element={<CreateEditFlashcardSetPage />} />
+                <Route path="ratings" element={<TutorRatingsPage />} />
+              </Route>
 
               {/* Student routes */}
               <Route

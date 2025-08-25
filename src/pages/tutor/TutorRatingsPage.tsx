@@ -138,6 +138,8 @@ const TutorRatingsPage: React.FC = () => {
   const filteredRatings =
     ratings
       ?.filter((rating) => {
+        // Filter out anonymous ratings by default unless showAnonymous is true
+        if (!showAnonymous && rating.is_anonymous) return false;
         if (filterRating && rating.rating !== filterRating) return false;
         return true;
       })

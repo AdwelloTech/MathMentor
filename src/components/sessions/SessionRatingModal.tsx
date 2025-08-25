@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, X, MessageSquare, User } from "lucide-react";
+import { Star, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -44,8 +44,8 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
     try {
       const ratingData: CreateRatingData = {
         session_id: session.id,
-        student_id: user.profile.id, // Use profile.id instead of user.id
-        tutor_id: session.tutor.id, // Use tutor.id instead of session.tutor.id
+        student_id: user.profile?.id ?? user.id, // Use profile.id when available, fallback to user.id
+        tutor_id: session.tutor.id,
         rating,
         review_text: reviewText.trim() || undefined,
         is_anonymous: isAnonymous,
@@ -165,8 +165,11 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  {new Date(session.date).toLocaleDateString()} •{" "}
-                  {session.duration_minutes} minutes
+                  {(() => {
+                    const [y, m, d] = session.date.split("-").map(Number);
+                    return new Date(y, m - 1, d).toLocaleDateString();
+                  })()}{" "}
+                  • {session.duration_minutes} minutes
                 </p>
               </div>
 

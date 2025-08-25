@@ -121,7 +121,6 @@ export type CreateQuestionData =
       // For short-answer: either accept zero predefined answers (manual grading)
       // or allow a list of acceptable textual answers used for auto-grading.
       answers?: CreateAnswerData[];
-      acceptable_answers?: string[];
     };
 
 export interface CreateAnswerData {

@@ -248,22 +248,32 @@ const QuizResultsPage: React.FC = () => {
                               <Clock className="h-4 w-4 text-green-600" />
                               <span className="text-sm font-medium">
                                 {attempt.completed_at
-                                  ? attempt.started_at
-                                    ? `Completed in ${Math.max(
-                                        0,
-                                        Math.round(
-                                          (new Date(
-                                            attempt.completed_at
-                                          ).getTime() -
-                                            new Date(
-                                              attempt.started_at
-                                            ).getTime()) /
-                                            60000
-                                        )
-                                      )} minutes`
-                                    : `Completed: ${formatDate(
+                                  ? (() => {
+                                      const endMs = Date.parse(
+                                        attempt.completed_at as string
+                                      );
+                                      const startMs = attempt.started_at
+                                        ? Date.parse(
+                                            attempt.started_at as string
+                                          )
+                                        : NaN;
+                                      if (
+                                        Number.isFinite(endMs) &&
+                                        Number.isFinite(startMs)
+                                      ) {
+                                        const minutes = Math.max(
+                                          0,
+                                          Math.round(
+                                            (endMs - (startMs as number)) /
+                                              60000
+                                          )
+                                        );
+                                        return `Completed in ${minutes} minutes`;
+                                      }
+                                      return `Completed: ${formatDate(
                                         attempt.completed_at
-                                      )}`
+                                      )}`;
+                                    })()
                                   : "In progress"}
                               </span>
                             </div>

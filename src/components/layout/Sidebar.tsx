@@ -460,10 +460,12 @@ const Sidebar: React.FC<SidebarProps> = ({
               className={cn(
                 "h-5 w-5 shrink-0 transition-colors duration-200",
                 active
-                  ? isGreenActive
-                    ? "text-green-600"
-                    : "text-yellow-600"
-                  : `text-gray-600 group-hover:text-${itemColors.primary}-600`
+                  ? (isGreenActive ? "text-green-600" : "text-yellow-600")
+                  : "text-gray-600",
+                !active &&
+                  (itemColors.primary === "green"
+                    ? "group-hover:text-green-600"
+                    : "group-hover:text-yellow-600")
               )}
             />
             {active && (

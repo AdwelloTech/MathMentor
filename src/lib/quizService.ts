@@ -55,18 +55,20 @@ export const quizService = {
 
         if (questionError) throw questionError;
 
-        // Create answers for this question
-        for (const answerData of questionData.answers) {
-          const { error: answerError } = await supabase
-            .from("quiz_answers")
-            .insert({
-              question_id: question.id,
-              answer_text: answerData.answer_text,
-              is_correct: answerData.is_correct,
-              answer_order: answerData.answer_order,
-            });
+        // Create answers for this question (only if answers are provided)
+        if (questionData.answers && questionData.answers.length > 0) {
+          for (const answerData of questionData.answers) {
+            const { error: answerError } = await supabase
+              .from("quiz_answers")
+              .insert({
+                question_id: question.id,
+                answer_text: answerData.answer_text,
+                is_correct: answerData.is_correct,
+                answer_order: answerData.answer_order,
+              });
 
-          if (answerError) throw answerError;
+            if (answerError) throw answerError;
+          }
         }
       }
 
@@ -499,8 +501,6 @@ export const quizService = {
       studentId: string,
       subjectFilter?: string
     ): Promise<Quiz[]> => {
-      console.log("Fetching quizzes for student:", studentId);
-
       // First get the tutor IDs from class bookings
       const { data: bookings, error: bookingsError } = await supabase
         .from("class_bookings")
@@ -517,16 +517,6 @@ export const quizService = {
         throw bookingsError;
       }
 
-      console.log("Bookings found:", bookings);
-
-      // Let's see the actual structure of the first booking
-      if (bookings && bookings.length > 0) {
-        console.log(
-          "First booking structure:",
-          JSON.stringify(bookings[0], null, 2)
-        );
-      }
-
       const tutorUserIds =
         bookings
           ?.flatMap((booking) =>
@@ -536,10 +526,7 @@ export const quizService = {
           )
           .filter(Boolean) || [];
 
-      console.log("Tutor user IDs:", tutorUserIds);
-
       if (tutorUserIds.length === 0) {
-        console.log("No tutor user IDs found, returning empty array");
         return [];
       }
 
@@ -554,14 +541,9 @@ export const quizService = {
         throw profileError;
       }
 
-      console.log("Tutor profiles found:", tutorProfiles);
-
       const tutorProfileIds = tutorProfiles?.map((profile) => profile.id) || [];
 
-      console.log("Tutor profile IDs:", tutorProfileIds);
-
       if (tutorProfileIds.length === 0) {
-        console.log("No tutor profile IDs found, returning empty array");
         return [];
       }
 
@@ -582,8 +564,6 @@ export const quizService = {
         console.error("Error fetching quizzes:", error);
         throw error;
       }
-
-      console.log("Quizzes found:", quizzesData);
 
       // Get student's profile ID for attempt lookup
       const { data: studentProfile, error: studentProfileError } =

@@ -259,6 +259,20 @@ const TutorProfile: React.FC = () => {
         });
       }
 
+      // Best effort: remove previous CV to avoid orphans
+      try {
+        const previousPath = formData.cvStoragePath;
+        if (previousPath && previousPath !== filePath) {
+          const { error: removeErr } = await supabase.storage
+            .from("cv-uploads")
+            .remove([previousPath]);
+          if (removeErr)
+            console.warn("Failed to delete previous CV file:", removeErr);
+        }
+      } catch (cleanupErr) {
+        console.warn("Cleanup of previous CV failed:", cleanupErr);
+      }
+
       console.log("CV uploaded successfully:", signed.signedUrl);
     } catch (error: any) {
       console.error("CV upload error:", error);

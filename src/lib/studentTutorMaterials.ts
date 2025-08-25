@@ -186,11 +186,17 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
     });
 
     if (error) {
-      console.error("Error in view tracking:", error);
+      console.error(
+        `RPC increment_tutor_note_view_count failed for materialId=${materialId}:`,
+        error
+      );
       throw error;
     }
   } catch (error) {
-    console.error("Error in view tracking:", error);
+    console.error(
+      `RPC increment_tutor_note_view_count failed for materialId=${materialId}:`,
+      error
+    );
     throw error;
   }
 };
@@ -203,7 +209,10 @@ export const incrementStudentTutorMaterialDownloadCount = async (
   });
 
   if (error) {
-    console.error("Error incrementing download count:", error);
+    console.error(
+      `RPC increment_tutor_note_download_count failed for materialId=${materialId}:`,
+      error
+    );
     throw error;
   }
 };

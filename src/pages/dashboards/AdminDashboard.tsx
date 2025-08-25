@@ -499,7 +499,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
                     <div>
                       <strong>Grade Level:</strong>{" "}
-                      {selectedStudent.grade_level}
+                      {selectedStudent.current_grade}
                     </div>
                     <div>
                       <strong>Learning Disabilities:</strong>{" "}

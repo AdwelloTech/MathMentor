@@ -209,10 +209,20 @@ const StudentProfile: React.FC = () => {
     // Update the AuthContext profile data with the new image URL
     if (updateProfile && profile) {
       try {
-        await updateProfile({
+        // Build raw updates object (may contain undefined values)
+        const rawUpdates = {
           profile_image_url: imageUrl || undefined,
-        });
-        console.log("AuthContext updated with new profile image URL");
+        };
+
+        // Remove undefined keys so Dexie.update leaves them untouched
+        const updates = Object.fromEntries(
+          Object.entries(rawUpdates).filter(([, v]) => v !== undefined)
+        );
+
+        if (Object.keys(updates).length > 0) {
+          await updateProfile(updates);
+          console.log("AuthContext updated with new profile image URL");
+        }
       } catch (error) {
         console.error("Failed to update AuthContext:", error);
       }
@@ -281,7 +291,8 @@ const StudentProfile: React.FC = () => {
 
       // Update AuthContext with the new profile data
       if (updateProfile) {
-        await updateProfile({
+        // Build raw updates object (may contain undefined values)
+        const rawUpdates = {
           first_name: updateData.first_name,
           last_name: updateData.last_name,
           full_name: updateData.full_name,
@@ -294,7 +305,16 @@ const StudentProfile: React.FC = () => {
           has_learning_disabilities: updateData.has_learning_disabilities,
           learning_needs_description:
             updateData.learning_needs_description || undefined,
-        });
+        };
+
+        // Remove undefined keys so Dexie.update leaves them untouched
+        const updates = Object.fromEntries(
+          Object.entries(rawUpdates).filter(([, v]) => v !== undefined)
+        );
+
+        if (Object.keys(updates).length > 0) {
+          await updateProfile(updates);
+        }
       }
 
       setSaveStatus("success");

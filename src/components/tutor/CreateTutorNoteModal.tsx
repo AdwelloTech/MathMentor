@@ -17,7 +17,10 @@ import {
 import { getNoteSubjects } from "@/lib/notes";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import toast from "react-hot-toast";
-import { DESCRIPTION_MAX_LENGTH } from "@/constants/form";
+import {
+  DESCRIPTION_MAX_LENGTH,
+  NOTE_TITLE_MAX_LENGTH,
+} from "@/constants/form";
 
 interface CreateTutorNoteModalProps {
   isOpen: boolean;
@@ -242,10 +245,10 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full"
                     placeholder="Enter the title of your study material"
                     required
-                    maxLength={100}
+                    maxLength={NOTE_TITLE_MAX_LENGTH}
                     showCharCount
                   />
                 </div>

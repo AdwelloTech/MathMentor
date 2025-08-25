@@ -1,5 +1,6 @@
 // Form validation constants
 export const DESCRIPTION_MAX_LENGTH = 500;
+export const NOTE_TITLE_MAX_LENGTH = 100;
 
 // File validation constants
 export const ALLOWED_DOCUMENT_MIME_TYPES = [

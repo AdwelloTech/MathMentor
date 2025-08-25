@@ -175,8 +175,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
         specializations.push("Learning Disabilities");
       }
 
-      // Prepare updates object
-      const updates = {
+      // Build raw updates object (may contain undefined values)
+      const rawUpdates = {
         first_name,
         last_name,
         full_name: formData.full_name,
@@ -196,6 +196,11 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
         profile_completed: true, // Mark profile as completed
         updated_at: new Date().toISOString(),
       };
+
+      // Remove undefined keys so Dexie.update leaves them untouched
+      const updates = Object.fromEntries(
+        Object.entries(rawUpdates).filter(([, v]) => v !== undefined)
+      );
 
       await updateProfile(updates);
       toast.success("Profile updated successfully!");

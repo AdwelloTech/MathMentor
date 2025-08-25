@@ -7,7 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import RichTextEditor from "./RichTextEditor";
-import { DESCRIPTION_MAX_LENGTH } from "@/constants/form";
+import {
+  DESCRIPTION_MAX_LENGTH,
+  NOTE_TITLE_MAX_LENGTH,
+} from "@/constants/form";
 
 interface CreateNoteModalProps {
   isOpen: boolean;
@@ -161,10 +164,10 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({
                       onChange={(e) =>
                         handleInputChange("title", e.target.value)
                       }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full"
                       placeholder="Enter note title..."
                       required
-                      maxLength={100}
+                      maxLength={NOTE_TITLE_MAX_LENGTH}
                       showCharCount
                     />
                   </div>

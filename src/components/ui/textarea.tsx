@@ -55,8 +55,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           )}
           ref={ref}
           maxLength={maxLength}
-          onChange={handleChange}
           {...props}
+          onChange={handleChange}
         />
         {showCharCount && maxLength && (
           <div

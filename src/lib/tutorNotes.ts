@@ -2,7 +2,7 @@ import { supabase } from "./supabase";
 import type { Database } from "@/types/database";
 
 type TutorNote = Database["public"]["Tables"]["tutor_notes"]["Row"];
-type TutorNoteWithDetails =
+export type TutorNoteWithDetails =
   Database["public"]["Functions"]["search_tutor_notes"]["Returns"][0];
 type NoteSubject = Database["public"]["Tables"]["note_subjects"]["Row"];
 

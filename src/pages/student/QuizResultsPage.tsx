@@ -99,7 +99,7 @@ const QuizResultsPage: React.FC = () => {
 
   const getScoreColor = (percentage: number) => {
     if (percentage >= 80) return "text-green-900";
-    if (percentage >= 60) return "text-yellow-600";
+    if (percentage >= 60) return "text-yellow-700";
     return "text-red-600";
   };
 

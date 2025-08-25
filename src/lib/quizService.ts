@@ -56,19 +56,25 @@ export const quizService = {
         if (questionError) throw questionError;
 
         // Create answers for this question (only if answers are provided)
-        if (questionData.answers && questionData.answers.length > 0) {
-          for (const answerData of questionData.answers) {
-            const { error: answerError } = await supabase
-              .from("quiz_answers")
-              .insert({
-                question_id: question.id,
-                answer_text: answerData.answer_text,
-                is_correct: answerData.is_correct,
-                answer_order: answerData.answer_order,
-              });
-
-            if (answerError) throw answerError;
-          }
+        const requiresAnswers = ["multiple_choice", "true_false"].includes(
+          questionData.question_type as string
+        );
+        if (questionData.answers?.length) {
+          const answersToInsert = questionData.answers.map((a) => ({
+            question_id: question.id,
+            answer_text: a.answer_text,
+            is_correct: a.is_correct,
+            // allow DB default if not provided
+            answer_order: a.answer_order ?? null,
+          }));
+          const { error: answersError } = await supabase
+            .from("quiz_answers")
+            .insert(answersToInsert);
+          if (answersError) throw answersError;
+        } else if (requiresAnswers) {
+          throw new Error(
+            `Question of type ${questionData.question_type} must include at least one answer`
+          );
         }
       }
 
@@ -175,19 +181,25 @@ export const quizService = {
       if (questionError) throw questionError;
 
       // Create answers for this question (only if answers are provided)
-      if (questionData.answers && questionData.answers.length > 0) {
-        for (const answerData of questionData.answers) {
-          const { error: answerError } = await supabase
-            .from("quiz_answers")
-            .insert({
-              question_id: question.id,
-              answer_text: answerData.answer_text,
-              is_correct: answerData.is_correct,
-              answer_order: answerData.answer_order,
-            });
-
-          if (answerError) throw answerError;
-        }
+      const requiresAnswers = ["multiple_choice", "true_false"].includes(
+        questionData.question_type as string
+      );
+      if (questionData.answers?.length) {
+        const answersToInsert = questionData.answers.map((a) => ({
+          question_id: question.id,
+          answer_text: a.answer_text,
+          is_correct: a.is_correct,
+          // allow DB default if not provided
+          answer_order: a.answer_order ?? null,
+        }));
+        const { error: answersError } = await supabase
+          .from("quiz_answers")
+          .insert(answersToInsert);
+        if (answersError) throw answersError;
+      } else if (requiresAnswers) {
+        throw new Error(
+          `Question of type ${questionData.question_type} must include at least one answer`
+        );
       }
 
       return question;
@@ -625,7 +637,7 @@ export const quizService = {
             points,
             question_order,
             created_at,
-            answers:quiz_answers(*)
+            answers:quiz_answers(id, answer_text, answer_order)
           )
         `
         )

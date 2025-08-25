@@ -312,8 +312,10 @@ const AdminDashboard: React.FC = () => {
                               }`}
                             >
                               <span className="text-sm font-medium text-gray-600">
-                                {student.first_name[0]}
-                                {student.last_name[0]}
+                                {student.first_name?.[0] ??
+                                  student.full_name?.[0] ??
+                                  "?"}
+                                {student.last_name?.[0] ?? ""}
                               </span>
                             </div>
                             <div className="ml-4">
@@ -445,8 +447,10 @@ const AdminDashboard: React.FC = () => {
                   }`}
                 >
                   <span className="text-2xl font-bold text-gray-600">
-                    {selectedStudent.first_name[0]}
-                    {selectedStudent.last_name[0]}
+                    {selectedStudent.first_name?.[0] ??
+                      selectedStudent.full_name?.[0] ??
+                      "?"}
+                    {selectedStudent.last_name?.[0] ?? ""}
                   </span>
                 </div>
               </div>

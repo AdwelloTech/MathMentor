@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Sparkles,
 } from "lucide-react";
+import DOMPurify from "dompurify";
 import {
   formatStudentTutorMaterialDate,
   formatFileSize,
@@ -352,7 +353,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                         <div
                           className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
                           dangerouslySetInnerHTML={{
-                            __html: material.content || "",
+                            __html: DOMPurify.sanitize(material.content || ""),
                           }}
                         />
                       </CardContent>

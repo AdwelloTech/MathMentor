@@ -211,7 +211,8 @@ const StudentProfile: React.FC = () => {
       try {
         // Build raw updates object (may contain undefined values)
         const rawUpdates = {
-          profile_image_url: imageUrl || undefined,
+          // Keep null to explicitly clear the image in AuthContext as well
+          profile_image_url: imageUrl,
         };
 
         // Remove undefined keys so Dexie.update leaves them untouched
@@ -296,15 +297,23 @@ const StudentProfile: React.FC = () => {
           first_name: updateData.first_name,
           last_name: updateData.last_name,
           full_name: updateData.full_name,
-          phone: updateData.phone || undefined,
-          address: updateData.address || undefined,
-          gender: updateData.gender || undefined,
-          emergency_contact: updateData.emergency_contact || undefined,
-          age: updateData.age || undefined,
-          grade_level_id: updateData.grade_level_id || undefined,
+          phone: updateData.phone, // allow null
+          address: updateData.address, // allow null
+          gender: updateData.gender, // allow null
+          emergency_contact: updateData.emergency_contact, // allow null
+          age: updateData.age, // allow null
+          grade_level_id: updateData.grade_level_id, // allow null
           has_learning_disabilities: updateData.has_learning_disabilities,
-          learning_needs_description:
-            updateData.learning_needs_description || undefined,
+          learning_needs_description: updateData.learning_needs_description, // allow null
+          // Keep AuthContext in sync for the rest as well
+          current_grade: updateData.current_grade,
+          academic_set: updateData.academic_set,
+          parent_name: updateData.parent_name,
+          parent_phone: updateData.parent_phone,
+          parent_email: updateData.parent_email,
+          city: updateData.city,
+          postcode: updateData.postcode,
+          school_name: updateData.school_name,
         };
 
         // Remove undefined keys so Dexie.update leaves them untouched
@@ -336,7 +345,7 @@ const StudentProfile: React.FC = () => {
 
   // Group grade levels by category for better UX
   const groupedGradeLevels = React.useMemo(() => {
-    return gradeLevels.reduce((acc, gradeLevel) => {
+    return (gradeLevels ?? []).reduce((acc, gradeLevel) => {
       const category = gradeLevel.category;
       if (!acc[category]) {
         acc[category] = [];

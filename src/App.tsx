@@ -72,12 +72,13 @@ function App() {
       <Routes>
         {/* Reset password route - always accessible regardless of auth status */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Admin login - accessible regardless of regular user session */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
 
         {/* Public routes */}
         {!user && !isAdminLoggedIn ? (
           <>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
@@ -260,27 +261,6 @@ function App() {
 
               {/* Tutor application route - accessible to all logged-in users */}
               <Route path="apply-tutor" element={<TutorApplicationPage />} />
-
-              {/* Student routes */}
-              <Route
-                path="student"
-                element={
-                  <ProtectedRoute requiredRole="student">
-                    <StudentLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<StudentDashboard />} />
-                <Route path="book-session" element={<BookSessionPage />} />
-                <Route
-                  path="book-consultation"
-                  element={<BookConsultationPage />}
-                />
-                <Route
-                  path="manage-sessions"
-                  element={<ManageSessionsPage />}
-                />
-              </Route>
 
               {/* Error routes */}
               <Route path="unauthorized" element={<UnauthorizedPage />} />

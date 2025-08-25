@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import DOMPurify from "dompurify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -38,6 +39,12 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
   const hasContent = material.content && material.content.trim().length > 0;
   const isPdfFile =
     hasFile && material.file_name?.toLowerCase().endsWith(".pdf");
+
+  // Sanitize untrusted HTML content
+  const sanitizedContent = useMemo(
+    () => DOMPurify.sanitize(material.content || ""),
+    [material.content]
+  );
 
   const handleClose = () => {
     if (!loading) {
@@ -288,11 +295,10 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                         </h3>
                       </CardHeader>
                       <CardContent>
+                        {/* Sanitize untrusted HTML content */}
                         <div
                           className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
-                          dangerouslySetInnerHTML={{
-                            __html: material.content || "",
-                          }}
+                          dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                         />
                       </CardContent>
                     </Card>

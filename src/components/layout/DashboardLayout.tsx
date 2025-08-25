@@ -185,7 +185,9 @@ const DashboardLayout: React.FC = () => {
         if (error) return;
         if (!data) return;
         // Replace the list with current pending requests to avoid stale items lingering
-        setInstantRequests((data as any[]).filter((r: any) => r.status === "pending"));
+        setInstantRequests(
+          (data as any[]).filter((r: any) => r.status === "pending")
+        );
       } catch (_) {}
     }, 10000);
 
@@ -253,7 +255,7 @@ const DashboardLayout: React.FC = () => {
       const { data, error } = await supabase
         .from("id_verifications")
         .select("*")
-        .eq("user_id", profile.id) // Use profile.id instead of user.id
+        .eq("user_id", user.id) // Match id_verifications.user_id to auth user's ID
         .order("submitted_at", { ascending: false })
         .limit(1);
 
@@ -288,6 +290,8 @@ const DashboardLayout: React.FC = () => {
     try {
       if (!profile?.id) return;
       setAcceptingId(requestId);
+      // Open a placeholder tab immediately to avoid popup blockers
+      const newTab = window.open("", "_blank");
       const accepted = await instantSessionService.acceptRequest(
         requestId,
         profile.id
@@ -296,7 +300,14 @@ const DashboardLayout: React.FC = () => {
       setDismissedIds((prev) => new Set(prev).add(requestId));
       setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
       if (accepted.jitsi_meeting_url) {
-        window.open(accepted.jitsi_meeting_url, "_blank");
+        if (newTab) {
+          newTab.location.href = accepted.jitsi_meeting_url;
+        } else {
+          window.open(accepted.jitsi_meeting_url, "_blank");
+        }
+      } else {
+        // If no URL, close the blank tab
+        newTab?.close();
       }
     } catch (e) {
       console.error(e);

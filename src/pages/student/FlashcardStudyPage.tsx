@@ -261,7 +261,15 @@ const FlashcardStudyPage: React.FC = () => {
           <motion.div
             className="relative cursor-pointer"
             style={{ perspective: "1200px" }}
+            role="button"
+            tabIndex={0}
             onClick={() => setShowBack((s) => !s)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setShowBack((s) => !s);
+              }
+            }}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}

@@ -127,7 +127,7 @@ const StudentTutorMaterialCard: React.FC<
 
   return (
     <Card
-      className={`group  transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg h-[245px] w-[400px] flex flex-col overflow-hidden ${
+      className={`group transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg h-[245px] w-full sm:w-[360px] md:w-[400px] flex flex-col overflow-hidden ${
         !hasAccess ? "opacity-75" : ""
       } ${isPremium ? "ring-2 ring-yellow-400/20" : ""}`}
       onClick={handleView}

@@ -93,13 +93,13 @@ const StudentQuizDashboard: React.FC = () => {
       // Filter by search term
       if (searchTerm.trim()) {
         const term = searchTerm.toLowerCase().trim();
-        filtered = filtered.filter(
-          (quiz) =>
-            quiz.title?.toLowerCase().includes(term) ||
-            quiz.description?.toLowerCase().includes(term) ||
-            quiz.subject?.toLowerCase().includes(term) ||
-            quiz.tutor?.full_name?.toLowerCase().includes(term)
-        );
+        filtered = filtered.filter((quiz) => {
+          const title = (quiz.title ?? "").toLowerCase();
+          const desc = (quiz.description ?? "").toLowerCase();
+          const subject = (quiz.subject ?? "").toLowerCase();
+          const tutor = (quiz.tutor?.full_name ?? "").toLowerCase();
+          return [title, desc, subject, tutor].some((f) => f.includes(term));
+        });
       }
 
       // Filter by subject
@@ -310,7 +310,7 @@ const StudentQuizDashboard: React.FC = () => {
                     {quizzes.length > 0
                       ? Math.round(
                           quizzes.reduce(
-                            (sum, q) => sum + q.time_limit_minutes,
+                            (sum, q) => sum + Number(q.time_limit_minutes ?? 0),
                             0
                           ) / quizzes.length
                         )

@@ -137,6 +137,7 @@ const TakeQuizPage: React.FC = () => {
   };
 
   const handleSubmitQuiz = async () => {
+    if (submitting || showResults) return;
     try {
       setSubmitting(true);
 

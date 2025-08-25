@@ -305,7 +305,7 @@ const TutorDashboard: React.FC = () => {
       const { data, error } = await supabase
         .from("id_verifications")
         .select("*")
-        .eq("user_id", profile.id) // Use profile.id instead of user.id
+        .eq("user_id", user.id) // Match id_verifications.user_id to auth user's ID
         .order("submitted_at", { ascending: false })
         .limit(1);
 

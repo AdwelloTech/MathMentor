@@ -347,9 +347,19 @@ const TutorDashboard: React.FC = () => {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.includes("pdf") && !file.type.includes("document")) {
-      setUploadError("Please upload a PDF or Word document");
-      return;
+    const allowedTypes = new Set([
+      "application/pdf",
+      "application/msword", // .doc
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+    ]);
+    if (!allowedTypes.has(file.type)) {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (!ext || !["pdf", "doc", "docx"].includes(ext)) {
+        setUploadError(
+          "Please upload a PDF or Word document (.pdf, .doc, .docx)"
+        );
+        return;
+      }
     }
 
     // Validate file size (max 5MB)
@@ -376,6 +386,7 @@ const TutorDashboard: React.FC = () => {
       console.error("CV upload error:", error);
       setUploadError("Failed to upload CV. Please try again.");
     } finally {
+      setIsUploading(false);
       setLoading(false);
     }
   };

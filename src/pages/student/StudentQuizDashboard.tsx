@@ -104,7 +104,10 @@ const StudentQuizDashboard: React.FC = () => {
 
       // Filter by subject
       if (selectedSubject && selectedSubject !== "all") {
-        filtered = filtered.filter((quiz) => quiz.subject === selectedSubject);
+        const ss = selectedSubject.toLowerCase();
+        filtered = filtered.filter(
+          (quiz) => (quiz.subject ?? "").toLowerCase() === ss
+        );
       }
 
       setQuizzes(filtered);

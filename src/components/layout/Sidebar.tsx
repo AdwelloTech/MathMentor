@@ -56,20 +56,24 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Fetch profile image when component mounts or profile changes
   useEffect(() => {
+    let isMounted = true;
     const fetchProfileImage = async () => {
       if (profile?.user_id) {
         try {
           const activeImage = await getActiveProfileImage(profile.user_id);
           if (activeImage) {
+            if (!isMounted) return;
             setProfileImage(activeImage);
             const imageUrl = getProfileImageUrl(activeImage.file_path);
             setProfileImageUrl(imageUrl);
           } else {
+            if (!isMounted) return;
             setProfileImage(null);
             setProfileImageUrl(null);
           }
         } catch (error) {
           console.error("Error fetching profile image:", error);
+          if (!isMounted) return;
           setProfileImage(null);
           setProfileImageUrl(null);
         }
@@ -77,6 +81,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
 
     fetchProfileImage();
+    return () => {
+      isMounted = false;
+    };
   }, [profile?.user_id]);
 
   // Add admin-specific navigation

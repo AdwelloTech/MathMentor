@@ -33,7 +33,7 @@ import {
 interface StudentTutorMaterialCardComponentProps
   extends StudentTutorMaterialCardProps {
   onView: () => void;
-  onViewCountUpdate?: (materialId: string, newCount: number) => void;
+  onViewCountIncrement?: (materialId: string, increment: number) => void;
 }
 
 const StudentTutorMaterialCard: React.FC<
@@ -55,7 +55,7 @@ const StudentTutorMaterialCard: React.FC<
   createdAt,
   hasAccess,
   onView,
-  onViewCountUpdate,
+  onViewCountIncrement,
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -75,9 +75,9 @@ const StudentTutorMaterialCard: React.FC<
         console.log("View tracking completed successfully");
 
         // Update the local view count after successful tracking
-        if (onViewCountUpdate) {
-          console.log("Updating local view count by 1");
-          onViewCountUpdate(id, 1);
+        if (onViewCountIncrement) {
+          console.log("Incrementing local view count by 1");
+          onViewCountIncrement(id, 1);
         }
 
         // Mark that we've tracked this view

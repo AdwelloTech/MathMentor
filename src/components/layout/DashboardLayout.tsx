@@ -287,11 +287,12 @@ const DashboardLayout: React.FC = () => {
   };
 
   const handleAcceptInstant = async (requestId: string) => {
+    let newTab: Window | null = null;
     try {
       if (!profile?.id) return;
       setAcceptingId(requestId);
       // Open a placeholder tab immediately to avoid popup blockers
-      const newTab = window.open("", "_blank");
+      newTab = window.open("", "_blank");
       const accepted = await instantSessionService.acceptRequest(
         requestId,
         profile.id
@@ -300,17 +301,18 @@ const DashboardLayout: React.FC = () => {
       setDismissedIds((prev) => new Set(prev).add(requestId));
       setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
       if (accepted.jitsi_meeting_url) {
-        if (newTab) {
-          newTab.location.href = accepted.jitsi_meeting_url;
-        } else {
-          window.open(accepted.jitsi_meeting_url, "_blank");
-        }
+        if (newTab) newTab.location.href = accepted.jitsi_meeting_url;
+        else window.open(accepted.jitsi_meeting_url, "_blank");
       } else {
         // If no URL, close the blank tab
         newTab?.close();
       }
     } catch (e) {
       console.error(e);
+      // Close placeholder tab on error
+      try {
+        newTab?.close();
+      } catch {}
     } finally {
       setAcceptingId(null);
     }
@@ -463,6 +465,18 @@ const DashboardLayout: React.FC = () => {
               </div>
             </div>
           </motion.div>
+        )}
+
+        {/* Mobile menu button for students */}
+        {profile?.role === "student" && (
+          <button
+            type="button"
+            aria-label="Open menu"
+            onClick={() => setSidebarOpen(true)}
+            className="fixed top-4 left-4 z-40 inline-flex items-center justify-center rounded-lg p-2 text-gray-700 bg-white/90 backdrop-blur border border-gray-200 shadow-sm lg:hidden"
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </button>
         )}
 
         {/* Main content */}

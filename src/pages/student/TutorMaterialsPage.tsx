@@ -440,7 +440,7 @@ const TutorMaterialsPage: React.FC = () => {
                       material.is_premium ? hasPremiumAccess : true
                     )}
                     onView={() => handleViewMaterial(material)}
-                    onViewCountUpdate={handleViewCountUpdate}
+                    onViewCountIncrement={handleViewCountUpdate}
                   />
                 </div>
               ))}

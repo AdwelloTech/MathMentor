@@ -89,7 +89,8 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
   const handleViewFile = () => {
     if (material.file_url) {
-      window.open(material.file_url, "_blank");
+      const w = window.open(material.file_url, "_blank", "noopener,noreferrer");
+      if (w) w.opener = null;
     }
   };
 

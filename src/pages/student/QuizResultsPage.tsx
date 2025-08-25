@@ -270,7 +270,10 @@ const QuizResultsPage: React.FC = () => {
                           </div>
 
                           <Button
-                            onClick={() => loadAttemptDetails(attempt.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              loadAttemptDetails(attempt.id);
+                            }}
                             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
                           >
                             <BarChart3 className="h-4 w-4 mr-2" />

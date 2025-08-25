@@ -32,16 +32,7 @@ import {
   EyeOff,
 } from "lucide-react";
 
-// PDF imports
-// @ts-ignore - types are bundled differently
-import pdfMake from "pdfmake/build/pdfmake";
-// @ts-ignore
-import pdfFonts from "pdfmake/build/vfs_fonts";
-// Make vfs assignment robust across different builds (pdfFonts.vfs or pdfFonts.pdfMake.vfs)
-// @ts-ignore
-const _vfs = (pdfFonts as any)?.vfs || (pdfFonts as any)?.pdfMake?.vfs;
-// @ts-ignore
-if (_vfs) (pdfMake as any).vfs = _vfs;
+// PDF imports are lazy-loaded in downloadVectorFastPdf() to reduce bundle size
 
 const FlashcardStudyPage: React.FC = () => {
   const { setId } = useParams<{ setId: string }>();
@@ -71,7 +62,17 @@ const FlashcardStudyPage: React.FC = () => {
     setIndex((i) => (i - 1 + setData.cards.length) % setData.cards.length);
   };
 
-  const downloadVectorFastPdf = () => {
+  const downloadVectorFastPdf = async () => {
+    // Lazy-load heavy deps to keep initial bundle small and avoid SSR issues
+    const pdfMakeModule: any = await import("pdfmake/build/pdfmake");
+    const pdfFontsModule: any = await import("pdfmake/build/vfs_fonts");
+    const pdfMakeLocal: any = pdfMakeModule.default ?? pdfMakeModule;
+    const vfs =
+      pdfFontsModule?.vfs ??
+      pdfFontsModule?.default?.vfs ??
+      pdfFontsModule?.pdfMake?.vfs;
+    if (vfs) pdfMakeLocal.vfs = vfs;
+
     if (!setData) return;
     const dd: any = {
       pageSize: "A4",
@@ -145,7 +146,7 @@ const FlashcardStudyPage: React.FC = () => {
       dd.content.push(makeCard(c.back_text, false));
     });
 
-    pdfMake
+    pdfMakeLocal
       .createPdf(dd)
       .download(
         `${(setData.title || "flashcards").replace(
@@ -382,7 +383,11 @@ const FlashcardStudyPage: React.FC = () => {
                     className="h-full bg-gradient-to-r from-green-900 to-yellow-400 rounded-full"
                     initial={{ width: 0 }}
                     animate={{
-                      width: `${((index + 1) / setData.cards.length) * 100}%`,
+                      width: setData.cards.length
+                        ? `${Math.round(
+                            ((index + 1) / setData.cards.length) * 100
+                          )}%`
+                        : "0%",
                     }}
                     transition={{ duration: 0.3 }}
                   ></motion.div>
@@ -435,7 +440,10 @@ const FlashcardStudyPage: React.FC = () => {
           <Card className="bg-gradient-to-br from-slate-700 to-slate-800 border-0 shadow-xl rounded-2xl text-white">
             <CardContent className="p-6 text-center">
               <div className="text-3xl font-bold text-yellow-400 mb-2">
-                {Math.round(((index + 1) / setData.cards.length) * 100)}%
+                {setData.cards.length
+                  ? Math.round(((index + 1) / setData.cards.length) * 100)
+                  : 0}
+                %
               </div>
               <div className="text-sm font-medium opacity-90">Progress</div>
             </CardContent>

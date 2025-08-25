@@ -99,14 +99,15 @@ export interface CreateQuizData {
 
 export interface CreateQuestionData {
   question_text: string;
-  question_type: "multiple_choice" | "true_false";
+  question_type: "multiple_choice" | "true_false" | "short_answer";
   points: number;
   question_order: number;
   // Optional AI augmentation flags when creating questions
   is_ai_generated?: boolean;
   ai_status?: "pending" | "approved" | "discarded";
   ai_metadata?: Record<string, any>;
-  answers: CreateAnswerData[];
+  // Omit answers for short-answer questions
+  answers?: CreateAnswerData[];
 }
 
 export interface CreateAnswerData {

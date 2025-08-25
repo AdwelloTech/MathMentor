@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,6 +52,9 @@ const TakeQuizPage: React.FC = () => {
     correctAnswers: number;
     totalQuestions: number;
   } | null>(null);
+
+  // Ref for synchronous double-submission protection
+  const submittingRef = useRef(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
@@ -66,7 +69,7 @@ const TakeQuizPage: React.FC = () => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
             // Auto-submit when time runs out
-            if (!hasSubmitted) handleSubmitQuiz();
+            if (!hasSubmitted && !submittingRef.current) handleSubmitQuiz();
             return 0;
           }
           return prev - 1;
@@ -139,7 +142,9 @@ const TakeQuizPage: React.FC = () => {
 
   const handleSubmitQuiz = async () => {
     try {
-      if (submitting || showResults || hasSubmitted) return;
+      if (submitting || showResults || hasSubmitted || submittingRef.current)
+        return;
+      submittingRef.current = true; // synchronous gate
       setSubmitting(true);
       setHasSubmitted(true);
 
@@ -164,6 +169,7 @@ const TakeQuizPage: React.FC = () => {
       toast.error("Failed to submit quiz");
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   };
 
@@ -357,8 +363,22 @@ const TakeQuizPage: React.FC = () => {
                   </Button>
                 ) : (
                   <Button
-                    onClick={handleSubmitQuiz}
-                    disabled={submitting}
+                    onClick={() => {
+                      if (
+                        !hasSubmitted &&
+                        !submitting &&
+                        !showResults &&
+                        !submittingRef.current
+                      ) {
+                        handleSubmitQuiz();
+                      }
+                    }}
+                    disabled={
+                      submitting ||
+                      hasSubmitted ||
+                      showResults ||
+                      submittingRef.current
+                    }
                     className="bg-yellow-500 hover:bg-yellow-600 text-green-900 font-semibold"
                   >
                     {submitting ? (

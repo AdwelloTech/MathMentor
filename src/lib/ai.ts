@@ -3,7 +3,7 @@ export interface GenerateAIRequest {
   gradeLevel?: string;
   numQuestions?: number;
   difficulty?: "easy" | "medium" | "hard";
-  questionType?: "multiple_choice" | "true_false";
+  questionType?: "multiple_choice" | "true_false" | "short_answer";
   title?: string;
   pdfText?: string;
 }
@@ -15,9 +15,9 @@ export interface GeneratedAIAnswer {
 
 export interface GeneratedAIQuestion {
   question_text: string;
-  question_type: "multiple_choice" | "true_false";
+  question_type: "multiple_choice" | "true_false" | "short_answer";
   points: number;
-  answers: GeneratedAIAnswer[];
+  answers?: GeneratedAIAnswer[];
   is_ai_generated: boolean;
   ai_status: "pending" | "approved" | "discarded";
   ai_metadata?: Record<string, any>;
@@ -29,7 +29,10 @@ export async function generateAIQuestions(
   gradeLevel?: string,
   numQuestions: number = 4,
   difficulty: "easy" | "medium" | "hard" = "medium",
-  questionType: "multiple_choice" | "true_false" = "multiple_choice",
+  questionType:
+    | "multiple_choice"
+    | "true_false"
+    | "short_answer" = "multiple_choice",
   title?: string,
   pdfText?: string
 ) {

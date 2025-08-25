@@ -39,7 +39,7 @@ const CreateQuizPage: React.FC = () => {
     "medium"
   );
   const [aiQuestionType, setAiQuestionType] = useState<
-    "multiple_choice" | "true_false"
+    "multiple_choice" | "true_false" | "short_answer"
   >("multiple_choice");
   const [questionFilter, setQuestionFilter] = useState<"all" | "manual" | "ai">(
     "all"
@@ -554,6 +554,7 @@ const CreateQuizPage: React.FC = () => {
                 >
                   <option value="multiple_choice">Multiple Choice</option>
                   <option value="true_false">True/False</option>
+                  <option value="short_answer">Short Answer</option>
                 </select>
               </div>
               <div>

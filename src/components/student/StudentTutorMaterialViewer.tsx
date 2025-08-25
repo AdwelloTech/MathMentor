@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import DOMPurify from "dompurify";
 import {
   X,
   FileText,
@@ -348,7 +349,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                         <div
                           className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
                           dangerouslySetInnerHTML={{
-                            __html: material.content || "",
+                            __html: DOMPurify.sanitize(material.content || ""),
                           }}
                         />
                       </CardContent>

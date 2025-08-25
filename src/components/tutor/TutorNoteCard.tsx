@@ -50,28 +50,25 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
   const hasFile = fileUrl && fileName;
   const hasContent = !hasFile; // If no file, assume it has text content
 
-  // Track unique view when component mounts (student views the material)
+  // Track unique view when component mounts (only for students, not tutors/admins)
   useEffect(() => {
-    const trackUniqueView = async () => {
-      // Check if we've already tracked this view in this session
-      const viewKey = `view_tracked_${id}_${user?.id}`;
-      const hasTrackedInSession = sessionStorage.getItem(viewKey);
+    // Only count views for students, not tutors/admins
+    if (user?.role !== "student") return;
 
-      if (user && !hasTrackedInSession) {
+    const trackUniqueView = async () => {
+      const viewKey = `view_tracked_${id}_${user.id}`;
+      if (!sessionStorage.getItem(viewKey)) {
         try {
           await incrementTutorNoteViewCountUnique(id, user.id);
-          // Mark that we've tracked this view in this session
           sessionStorage.setItem(viewKey, "true");
-        } catch (error) {
-          console.error("Error tracking unique view:", error);
-          // Don't throw error - view tracking failure shouldn't break the component
+        } catch {
+          /* silent - view tracking failure shouldn't break the component */
         }
       }
     };
 
-    // Only track view once when component mounts
     trackUniqueView();
-  }, [id, user]); // Keep minimal dependencies
+  }, [id, user]);
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't trigger card click if clicking on buttons or file links

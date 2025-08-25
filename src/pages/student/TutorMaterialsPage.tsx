@@ -144,52 +144,32 @@ const TutorMaterialsPage: React.FC = () => {
   };
 
   const handleViewCountUpdate = (materialId: string, increment: number) => {
-    setMaterials((prevMaterials) =>
-      prevMaterials.map((material) =>
-        material.id === materialId
-          ? { ...material, view_count: material.view_count + increment }
-          : material
-      )
-    );
+    const updateMaterialCount = (material: any) =>
+      material.id === materialId
+        ? {
+            ...material,
+            view_count: Math.max(0, (material.view_count ?? 0) + increment),
+          }
+        : material;
 
-    // Also update allMaterials to keep filtering working correctly
-    setAllMaterials((prevAllMaterials) =>
-      prevAllMaterials.map((material) =>
-        material.id === materialId
-          ? { ...material, view_count: material.view_count + increment }
-          : material
-      )
-    );
+    setMaterials((prev) => prev.map(updateMaterialCount));
+    setAllMaterials((prev) => prev.map(updateMaterialCount));
   };
 
   const handleDownloadCountUpdate = (materialId: string, increment: number) => {
-    console.log("handleDownloadCountUpdate called with:", {
-      materialId,
-      increment,
-    });
+    const updateMaterialCount = (material: any) =>
+      material.id === materialId
+        ? {
+            ...material,
+            download_count: Math.max(
+              0,
+              (material.download_count ?? 0) + increment
+            ),
+          }
+        : material;
 
-    setMaterials((prevMaterials) => {
-      console.log("Previous materials state:", prevMaterials);
-      const updatedMaterials = prevMaterials.map((material) =>
-        material.id === materialId
-          ? { ...material, download_count: material.download_count + increment }
-          : material
-      );
-      console.log("Updated materials state:", updatedMaterials);
-      return updatedMaterials;
-    });
-
-    // Also update allMaterials to keep filtering working correctly
-    setAllMaterials((prevAllMaterials) => {
-      console.log("Previous allMaterials state:", prevAllMaterials);
-      const updatedAllMaterials = prevAllMaterials.map((material) =>
-        material.id === materialId
-          ? { ...material, download_count: material.download_count + increment }
-          : material
-      );
-      console.log("Updated allMaterials state:", updatedAllMaterials);
-      return updatedAllMaterials;
-    });
+    setMaterials((prev) => prev.map(updateMaterialCount));
+    setAllMaterials((prev) => prev.map(updateMaterialCount));
   };
 
   const clearFilters = () => {

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,7 +17,6 @@ import {
   formatFileSize,
   getStudentTutorMaterialSubjectColor,
   truncateStudentTutorMaterialText,
-  incrementStudentTutorMaterialViewCountUnique,
   incrementStudentTutorMaterialDownloadCount,
   type StudentTutorMaterialCardProps,
 } from "@/lib/studentTutorMaterials";
@@ -33,7 +32,6 @@ import {
 interface StudentTutorMaterialCardComponentProps
   extends StudentTutorMaterialCardProps {
   onView: () => void;
-  onViewCountUpdate?: (materialId: string, newCount: number) => void;
   onDownloadCountUpdate?: (materialId: string, newCount: number) => void;
 }
 
@@ -56,46 +54,15 @@ const StudentTutorMaterialCard: React.FC<
   createdAt,
   hasAccess,
   onView,
-  onViewCountUpdate,
   onDownloadCountUpdate,
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const hasFile = fileUrl && fileName;
 
-  // Track view when component mounts (student views the material)
-  useEffect(() => {
-    const trackView = async () => {
-      // Check if we've already tracked this view in this session
-      const viewKey = `view_tracked_${id}_${user?.id}`;
-      const hasTrackedInSession = sessionStorage.getItem(viewKey);
+  // View tracking is handled by the StudentTutorMaterialViewer when it opens
 
-      if (user && !hasTrackedInSession && hasAccess) {
-        try {
-          console.log("Tracking view for material:", id);
-          await incrementStudentTutorMaterialViewCountUnique(id, user.id);
-          console.log("View tracking completed successfully");
-
-          // Update the local view count after successful tracking
-          if (onViewCountUpdate) {
-            console.log("Updating local view count by 1");
-            onViewCountUpdate(id, 1);
-          }
-
-          // Mark that we've tracked this view in this session
-          sessionStorage.setItem(viewKey, "true");
-        } catch (error) {
-          console.error("Error tracking view:", error);
-          // Don't throw error - view tracking failure shouldn't break the component
-        }
-      }
-    };
-
-    // Only track view once when component mounts and user has access
-    trackView();
-  }, [id, user, hasAccess]); // Keep minimal dependencies
-
-  const handleView = async () => {
+  const handleView = () => {
     if (!hasAccess) {
       return;
     }

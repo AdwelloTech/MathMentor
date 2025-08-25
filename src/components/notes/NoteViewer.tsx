@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import DOMPurify from "dompurify";
 import {
   XMarkIcon,
   EyeIcon,
@@ -112,7 +113,9 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ note, isOpen, onClose }) => {
                   <div
                     className="text-gray-800 leading-relaxed"
                     dangerouslySetInnerHTML={{
-                      __html: formatNoteContent(note.content),
+                      __html: DOMPurify.sanitize(
+                        formatNoteContent(note.content)
+                      ),
                     }}
                   />
                 </div>

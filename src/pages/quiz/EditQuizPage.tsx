@@ -49,7 +49,7 @@ const EditQuizPage: React.FC = () => {
     "medium"
   );
   const [aiQuestionType, setAiQuestionType] = useState<
-    "multiple_choice" | "true_false"
+    "multiple_choice" | "true_false" | "short_answer"
   >("multiple_choice");
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [pdfName, setPdfName] = useState<string | null>(null);
@@ -486,6 +486,7 @@ const EditQuizPage: React.FC = () => {
             >
               <option value="multiple_choice">Multiple Choice</option>
               <option value="true_false">True/False</option>
+              <option value="short_answer">Short Answer</option>
             </select>
           </div>
           <div>

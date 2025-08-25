@@ -165,29 +165,11 @@ export const incrementStudentTutorMaterialViewCount = async (
   materialId: string
 ): Promise<void> => {
   try {
-    // First get the current view count
-    const { data: currentNote, error: fetchError } = await supabase
-      .from("tutor_notes")
-      .select("view_count")
-      .eq("id", materialId)
-      .single();
-
-    if (fetchError) {
-      console.warn("Error fetching current view count:", fetchError);
-      return;
-    }
-
-    // Then update with the incremented value
-    const { error } = await supabase
-      .from("tutor_notes")
-      .update({
-        view_count: (currentNote?.view_count || 0) + 1,
-      })
-      .eq("id", materialId);
-
+    const { error } = await supabase.rpc("increment_tutor_note_view_count", {
+      material_id: materialId,
+    });
     if (error) {
-      console.warn("Error incrementing view count:", error);
-      // Don't throw error - view tracking failure shouldn't break the component
+      console.warn("Error incrementing view count (RPC):", error);
     }
   } catch (error) {
     console.warn("Error in incrementStudentTutorMaterialViewCount:", error);
@@ -200,32 +182,24 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
   studentId: string
 ): Promise<void> => {
   try {
-    // First get the current view count
-    const { data: currentNote, error: fetchError } = await supabase
-      .from("tutor_notes")
-      .select("view_count")
-      .eq("id", materialId)
-      .single();
+    if (!studentId) return;
 
-    if (fetchError) {
-      console.warn("Error fetching current view count:", fetchError);
-      return;
-    }
-
-    // Then update with the incremented value
-    const { error } = await supabase
-      .from("tutor_notes")
-      .update({
-        view_count: (currentNote?.view_count || 0) + 1,
-      })
-      .eq("id", materialId);
+    const { error } = await supabase.rpc(
+      "increment_tutor_note_view_count_unique",
+      {
+        material_id: materialId,
+        user_id: studentId,
+      }
+    );
 
     if (error) {
-      console.warn("Error incrementing view count:", error);
-      // Don't throw error - view tracking failure shouldn't break the component
+      console.warn("Error incrementing unique view count (RPC):", error);
     }
   } catch (error) {
-    console.warn("Error in view tracking:", error);
+    console.warn(
+      "Error in incrementStudentTutorMaterialViewCountUnique:",
+      error
+    );
     // Don't throw error - view tracking failure shouldn't break the component
   }
 };
@@ -236,36 +210,18 @@ export const incrementStudentTutorMaterialDownloadCount = async (
   try {
     console.log("Starting download count increment for material:", materialId);
 
-    // First get the current download count
-    const { data: currentNote, error: fetchError } = await supabase
-      .from("tutor_notes")
-      .select("download_count")
-      .eq("id", materialId)
-      .single();
-
-    if (fetchError) {
-      console.warn("Error fetching current download count:", fetchError);
-      return;
-    }
-
-    console.log("Current download count:", currentNote?.download_count);
-
-    // Then update with the incremented value
-    const { error } = await supabase
-      .from("tutor_notes")
-      .update({
-        download_count: (currentNote?.download_count || 0) + 1,
-      })
-      .eq("id", materialId);
+    const { error } = await supabase.rpc(
+      "increment_tutor_note_download_count",
+      {
+        material_id: materialId,
+      }
+    );
 
     if (error) {
       console.warn("Error incrementing download count:", error);
       // Don't throw error - download tracking failure shouldn't break the component
     } else {
-      console.log(
-        "Download count updated successfully to:",
-        (currentNote?.download_count || 0) + 1
-      );
+      console.log("Download count updated successfully");
     }
   } catch (error) {
     console.warn("Error in incrementStudentTutorMaterialDownloadCount:", error);

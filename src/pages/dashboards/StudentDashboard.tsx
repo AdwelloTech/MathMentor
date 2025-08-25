@@ -664,28 +664,28 @@ const StudentDashboard: React.FC = () => {
                       title: "Book Session",
                       description: "Schedule a tutoring session",
                       icon: PlayIcon,
-                      color: "from-green-900 to-green-900",
+                      bgClass: "from-green-900 to-green-900",
                       action: () => navigate("/student/book-session"),
                     },
                     {
                       title: "Take Quiz",
                       description: "Test your knowledge",
                       icon: AcademicCapIcon,
-                      color: "from-green-900 to-green-900",
+                      bgClass: "from-green-900 to-green-900",
                       action: () => navigate("/student/quizzes"),
                     },
                     {
                       title: "Study Notes",
                       description: "Review study materials",
                       icon: BookOpenIcon,
-                      color: "from-green-900 to-green-900",
+                      bgClass: "from-green-900 to-green-900",
                       action: () => navigate("/student/notes"),
                     },
                     {
                       title: "Flashcards",
                       description: "Practice with flashcards",
                       icon: CogIcon,
-                      color: "from-green-900 to-green-900",
+                      bgClass: "from-green-900 to-green-900",
                       action: () => navigate("/student/flashcards"),
                     },
                   ].map((action, index) => (
@@ -700,7 +700,7 @@ const StudentDashboard: React.FC = () => {
                       >
                         <CardContent className="p-6 text-center">
                           <div
-                            className={`bg-gradient-to-r ${action.color} w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg`}
+                            className={`bg-gradient-to-r ${action.bgClass} w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg`}
                           >
                             <action.icon className="w-6 h-6 text-white" />
                           </div>

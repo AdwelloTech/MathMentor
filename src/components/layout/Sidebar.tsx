@@ -337,7 +337,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
               {isHovered && (
                 <span className="overflow-hidden whitespace-nowrap text-gray-400">
-                  {useMemo(() => item.name, [item.name])}
+                  {item.name}
                 </span>
               )}
             </div>
@@ -390,7 +390,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </motion.div>
               {isHovered && (
                 <span className="overflow-hidden whitespace-nowrap font-medium">
-                  {useMemo(() => item.name, [item.name])}
+                  {item.name}
                 </span>
               )}
             </div>
@@ -456,24 +456,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                 )}
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-3 border-white shadow-sm" />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm" />
             </motion.div>
 
             {/* Profile Details */}
             {isHovered && (
               <div className="flex flex-col overflow-hidden">
                 <span className="text-sm font-semibold text-gray-900 truncate max-w-32">
-                  {useMemo(
-                    () => profile?.full_name || "User",
-                    [profile?.full_name]
-                  )}
+                  {profile?.full_name || "User"}
                 </span>
                 <span className="text-xs text-gray-500 truncate max-w-32">
-                  {useMemo(
-                    () =>
-                      profile?.role ? getRoleDisplayName(profile.role) : "User",
-                    [profile?.role]
-                  )}
+                  {profile?.role ? getRoleDisplayName(profile.role) : "User"}
                 </span>
               </div>
             )}

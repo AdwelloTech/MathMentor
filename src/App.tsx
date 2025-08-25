@@ -309,26 +309,7 @@ function App() {
               {/* Tutor application route - accessible to all logged-in users */}
               <Route path="apply-tutor" element={<TutorApplicationPage />} />
 
-              {/* Student routes */}
-              <Route
-                path="student"
-                element={
-                  <ProtectedRoute requiredRole="student">
-                    <StudentLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<StudentDashboard />} />
-                <Route path="book-session" element={<BookSessionPage />} />
-                <Route
-                  path="book-consultation"
-                  element={<BookConsultationPage />}
-                />
-                <Route
-                  path="manage-sessions"
-                  element={<ManageSessionsPage />}
-                />
-              </Route>
+
 
               {/* Error routes */}
               <Route path="unauthorized" element={<UnauthorizedPage />} />

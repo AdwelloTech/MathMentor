@@ -183,12 +183,16 @@ const CreateQuizPage: React.FC = () => {
           answer_order: i + 1,
         })),
       }));
-      setQuestions((prev) => [...prev, ...mapped]);
+      const capacity = Math.max(0, 40 - questions.length);
+      const toAdd = mapped.slice(0, capacity);
+      setQuestions((prev) => [...prev, ...toAdd]);
       setQuestionFilter("ai");
       // Reset number of questions to 1 after generation
       setAiNumQuestions(1);
       toast.success(
-        `Generated ${mapped.length} question${mapped.length > 1 ? "s" : ""}`
+        `Generated ${toAdd.length} question${toAdd.length === 1 ? "" : "s"}${
+          mapped.length > toAdd.length ? " (reached 40-question limit)" : ""
+        }`
       );
     } catch (e) {
       console.error(e);
@@ -454,9 +458,11 @@ const CreateQuizPage: React.FC = () => {
               <input
                 type="number"
                 value={quizData.time_limit_minutes}
-                onChange={(e) =>
-                  updateQuizData("time_limit_minutes", parseInt(e.target.value))
-                }
+                onChange={(e) => {
+                  const n = Number.parseInt(e.target.value || "0");
+                  const clamped = Math.min(180, Math.max(1, Number.isNaN(n) ? 1 : n));
+                  updateQuizData("time_limit_minutes", clamped);
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="1"
                 max="180"
@@ -711,13 +717,14 @@ const CreateQuizPage: React.FC = () => {
                           <input
                             type="number"
                             value={question.points}
-                            onChange={(e) =>
-                              updateQuestion(
-                                questionIndex,
-                                "points",
-                                parseInt(e.target.value)
-                              )
-                            }
+                            onChange={(e) => {
+                              const n = Number.parseInt(e.target.value || "0");
+                              const clamped = Math.min(
+                                100,
+                                Math.max(1, Number.isNaN(n) ? 1 : n)
+                              );
+                              updateQuestion(questionIndex, "points", clamped);
+                            }}
                             className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"
                             min="1"
                             max="100"
@@ -846,7 +853,7 @@ const CreateQuizPage: React.FC = () => {
                 >
                   {loading ? (
                     <>
-                      <LoadingSpinner size="sm" />
+                      <LoadingSpinner />
                       <span className="ml-2">Creating Quiz...</span>
                     </>
                   ) : (

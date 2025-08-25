@@ -84,8 +84,11 @@ const QuizResultsPage: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateInput?: string | Date | null) => {
+    if (!dateInput) return "—";
+    const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -344,8 +347,7 @@ const QuizResultsPage: React.FC = () => {
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>
-                      Started:{" "}
-                      {formatDate(selectedAttempt?.attempt.started_at || "")}
+                      Started: {formatDate(selectedAttempt?.attempt.started_at)}
                     </span>
                   </div>
                   {selectedAttempt?.attempt.completed_at && (

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import DOMPurify from "dompurify";
 import {
   X,
   FileText,
@@ -39,6 +40,12 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
   const isPdfFile =
     hasFile && material.file_name?.toLowerCase().endsWith(".pdf");
 
+  // Sanitize HTML content to prevent XSS
+  const safeContent = useMemo(
+    () => DOMPurify.sanitize(material.content || ""),
+    [material.content]
+  );
+
   const handleClose = () => {
     if (!loading) {
       onClose();
@@ -50,11 +57,12 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
     try {
       setLoading(true);
-      // Increment download count
-      await incrementStudentTutorMaterialDownloadCount(material.id);
 
       // Force download by fetching the file and creating a blob
       const response = await fetch(material.file_url!);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -65,6 +73,8 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      // Count only on a confirmed successful download path
+      await incrementStudentTutorMaterialDownloadCount(material.id);
     } catch (error) {
       console.error("Error downloading file:", error);
       // Fallback: try direct download
@@ -72,9 +82,16 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
       link.href = material.file_url!;
       link.download = material.file_name || "download";
       link.target = "_blank";
+      link.rel = "noopener noreferrer";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      // Best-effort: count after initiating a direct download
+      try {
+        await incrementStudentTutorMaterialDownloadCount(material.id);
+      } catch (e) {
+        console.warn("Failed to record download count in fallback path:", e);
+      }
     } finally {
       setLoading(false);
     }
@@ -290,9 +307,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                       <CardContent>
                         <div
                           className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
-                          dangerouslySetInnerHTML={{
-                            __html: material.content || "",
-                          }}
+                          dangerouslySetInnerHTML={{ __html: safeContent }}
                         />
                       </CardContent>
                     </Card>

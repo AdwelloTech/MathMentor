@@ -186,13 +186,13 @@ const BookSessionPage: React.FC = () => {
     const matchesType =
       filterType === "all" || session.class_type_id === filterType;
     const matchesDate = !filterDate || session.date === filterDate;
+    const subj = session.subject?.display_name ?? "";
+    const fs = filterSubject.toLowerCase();
     const matchesSubject =
       !filterSubject ||
-      session.title.toLowerCase().includes(filterSubject.toLowerCase()) ||
-      (session.description &&
-        session.description
-          .toLowerCase()
-          .includes(filterSubject.toLowerCase()));
+      subj.toLowerCase().includes(fs) ||
+      session.title.toLowerCase().includes(fs) ||
+      (session.description && session.description.toLowerCase().includes(fs));
     const matchesSearch =
       !searchTerm ||
       session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

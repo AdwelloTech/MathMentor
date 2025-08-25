@@ -64,8 +64,10 @@ export const quizService = {
             question_id: question.id,
             answer_text: a.answer_text,
             is_correct: a.is_correct,
-            // allow DB default if not provided
-            answer_order: a.answer_order ?? null,
+            // let DB default apply if not provided
+            ...(a.answer_order !== undefined
+              ? { answer_order: a.answer_order }
+              : {}),
           }));
           const { error: answersError } = await supabase
             .from("quiz_answers")
@@ -189,8 +191,10 @@ export const quizService = {
           question_id: question.id,
           answer_text: a.answer_text,
           is_correct: a.is_correct,
-          // allow DB default if not provided
-          answer_order: a.answer_order ?? null,
+          // let DB default apply if not provided
+          ...(a.answer_order !== undefined
+            ? { answer_order: a.answer_order }
+            : {}),
         }));
         const { error: answersError } = await supabase
           .from("quiz_answers")

@@ -437,10 +437,17 @@ const QuizResultsPage: React.FC = () => {
                               {studentAnswer?.points_earned || 0}/
                               {question.points} points
                             </span>
-                            {isCorrect ? (
+                            {isCorrect === true ? (
                               <CheckCircle className="h-5 w-5 text-green-600" />
-                            ) : (
+                            ) : isCorrect === false ? (
                               <XCircle className="h-5 w-5 text-red-600" />
+                            ) : (
+                              <>
+                                <Clock className="h-5 w-5 text-yellow-600" />
+                                <span className="text-sm text-yellow-700">
+                                  Pending grading
+                                </span>
+                              </>
                             )}
                           </div>
                         </div>

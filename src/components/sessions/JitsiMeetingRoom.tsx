@@ -37,13 +37,40 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
   const [showEmbedded, setShowEmbedded] = useState(false);
   const jitsiContainerRef = useRef<HTMLDivElement>(null);
 
-  // Extract room name from Jitsi URL
+  // Extract room name from Jitsi URL using URL API for robustness
   const getRoomName = (url: string): string => {
-    const urlParts = url.split("/");
-    return urlParts[urlParts.length - 1] || "default-room";
+    try {
+      // Construct URL object to handle relative URLs safely
+      const urlObj = new URL(url);
+
+      // Get pathname and remove any trailing slash
+      const pathname = urlObj.pathname.replace(/\/$/, "");
+
+      // Split by "/" and filter out empty segments, then take the last one
+      const pathSegments = pathname.split("/").filter(Boolean);
+      const lastSegment = pathSegments[pathSegments.length - 1];
+
+      // Decode URI component and ensure we have a valid room name
+      const decodedRoomName = lastSegment ? decodeURIComponent(lastSegment) : "";
+
+      return decodedRoomName || "default-room";
+    } catch (error) {
+      // Fallback for relative URLs or invalid URLs
+      console.warn("Failed to parse Jitsi URL, using fallback method:", error);
+
+      // Remove query parameters and hash fragments
+      const baseUrl = url.split(/[?#]/)[0];
+
+      // Simple split as last resort
+      const urlParts = baseUrl.split("/");
+      const lastPart = urlParts[urlParts.length - 1];
+
+      return lastPart || "default-room";
+    }
   };
 
-  const roomName = session.jitsi_meeting_url
+  // Validate URL before processing and provide safe fallback
+  const roomName = session.jitsi_meeting_url && session.jitsi_meeting_url.trim()
     ? getRoomName(session.jitsi_meeting_url)
     : `room-${session.id}`;
 

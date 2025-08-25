@@ -41,10 +41,18 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
 
     setIsSubmitting(true);
 
+    // Require profile.id for rating creation - don't fall back to user.id
+    if (!user.profile?.id) {
+      console.error("❌ No profile.id available for rating submission");
+      toast.error("Unable to submit rating - profile information missing");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const ratingData: CreateRatingData = {
         session_id: session.id,
-        student_id: user.profile?.id ?? user.id, // Use profile.id when available, fallback to user.id
+        student_id: user.profile.id,
         tutor_id: session.tutor.id,
         rating,
         review_text: reviewText.trim() || undefined,

@@ -22,7 +22,7 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
   onSessionEnd,
   className = "",
 }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isSessionActive, setIsSessionActive] = useState<boolean>(false);
   const [isSessionEnded, setIsSessionEnded] = useState<boolean>(false);
@@ -169,7 +169,7 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [session, manuallyEnded]);
+  }, [session, manuallyEnded, isSessionCancelled]);
 
   // Check if rated when component loads and when session ends
   useEffect(() => {
@@ -354,6 +354,13 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
 
   // Handle manual session end
   const handleEndSession = async () => {
+    // Security check: Only tutors can end sessions
+    if (!profile?.role || profile.role !== "tutor") {
+      console.error("❌ Unauthorized: Only tutors can end sessions");
+      toast.error("You don't have permission to end this session");
+      return;
+    }
+
     console.log("🚨 End Session clicked! Current state:", {
       isSessionActive,
       isSessionEnded,
@@ -530,16 +537,18 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
                     {cancellingSession ? "Cancelling..." : "Cancel Session"}
                   </Button>
                 ) : (
-                  // End Session button (when session is active)
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEndSession}
-                    disabled={endingSession}
-                    className="border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 text-xs px-2 py-1 h-6"
-                  >
-                    {endingSession ? "Ending..." : "End Session"}
-                  </Button>
+                  // End Session button (when session is active) - Only for tutors
+                  profile?.role === "tutor" ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEndSession}
+                      disabled={endingSession}
+                      className="border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 text-xs px-2 py-1 h-6"
+                    >
+                      {endingSession ? "Ending..." : "End Session"}
+                    </Button>
+                  ) : null
                 )}
               </>
             )}

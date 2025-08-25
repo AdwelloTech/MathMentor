@@ -143,6 +143,8 @@ export interface CreateClassFormData {
 }
 
 export interface UpdateClassFormData {
+  /** The ID of the subject to assign; allows subject changes */
+  subject_id?: string | null;
   title?: string;
   description?: string;
   max_students?: number;

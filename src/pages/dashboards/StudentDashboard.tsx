@@ -407,28 +407,28 @@ const StudentDashboard: React.FC = () => {
                 name: "Total Sessions",
                 value: data.stats?.total_bookings || 0,
                 icon: VideoCameraIcon,
-                color: "green-900",
+                bgClass: "bg-green-900",
                 description: "All time bookings",
               },
               {
                 name: "Hours Learned",
                 value: calculateHoursLearned(),
                 icon: ClockIcon,
-                color: "green-900",
+                bgClass: "bg-green-900",
                 description: "Estimated learning time",
               },
               {
                 name: "Tutors Worked With",
                 value: data.stats?.total_tutors || 0,
                 icon: UserGroupIcon,
-                color: "green-900",
+                bgClass: "bg-green-900",
                 description: "Unique tutors",
               },
               {
                 name: "This Month",
                 value: data.stats?.bookings_this_month || 0,
                 icon: TrendingUpIcon,
-                color: "yellow-900",
+                bgClass: "bg-yellow-900",
                 description: "Sessions booked",
               },
             ].map((stat, index) => (
@@ -440,7 +440,7 @@ const StudentDashboard: React.FC = () => {
                 <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50">
                   <CardHeader className="pb-2">
                     <div
-                      className={`bg-${stat.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}
+                      className={`${stat.bgClass} w-12 h-12 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}
                     >
                       <stat.icon className="w-6 h-6 text-white" />
                     </div>

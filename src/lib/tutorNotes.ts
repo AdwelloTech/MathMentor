@@ -143,6 +143,13 @@ export async function getTutorNoteById(
     }
 
     // Transform the data to match the TutorNoteWithDetails format
+    const ns = Array.isArray(data.note_subjects)
+      ? data.note_subjects[0]
+      : (data.note_subjects as any | null);
+    const gl = Array.isArray(data.grade_levels)
+      ? data.grade_levels[0]
+      : (data.grade_levels as any | null);
+
     const transformedNote: TutorNoteWithDetails = {
       id: data.id,
       title: data.title,
@@ -152,12 +159,12 @@ export async function getTutorNoteById(
       file_name: data.file_name,
       file_size: data.file_size,
       subject_id: data.subject_id,
-      subject_name: data.note_subjects?.name || null,
-      subject_display_name: data.note_subjects?.display_name || null,
-      subject_color: data.note_subjects?.color || null,
+      subject_name: ns?.name ?? null,
+      subject_display_name: ns?.display_name ?? null,
+      subject_color: ns?.color ?? null,
       grade_level_id: data.grade_level_id,
-      grade_level_code: data.grade_levels?.code || null,
-      grade_level_display: data.grade_levels?.display_name || null,
+      grade_level_code: gl?.code ?? null,
+      grade_level_display: gl?.display_name ?? null,
       created_by: data.created_by,
       is_premium: data.is_premium,
       view_count: data.view_count,

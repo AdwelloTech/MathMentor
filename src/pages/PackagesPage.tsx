@@ -71,7 +71,7 @@ const PackagesPage: React.FC = () => {
 
     // Check if payment is required for the selected package
     const requiresPayment =
-      packageType && ["silver", "gold"].includes(packageType);
+      !!packageType && ["silver", "gold"].includes(packageType.toLowerCase());
 
     if (requiresPayment) {
       // Store the package type and show payment form
@@ -171,8 +171,10 @@ const PackagesPage: React.FC = () => {
     if (!currentPackage) return true;
 
     const packageOrder = ["free", "silver", "gold"];
-    const currentIndex = packageOrder.indexOf(currentPackage.package_type);
-    const targetIndex = packageOrder.indexOf(packageType);
+    const currentIndex = packageOrder.indexOf(
+      (currentPackage.package_type || "").toLowerCase()
+    );
+    const targetIndex = packageOrder.indexOf((packageType || "").toLowerCase());
 
     return targetIndex > currentIndex;
   };

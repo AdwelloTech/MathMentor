@@ -373,7 +373,11 @@ const FlashcardStudyPage: React.FC = () => {
                     className="h-full bg-gradient-to-r from-green-900 to-yellow-400 rounded-full"
                     initial={{ width: 0 }}
                     animate={{
-                      width: `${((index + 1) / setData.cards.length) * 100}%`,
+                      width: `${
+                        setData.cards.length
+                          ? ((index + 1) / setData.cards.length) * 100
+                          : 0
+                      }%`,
                     }}
                     transition={{ duration: 0.3 }}
                   ></motion.div>

@@ -113,7 +113,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("id", id)

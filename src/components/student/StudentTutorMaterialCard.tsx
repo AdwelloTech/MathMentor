@@ -97,11 +97,11 @@ const StudentTutorMaterialCard: React.FC<
     if (!hasAccess || !fileUrl) return;
 
     try {
-      // Increment download count
-      await incrementStudentTutorMaterialDownloadCount(id);
-
       // Force download by fetching the file and creating a blob
       const response = await fetch(fileUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -112,6 +112,7 @@ const StudentTutorMaterialCard: React.FC<
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      await incrementStudentTutorMaterialDownloadCount(id);
     } catch (error) {
       console.error("Error downloading file:", error);
       // Fallback: try direct download
@@ -119,9 +120,15 @@ const StudentTutorMaterialCard: React.FC<
       link.href = fileUrl;
       link.download = fileName || "download";
       link.target = "_blank";
+      link.rel = "noopener noreferrer";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      try {
+        await incrementStudentTutorMaterialDownloadCount(id);
+      } catch (e) {
+        console.warn("Failed to record download count in fallback path:", e);
+      }
     }
   };
 

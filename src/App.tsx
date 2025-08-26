@@ -39,6 +39,7 @@ import ManageFlashcardsPage from "./pages/tutor/ManageFlashcardsPage";
 import CreateEditFlashcardSetPage from "./pages/tutor/CreateEditFlashcardSetPage";
 import FlashcardsListPage from "./pages/student/FlashcardsListPage";
 import FlashcardStudyPage from "./pages/student/FlashcardStudyPage";
+import AdminLayout from "./components/layout/AdminLayout";
 
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
@@ -74,51 +75,68 @@ function App() {
     );
   }
 
-  // Additional check: ensure we have both user and profile before proceeding
-  // This prevents the brief moment where user exists but profile is still loading
-  const isAuthFullyInitialized = (user && profile) || isAdminLoggedIn;
+  // Check if user is fully authenticated (both user and profile exist)
+  const isUserAuthenticated = user && profile;
+  
+  // Check if we're on admin routes
+  const isOnAdminRoute = location.pathname.startsWith("/admin");
+  
+  // List of public routes that don't require authentication
+  const publicRoutes = [
+    "/login",
+    "/admin/login", 
+    "/register", 
+    "/forgot-password", 
+    "/reset-password"
+  ];
+  const isOnPublicRoute = publicRoutes.includes(location.pathname);
 
-  // If auth is not fully initialized but we're on a protected route,
-  // don't redirect to login immediately - wait for auth to complete
-  const isOnProtectedRoute =
-    location.pathname.startsWith("/tutor") ||
-    location.pathname.startsWith("/student") ||
-    location.pathname.startsWith("/admin") ||
-    location.pathname.startsWith("/principal") ||
-    location.pathname.startsWith("/teacher") ||
-    location.pathname.startsWith("/parent") ||
-    location.pathname.startsWith("/hr") ||
-    location.pathname.startsWith("/finance") ||
-    location.pathname.startsWith("/support");
-
-  // If we're on a protected route and auth is not fully initialized,
-  // show loading to prevent premature redirects
-  if (isOnProtectedRoute && !isAuthFullyInitialized) {
+  // If on admin login, always show it (it's a public route)
+  if (location.pathname === "/admin/login") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+      <div className="min-h-screen bg-gray-50">
+        <Routes>
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+        </Routes>
       </div>
     );
+  }
+
+  // Special handling for admin routes
+  if (isOnAdminRoute && location.pathname !== "/admin/login") {
+    // For admin routes (except login), check admin authentication
+    if (!isAdminLoggedIn) {
+      return (
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            <Route path="*" element={<Navigate to="/admin/login" replace />} />
+          </Routes>
+        </div>
+      );
+    }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Routes>
-        {/* Reset password route - always accessible regardless of auth status */}
+        {/* Public routes - always accessible */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-        {/* Public routes - only show when not authenticated and auth is fully initialized */}
-        {!isAuthFullyInitialized ? (
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        
+        {/* Handle authentication-based routing */}
+        {!isUserAuthenticated && !isAdminLoggedIn ? (
+          // Show auth pages when no user is logged in
           <>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            {/* Redirect any other route to login */}
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         ) : (
+          // Show protected routes when user is authenticated
           <>
-            {/* Protected routes */}
+            {/* Main application routes */}
             <Route path="/" element={<DashboardLayout />}>
               <Route index element={<DashboardRoute />} />
               <Route path="dashboard" element={<DashboardRoute />} />
@@ -151,63 +169,23 @@ function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="id-verification" element={<IDVerificationPage />} />
 
-              {/* Admin routes */}
+              {/* Admin routes with nested structure */}
               <Route
-                path="admin"
+                path="admin/*"
                 element={
                   <ProtectedRoute requiredRole="admin">
-                    <AdminDashboard />
+                    <AdminLayout />
                   </ProtectedRoute>
                 }
-              />
-              <Route
-                path="admin/students"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageStudentsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/tutor-applications"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageTutorApplicationsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/tutors"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageTutorsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/id-verifications"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageIDVerificationsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/quizzes"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageQuizzesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/flashcards"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AdminManageFlashcardsPage />
-                  </ProtectedRoute>
-                }
-              />
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="students" element={<ManageStudentsPage />} />
+                <Route path="tutor-applications" element={<ManageTutorApplicationsPage />} />
+                <Route path="tutors" element={<ManageTutorsPage />} />
+                <Route path="id-verifications" element={<ManageIDVerificationsPage />} />
+                <Route path="quizzes" element={<ManageQuizzesPage />} />
+                <Route path="flashcards" element={<AdminManageFlashcardsPage />} />
+              </Route>
 
               {/* Principal routes */}
               <Route
@@ -346,7 +324,7 @@ function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 
-            {/* Redirect auth routes to dashboard */}
+            {/* Redirect auth routes to dashboard when already logged in */}
             <Route
               path="/login"
               element={<Navigate to="/dashboard" replace />}
@@ -359,7 +337,6 @@ function App() {
               path="/forgot-password"
               element={<Navigate to="/dashboard" replace />}
             />
-            {/* Note: /reset-password is handled separately above */}
           </>
         )}
       </Routes>
@@ -368,10 +345,20 @@ function App() {
 }
 
 // Dashboard route component that redirects to appropriate dashboard
+// Dashboard route component that redirects to appropriate dashboard
 function DashboardRoute() {
   const { user, profile, loading } = useAuth();
-  const { adminSession, isAdminLoggedIn } = useAdmin();
+  const { adminSession, isAdminLoggedIn, loading: adminLoading } = useAdmin();
   const location = useLocation();
+
+  // Wait for both auth contexts to finish loading
+  if (loading || adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   // Check for admin session first
   if (isAdminLoggedIn && adminSession) {
@@ -383,7 +370,7 @@ function DashboardRoute() {
   }
 
   // Wait for profile to load before redirecting
-  if (loading || !profile) {
+  if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <LoadingSpinner size="lg" />
@@ -437,8 +424,17 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, profile } = useAuth();
-  const { isAdminLoggedIn } = useAdmin();
+  const { user, profile, loading } = useAuth();
+  const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
+
+  // Wait for both auth contexts to finish loading
+  if (loading || adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   // For admin routes, check admin session
   if (requiredRole === "admin") {

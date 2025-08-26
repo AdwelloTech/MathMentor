@@ -285,7 +285,6 @@ const StudentProfile: React.FC = () => {
           full_name: updateData.full_name,
           phone: updateData.phone || undefined,
           address: updateData.address || undefined,
-          date_of_birth: updateData.date_of_birth || undefined,
           gender: updateData.gender || undefined,
           emergency_contact: updateData.emergency_contact || undefined,
           age: updateData.age || undefined,

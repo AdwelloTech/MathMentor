@@ -12,6 +12,7 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-full mx-auto">
       {/* Page Header */}
+      <ProfileHeader />
 
       {/* Profile Content */}
       <motion.div

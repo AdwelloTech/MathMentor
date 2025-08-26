@@ -47,6 +47,7 @@ export const STUDENT_INSTANT_SESSION_BACKGROUND = "bg-gradient-to-br from-green-
 export const extractBackgroundColor = (className: string): string => {
   // Common Tailwind background patterns
   const bgPatterns = [
+    /bg-gradient-to-[trbl]{1,2}/g, // Gradient direction patterns like bg-gradient-to-br, bg-gradient-to-r
     /bg-\[#([A-Fa-f0-9]{6})\]/g, // Custom hex colors like bg-[#D5FFC5]
     /bg-gray-\d+/g, // Gray scale like bg-gray-50
     /bg-blue-\d+/g, // Blue scale
@@ -72,6 +73,33 @@ export const extractBackgroundColor = (className: string): string => {
     /bg-rose-\d+/g, // Rose scale
   ];
 
+  // Check if this is a gradient class
+  if (className.includes('bg-gradient-to-')) {
+    // For gradients, extract the complete gradient classes
+    const gradientClasses = [];
+    const words = className.split(' ');
+
+    // Find gradient direction class
+    const gradientDirection = words.find(word => word.match(/bg-gradient-to-[trbl]{1,2}/));
+    if (gradientDirection) {
+      gradientClasses.push(gradientDirection);
+    }
+
+    // Find gradient color stops (from-, via-, to-)
+    const gradientStops = words.filter(word =>
+      word.match(/from-[a-z]+-\d+/) ||
+      word.match(/via-[a-z]+-\d+/) ||
+      word.match(/to-[a-z]+-\d+/)
+    );
+
+    gradientClasses.push(...gradientStops);
+
+    if (gradientClasses.length > 0) {
+      return gradientClasses.join(' '); // Return complete gradient classes
+    }
+  }
+
+  // For non-gradient backgrounds, use the original pattern matching
   for (const pattern of bgPatterns) {
     const match = className.match(pattern);
     if (match) {

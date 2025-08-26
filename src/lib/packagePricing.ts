@@ -37,6 +37,24 @@ export const packagePricingService = {
     return data;
   },
 
+  // Get a specific package by type (any status, for legacy plan support)
+  async getByTypeAnyStatus(
+    packageType: string
+  ): Promise<PackagePricing | null> {
+    const { data, error } = await supabase
+      .from("package_pricing")
+      .select("*")
+      .eq("package_type", packageType)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching package (any status):", error);
+      throw error;
+    }
+
+    return data ?? null;
+  },
+
   // Get current student's package
   async getCurrentStudentPackage(
     studentId: string
@@ -57,8 +75,8 @@ export const packagePricingService = {
       return null; // Student has no package assigned
     }
 
-    // Get the package details
-    return this.getByType(profile.package);
+    // Get the package details (supports legacy/inactive plans)
+    return this.getByTypeAnyStatus(profile.package);
   },
 
   // Update student's package (DEPRECATED - use confirmAndUpgrade for paid packages)

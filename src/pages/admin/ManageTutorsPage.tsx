@@ -31,6 +31,32 @@ import {
 import toast from "react-hot-toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
+// Helper function to generate initials safely
+const generateInitials = (fullName: string | null | undefined): string => {
+  // Handle null/undefined/empty cases
+  if (!fullName || typeof fullName !== "string") {
+    return "??";
+  }
+
+  // Trim and split by whitespace, filter out empty parts
+  const parts = fullName
+    .trim()
+    .split(/\s+/)
+    .filter((part) => part.length > 0);
+
+  if (parts.length === 0) {
+    return "??";
+  }
+
+  // Map to first character of each part, with fallback
+  const initials = parts
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("")
+    .slice(0, 2); // Limit to 2 characters max
+
+  return initials || "??";
+};
+
 const ManageTutorsPage: React.FC = () => {
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [filteredTutors, setFilteredTutors] = useState<Tutor[]>([]);
@@ -405,11 +431,7 @@ const ManageTutorsPage: React.FC = () => {
                           />
                         ) : (
                           <span className="text-sm font-medium text-gray-700">
-                            {tutor.full_name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()}
+                            {generateInitials(tutor.full_name)}
                           </span>
                         )}
                       </div>
@@ -555,11 +577,7 @@ const ManageTutorsPage: React.FC = () => {
                         />
                       ) : (
                         <span className="text-lg font-medium text-gray-700">
-                          {selectedTutor.full_name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
+                          {generateInitials(selectedTutor.full_name)}
                         </span>
                       )}
                     </div>

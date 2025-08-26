@@ -323,18 +323,24 @@ class AdminTutorService {
 
       if (applicationsError) throw applicationsError;
 
-      const approved =
-        applications?.filter((app) => app.application_status === "approved")
-          .length || 0;
-      const pending =
-        applications?.filter((app) => app.application_status === "pending")
-          .length || 0;
-      const rejected =
-        applications?.filter((app) => app.application_status === "rejected")
-          .length || 0;
-      const under_review =
-        applications?.filter((app) => app.application_status === "under_review")
-          .length || 0;
+      const statusCounts =
+        applications?.reduce((acc, app) => {
+          const status = app.application_status;
+          if (
+            status === "approved" ||
+            status === "pending" ||
+            status === "rejected" ||
+            status === "under_review"
+          ) {
+            acc[status] = (acc[status] || 0) + 1;
+          }
+          return acc;
+        }, {} as Record<string, number>) || {};
+
+      const approved = statusCounts.approved || 0;
+      const pending = statusCounts.pending || 0;
+      const rejected = statusCounts.rejected || 0;
+      const under_review = statusCounts.under_review || 0;
 
       // Get recent registrations (last 30 days)
       const thirtyDaysAgo = new Date();

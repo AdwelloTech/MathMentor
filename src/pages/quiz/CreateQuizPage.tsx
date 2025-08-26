@@ -104,10 +104,10 @@ const CreateQuizPage: React.FC = () => {
   ) => {
     setQuestions((prev) =>
       prev.map((q, qIndex) =>
-        qIndex === questionIndex
+        qIndex === questionIndex && q.question_type !== "short_answer"
           ? {
               ...q,
-              answers: q.answers.map((a, aIndex) =>
+              answers: q.answers.map((a: any, aIndex: number) =>
                 aIndex === answerIndex ? { ...a, [field]: value } : a
               ),
             }
@@ -119,10 +119,10 @@ const CreateQuizPage: React.FC = () => {
   const setCorrectAnswer = (questionIndex: number, answerIndex: number) => {
     setQuestions((prev) =>
       prev.map((q, qIndex) =>
-        qIndex === questionIndex
+        qIndex === questionIndex && q.question_type !== "short_answer"
           ? {
               ...q,
-              answers: q.answers.map((a, aIndex) => ({
+              answers: q.answers.map((a: any, aIndex: number) => ({
                 ...a,
                 is_correct: aIndex === answerIndex,
               })),
@@ -182,7 +182,7 @@ const CreateQuizPage: React.FC = () => {
         title: quizData.title || undefined,
         pdfBase64: pdfBase64 || undefined,
       });
-      const mapped = ai.map((q, idx) => ({
+      const mapped = ai.map((q: any, idx: number) => ({
         question_text: q.question_text,
         question_type: q.question_type,
         points: q.points ?? 10,
@@ -190,11 +190,14 @@ const CreateQuizPage: React.FC = () => {
         is_ai_generated: true,
         ai_status: q.ai_status || "pending",
         ai_metadata: q.ai_metadata,
-        answers: q.answers.map((a, i) => ({
-          answer_text: a.answer_text,
-          is_correct: a.is_correct,
-          answer_order: i + 1,
-        })),
+        answers:
+          q.question_type === "short_answer"
+            ? []
+            : (q.answers ?? []).map((a: any, i: number) => ({
+                answer_text: a.answer_text,
+                is_correct: a.is_correct,
+                answer_order: i + 1,
+              })),
       }));
       setQuestions((prev) => [...prev, ...mapped]);
       setQuestionFilter("ai");
@@ -250,12 +253,15 @@ const CreateQuizPage: React.FC = () => {
       return "Add at least one question to create a quiz";
     }
 
-    const incompleteQuestions = included.filter(
-      (q) =>
-        q.question_text.trim() === "" ||
-        !q.answers.some((a) => a.is_correct) ||
-        q.answers.some((a) => a.answer_text.trim() === "")
-    );
+    const incompleteQuestions = included.filter((q) => {
+      const emptyText = q.question_text.trim() === "";
+      if (q.question_type === "short_answer") return emptyText;
+      return (
+        emptyText ||
+        !q.answers?.some((a) => a.is_correct) ||
+        q.answers?.some((a) => a.answer_text.trim() === "")
+      );
+    });
 
     if (incompleteQuestions.length > 0) {
       return "Complete all questions and ensure each has a correct answer";
@@ -287,12 +293,15 @@ const CreateQuizPage: React.FC = () => {
       return false;
     }
 
-    return included.every(
-      (q) =>
-        q.question_text.trim() !== "" &&
-        q.answers.some((a) => a.is_correct) &&
-        q.answers.every((a) => a.answer_text.trim() !== "")
-    );
+    return included.every((q) => {
+      const hasText = q.question_text.trim() !== "";
+      if (q.question_type === "short_answer") return hasText;
+      return (
+        hasText &&
+        q.answers?.some((a) => a.is_correct) &&
+        q.answers?.every((a) => a.answer_text.trim() !== "")
+      );
+    });
   };
 
   const handleSubmit = async () => {
@@ -766,19 +775,35 @@ const CreateQuizPage: React.FC = () => {
                       <div className="flex items-center space-x-4">
                         <select
                           value={question.question_type}
-                          onChange={(e) =>
-                            updateQuestion(
-                              questionIndex,
-                              "question_type",
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => {
+                            const nextType = e.target.value as
+                              | "multiple_choice"
+                              | "true_false"
+                              | "short_answer";
+                            setQuestions((prev) =>
+                              prev.map((q, idx) =>
+                                idx === questionIndex
+                                  ? {
+                                      ...q,
+                                      question_type: nextType,
+                                      answers:
+                                        nextType === "short_answer"
+                                          ? []
+                                          : q.question_type === "short_answer"
+                                          ? []
+                                          : q.answers,
+                                    }
+                                  : q
+                              )
+                            );
+                          }}
                           className="px-3 py-1 border border-gray-300 rounded-md text-sm"
                         >
                           <option value="multiple_choice">
                             Multiple Choice
                           </option>
                           <option value="true_false">True/False</option>
+                          <option value="short_answer">Short Answer</option>
                         </select>
                         <div className="flex items-center space-x-2">
                           <span className="text-sm text-gray-600">Points:</span>
@@ -845,54 +870,56 @@ const CreateQuizPage: React.FC = () => {
                       />
                     </div>
 
-                    {/* Answers */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
-                        Answers *
-                      </label>
-                      <div className="space-y-3">
-                        {question.answers.map((answer, answerIndex) => (
-                          <div
-                            key={answerIndex}
-                            className="flex items-center space-x-3"
-                          >
-                            <button
-                              onClick={() =>
-                                setCorrectAnswer(questionIndex, answerIndex)
-                              }
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                                answer.is_correct
-                                  ? "border-green-500 bg-green-500 text-white"
-                                  : "border-gray-300 hover:border-gray-400"
-                              }`}
+                    {/* Answers (MC/TF only) */}
+                    {question.question_type !== "short_answer" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Answers *
+                        </label>
+                        <div className="space-y-3">
+                          {question.answers.map((answer, answerIndex) => (
+                            <div
+                              key={answerIndex}
+                              className="flex items-center space-x-3"
                             >
+                              <button
+                                onClick={() =>
+                                  setCorrectAnswer(questionIndex, answerIndex)
+                                }
+                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                  answer.is_correct
+                                    ? "border-green-500 bg-green-500 text-white"
+                                    : "border-gray-300 hover:border-gray-400"
+                                }`}
+                              >
+                                {answer.is_correct && (
+                                  <CheckIcon className="h-4 w-4" />
+                                )}
+                              </button>
+                              <input
+                                type="text"
+                                value={answer.answer_text}
+                                onChange={(e) =>
+                                  updateAnswer(
+                                    questionIndex,
+                                    answerIndex,
+                                    "answer_text",
+                                    e.target.value
+                                  )
+                                }
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder={`Answer ${answerIndex + 1}`}
+                              />
                               {answer.is_correct && (
-                                <CheckIcon className="h-4 w-4" />
+                                <span className="text-sm text-green-600 font-medium">
+                                  Correct
+                                </span>
                               )}
-                            </button>
-                            <input
-                              type="text"
-                              value={answer.answer_text}
-                              onChange={(e) =>
-                                updateAnswer(
-                                  questionIndex,
-                                  answerIndex,
-                                  "answer_text",
-                                  e.target.value
-                                )
-                              }
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder={`Answer ${answerIndex + 1}`}
-                            />
-                            {answer.is_correct && (
-                              <span className="text-sm text-green-600 font-medium">
-                                Correct
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })

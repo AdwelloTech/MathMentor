@@ -166,7 +166,7 @@ export const incrementStudentTutorMaterialViewCount = async (
 ): Promise<void> => {
   try {
     const { error } = await supabase.rpc("increment_tutor_note_view_count", {
-      material_id: materialId,
+      note_id: materialId,
     });
     if (error) {
       console.warn("Error incrementing view count (RPC):", error);

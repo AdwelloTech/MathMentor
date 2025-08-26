@@ -6,6 +6,7 @@ export interface GenerateAIRequest {
   questionType?: "multiple_choice" | "true_false" | "short_answer";
   title?: string;
   pdfText?: string;
+  pdfBase64?: string;
 }
 
 export interface GeneratedAIAnswer {
@@ -63,7 +64,17 @@ export async function generateAIQuestions(
     }
 
     const data = await response.json();
-    return data.questions;
+    const raw = Array.isArray(data?.questions) ? data.questions : [];
+    return raw.map((q: any) => {
+      const isShort = q.question_type === "short_answer";
+      return {
+        ...q,
+        // Always give non–short-answer types an array
+        ...(isShort
+          ? {}
+          : { answers: Array.isArray(q.answers) ? q.answers : [] }),
+      };
+    });
   } catch (error) {
     console.error("Error generating AI questions:", error);
     throw error;

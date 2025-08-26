@@ -225,11 +225,14 @@ const EditQuizPage: React.FC = () => {
         is_ai_generated: true,
         ai_status: q.ai_status || "pending",
         ai_metadata: q.ai_metadata,
-        answers: q.answers.map((a: any, i: number) => ({
-          answer_text: a.answer_text,
-          is_correct: a.is_correct,
-          answer_order: i + 1,
-        })),
+        answers:
+          q.question_type === "short_answer"
+            ? []
+            : (q.answers ?? []).map((a: any, i: number) => ({
+                answer_text: a.answer_text,
+                is_correct: a.is_correct,
+                answer_order: i + 1,
+              })),
         isNew: true,
       }));
       setQuestions((prev) => [...prev, ...mapped]);
@@ -270,12 +273,17 @@ const EditQuizPage: React.FC = () => {
     }
 
     if (
-      !questions.every(
-        (q) =>
-          q.question_text.trim() !== "" &&
+      !questions.every((q) => {
+        const hasText = q.question_text.trim() !== "";
+        if (q.question_type === "short_answer") return hasText;
+        // MC/TF rules
+        return (
+          hasText &&
+          q.answers?.length > 0 &&
           q.answers.some((a) => a.is_correct) &&
           q.answers.every((a) => a.answer_text.trim() !== "")
-      )
+        );
+      })
     ) {
       toast.error(
         "Please complete all questions and ensure each question has a correct answer."
@@ -333,20 +341,36 @@ const EditQuizPage: React.FC = () => {
           }
         } else {
           // Create new question with answers
-          const newQuestion = await quizService.questions.create(quizId!, {
-            question_text: question.question_text,
-            question_type: question.question_type,
-            points: question.points,
-            question_order: question.question_order,
-            is_ai_generated: (question as any).is_ai_generated ?? false,
-            ai_status: (question as any).ai_status ?? null,
-            ai_metadata: (question as any).ai_metadata ?? null,
-            answers: question.answers.map((answer) => ({
-              answer_text: answer.answer_text,
-              is_correct: answer.is_correct,
-              answer_order: answer.answer_order,
-            })),
-          });
+          const createData: CreateQuestionData =
+            question.question_type === "short_answer"
+              ? {
+                  question_text: question.question_text,
+                  question_type: question.question_type,
+                  points: question.points,
+                  question_order: question.question_order,
+                  is_ai_generated: (question as any).is_ai_generated ?? false,
+                  ai_status: (question as any).ai_status ?? null,
+                  ai_metadata: (question as any).ai_metadata ?? null,
+                }
+              : {
+                  question_text: question.question_text,
+                  question_type: question.question_type,
+                  points: question.points,
+                  question_order: question.question_order,
+                  is_ai_generated: (question as any).is_ai_generated ?? false,
+                  ai_status: (question as any).ai_status ?? null,
+                  ai_metadata: (question as any).ai_metadata ?? null,
+                  answers: question.answers.map((answer) => ({
+                    answer_text: answer.answer_text,
+                    is_correct: answer.is_correct,
+                    answer_order: answer.answer_order,
+                  })),
+                };
+
+          const newQuestion = await quizService.questions.create(
+            quizId!,
+            createData
+          );
         }
       }
 
@@ -726,17 +750,29 @@ const EditQuizPage: React.FC = () => {
                 <div className="flex items-center space-x-4">
                   <select
                     value={question.question_type}
-                    onChange={(e) =>
-                      updateQuestion(
-                        questionIndex,
-                        "question_type",
-                        e.target.value
-                      )
-                    }
+                    onChange={(e) => {
+                      const nextType = e.target.value as
+                        | "multiple_choice"
+                        | "true_false"
+                        | "short_answer";
+                      setQuestions((prev) =>
+                        prev.map((q, idx) =>
+                          idx === questionIndex
+                            ? {
+                                ...q,
+                                question_type: nextType,
+                                answers:
+                                  nextType === "short_answer" ? [] : q.answers,
+                              }
+                            : q
+                        )
+                      );
+                    }}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm"
                   >
                     <option value="multiple_choice">Multiple Choice</option>
                     <option value="true_false">True/False</option>
+                    <option value="short_answer">Short Answer</option>
                   </select>
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600">Points:</span>
@@ -805,52 +841,56 @@ const EditQuizPage: React.FC = () => {
                 />
               </div>
 
-              {/* Answers */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Answers *
-                </label>
-                <div className="space-y-3">
-                  {question.answers.map((answer, answerIndex) => (
-                    <div
-                      key={answerIndex}
-                      className="flex items-center space-x-3"
-                    >
-                      <button
-                        onClick={() =>
-                          setCorrectAnswer(questionIndex, answerIndex)
-                        }
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          answer.is_correct
-                            ? "border-green-500 bg-green-500 text-white"
-                            : "border-gray-300 hover:border-gray-400"
-                        }`}
+              {/* Answers (MC/TF only) */}
+              {question.question_type !== "short_answer" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Answers *
+                  </label>
+                  <div className="space-y-3">
+                    {question.answers.map((answer, answerIndex) => (
+                      <div
+                        key={answerIndex}
+                        className="flex items-center space-x-3"
                       >
-                        {answer.is_correct && <CheckIcon className="h-4 w-4" />}
-                      </button>
-                      <input
-                        type="text"
-                        value={answer.answer_text}
-                        onChange={(e) =>
-                          updateAnswer(
-                            questionIndex,
-                            answerIndex,
-                            "answer_text",
-                            e.target.value
-                          )
-                        }
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={`Answer ${answerIndex + 1}`}
-                      />
-                      {answer.is_correct && (
-                        <span className="text-sm text-green-600 font-medium">
-                          Correct
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                        <button
+                          onClick={() =>
+                            setCorrectAnswer(questionIndex, answerIndex)
+                          }
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            answer.is_correct
+                              ? "border-green-500 bg-green-500 text-white"
+                              : "border-gray-300 hover:border-gray-400"
+                          }`}
+                        >
+                          {answer.is_correct && (
+                            <CheckIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                        <input
+                          type="text"
+                          value={answer.answer_text}
+                          onChange={(e) =>
+                            updateAnswer(
+                              questionIndex,
+                              answerIndex,
+                              "answer_text",
+                              e.target.value
+                            )
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={`Answer ${answerIndex + 1}`}
+                        />
+                        {answer.is_correct && (
+                          <span className="text-sm text-green-600 font-medium">
+                            Correct
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           );
         })}

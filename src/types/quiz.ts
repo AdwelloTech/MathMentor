@@ -97,18 +97,37 @@ export interface CreateQuizData {
   questions: CreateQuestionData[];
 }
 
-export interface CreateQuestionData {
-  question_text: string;
-  question_type: "multiple_choice" | "true_false" | "short_answer";
-  points: number;
-  question_order: number;
-  // Optional AI augmentation flags when creating questions
-  is_ai_generated?: boolean;
-  ai_status?: "pending" | "approved" | "discarded";
-  ai_metadata?: Record<string, any>;
-  // Omit answers for short-answer questions
-  answers?: CreateAnswerData[];
-}
+export type CreateQuestionData =
+  | {
+      question_text: string;
+      question_type: "multiple_choice";
+      points: number;
+      question_order: number;
+      is_ai_generated?: boolean;
+      ai_status?: "pending" | "approved" | "discarded";
+      ai_metadata?: Record<string, any>;
+      answers: CreateAnswerData[]; // required
+    }
+  | {
+      question_text: string;
+      question_type: "true_false";
+      points: number;
+      question_order: number;
+      is_ai_generated?: boolean;
+      ai_status?: "pending" | "approved" | "discarded";
+      ai_metadata?: Record<string, any>;
+      answers: CreateAnswerData[]; // required
+    }
+  | {
+      question_text: string;
+      question_type: "short_answer";
+      points: number;
+      question_order: number;
+      is_ai_generated?: boolean;
+      ai_status?: "pending" | "approved" | "discarded";
+      ai_metadata?: Record<string, any>;
+      // no answers here
+    };
 
 export interface CreateAnswerData {
   answer_text: string;

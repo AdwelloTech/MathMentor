@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import LogoPng from "@/assets/math-mentor-logo.png";
 import { Link, useLocation } from "react-router-dom";
 import {
   XMarkIcon,
@@ -23,7 +24,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { getActiveProfileImage, getProfileImageUrl } from "@/lib/profileImages";
-import type { ProfileImage } from "@/types/auth";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -50,32 +50,35 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { isAdminLoggedIn } = useAdmin();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
-  const [profileImage, setProfileImage] = useState<ProfileImage | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   // Fetch profile image when component mounts or profile changes
   useEffect(() => {
+    let cancelled = false;
     const fetchProfileImage = async () => {
-      if (profile?.user_id) {
-        try {
-          const activeImage = await getActiveProfileImage(profile.user_id);
-          if (activeImage) {
-            setProfileImage(activeImage);
-            const imageUrl = getProfileImageUrl(activeImage.file_path);
-            setProfileImageUrl(imageUrl);
-          } else {
-            setProfileImage(null);
-            setProfileImageUrl(null);
-          }
-        } catch (error) {
-          console.error("Error fetching profile image:", error);
-          setProfileImage(null);
-          setProfileImageUrl(null);
+      if (!profile?.user_id) {
+        setProfileImageUrl(null);
+        return;
+      }
+      try {
+        const activeImage = await getActiveProfileImage(profile.user_id);
+        if (cancelled) return;
+        if (activeImage) {
+          const imageUrl = getProfileImageUrl(activeImage.file_path);
+          if (!cancelled) setProfileImageUrl(imageUrl);
+        } else {
+          if (!cancelled) setProfileImageUrl(null);
         }
+      } catch (error) {
+        console.error("Error fetching profile image:", error);
+        if (!cancelled) setProfileImageUrl(null);
       }
     };
 
     fetchProfileImage();
+    return () => {
+      cancelled = true;
+    };
   }, [profile?.user_id]);
 
   // Add admin-specific navigation
@@ -299,7 +302,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               transition={{ duration: 0.2 }}
             >
               <img
-                src="/src/assets/math-mentor-logo.png"
+                src={LogoPng}
                 alt="Math Mentor Logo"
                 className="h-16 w-16 text-white"
               />
@@ -314,7 +317,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const NavigationItem = useCallback(
     ({ item }: { item: any }) => {
       const isDisabled = item.disabled;
-      const active = isActive(item.href);
+      const active = location.pathname === item.href;
 
       if (isDisabled) {
         return (
@@ -322,6 +325,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             key={item.name}
             className="relative group"
             title={getTooltipMessage(item)}
+            aria-label={getTooltipMessage(item) || item.name}
           >
             <div
               className={cn(
@@ -355,6 +359,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           <Link
             to={item.href}
             onClick={() => setSidebarOpen(false)}
+            aria-label={item.name}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 relative overflow-hidden",
               active
@@ -398,7 +404,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </motion.div>
       );
     },
-    [isHovered, isActive]
+    [isHovered, location.pathname]
   );
 
   // Memoize the navigation section to prevent re-renders
@@ -535,7 +541,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </motion.button>
                 </div>
 
-                <div className="flex grow flex-col bg-white/95 backdrop-blur-xl border-r border-gray-200/50 px-6 pb-4 shadow-2xl">
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Main navigation"
+                  className="flex grow flex-col bg-white/95 backdrop-blur-xl border-r border-gray-200/50 px-6 pb-4 shadow-2xl"
+                >
                   <div className="flex flex-col h-full overflow-y-auto">
                     <LogoSection />
                     <NavigationSection />

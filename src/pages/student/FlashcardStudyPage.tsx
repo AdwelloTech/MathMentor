@@ -58,102 +58,111 @@ const FlashcardStudyPage: React.FC = () => {
   };
   const prev = () => {
     setShowBack(false);
-    if (!setData) return;
-    setIndex((i) => (i - 1 + setData.cards.length) % setData.cards.length);
+    const len = setData?.cards?.length ?? 0;
+    if (!len) return;
+    setIndex((i) => (i - 1 + len) % len);
   };
 
   const downloadVectorFastPdf = async () => {
-    // Lazy-load heavy deps to keep initial bundle small and avoid SSR issues
-    const pdfMakeModule: any = await import("pdfmake/build/pdfmake");
-    const pdfFontsModule: any = await import("pdfmake/build/vfs_fonts");
-    const pdfMakeLocal: any = pdfMakeModule.default ?? pdfMakeModule;
-    const vfs =
-      pdfFontsModule?.vfs ??
-      pdfFontsModule?.default?.vfs ??
-      pdfFontsModule?.pdfMake?.vfs;
-    if (vfs) pdfMakeLocal.vfs = vfs;
+    // Bail early if nothing to export; also avoids loading big chunks unnecessarily
+    if (!setData?.cards?.length) return;
 
-    if (!setData) return;
-    const dd: any = {
-      pageSize: "A4",
-      pageMargins: [36, 36, 36, 36],
-      defaultStyle: { fontSize: 12 },
-      content: [] as any[],
-    };
+    try {
+      // Lazy-load heavy deps to keep initial bundle small and avoid SSR issues
+      const [pdfMakeModule, pdfFontsModule]: any = await Promise.all([
+        import("pdfmake/build/pdfmake"),
+        import("pdfmake/build/vfs_fonts"),
+      ]);
+      const pdfMakeLocal: any = pdfMakeModule.default ?? pdfMakeModule;
+      const vfs =
+        pdfFontsModule?.vfs ??
+        pdfFontsModule?.default?.vfs ??
+        pdfFontsModule?.pdfMake?.vfs;
+      if (vfs) pdfMakeLocal.vfs = vfs;
+      const dd: any = {
+        pageSize: "A4",
+        pageMargins: [36, 36, 36, 36],
+        defaultStyle: { fontSize: 12 },
+        content: [] as any[],
+      };
 
-    const makeCard = (text: string, isFront: boolean) => {
-      const cardH = 280;
-      const cardW = 500;
-      const innerPad = 24;
-      const fontSz = isFront ? 14 : 12;
-      const lineH = Math.round(fontSz * 1.25);
-      const approxCharsPerLine = Math.max(
-        10,
-        Math.floor((cardW - innerPad * 2) / (fontSz * 0.6))
-      );
-      const linesApprox = Math.max(
-        1,
-        Math.ceil((text || "").length / approxCharsPerLine)
-      );
-      const estBlockH = linesApprox * lineH;
-      const topOffset =
-        -cardH + Math.floor(cardH / 2) - Math.floor(estBlockH / 2);
-      const svg = `<svg width="${cardW}" height="${cardH}" xmlns="http://www.w3.org/2000/svg">
+      const makeCard = (text: string, isFront: boolean) => {
+        const cardH = 280;
+        const cardW = 500;
+        const innerPad = 24;
+        const fontSz = isFront ? 14 : 12;
+        const lineH = Math.round(fontSz * 1.25);
+        const approxCharsPerLine = Math.max(
+          10,
+          Math.floor((cardW - innerPad * 2) / (fontSz * 0.6))
+        );
+        const linesApprox = Math.max(
+          1,
+          Math.ceil((text || "").length / approxCharsPerLine)
+        );
+        const estBlockH = linesApprox * lineH;
+        const topOffset =
+          -cardH + Math.floor(cardH / 2) - Math.floor(estBlockH / 2);
+        const svg = `<svg width="${cardW}" height="${cardH}" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" rx="16" ry="16" width="${cardW}" height="${cardH}" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" />
       </svg>`;
-      return {
-        alignment: "center",
-        stack: [
-          { svg, margin: [0, 0, 0, 0] },
-          {
-            columns: [
-              {
-                width: cardW - innerPad * 2,
-                text: text || "",
-                alignment: "center",
-                bold: isFront,
-                fontSize: fontSz,
-                lineHeight: 1.25,
-              },
-            ],
-            columnGap: 0,
-            margin: [innerPad, topOffset, innerPad, 0],
-          },
-          { text: "", margin: [0, Math.ceil(cardH / 2), 0, 8] },
-        ],
-        margin: [0, 0, 0, 0],
-      } as any;
-    };
+        return {
+          alignment: "center",
+          stack: [
+            { svg, margin: [0, 0, 0, 0] },
+            {
+              columns: [
+                {
+                  width: cardW - innerPad * 2,
+                  text: text || "",
+                  alignment: "center",
+                  bold: isFront,
+                  fontSize: fontSz,
+                  lineHeight: 1.25,
+                },
+              ],
+              columnGap: 0,
+              margin: [innerPad, topOffset, innerPad, 0],
+            },
+            { text: "", margin: [0, Math.ceil(cardH / 2), 0, 8] },
+          ],
+          margin: [0, 0, 0, 0],
+        } as any;
+      };
 
-    setData.cards.forEach((c, idx) => {
-      if (idx > 0) {
-        dd.content.push({ text: "", pageBreak: "before" });
-      }
+      setData.cards.forEach((c, idx) => {
+        if (idx > 0) {
+          dd.content.push({ text: "", pageBreak: "before" });
+        }
 
-      dd.content.push({
-        text: "Front",
-        bold: true,
-        fontSize: 14,
-        margin: [2, 0, 0, 4],
+        dd.content.push({
+          text: "Front",
+          bold: true,
+          fontSize: 14,
+          margin: [2, 0, 0, 4],
+        });
+        dd.content.push(makeCard(c.front_text, true));
+        dd.content.push({
+          text: "Back",
+          bold: true,
+          fontSize: 14,
+          margin: [2, 12, 0, 4],
+        });
+        dd.content.push(makeCard(c.back_text, false));
       });
-      dd.content.push(makeCard(c.front_text, true));
-      dd.content.push({
-        text: "Back",
-        bold: true,
-        fontSize: 14,
-        margin: [2, 12, 0, 4],
-      });
-      dd.content.push(makeCard(c.back_text, false));
-    });
 
-    pdfMakeLocal
-      .createPdf(dd)
-      .download(
-        `${(setData.title || "flashcards").replace(
-          /[^a-z0-9\-\_]+/gi,
-          "_"
-        )}_fast.pdf`
-      );
+      pdfMakeLocal
+        .createPdf(dd)
+        .download(
+          `${(setData.title || "flashcards").replace(
+            /[^a-z0-9\-\_]+/gi,
+            "_"
+          )}_fast.pdf`
+        );
+    } catch (error) {
+      console.error("Error generating or downloading PDF:", error);
+      // Could also set an error state or show a toast notification here
+    }
   };
 
   if (!setData) {

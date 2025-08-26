@@ -124,7 +124,7 @@ The routing is organized to use the appropriate layout for each role:
 
 ### Page Structure Requirements
 
-#### For Tutor Pages:
+#### For Tutor Pages
 
 ```tsx
 // ✅ CORRECT - No background wrapper
@@ -144,7 +144,7 @@ return (
 );
 ```
 
-#### For Student Pages:
+#### For Student Pages
 
 ```tsx
 // ✅ CORRECT - No background wrapper

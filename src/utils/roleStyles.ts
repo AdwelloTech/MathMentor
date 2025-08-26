@@ -40,6 +40,9 @@ export const getStudentPageBackgroundClass = (customBg?: string) => {
   return `min-h-screen ${backgroundClass}`;
 };
 
+// Student page specific background constants
+export const STUDENT_INSTANT_SESSION_BACKGROUND = "bg-gradient-to-br from-green-50 via-yellow-50 to-green-100";
+
 // Extract background color from Tailwind classes for body matching
 export const extractBackgroundColor = (className: string): string => {
   // Common Tailwind background patterns

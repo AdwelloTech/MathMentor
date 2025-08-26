@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -19,15 +19,32 @@ const StudentLayoutContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { backgroundClass } = useStudentBackground();
+  const appliedClassRef = useRef<string | null>(null);
 
-  // Set body background to match the inner wrapper background
+  // Set body background to match the inner wrapper background (non-destructive)
   useEffect(() => {
-    // Apply the background to the body element
-    document.body.className = backgroundClass;
+    const body = document.body;
+    const prevClass = appliedClassRef.current;
 
-    // Cleanup: remove the background when component unmounts
+    // Remove previous background class if it exists and is different
+    if (prevClass && prevClass !== backgroundClass) {
+      body.classList.remove(prevClass);
+    }
+
+    // Add new background class if it exists and isn't already applied
+    if (backgroundClass && !body.classList.contains(backgroundClass)) {
+      body.classList.add(backgroundClass);
+    }
+
+    // Update ref to track the currently applied class
+    appliedClassRef.current = backgroundClass;
+
+    // Cleanup: remove the background class when component unmounts
     return () => {
-      document.body.className = "";
+      if (appliedClassRef.current) {
+        body.classList.remove(appliedClassRef.current);
+        appliedClassRef.current = null;
+      }
     };
   }, [backgroundClass]);
 

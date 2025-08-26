@@ -96,11 +96,17 @@ const ClassSchedulingPage: React.FC = () => {
   }, [currentMonth, currentYear]);
 
   const loadData = async () => {
+    if (!user?.id) {
+      console.warn("User not available, skipping class data load");
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const [types, classes] = await Promise.all([
         classSchedulingService.classTypes.getAll(),
-        classSchedulingService.classes.getByTutorId(user!.id),
+        classSchedulingService.classes.getByTutorId(user.id),
       ]);
 
       setClassTypes(types);
@@ -225,6 +231,20 @@ const ClassSchedulingPage: React.FC = () => {
     setSelectedTime("");
   };
 
+  // Initialize form when modal opens
+  useEffect(() => {
+    if (showClassForm && selectedClassType) {
+      setFormData((prev) => ({
+        ...prev,
+        class_type_id: selectedClassType.id,
+        max_students: selectedClassType.max_students,
+        price_per_session: selectedClassType.price_per_session,
+        title: `${selectedClassType.name} Session`,
+        description: selectedClassType.description || "",
+      }));
+    }
+  }, [showClassForm, selectedClassType]);
+
   const handleDateSelect = (date: string) => {
     if (!selectedClassType) return;
 
@@ -264,6 +284,13 @@ const ClassSchedulingPage: React.FC = () => {
       return;
     }
 
+    if (!user?.id) {
+      toast.error("Authentication required to create class");
+      return;
+    }
+
+    const tutorId = user.id;
+
     try {
       setLoading(true);
 
@@ -277,7 +304,7 @@ const ClassSchedulingPage: React.FC = () => {
 
       const classData: CreateClassFormData & { tutor_id: string } = {
         ...formData,
-        tutor_id: user!.id,
+        tutor_id: tutorId,
         date: selectedDate,
         start_time: selectedTime,
         end_time: endTimeString,
@@ -292,6 +319,19 @@ const ClassSchedulingPage: React.FC = () => {
       setSelectedDate("");
       setSelectedTime("");
       setShowTimeSelection(false);
+
+      // Reset form data
+      setFormData({
+        class_type_id: "",
+        title: "",
+        description: "",
+        date: "",
+        start_time: "",
+        end_time: "",
+        max_students: 1,
+        price_per_session: 0,
+        is_recurring: false,
+      });
 
       // Reload data
       await loadData();
@@ -639,7 +679,7 @@ const ClassSchedulingPage: React.FC = () => {
                 className="mt-6 flex justify-center"
               >
                 <button
-                  onClick={handleCreateClass}
+                  onClick={() => setShowClassForm(true)}
                   disabled={loading}
                   className="bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white px-8 py-3 rounded-xl font-semibold shadow-[0_2px_2px_0_#16803D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -660,6 +700,103 @@ const ClassSchedulingPage: React.FC = () => {
           </motion.div>
         )}
       </div>
+
+      {/* Class Creation Form Modal */}
+      {showClassForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg p-6 w-full max-w-md mx-4"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Create {selectedClassType?.name}
+              </h3>
+              <button
+                onClick={() => setShowClassForm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Class Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter class title"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  placeholder="Enter class description"
+                />
+              </div>
+
+              {selectedClassType && selectedClassType.max_students > 1 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Max Students
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={selectedClassType.max_students}
+                    value={formData.max_students}
+                    onChange={(e) => setFormData(prev => ({ ...prev, max_students: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Price per Session ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.price_per_session}
+                  onChange={(e) => setFormData(prev => ({ ...prev, price_per_session: parseFloat(e.target.value) }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center space-x-4 pt-4">
+                <button
+                  onClick={handleCreateClass}
+                  disabled={loading || !formData.title}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Creating...' : 'Create Class'}
+                </button>
+                <button
+                  onClick={() => setShowClassForm(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

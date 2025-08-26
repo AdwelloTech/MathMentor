@@ -329,7 +329,12 @@ const CreateEditFlashcardSetPage: React.FC = () => {
             <span className="text-sm text-gray-600">Difficulty:</span>
             <select
               value={aiDifficulty}
-              onChange={(e) => setAiDifficulty(e.target.value as any)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "easy" || value === "medium" || value === "hard") {
+                  setAiDifficulty(value);
+                }
+              }}
               className="border rounded-md p-2"
               aria-label="Difficulty"
             >

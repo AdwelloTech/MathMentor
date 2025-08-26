@@ -32,7 +32,7 @@ const StudentPageWrapper: React.FC<StudentPageWrapperProps> = ({
     };
   }, [backgroundClass, setBackgroundClass]);
 
-  return <div className={`min-h-screen ${className}`}>{children}</div>;
+  return <div className={`min-h-screen ${backgroundClass} ${className}`}>{children}</div>;
 };
 
 export default StudentPageWrapper;

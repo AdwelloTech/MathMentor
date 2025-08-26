@@ -42,6 +42,32 @@ interface TutorProfileFormData {
   cvFileName: string;
 }
 
+// Enhanced PDF file validation with MIME type and content verification
+const validatePDFFile = async (file: File): Promise<boolean> => {
+  // First check: MIME type validation
+  if (file.type === "application/pdf" || file.type.startsWith("application/pdf")) {
+    return true;
+  }
+
+  // Second check: If MIME type is empty or ambiguous, check file content
+  if (!file.type || file.type === "application/octet-stream") {
+    try {
+      const arrayBuffer = await file.slice(0, 8).arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const header = String.fromCharCode(...uint8Array.slice(0, 5));
+
+      // PDF files start with "%PDF-"
+      return header === "%PDF-";
+    } catch (error) {
+      console.error("Error reading file header:", error);
+      return false;
+    }
+  }
+
+  // If MIME type is present but not PDF, reject
+  return false;
+};
+
 const TutorProfile: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -181,9 +207,10 @@ const TutorProfile: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.includes("pdf") && !file.type.includes("document")) {
-      setCvUploadError("Please upload a PDF or Word document");
+    // Validate file type with enhanced security
+    const isValidPDF = await validatePDFFile(file);
+    if (!isValidPDF) {
+      setCvUploadError("Please upload a valid PDF file");
       return;
     }
 
@@ -785,7 +812,8 @@ const TutorProfile: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
+                      try {
                       setFormData((prev) => ({
                         ...prev,
                         cvFileName: "",
@@ -793,10 +821,14 @@ const TutorProfile: React.FC = () => {
                       }));
                       // Clear from database
                       if (updateProfile) {
-                        updateProfile({
+                          await updateProfile({
                           cv_file_name: undefined,
                           cv_url: undefined,
                         });
+                        }
+                      } catch (error) {
+                        console.error("Error removing CV:", error);
+                        setCvUploadError("Failed to remove CV. Please try again.");
                       }
                     }}
                     className="text-red-600 hover:text-red-800"

@@ -519,12 +519,11 @@ const CreateQuizPage: React.FC = () => {
                       id="quiz-time"
                       type="number"
                       value={quizData.time_limit_minutes}
-                      onChange={(e) =>
-                        updateQuizData(
-                          "time_limit_minutes",
-                          parseInt(e.target.value)
-                        )
-                      }
+                      onChange={(e) => {
+                        const raw = Number.parseInt(e.target.value || "0");
+                        const next = Number.isFinite(raw) ? Math.min(180, Math.max(1, raw)) : 60;
+                        updateQuizData("time_limit_minutes", next);
+                      }}
                       min="1"
                       max="180"
                       className="focus:ring-2 focus:ring-[#16803D] focus:border-[#16803D]"

@@ -103,7 +103,7 @@ const TutorManageClassesPage: React.FC = () => {
     if (!confirm("Are you sure you want to delete this class?")) return;
     try {
       await classSchedulingService.classes.delete(classId);
-      setClasses(classes.filter((c) => c.id !== classId));
+      setClasses((prev) => prev.filter((c) => c.id !== classId));
       setSelectedClass(null);
       setShowDetails(false);
     } catch (err) {
@@ -119,8 +119,8 @@ const TutorManageClassesPage: React.FC = () => {
         editingClass.id,
         updatedClass
       );
-      setClasses(
-        classes.map((c) => (c.id === editingClass.id ? updatedData : c))
+      setClasses((prev) =>
+        prev.map((c) => (c.id === editingClass.id ? updatedData : c))
       );
       setEditingClass(null);
       setSelectedClass(null);
@@ -777,13 +777,22 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
             <Input
               id="max-students"
               type="number"
-              value={formData.max_students}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  max_students: parseInt(e.target.value),
-                })
-              }
+              value={formData.max_students || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "") {
+                  setFormData({
+                    ...formData,
+                    max_students: formData.max_students || 1,
+                  });
+                } else {
+                  const parsed = parseInt(value, 10);
+                  setFormData({
+                    ...formData,
+                    max_students: Number.isNaN(parsed) ? formData.max_students : parsed,
+                  });
+                }
+              }}
               className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
               required
               min="1"
@@ -798,13 +807,22 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
               id="price"
               type="number"
               step="0.01"
-              value={formData.price_per_session}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  price_per_session: parseFloat(e.target.value),
-                })
-              }
+              value={formData.price_per_session || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "") {
+                  setFormData({
+                    ...formData,
+                    price_per_session: formData.price_per_session || 0,
+                  });
+                } else {
+                  const parsed = parseFloat(value);
+                  setFormData({
+                    ...formData,
+                    price_per_session: Number.isNaN(parsed) ? formData.price_per_session : parsed,
+                  });
+                }
+              }}
               className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
               required
               min="0"

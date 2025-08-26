@@ -46,6 +46,18 @@ type NoteSubject = {
   color: string;
 };
 
+interface AIQuestion {
+  question_text: string;
+  question_type: "multiple_choice" | "true_false";
+  points?: number;
+  ai_status?: string;
+  ai_metadata?: any;
+  answers: Array<{
+    answer_text: string;
+    is_correct: boolean;
+  }>;
+}
+
 const CreateQuizPage: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -63,9 +75,9 @@ const CreateQuizPage: React.FC = () => {
   const [questionFilter, setQuestionFilter] = useState<"all" | "manual" | "ai">(
     "all"
   );
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
-  const [pdfName, setPdfName] = useState<string | null>(null);
-  const [pdfSize, setPdfSize] = useState<number | null>(null);
+  const [pdfs, setPdfs] = useState<
+    Array<{ pdfBase64: string; fileName: string; fileSize: number }>
+  >([]);
 
   // Quiz basic info
   const [quizData, setQuizData] = useState({
@@ -192,16 +204,17 @@ const CreateQuizPage: React.FC = () => {
     }
     setAiLoading(true);
     try {
-      const ai = await generateAIQuestions({
+      const ai: AIQuestion[] = await generateAIQuestions({
         subject: quizData.subject,
         gradeLevel: quizData.grade_level || undefined,
         numQuestions: aiNumQuestions,
         difficulty: aiDifficulty,
         questionType: aiQuestionType,
         title: quizData.title || undefined,
-        pdfBase64: pdfBase64 || undefined,
+        pdfs: pdfs.length > 0 ? pdfs : undefined,
       });
-      const mapped = ai.map((q, idx) => ({
+      
+      const mapped = ai.map((q: AIQuestion, idx: number) => ({
         question_text: q.question_text,
         question_type: q.question_type,
         points: q.points ?? 10,
@@ -455,13 +468,13 @@ const CreateQuizPage: React.FC = () => {
             <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                    <CheckIcon className="w-4 h-4 text-white" />
+                  <div className="bg-green-100 w-8 h-8 rounded-lg flex items-center justify-center">
+                    <PlusIcon className="w-4 h-4 text-green-600" />
                   </div>
-                  <span>Quiz Information</span>
+                  <span>Quiz Details</span>
                 </CardTitle>
                 <CardDescription>
-                  Fill in the basic details for your quiz
+                  Set up your quiz basic information
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -482,9 +495,7 @@ const CreateQuizPage: React.FC = () => {
                     <Label htmlFor="quiz-subject">Subject *</Label>
                     <Select
                       value={quizData.subject}
-                      onValueChange={(value) =>
-                        updateQuizData("subject", value)
-                      }
+                      onValueChange={(value) => updateQuizData("subject", value)}
                     >
                       <SelectTrigger className="focus:ring-2 focus:ring-[#16803D] focus:border-[#16803D]">
                         <SelectValue placeholder="Select a subject" />
@@ -521,7 +532,9 @@ const CreateQuizPage: React.FC = () => {
                       value={quizData.time_limit_minutes}
                       onChange={(e) => {
                         const raw = Number.parseInt(e.target.value || "0");
-                        const next = Number.isFinite(raw) ? Math.min(180, Math.max(1, raw)) : 60;
+                        const next = Number.isFinite(raw)
+                          ? Math.min(180, Math.max(1, raw))
+                          : 60;
                         updateQuizData("time_limit_minutes", next);
                       }}
                       min="1"
@@ -645,7 +658,9 @@ const CreateQuizPage: React.FC = () => {
                       value={aiNumQuestions}
                       onChange={(e) => {
                         const raw = Number.parseInt(e.target.value || "0");
-                        const next = Number.isFinite(raw) ? Math.min(20, Math.max(1, raw)) : 5;
+                        const next = Number.isFinite(raw)
+                          ? Math.min(20, Math.max(1, raw))
+                          : 5;
                         setAiNumQuestions(next);
                       }}
                     />
@@ -677,27 +692,43 @@ const CreateQuizPage: React.FC = () => {
                         id="quiz-create-pdf"
                         type="file"
                         accept="application/pdf"
+                        multiple
                         onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
+                          const files = Array.from(e.target.files || []);
+                          if (files.length === 0) return;
 
-                          // Check file size before upload (10MB limit)
-                          const maxBytes = 10 * 1024 * 1024;
-                          if (file.size > maxBytes) {
-                            toast.error("PDF must be 10MB or smaller. Please choose a smaller file.");
+                          if (files.length > 10) {
+                            toast.error(
+                              "Maximum 10 PDF files allowed per selection"
+                            );
                             return;
                           }
 
                           try {
-                            const { pdfBase64, fileName, fileSize } =
-                              await uploadPdfForAI(file);
-                            setPdfBase64(pdfBase64);
-                            setPdfName(fileName);
-                            setPdfSize(fileSize);
-                            toast.success("Syllabus loaded as AI context");
+                            const currentCount = pdfs.length;
+                            if (currentCount + files.length > 10) {
+                              toast.error("You can upload up to 10 PDFs in total");
+                              return;
+                            }
+
+                            const { pdfs: uploadedPdfs } = await uploadPdfForAI(
+                              files
+                            );
+                            setPdfs((prev) => [...prev, ...uploadedPdfs]);
+
+                            const newTotal = currentCount + uploadedPdfs.length;
+                            if (newTotal === 1) {
+                              toast.success("1 PDF loaded as AI context");
+                            } else {
+                              toast.success(
+                                `${uploadedPdfs.length} PDF${
+                                  uploadedPdfs.length > 1 ? "s" : ""
+                                } added to AI context (Total: ${newTotal}/10)`
+                              );
+                            }
                           } catch (err: any) {
                             console.error(err);
-                            toast.error(err?.message || "Failed to read PDF");
+                            toast.error(err?.message || "Failed to read PDFs");
                           }
                         }}
                         className="hidden"
@@ -706,36 +737,49 @@ const CreateQuizPage: React.FC = () => {
                         htmlFor="quiz-create-pdf"
                         className="inline-flex items-center px-3 py-2 bg-white border rounded-md text-sm cursor-pointer hover:bg-gray-50"
                       >
-                        Choose PDF
+                        Choose PDFs (up to 10)
                       </label>
-                      {pdfName ? (
-                        <Badge variant="secondary" className="bg-white">
-                          {pdfName}
-                          {pdfSize && ` (${(pdfSize / 1024).toFixed(1)} KB)`}
-                        </Badge>
+                      {pdfs.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {pdfs.map((pdf, index) => (
+                            <span
+                              key={index}
+                              className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1 flex items-center gap-1"
+                            >
+                              {pdf.fileName} (
+                              {(pdf.fileSize / 1024).toFixed(1)} KB)
+                              <button
+                                onClick={() =>
+                                  setPdfs((prev) =>
+                                    prev.filter((_, i) => i !== index)
+                                  )
+                                }
+                                className="ml-1 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center"
+                                title="Remove PDF"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
                       ) : (
                         <span className="text-xs text-gray-500">
-                          No file selected
+                          No files selected
                         </span>
                       )}
                     </div>
-                    {pdfName && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setPdfBase64(null);
-                          setPdfName(null);
-                          setPdfSize(null);
-                        }}
+                    {pdfs.length > 0 && (
+                      <button
+                        onClick={() => setPdfs([])}
                         className="text-xs text-gray-600 hover:text-gray-900"
                       >
-                        Clear
-                      </Button>
+                        Clear All
+                      </button>
                     )}
                   </div>
                   <p className="text-xs text-gray-500">
-                    PDF up to 10MB. We'll use its text as AI context.
+                    PDFs up to 10MB each, maximum 10 files. We'll use their text
+                    as AI context.
                   </p>
                 </div>
               </CardContent>
@@ -899,8 +943,12 @@ const CreateQuizPage: React.FC = () => {
                                   type="number"
                                   value={question.points}
                                   onChange={(e) => {
-                                    const raw = Number.parseInt(e.target.value || "0");
-                                    const next = Number.isFinite(raw) ? Math.min(100, Math.max(1, raw)) : 10;
+                                    const raw = Number.parseInt(
+                                      e.target.value || "0"
+                                    );
+                                    const next = Number.isFinite(raw)
+                                      ? Math.min(100, Math.max(1, raw))
+                                      : 10;
                                     updateQuestion(questionIndex, "points", next);
                                   }}
                                   className="w-16"

@@ -12,14 +12,14 @@ const ProfileHeader = () => {
       transition={{ duration: 0.5 }}
       className="mb-8"
     >
-      <div className="  max-w-full mx-auto">
+      <div className="bg-gradient-to-r from-emerald-900 to-emerald-800 rounded-2xl p-8 shadow-lg relative max-w-7xl mx-auto px-6">
         <div className="flex items-center space-x-4">
           {/* Content */}
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
-              <h1 className="text-3xl font-bold text-black">My Profile</h1>
+              <h1 className="text-3xl font-bold text-white">My Profile</h1>
             </div>
-            <p className="text-gray-900 text-base leading-relaxed">
+            <p className="text-emerald-100 text-base leading-relaxed">
               Manage your personal information and learning preferences with our
               modern, secure profile system.
             </p>
@@ -47,7 +47,7 @@ const ProfileHeader = () => {
       </div>
 
       {/* Bottom accent line */}
-      <div className="relative mt-4">
+      <div className="relative mt-4 max-w-7xl mx-auto px-6">
         <Separator className="bg-gradient-to-r from-transparent via-emerald-200 to-transparent" />
         <div className="absolute inset-0 flex justify-center">
           <div className="w-16 h-0.5 bg-gradient-to-r from-emerald-900 to-yellow-400 rounded-full -mt-px"></div>

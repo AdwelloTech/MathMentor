@@ -92,13 +92,15 @@ export async function generateAIFlashcards(
         title?: string;
         difficulty?: "easy" | "medium" | "hard";
         pdfText?: string;
+        pdfs?: Array<{ pdfBase64: string; fileName: string; fileSize: number }>;
       }
     | string,
   gradeLevel?: string,
   numCards: number = 10,
   title?: string,
   difficulty: "easy" | "medium" | "hard" = "medium",
-  pdfText?: string
+  pdfText?: string,
+  pdfs?: Array<{ pdfBase64: string; fileName: string; fileSize: number }>
 ) {
   try {
     const payload =
@@ -110,8 +112,17 @@ export async function generateAIFlashcards(
             title,
             difficulty,
             pdfText,
+            pdfs,
           }
         : subjectOrArgs;
+
+    console.log("🧠 AI Flashcards payload:", {
+      subject: payload.subject,
+      gradeLevel: payload.gradeLevel,
+      numCards: payload.numCards,
+      pdfs: payload.pdfs ? `${payload.pdfs.length} PDFs` : "No PDFs",
+      pdfsData: payload.pdfs,
+    });
 
     const response = await fetch("/api/ai/flashcards", {
       method: "POST",
@@ -147,14 +158,45 @@ export async function uploadPdfForAI(
   }
 
   const form = new FormData();
-  form.append("file", file);
+
+  if (Array.isArray(files)) {
+    // Handle multiple files
+    if (files.length > 10) {
+      throw new Error("Maximum 10 PDF files allowed");
+    }
+    files.forEach((file, index) => {
+      console.log(
+        "📄 Appending file to form:",
+        file.name,
+        file.type,
+        file.size
+      );
+      form.append("files", file);
+    });
+  } else {
+    // Handle single file (backward compatibility)
+    console.log(
+      "📄 Appending single file to form:",
+      files.name,
+      files.type,
+      files.size
+    );
+    form.append("files", files);
+  }
+
+  console.log("📄 FormData entries:");
+  for (let [key, value] of form.entries()) {
+    console.log("📄 Form key:", key, "value type:", typeof value);
+  }
+
   const res = await fetch("/api/ai/pdf/upload", {
     method: "POST",
     body: form,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({} as any));
-    throw new Error(err?.error || "Failed to upload PDF");
+    console.error("📄 Upload failed:", err);
+    throw new Error(err?.error || "Failed to upload PDFs");
   }
   return res.json();
 }

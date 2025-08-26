@@ -6,25 +6,40 @@ import cors from "cors";
 // PDF processing temporarily simplified
 import multer from "multer";
 
-// Lazy PDF text extraction to avoid type issues
+// PDF text extraction using pdf.js-extract (Node.js optimized)
 async function extractPdfTextFromBase64(
   pdfBase64: string
 ): Promise<{ text: string; truncated: boolean }> {
   try {
     const buffer = Buffer.from(pdfBase64, "base64");
-    // Dynamic import keeps build happy without types
-    const pdfParse = (await import("pdf-parse")).default as any;
-    const data = await pdfParse(buffer);
-    let text: string = String(data?.text || "");
-    // Normalize whitespace and remove odd chars
-    text = text.replace(/\u0000/g, " ").replace(/[\t\r]+/g, " ");
-    // Trim excessively long context to keep prompt size bounded
-    const MAX_LEN = 18000;
-    const truncated = text.length > MAX_LEN;
-    if (truncated) {
-      text = text.slice(0, MAX_LEN);
+
+    // Dynamic import of pdf.js-extract
+    const { PDFExtract } = await import("pdf.js-extract");
+    const pdfExtract = new PDFExtract();
+
+    // Extract text directly from PDF buffer
+    const data = await pdfExtract.extractBuffer(buffer);
+    let extractedText = "";
+
+    // Combine text from all pages
+    if (data.pages && data.pages.length > 0) {
+      extractedText = data.pages
+        .map(
+          (page: any) =>
+            page.content?.map((item: any) => item.str).join(" ") || ""
+        )
+        .join("\n");
     }
-    return { text: text.trim(), truncated };
+
+    // Normalize whitespace and remove odd characters
+    extractedText = extractedText
+      .replace(/\u0000/g, " ")
+      .replace(/[\t\r]+/g, " ");
+
+    // No character limit - use full PDF content
+    const text = extractedText;
+
+    return { text: text.trim(), truncated: false };
   } catch (err) {
     console.error("PDF text extraction failed:", err);
     return { text: "", truncated: false };
@@ -109,10 +124,13 @@ app.use(cors());
 app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ extended: true, limit: "4mb" }));
 
-// File upload (PDF) - in memory
+// File upload (PDF) - in memory, support up to 10 files
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+    files: 10, // Allow up to 10 files
+  },
 });
 
 // Health
@@ -120,31 +138,52 @@ app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// Extract text from uploaded PDF (used as AI context)
+// Extract text from uploaded PDFs (used as AI context)
+console.log("📄 Registering PDF upload route with multer middleware");
+
 app.post(
   "/api/ai/pdf/upload",
-  upload.single("file"),
+  upload.array("files", 10), // Allow up to 10 files
   async (req: Request, res: Response) => {
+    console.log("📄 PDF upload request received");
+    console.log("📄 Request headers:", req.headers);
+    console.log("📄 Request files:", req.files);
+
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: "Missing PDF file" });
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: "Missing PDF files" });
       }
 
-      console.log("📄 PDF Upload Details:");
-      console.log("- File name:", req.file.originalname);
-      console.log("- File size:", req.file.size, "bytes");
-      console.log("- MIME type:", req.file.mimetype);
+      const files = req.files as Express.Multer.File[];
 
-      // Convert PDF to base64 for sending directly to DeepSeek R1
-      const pdfBase64 = req.file.buffer.toString("base64");
+      if (files.length > 10) {
+        return res.status(400).json({ error: "Maximum 10 PDF files allowed" });
+      }
 
-      console.log("📄 PDF prepared for AI model:");
-      console.log("- Base64 length:", pdfBase64.length, "characters");
+      const pdfData = [];
+
+      for (const file of files) {
+        console.log("📄 PDF Upload Details:");
+        console.log("- File name:", file.originalname);
+        console.log("- File size:", file.size, "bytes");
+        console.log("- MIME type:", file.mimetype);
+
+        // Convert PDF to base64 for sending directly to DeepSeek R1
+        const pdfBase64 = file.buffer.toString("base64");
+
+        console.log("📄 PDF prepared for AI model:");
+        console.log("- Base64 length:", pdfBase64.length, "characters");
+
+        pdfData.push({
+          pdfBase64,
+          fileName: file.originalname,
+          fileSize: file.size,
+        });
+      }
 
       res.json({
-        pdfBase64,
-        fileName: req.file.originalname,
-        fileSize: req.file.size,
+        pdfs: pdfData,
+        totalFiles: pdfData.length,
       });
     } catch (err) {
       console.error("PDF extract error", err);
@@ -170,7 +209,11 @@ app.post("/api/ai/generate", async (req: Request, res: Response) => {
       title,
       pdfText,
       pdfBase64,
-    }: GenerateAIRequest & { pdfBase64?: string } = req.body || {};
+      pdfs,
+    }: GenerateAIRequest & {
+      pdfBase64?: string;
+      pdfs?: Array<{ pdfBase64: string; fileName: string; fileSize: number }>;
+    } = req.body || {};
 
     if (!subject) {
       return res.status(400).json({ error: "subject is required" });
@@ -180,21 +223,60 @@ app.post("/api/ai/generate", async (req: Request, res: Response) => {
     const contextLine = title ? `Quiz title: ${title}.` : "";
     // If we only have base64, extract text on the server
     let effectivePdfText: string | undefined = pdfText;
+    let allPdfTexts: string[] = [];
+
+    // Handle single PDF (backward compatibility)
     if (!effectivePdfText && pdfBase64) {
       const extracted = await extractPdfTextFromBase64(pdfBase64);
       effectivePdfText = extracted.text || undefined;
+      if (effectivePdfText) {
+        allPdfTexts.push(effectivePdfText);
+      }
+    }
+
+    // Handle multiple PDFs
+    if (pdfs && pdfs.length > 0) {
+      console.log(`🔍 Processing ${pdfs.length} PDFs for text extraction...`);
+      for (const pdf of pdfs) {
+        try {
+          console.log(`🔍 Extracting text from ${pdf.fileName}...`);
+          const extracted = await extractPdfTextFromBase64(pdf.pdfBase64);
+          console.log(`🔍 Extraction result for ${pdf.fileName}:`, {
+            success: !!extracted.text,
+            textLength: extracted.text?.length || 0,
+            truncated: extracted.truncated,
+          });
+          if (extracted.text) {
+            allPdfTexts.push(extracted.text);
+            console.log(
+              `✅ Extracted PDF text from ${pdf.fileName}, length:`,
+              extracted.text.length
+            );
+          } else {
+            console.log(`❌ No text extracted from ${pdf.fileName}`);
+          }
+        } catch (err) {
+          console.error(`❌ Failed to extract text from ${pdf.fileName}:`, err);
+        }
+      }
+    }
+
+    // Combine all PDF texts
+    if (allPdfTexts.length > 0) {
+      effectivePdfText = allPdfTexts.join("\n\n---\n\n");
       console.log(
-        "- Extracted PDF text length:",
-        (effectivePdfText || "").length
+        "- Total extracted PDF text length:",
+        effectivePdfText.length
       );
       if (effectivePdfText) {
         const preview = effectivePdfText.replace(/\s+/g, " ").slice(0, 200);
-        console.log("- PDF text preview (first 200 chars):", preview);
+        console.log("- Combined PDF text preview (first 200 chars):", preview);
       }
     }
+
     const pdfContext =
       effectivePdfText && effectivePdfText.trim()
-        ? `\n\nContext - Syllabus Excerpt:\n"""\n${effectivePdfText.trim()}\n"""\nUse this context to align style, terminology, and scope. Prefer this context over generic knowledge when possible.`
+        ? `\n\nContext - Syllabus Excerpts:\n"""\n${effectivePdfText.trim()}\n"""\nUse this context to align style, terminology, and scope. Prefer this context over generic knowledge when possible.`
         : "";
 
     // Log what context is being used
@@ -204,10 +286,23 @@ app.post("/api/ai/generate", async (req: Request, res: Response) => {
     console.log("- Number of Questions:", numQuestions);
     console.log("- Difficulty:", difficulty);
     console.log("- Question Type:", questionType);
-    console.log("- PDF Base64 provided:", !!pdfBase64);
+    console.log("- Single PDF Base64 provided:", !!pdfBase64);
+    console.log("- Multiple PDFs provided:", pdfs ? pdfs.length : 0);
     console.log("- PDF text used as context:", !!effectivePdfText);
     if (pdfBase64)
-      console.log("- PDF Base64 length:", pdfBase64.length, "characters");
+      console.log(
+        "- Single PDF Base64 length:",
+        pdfBase64.length,
+        "characters"
+      );
+    if (pdfs && pdfs.length > 0) {
+      console.log(
+        `- Multiple PDFs total size: ${pdfs.reduce(
+          (sum, pdf) => sum + pdf.pdfBase64.length,
+          0
+        )} characters`
+      );
+    }
 
     let userPrompt: string;
     if (questionType === "multiple_choice") {
@@ -397,7 +492,11 @@ app.post("/api/ai/flashcards", async (req: Request, res: Response) => {
       difficulty = "medium",
       pdfText,
       pdfBase64,
-    }: GenerateAIFlashcardsRequest & { pdfBase64?: string } = req.body || {};
+      pdfs,
+    }: GenerateAIFlashcardsRequest & {
+      pdfBase64?: string;
+      pdfs?: Array<{ pdfBase64: string; fileName: string; fileSize: number }>;
+    } = req.body || {};
 
     if (!subject) {
       return res.status(400).json({ error: "subject is required" });
@@ -410,21 +509,60 @@ app.post("/api/ai/flashcards", async (req: Request, res: Response) => {
     const contextLine = title ? `Set title: ${title}.` : "";
     // If we only have base64, extract text on the server
     let effectivePdfText: string | undefined = pdfText;
+    let allPdfTexts: string[] = [];
+
+    // Handle single PDF (backward compatibility)
     if (!effectivePdfText && pdfBase64) {
       const extracted = await extractPdfTextFromBase64(pdfBase64);
       effectivePdfText = extracted.text || undefined;
+      if (effectivePdfText) {
+        allPdfTexts.push(effectivePdfText);
+      }
+    }
+
+    // Handle multiple PDFs
+    if (pdfs && pdfs.length > 0) {
+      console.log(`🔍 Processing ${pdfs.length} PDFs for text extraction...`);
+      for (const pdf of pdfs) {
+        try {
+          console.log(`🔍 Extracting text from ${pdf.fileName}...`);
+          const extracted = await extractPdfTextFromBase64(pdf.pdfBase64);
+          console.log(`🔍 Extraction result for ${pdf.fileName}:`, {
+            success: !!extracted.text,
+            textLength: extracted.text?.length || 0,
+            truncated: extracted.truncated,
+          });
+          if (extracted.text) {
+            allPdfTexts.push(extracted.text);
+            console.log(
+              `✅ Extracted PDF text from ${pdf.fileName}, length:`,
+              extracted.text.length
+            );
+          } else {
+            console.log(`❌ No text extracted from ${pdf.fileName}`);
+          }
+        } catch (err) {
+          console.error(`❌ Failed to extract text from ${pdf.fileName}:`, err);
+        }
+      }
+    }
+
+    // Combine all PDF texts
+    if (allPdfTexts.length > 0) {
+      effectivePdfText = allPdfTexts.join("\n\n---\n\n");
       console.log(
-        "- Extracted PDF text length:",
-        (effectivePdfText || "").length
+        "- Total extracted PDF text length:",
+        effectivePdfText.length
       );
       if (effectivePdfText) {
         const preview = effectivePdfText.replace(/\s+/g, " ").slice(0, 200);
-        console.log("- PDF text preview (first 200 chars):", preview);
+        console.log("- Combined PDF text preview (first 200 chars):", preview);
       }
     }
+
     const pdfContext =
       effectivePdfText && effectivePdfText.trim()
-        ? `\n\nContext - Syllabus Excerpt:\n"""\n${effectivePdfText.trim()}\n"""\nUse this context to align style, terminology, and scope. Prefer this context over generic knowledge when possible.`
+        ? `\n\nContext - Syllabus Excerpts:\n"""\n${effectivePdfText.trim()}\n"""\nUse this context to align style, terminology, and scope. Prefer this context over generic knowledge when possible.`
         : "";
 
     // Log what context is being used
@@ -433,10 +571,23 @@ app.post("/api/ai/flashcards", async (req: Request, res: Response) => {
     console.log("- Grade Level:", gradeLevel);
     console.log("- Number of Cards:", numCards);
     console.log("- Difficulty:", difficulty);
-    console.log("- PDF Base64 provided:", !!pdfBase64);
+    console.log("- Single PDF Base64 provided:", !!pdfBase64);
+    console.log("- Multiple PDFs provided:", pdfs ? pdfs.length : 0);
     console.log("- PDF text used as context:", !!effectivePdfText);
     if (pdfBase64)
-      console.log("- PDF Base64 length:", pdfBase64.length, "characters");
+      console.log(
+        "- Single PDF Base64 length:",
+        pdfBase64.length,
+        "characters"
+      );
+    if (pdfs && pdfs.length > 0) {
+      console.log(
+        `- Multiple PDFs total size: ${pdfs.reduce(
+          (sum, pdf) => sum + pdf.pdfBase64.length,
+          0
+        )} characters`
+      );
+    }
 
     const userPrompt = `You are an assistant that generates concise, high‑quality study flashcards as term–definition pairs.
 
@@ -469,24 +620,20 @@ ${contextLine}${pdfContext}
 - Ensure accuracy and educational value for mathematics learning.`;
 
     let content = "";
+    const hostValue = String(
+      (req.headers["x-forwarded-host"] as string | string[] | undefined) ??
+        req.headers.host ??
+        "localhost:3000"
+    );
+    const httpReferer = hostValue.startsWith("http")
+      ? hostValue
+      : `http://${hostValue}`;
+
+    // Always use DeepSeek R1 and pass extracted PDF text as context
+    const modelId = "deepseek/deepseek-r1:free";
+    console.log("- Using model:", modelId, "(text-only, PDF text as context)");
+
     try {
-      const hostValue = String(
-        (req.headers["x-forwarded-host"] as string | string[] | undefined) ??
-          req.headers.host ??
-          "localhost:3000"
-      );
-      const httpReferer = hostValue.startsWith("http")
-        ? hostValue
-        : `http://${hostValue}`;
-
-      // Always use DeepSeek R1 and pass extracted PDF text as context
-      const modelId = "deepseek/deepseek-r1:free";
-      console.log(
-        "- Using model:",
-        modelId,
-        "(text-only, PDF text as context)"
-      );
-
       const resp = await fetch(
         "https://openrouter.ai/api/v1/chat/completions",
         {
@@ -850,9 +997,23 @@ app.listen(PORT, () => {
 
 // Global error handler (handles multer errors and others)
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("Unhandled error:", err);
+
   if (err && err.code === "LIMIT_FILE_SIZE") {
     return res.status(413).json({ error: "PDF too large. Max 10MB." });
   }
-  console.error("Unhandled error:", err);
+
+  if (err && err.code === "LIMIT_UNEXPECTED_FILE") {
+    return res.status(400).json({
+      error: "Unexpected file field. Please use 'files' field for PDF uploads.",
+    });
+  }
+
+  if (err && err.code === "LIMIT_FILE_COUNT") {
+    return res
+      .status(400)
+      .json({ error: "Too many files. Maximum 10 PDFs allowed." });
+  }
+
   res.status(500).json({ error: "Server error" });
 });

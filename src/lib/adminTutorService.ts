@@ -102,7 +102,7 @@ class AdminTutorService {
       const { data: applications, error: applicationsError } = await supabase
         .from("tutor_applications")
         .select("*")
-        .order("submitted_at", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (applicationsError) {
         console.error("Error fetching applications:", applicationsError);
@@ -157,7 +157,7 @@ class AdminTutorService {
         .from("tutor_applications")
         .select("*")
         .eq("user_id", tutor.user_id)
-        .order("submitted_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(1);
 
       if (applicationsError) {
@@ -319,13 +319,27 @@ class AdminTutorService {
       // Get application status counts
       const { data: applications, error: applicationsError } = await supabase
         .from("tutor_applications")
-        .select("application_status");
+        .select("user_id, application_status, created_at");
 
       if (applicationsError) throw applicationsError;
 
-      const statusCounts =
-        applications?.reduce((acc, app) => {
-          const status = app.application_status;
+      // Deduplicate by user: keep the latest application per user
+      type App = {
+        user_id: string;
+        application_status: string | null;
+        created_at?: string | null;
+      };
+      const latestByUser = new Map<string, App>();
+      (applications ?? []).forEach((app: App) => {
+        const prev = latestByUser.get(app.user_id);
+        const currTs = new Date(app.created_at ?? 0).getTime();
+        const prevTs = prev ? new Date(prev.created_at ?? 0).getTime() : -1;
+        if (!prev || currTs >= prevTs) latestByUser.set(app.user_id, app);
+      });
+
+      const statusCounts = Array.from(latestByUser.values()).reduce(
+        (acc, app) => {
+          const status = app.application_status ?? "unknown";
           if (
             status === "approved" ||
             status === "pending" ||
@@ -335,7 +349,9 @@ class AdminTutorService {
             acc[status] = (acc[status] || 0) + 1;
           }
           return acc;
-        }, {} as Record<string, number>) || {};
+        },
+        {} as Record<string, number>
+      );
 
       const approved = statusCounts.approved || 0;
       const pending = statusCounts.pending || 0;

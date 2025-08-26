@@ -80,6 +80,7 @@ const TutorManageClassesPage: React.FC = () => {
   const loadClasses = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await classSchedulingService.classes.getByTutorId(user!.id);
       setClasses(data || []);
     } catch (err) {
@@ -102,10 +103,12 @@ const TutorManageClassesPage: React.FC = () => {
   const handleDeleteClass = async (classId: string) => {
     if (!confirm("Are you sure you want to delete this class?")) return;
     try {
+      setError(null);
       await classSchedulingService.classes.delete(classId);
       setClasses((prev) => prev.filter((c) => c.id !== classId));
       setSelectedClass(null);
       setShowDetails(false);
+      setError(null); // Clear error on success
     } catch (err) {
       setError("Failed to delete class");
       console.error("Error deleting class:", err);
@@ -115,6 +118,7 @@ const TutorManageClassesPage: React.FC = () => {
   const handleUpdateClass = async (updatedClass: Partial<TutorClass>) => {
     if (!editingClass) return;
     try {
+      setError(null);
       const updatedData = await classSchedulingService.classes.update(
         editingClass.id,
         updatedClass
@@ -125,6 +129,7 @@ const TutorManageClassesPage: React.FC = () => {
       setEditingClass(null);
       setSelectedClass(null);
       setShowDetails(false);
+      setError(null); // Clear error on success
     } catch (err) {
       setError("Failed to update class");
       console.error("Error updating class:", err);
@@ -739,6 +744,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
             <Input
               id="start-time"
               type="time"
+              step="1"
               value={formData.start_time}
               onChange={(e) =>
                 setFormData({ ...formData, start_time: e.target.value })
@@ -758,6 +764,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
             <Input
               id="end-time"
               type="time"
+              step="1"
               value={formData.end_time}
               onChange={(e) =>
                 setFormData({ ...formData, end_time: e.target.value })
@@ -868,13 +875,13 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           </Label>
           <Textarea
             id="description"
-            value={formData.description}
+            value={formData.description ?? ""}
             onChange={(e) =>
               setFormData({ ...formData, description: e.target.value })
             }
             rows={3}
             className="h-24 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all resize-none"
-            required
+            /* required */
           />
         </div>
 

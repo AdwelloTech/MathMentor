@@ -23,10 +23,11 @@ const StudentPageWrapper: React.FC<StudentPageWrapperProps> = ({
   const { setBackgroundClass } = useStudentBackground();
 
   useEffect(() => {
-    // Set the background class in the context
+    // Set the background class in the context on mount
     setBackgroundClass(backgroundClass);
 
-    // Cleanup: reset to default when component unmounts
+    // Cleanup: reset to default background when component unmounts
+    // This prevents background leakage into non-student pages
     return () => {
       setBackgroundClass("bg-gray-50");
     };

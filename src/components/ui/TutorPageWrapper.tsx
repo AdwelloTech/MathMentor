@@ -21,15 +21,27 @@ const TutorPageWrapper: React.FC<TutorPageWrapperProps> = ({
 }) => {
   useEffect(() => {
     // Set the background class on the body element for seamless appearance
-    document.body.className = backgroundClass;
+    // Split backgroundClass on whitespace to handle multiple classes
+    const classesToAdd = backgroundClass.trim().split(/\s+/).filter(cls => cls.length > 0);
 
-    // Cleanup: remove the background when component unmounts
+    // Add each class individually to avoid clobbering existing classes
+    classesToAdd.forEach(cls => {
+      if (cls) {
+        document.body.classList.add(cls);
+      }
+    });
+
+    // Cleanup: remove only the classes we added
     return () => {
-      document.body.className = "";
+      classesToAdd.forEach(cls => {
+        if (cls) {
+          document.body.classList.remove(cls);
+        }
+      });
     };
   }, [backgroundClass]);
 
-  return <div className={`min-h-screen ${className}`}>{children}</div>;
+  return <div className={`min-h-screen ${backgroundClass} ${className}`}>{children}</div>;
 };
 
 export default TutorPageWrapper;

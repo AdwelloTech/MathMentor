@@ -643,14 +643,11 @@ const CreateQuizPage: React.FC = () => {
                       min={1}
                       max={20}
                       value={aiNumQuestions}
-                      onChange={(e) =>
-                        setAiNumQuestions(
-                          Math.max(
-                            1,
-                            Math.min(20, parseInt(e.target.value || "1"))
-                          )
-                        )
-                      }
+                      onChange={(e) => {
+                        const raw = Number.parseInt(e.target.value || "0");
+                        const next = Number.isFinite(raw) ? Math.min(20, Math.max(1, raw)) : 5;
+                        setAiNumQuestions(next);
+                      }}
                     />
                   </div>
 
@@ -683,6 +680,14 @@ const CreateQuizPage: React.FC = () => {
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
+
+                          // Check file size before upload (10MB limit)
+                          const maxBytes = 10 * 1024 * 1024;
+                          if (file.size > maxBytes) {
+                            toast.error("PDF must be 10MB or smaller. Please choose a smaller file.");
+                            return;
+                          }
+
                           try {
                             const { pdfBase64, fileName, fileSize } =
                               await uploadPdfForAI(file);
@@ -893,13 +898,11 @@ const CreateQuizPage: React.FC = () => {
                                 <Input
                                   type="number"
                                   value={question.points}
-                                  onChange={(e) =>
-                                    updateQuestion(
-                                      questionIndex,
-                                      "points",
-                                      parseInt(e.target.value)
-                                    )
-                                  }
+                                  onChange={(e) => {
+                                    const raw = Number.parseInt(e.target.value || "0");
+                                    const next = Number.isFinite(raw) ? Math.min(100, Math.max(1, raw)) : 10;
+                                    updateQuestion(questionIndex, "points", next);
+                                  }}
                                   className="w-16"
                                   min="1"
                                   max="100"

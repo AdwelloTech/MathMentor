@@ -39,7 +39,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { getActiveProfileImage } from "@/lib/profileImages";
+import { getActiveProfileImage, getProfileImageUrl } from "@/lib/profileImages";
 import ProfileImageUpload from "@/components/ui/ProfileImageUpload";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 // Note: toast functionality removed as it's not available in this project
@@ -65,31 +65,7 @@ interface TutorProfileFormData {
   cvFileName: string;
 }
 
-// Enhanced PDF file validation with MIME type and content verification
-const validatePDFFile = async (file: File): Promise<boolean> => {
-  // First check: MIME type validation
-  if (file.type === "application/pdf" || file.type.startsWith("application/pdf")) {
-    return true;
-  }
 
-  // Second check: If MIME type is empty or ambiguous, check file content
-  if (!file.type || file.type === "application/octet-stream") {
-    try {
-      const arrayBuffer = await file.slice(0, 8).arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      const header = String.fromCharCode(...uint8Array.slice(0, 5));
-
-      // PDF files start with "%PDF-"
-      return header === "%PDF-";
-    } catch (error) {
-      console.error("Error reading file header:", error);
-      return false;
-    }
-  }
-
-  // If MIME type is present but not PDF, reject
-  return false;
-};
 
 const TutorProfile: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -169,8 +145,13 @@ const TutorProfile: React.FC = () => {
           });
 
         // Load active profile image
-        if (profileData.id) {
-          const imageUrl = await getActiveProfileImage(profileData.id);
+        if (user.id) {
+          // Fetch the active ProfileImage object
+          const activeImage = await getActiveProfileImage(user.id);
+          // Convert file_path to a public URL (or null if none)
+          const imageUrl = activeImage
+            ? getProfileImageUrl(activeImage.file_path)
+            : null;
           setCurrentProfileImageUrl(imageUrl);
         }
       } catch (error) {
@@ -311,13 +292,51 @@ const TutorProfile: React.FC = () => {
     }
   };
 
+  const validatePDFFile = async (file: File): Promise<boolean> => {
+    // First check: MIME type validation
+    if (file.type && file.type.startsWith("application/pdf")) {
+      return true; // Valid PDF based on MIME type
+    }
+
+    // Second check: File extension as fallback
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      return false; // Not a PDF based on extension
+    }
+
+    // Third check: File header validation for spoofed files
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        if (!arrayBuffer) {
+          resolve(false);
+          return;
+        }
+
+        // Read first 8 bytes to check PDF header
+        const uint8Array = new Uint8Array(arrayBuffer.slice(0, 8));
+        const header = String.fromCharCode(...uint8Array);
+
+        // PDF files start with "%PDF-"
+        resolve(header.startsWith("%PDF-"));
+      };
+
+      reader.onerror = () => resolve(false);
+
+      // Read first 8 bytes of the file
+      const slice = file.slice(0, 8);
+      reader.readAsArrayBuffer(slice);
+    });
+  };
+
   const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
 
-    // Validate file type
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      setCvUploadError("Please upload a PDF file");
+    // Validate file type with comprehensive checks
+    const isValidPDF = await validatePDFFile(file);
+    if (!isValidPDF) {
+      setCvUploadError("Please upload a valid PDF file");
       return;
     }
 
@@ -442,8 +461,8 @@ const TutorProfile: React.FC = () => {
 
       console.log("CV removed successfully!");
     } catch (error) {
-      console.error("Error removing CV:", error);
-      console.error("Failed to remove CV");
+      console.error("Failed to remove CV:", error);
+      setCvUploadError("Failed to remove CV. Please try again.");
     }
   };
 
@@ -717,12 +736,10 @@ const TutorProfile: React.FC = () => {
                   name="experienceYears"
                     type="number"
                   value={formData.experienceYears || ""}
-                    onChange={(e) =>
-                      handleNumberChange(
-                        "experienceYears",
-                        parseInt(e.target.value) || undefined
-                      )
-                    }
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      handleNumberChange("experienceYears", Number.isNaN(v) ? undefined : v);
+                    }}
                     placeholder="Enter years of experience"
                   min="0"
                   max="50"
@@ -742,12 +759,10 @@ const TutorProfile: React.FC = () => {
                   name="hourlyRate"
                     type="number"
                   value={formData.hourlyRate || ""}
-                    onChange={(e) =>
-                      handleNumberChange(
-                        "hourlyRate",
-                        parseFloat(e.target.value) || undefined
-                      )
-                    }
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      handleNumberChange("hourlyRate", Number.isNaN(v) ? undefined : v);
+                    }}
                     placeholder="Enter your hourly rate"
                   min="0"
                   step="0.01"

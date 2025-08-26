@@ -53,6 +53,18 @@ export async function generateAIQuestions(
           }
         : argsOrSubject;
 
+    // Back-compat shim: some callers still send { pdfs: [{ pdfBase64, ... }] }
+    // If present and no explicit pdfBase64 provided, pick the first one.
+    const maybeOld = (typeof argsOrSubject === "object" &&
+      argsOrSubject) as any;
+    if (
+      !payload.pdfBase64 &&
+      Array.isArray(maybeOld?.pdfs) &&
+      maybeOld.pdfs.length > 0
+    ) {
+      payload.pdfBase64 = maybeOld.pdfs[0].pdfBase64;
+    }
+
     const response = await fetch("/api/ai/generate", {
       method: "POST",
       headers: {
@@ -144,49 +156,33 @@ export async function generateAIFlashcards(
   }
 }
 
-// Upload a PDF and get base64 for AI processing
+// Upload one or many PDFs and get base64 blobs for AI processing
 export async function uploadPdfForAI(
-  file: File
-): Promise<{ pdfBase64: string; fileName: string; fileSize: number }> {
+  files: File | File[]
+): Promise<{
+  pdfs: Array<{ pdfBase64: string; fileName: string; fileSize: number }>;
+}> {
+  const arr = Array.isArray(files) ? files : [files];
   // Basic client-side validation; server must still enforce limits
   const maxBytes = 10 * 1024 * 1024; // 10MB
-  if (file.size > maxBytes) {
-    throw new Error("PDF exceeds 10MB limit");
+  if (arr.length === 0) {
+    throw new Error("No files provided");
   }
-  if (file.type !== "application/pdf") {
-    throw new Error("Only PDF files are allowed");
+  if (arr.length > 10) {
+    throw new Error("Maximum 10 PDF files allowed");
+  }
+  for (const f of arr) {
+    if (f.size > maxBytes) {
+      throw new Error(`"${f.name}" exceeds 10MB limit`);
+    }
+    if (f.type !== "application/pdf") {
+      throw new Error(`"${f.name}" is not a PDF`);
+    }
   }
 
   const form = new FormData();
-
-  if (Array.isArray(files)) {
-    // Handle multiple files
-    if (files.length > 10) {
-      throw new Error("Maximum 10 PDF files allowed");
-    }
-    files.forEach((file, index) => {
-      console.log(
-        "📄 Appending file to form:",
-        file.name,
-        file.type,
-        file.size
-      );
-      form.append("files", file);
-    });
-  } else {
-    // Handle single file (backward compatibility)
-    console.log(
-      "📄 Appending single file to form:",
-      files.name,
-      files.type,
-      files.size
-    );
-    form.append("files", files);
-  }
-
-  console.log("📄 FormData entries:");
-  for (let [key, value] of form.entries()) {
-    console.log("📄 Form key:", key, "value type:", typeof value);
+  for (const f of arr) {
+    form.append("files", f);
   }
 
   const res = await fetch("/api/ai/pdf/upload", {
@@ -198,5 +194,9 @@ export async function uploadPdfForAI(
     console.error("📄 Upload failed:", err);
     throw new Error(err?.error || "Failed to upload PDFs");
   }
-  return res.json();
+  const json = await res.json();
+  if (!Array.isArray(json?.pdfs)) {
+    throw new Error("Upload response malformed (missing pdfs array)");
+  }
+  return json;
 }

@@ -212,7 +212,8 @@ const EditQuizPage: React.FC = () => {
         difficulty: aiDifficulty,
         questionType: aiQuestionType,
         title: quizData.title,
-        pdfs: pdfs.length > 0 ? pdfs : undefined,
+        // If multiple PDFs are allowed, server/UI policy decides how to merge.
+        pdfBase64: pdfs[0]?.pdfBase64,
       });
       const mapped = ai.map((q: any, idx: number) => ({
         id: `temp-ai-${Date.now()}-${idx}`,
@@ -328,10 +329,36 @@ const EditQuizPage: React.FC = () => {
               : {}),
           });
 
-          // Update existing answers
+          // Answer reconciliation: handle create, update, and delete operations
+          const existingAnswerIds = await quizService.answers
+            .getByQuestionId(question.id)
+            .then((answers) => answers.map((a) => a.id));
+
+          const currentAnswerIds = question.answers
+            .filter((a) => "id" in a && a.id)
+            .map((a) => a.id);
+
+          // Delete answers that were removed or when switching to short_answer
+          for (const existingId of existingAnswerIds) {
+            if (
+              !currentAnswerIds.includes(existingId) ||
+              question.question_type === "short_answer"
+            ) {
+              await quizService.answers.delete(existingId);
+            }
+          }
+
+          // Create new answers that were added
           for (const answer of question.answers) {
-            if ("id" in answer) {
-              // Check if it's an existing answer
+            if (!("id" in answer) || !answer.id) {
+              // This is a new answer without an ID
+              await quizService.answers.create(question.id, {
+                answer_text: answer.answer_text,
+                is_correct: answer.is_correct,
+                answer_order: answer.answer_order,
+              });
+            } else {
+              // Update existing answer
               await quizService.answers.update(answer.id, {
                 answer_text: answer.answer_text,
                 is_correct: answer.is_correct,
@@ -790,16 +817,61 @@ const EditQuizPage: React.FC = () => {
                         | "true_false"
                         | "short_answer";
                       setQuestions((prev) =>
-                        prev.map((q, idx) =>
-                          idx === questionIndex
-                            ? {
-                                ...q,
-                                question_type: nextType,
-                                answers:
-                                  nextType === "short_answer" ? [] : q.answers,
-                              }
-                            : q
-                        )
+                        prev.map((q, idx) => {
+                          if (idx !== questionIndex) return q;
+                          if (nextType === "short_answer") {
+                            return {
+                              ...q,
+                              question_type: nextType,
+                              answers: [],
+                            };
+                          }
+                          if (nextType === "true_false") {
+                            return {
+                              ...q,
+                              question_type: nextType,
+                              answers: [
+                                {
+                                  answer_text: "True",
+                                  is_correct: true,
+                                  answer_order: 1,
+                                },
+                                {
+                                  answer_text: "False",
+                                  is_correct: false,
+                                  answer_order: 2,
+                                },
+                              ],
+                            };
+                          }
+                          // multiple_choice: 4 seeded options; first correct
+                          return {
+                            ...q,
+                            question_type: nextType,
+                            answers: [
+                              {
+                                answer_text: "Option 1",
+                                is_correct: true,
+                                answer_order: 1,
+                              },
+                              {
+                                answer_text: "Option 2",
+                                is_correct: false,
+                                answer_order: 2,
+                              },
+                              {
+                                answer_text: "Option 3",
+                                is_correct: false,
+                                answer_order: 3,
+                              },
+                              {
+                                answer_text: "Option 4",
+                                is_correct: false,
+                                answer_order: 4,
+                              },
+                            ],
+                          };
+                        })
                       );
                     }}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm"

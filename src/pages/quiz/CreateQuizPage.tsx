@@ -180,7 +180,8 @@ const CreateQuizPage: React.FC = () => {
         difficulty: aiDifficulty,
         questionType: aiQuestionType,
         title: quizData.title || undefined,
-        pdfs: pdfs.length > 0 ? pdfs : undefined,
+        // If multiple PDFs are allowed, server/UI policy decides how to merge.
+        pdfBase64: pdfs[0]?.pdfBase64,
       });
       const mapped = ai.map((q: any, idx: number) => ({
         question_text: q.question_text,
@@ -190,14 +191,15 @@ const CreateQuizPage: React.FC = () => {
         is_ai_generated: true,
         ai_status: q.ai_status || "pending",
         ai_metadata: q.ai_metadata,
-        answers:
-          q.question_type === "short_answer"
-            ? []
-            : (q.answers ?? []).map((a: any, i: number) => ({
+        ...(q.question_type !== "short_answer"
+          ? {
+              answers: (q.answers ?? []).map((a: any, i: number) => ({
                 answer_text: a.answer_text,
                 is_correct: a.is_correct,
                 answer_order: i + 1,
               })),
+            }
+          : {}),
       }));
       setQuestions((prev) => [...prev, ...mapped]);
       setQuestionFilter("ai");
@@ -830,8 +832,8 @@ const CreateQuizPage: React.FC = () => {
                                   return {
                                     ...q,
                                     question_type: nextType,
-                                    answers: [],
-                                  };
+                                    answers: undefined,
+                                  } as CreateQuestionData;
                                 }
                                 // Seed defaults when moving into MC/TF
                                 if (nextType === "true_false") {
@@ -850,7 +852,7 @@ const CreateQuizPage: React.FC = () => {
                                         answer_order: 2,
                                       },
                                     ],
-                                  };
+                                  } as CreateQuestionData;
                                 }
                                 // multiple_choice: 4 options with placeholders; mark first as correct
                                 return {
@@ -878,7 +880,7 @@ const CreateQuizPage: React.FC = () => {
                                       answer_order: 4,
                                     },
                                   ],
-                                };
+                                } as CreateQuestionData;
                               })
                             );
                           }}

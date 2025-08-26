@@ -201,7 +201,7 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles!user_id(id, full_name, email)
         `
         )
         .single();
@@ -271,46 +271,67 @@ export const classSchedulingService = {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Transform to search results with additional info
-      const results: ClassSearchResult[] = await Promise.all(
-        data.map(async (classRecord) => {
-          // Get tutor rating and reviews from session_ratings table
-          const { data: reviews } = await supabase
-            .from("session_ratings")
-            .select("rating")
-            .eq("tutor_id", classRecord.tutor?.id || classRecord.tutor_id);
+      // Extract unique tutor IDs for batch queries
+      const tutorIds = [
+        ...new Set(
+          data
+            .map((classRecord) => classRecord.tutor?.id || classRecord.tutor_id)
+            .filter((id) => id) // Remove any null/undefined IDs
+        ),
+      ];
 
-          const ratings = reviews?.map((r) => r.rating) || [];
-          const averageRating =
-            ratings.length > 0
-              ? ratings.reduce((a, b) => a + b, 0) / ratings.length
-              : 0;
+      // Batch fetch all tutor ratings
+      const { data: allReviews } = await supabase
+        .from("session_ratings")
+        .select("tutor_id, rating")
+        .in("tutor_id", tutorIds);
 
-          // Get tutor subjects
-          const { data: tutorProfile } = await supabase
-            .from("profiles")
-            .select("subjects")
-            .eq("id", classRecord.tutor?.id || classRecord.tutor_id)
-            .single();
+      // Group ratings by tutor_id
+      const ratingsMap = new Map<string, number[]>();
+      allReviews?.forEach((review) => {
+        if (!ratingsMap.has(review.tutor_id)) {
+          ratingsMap.set(review.tutor_id, []);
+        }
+        ratingsMap.get(review.tutor_id)!.push(review.rating);
+      });
 
-          const subjects = tutorProfile?.subjects || [];
+      // Batch fetch all tutor profiles for subjects
+      const { data: tutorProfiles } = await supabase
+        .from("profiles")
+        .select("id, subjects")
+        .in("id", tutorIds);
 
-          return {
-            class: classRecord,
-            tutor: {
-              id: classRecord.tutor?.id || classRecord.tutor_id,
-              full_name: classRecord.tutor?.full_name || "",
-              rating: averageRating,
-              total_reviews: ratings.length,
-              subjects: subjects,
-            },
-            available_slots:
-              classRecord.max_students - classRecord.current_students,
-            is_bookable:
-              classRecord.current_students < classRecord.max_students,
-          };
-        })
-      );
+      // Create subjects map
+      const subjectsMap = new Map<string, string[]>();
+      tutorProfiles?.forEach((profile) => {
+        subjectsMap.set(profile.id, profile.subjects || []);
+      });
+
+      // Transform to search results using batched data
+      const results: ClassSearchResult[] = data.map((classRecord) => {
+        const tutorId = classRecord.tutor?.id || classRecord.tutor_id;
+        const ratings = ratingsMap.get(tutorId) || [];
+        const averageRating =
+          ratings.length > 0
+            ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+            : 0;
+
+        const subjects = subjectsMap.get(tutorId) || [];
+
+        return {
+          class: classRecord,
+          tutor: {
+            id: tutorId,
+            full_name: classRecord.tutor?.full_name || "",
+            rating: averageRating,
+            total_reviews: ratings.length,
+            subjects: subjects,
+          },
+          available_slots:
+            classRecord.max_students - classRecord.current_students,
+          is_bookable: classRecord.current_students < classRecord.max_students,
+        };
+      });
 
       return results;
     },

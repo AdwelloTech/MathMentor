@@ -37,8 +37,10 @@ const TutorApplicationPage: React.FC = () => {
     }
 
     try {
-      const application = await db.tutorApplications.getByUserId(user.id);
-      setExistingApplication(application);
+      const applications = await db.tutorApplications.getByUserId(user.id);
+      // Get the most recent application (first in the array since it's ordered by submitted_at desc)
+      const mostRecentApplication = applications?.[0] || null;
+      setExistingApplication(mostRecentApplication);
     } catch (error: any) {
       // If no application found, that's fine
       if (error.code !== "PGRST116") {

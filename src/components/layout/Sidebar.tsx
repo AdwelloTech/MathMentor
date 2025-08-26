@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import logoUrl from "@/assets/math-mentor-logo.png";
 import { Link, useLocation } from "react-router-dom";
 import {
   XMarkIcon,
@@ -299,7 +300,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               transition={{ duration: 0.2 }}
             >
               <img
-                src="/src/assets/math-mentor-logo.png"
+                src={logoUrl}
                 alt="Math Mentor Logo"
                 className="h-16 w-16 text-white"
               />
@@ -337,7 +338,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
               {isHovered && (
                 <span className="overflow-hidden whitespace-nowrap text-gray-400">
-                  {useMemo(() => item.name, [item.name])}
+                  {item.name}
                 </span>
               )}
             </div>
@@ -390,7 +391,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </motion.div>
               {isHovered && (
                 <span className="overflow-hidden whitespace-nowrap font-medium">
-                  {useMemo(() => item.name, [item.name])}
+                  {item.name}
                 </span>
               )}
             </div>
@@ -463,17 +464,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             {isHovered && (
               <div className="flex flex-col overflow-hidden">
                 <span className="text-sm font-semibold text-gray-900 truncate max-w-32">
-                  {useMemo(
-                    () => profile?.full_name || "User",
-                    [profile?.full_name]
-                  )}
+                  {profile?.full_name || "User"}
                 </span>
                 <span className="text-xs text-gray-500 truncate max-w-32">
-                  {useMemo(
-                    () =>
-                      profile?.role ? getRoleDisplayName(profile.role) : "User",
-                    [profile?.role]
-                  )}
+                  {profile?.role ? getRoleDisplayName(profile.role) : "User"}
                 </span>
               </div>
             )}

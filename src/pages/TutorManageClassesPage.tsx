@@ -514,7 +514,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     title: classItem.title,
-    description: classItem.description,
+    description: classItem.description ?? "",
     class_type_id: classItem.class_type_id,
     date: classItem.date,
     start_time: classItem.start_time,
@@ -700,7 +700,6 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
             }
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           />
         </div>
 

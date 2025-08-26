@@ -75,6 +75,12 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
         return;
       }
 
+      // Don't update if cancelled locally (booking cancelled but props may not reflect it yet)
+      if (isSessionCancelled) {
+        console.log("Timer update blocked - session cancelled");
+        return;
+      }
+
       // Check if session is already completed or cancelled in database
       if (session.class_status === "completed") {
         console.log(
@@ -147,7 +153,7 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [session, manuallyEnded]);
+  }, [session, manuallyEnded, isSessionCancelled]);
 
   // Check if rated when component loads and when session ends
   useEffect(() => {

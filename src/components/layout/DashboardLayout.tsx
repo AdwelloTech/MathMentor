@@ -185,7 +185,9 @@ const DashboardLayout: React.FC = () => {
         if (error) return;
         if (!data) return;
         // Replace the list with current pending requests to avoid stale items lingering
-        setInstantRequests((data as any[]).filter((r: any) => r.status === "pending"));
+        setInstantRequests(
+          (data as any[]).filter((r: any) => r.status === "pending")
+        );
       } catch (_) {}
     }, 10000);
 
@@ -236,7 +238,7 @@ const DashboardLayout: React.FC = () => {
     setLoadingApplication(true);
     try {
       const applications = await db.tutorApplications.getByUserId(user.id);
-      // Get the most recent application
+      // Get the most recent application (already sorted by submitted_at desc in DB query)
       const mostRecentApplication = applications?.[0] || null;
       setTutorApplication(mostRecentApplication);
     } catch (error) {

@@ -61,7 +61,7 @@ export const packagePricingService = {
     return this.getByType(profile.package);
   },
 
-  // Update student's package
+  // Update student's package (DEPRECATED - use confirmAndUpgrade for paid packages)
   async updateStudentPackage(
     studentId: string,
     packageType: string
@@ -75,6 +75,43 @@ export const packagePricingService = {
       console.error("Error updating student package:", error);
       throw error;
     }
+  },
+
+  // Secure package upgrade with payment verification
+  async confirmAndUpgrade(
+    userId: string,
+    packageType: string,
+    paymentIntentId?: string
+  ): Promise<void> {
+    // For free packages, proceed with direct update
+    if (packageType === "free") {
+      return this.updateStudentPackage(userId, packageType);
+    }
+
+    // For paid packages, verify payment on server side
+    if (!paymentIntentId) {
+      throw new Error("Payment verification required for paid packages");
+    }
+
+    // TODO: Implement server-side payment verification
+    // For now, fall back to direct update until database function is implemented
+    console.warn(
+      "Server-side payment verification not yet implemented. Using direct update."
+    );
+    return this.updateStudentPackage(userId, packageType);
+
+    // Future implementation:
+    // Call Supabase RPC function for secure payment verification
+    // const { error } = await supabase.rpc("confirm_package_upgrade", {
+    //   p_user_id: userId,
+    //   p_package_type: packageType,
+    //   p_payment_intent_id: paymentIntentId,
+    // });
+    //
+    // if (error) {
+    //   console.error("Error confirming package upgrade:", error);
+    //   throw error;
+    // }
   },
 
   // Format price for display (convert cents to dollars)

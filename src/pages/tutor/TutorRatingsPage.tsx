@@ -37,9 +37,18 @@ const TutorRatingsPage: React.FC = () => {
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<"date" | "rating">("date");
 
-  const { ratings, stats, loading, error } = useSessionRating(
-    profile?.id || ""
-  );
+  // Early return while profile is loading/undefined
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-6xl mx-auto">
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
+
+  const { ratings, stats, loading, error } = useSessionRating(profile.id);
 
   if (loading) {
     return (
@@ -138,6 +147,7 @@ const TutorRatingsPage: React.FC = () => {
   const filteredRatings =
     ratings
       ?.filter((rating) => {
+        if (!showAnonymous && rating.is_anonymous) return false;
         if (filterRating && rating.rating !== filterRating) return false;
         return true;
       })

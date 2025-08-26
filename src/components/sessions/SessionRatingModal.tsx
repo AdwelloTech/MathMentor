@@ -26,7 +26,7 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
   session,
   onSubmit,
 }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [rating, setRating] = useState<number>(0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState("");
@@ -44,7 +44,7 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
     try {
       const ratingData: CreateRatingData = {
         session_id: session.id,
-        student_id: user.profile.id, // Use profile.id instead of user.id
+        student_id: (profile?.id ?? user?.id)!,
         tutor_id: session.tutor.id, // Use tutor.id instead of session.tutor.id
         rating,
         review_text: reviewText.trim() || undefined,

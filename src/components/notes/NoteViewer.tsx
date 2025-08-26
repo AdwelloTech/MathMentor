@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
+import DOMPurify from "dompurify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   XMarkIcon,
@@ -33,6 +34,12 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ note, isOpen, onClose }) => {
   if (!note) return null;
 
   const subjectColor = getSubjectColor(note.subject_color);
+
+  // Sanitize HTML content to prevent XSS
+  const sanitizedNoteContent = useMemo(
+    () => DOMPurify.sanitize(formatNoteContent(note.content)),
+    [note.content]
+  );
 
   return (
     <AnimatePresence>
@@ -112,7 +119,7 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ note, isOpen, onClose }) => {
                   <div
                     className="text-gray-800 leading-relaxed"
                     dangerouslySetInnerHTML={{
-                      __html: formatNoteContent(note.content),
+                      __html: sanitizedNoteContent,
                     }}
                   />
                 </div>

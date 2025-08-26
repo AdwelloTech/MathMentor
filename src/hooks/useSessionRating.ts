@@ -5,28 +5,35 @@ import {
   type TutorRatingStats,
 } from "@/lib/sessionRatingService";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 export const useSessionRating = (tutorId?: string) => {
   const { user } = useAuth();
   const [ratings, setRatings] = useState<SessionRating[]>([]);
   const [stats, setStats] = useState<TutorRatingStats | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingRatings, setLoadingRatings] = useState(false);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const loading = loadingRatings || loadingStats;
+  const [ratingsError, setRatingsError] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const error = ratingsError || statsError;
 
   // Load tutor ratings
   const loadTutorRatings = useCallback(async () => {
     if (!tutorId) return;
 
     try {
-      setLoading(true);
-      setError(null);
+      setLoadingRatings(true);
+      setRatingsError(null);
       const tutorRatings = await sessionRatingService.getByTutorId(tutorId);
       setRatings(tutorRatings);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load ratings");
+      setRatingsError(
+        err instanceof Error ? err.message : "Failed to load ratings"
+      );
       console.error("Error loading tutor ratings:", err);
     } finally {
-      setLoading(false);
+      setLoadingRatings(false);
     }
   }, [tutorId]);
 
@@ -35,17 +42,17 @@ export const useSessionRating = (tutorId?: string) => {
     if (!tutorId) return;
 
     try {
-      setLoading(true);
-      setError(null);
+      setLoadingStats(true);
+      setStatsError(null);
       const tutorStats = await sessionRatingService.getTutorStats(tutorId);
       setStats(tutorStats);
     } catch (err) {
-      setError(
+      setStatsError(
         err instanceof Error ? err.message : "Failed to load rating stats"
       );
       console.error("Error loading tutor rating stats:", err);
     } finally {
-      setLoading(false);
+      setLoadingStats(false);
     }
   }, [tutorId]);
 
@@ -141,7 +148,15 @@ export const useSessionRating = (tutorId?: string) => {
   const deleteRating = useCallback(
     async (ratingId: string) => {
       try {
-        await sessionRatingService.delete(ratingId);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          throw new Error("User must be authenticated to delete a rating");
+        }
+
+        await sessionRatingService.delete(ratingId, user.id);
 
         // Update local state
         setRatings((prev) => prev.filter((rating) => rating.id !== ratingId));
@@ -179,4 +194,3 @@ export const useSessionRating = (tutorId?: string) => {
     loadTutorStats,
   };
 };
-

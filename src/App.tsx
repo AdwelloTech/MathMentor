@@ -129,7 +129,14 @@ function App() {
                 path="tutor/flashcards/edit/:setId"
                 element={<CreateEditFlashcardSetPage />}
               />
-              <Route path="tutor/ratings" element={<TutorRatingsPage />} />
+              <Route
+                path="tutor/ratings"
+                element={
+                  <ProtectedRoute requiredRole="tutor">
+                    <TutorRatingsPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* View flashcards set - accessible to any logged-in role */}
               <Route

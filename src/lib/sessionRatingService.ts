@@ -59,9 +59,23 @@ export interface TutorRatingStats {
 export const sessionRatingService = {
   // Create a new rating
   create: async (ratingData: CreateRatingData): Promise<SessionRating> => {
+    // Validate rating bounds (1-5)
+    if (
+      typeof ratingData.rating !== "number" ||
+      ratingData.rating < 1 ||
+      ratingData.rating > 5
+    ) {
+      throw new Error("Rating must be an integer between 1 and 5.");
+    }
+
+    const payload = {
+      is_anonymous: false,
+      ...ratingData,
+    };
+
     const { data, error } = await supabase
       .from("session_ratings")
-      .insert([ratingData])
+      .insert([payload])
       .select()
       .single();
 
@@ -78,6 +92,17 @@ export const sessionRatingService = {
     ratingId: string,
     updates: UpdateRatingData
   ): Promise<SessionRating> => {
+    // Validate rating bounds (1-5) if rating is being updated
+    if (updates.rating != null) {
+      if (
+        typeof updates.rating !== "number" ||
+        updates.rating < 1 ||
+        updates.rating > 5
+      ) {
+        throw new Error("Rating must be an integer between 1 and 5.");
+      }
+    }
+
     const { data, error } = await supabase
       .from("session_ratings")
       .update(updates)
@@ -241,11 +266,12 @@ export const sessionRatingService = {
   },
 
   // Delete a rating (only by the student who created it)
-  delete: async (ratingId: string): Promise<void> => {
+  delete: async (ratingId: string, currentUserId: string): Promise<void> => {
     const { error } = await supabase
       .from("session_ratings")
       .delete()
-      .eq("id", ratingId);
+      .eq("id", ratingId)
+      .eq("student_id", currentUserId);
 
     if (error) {
       console.error("Error deleting rating:", error);

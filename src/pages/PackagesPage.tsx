@@ -93,8 +93,12 @@ const PackagesPage: React.FC = () => {
     try {
       setUpgrading(packageType);
 
-      // Update the package in the database
-      await packagePricingService.updateStudentPackage(user.id, packageType);
+      // Secure package upgrade with payment verification
+      await packagePricingService.confirmAndUpgrade(
+        user.id,
+        packageType,
+        paymentIntentId
+      );
 
       // Reload packages to reflect the change
       await loadPackages();

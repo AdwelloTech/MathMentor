@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import DOMPurify from "dompurify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -38,6 +39,12 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
   const hasContent = material.content && material.content.trim().length > 0;
   const isPdfFile =
     hasFile && material.file_name?.toLowerCase().endsWith(".pdf");
+
+  // Sanitize HTML content to prevent XSS
+  const sanitizedContent = useMemo(
+    () => DOMPurify.sanitize(material.content || ""),
+    [material.content]
+  );
 
   const handleClose = () => {
     if (!loading) {
@@ -104,7 +111,10 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-10"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="material-viewer-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10"
           >
             <div className="bg-gray-200 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden border border-green-900/10">
               {/* Header */}
@@ -112,10 +122,13 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-4">
                     <div>
-                      <h2 className="text-2xl font-bold text-white mb-1">
+                      <h2
+                        id="material-viewer-title"
+                        className="text-2xl font-bold text-white mb-1"
+                      >
                         {material.title || "Untitled Material"}
                       </h2>
-                      <div className="flex flex-col items-start space-x-3">
+                      <div className="flex flex-col items-start space-y-2">
                         {material.is_premium && (
                           <Badge className="bg-yellow-400 text-black border-0 text-xs font-bold hover:bg-yellow-400">
                             PREMIUM
@@ -291,7 +304,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                         <div
                           className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
                           dangerouslySetInnerHTML={{
-                            __html: material.content || "",
+                            __html: sanitizedContent,
                           }}
                         />
                       </CardContent>

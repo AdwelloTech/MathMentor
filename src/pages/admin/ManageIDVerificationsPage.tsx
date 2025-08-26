@@ -475,7 +475,10 @@ const ManageIDVerificationsPage: React.FC = () => {
                       {filteredVerifications.map((verification) => {
                         const profile = (verification as any).profiles;
                         return (
-                          <tr key={verification.id} className="hover:bg-gray-50">
+                          <tr
+                            key={verification.id}
+                            className="hover:bg-gray-50"
+                          >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -511,7 +514,9 @@ const ManageIDVerificationsPage: React.FC = () => {
                               <div className="flex items-center space-x-3">
                                 {/* View Details Button */}
                                 <button
-                                  onClick={() => handleViewDetails(verification)}
+                                  onClick={() =>
+                                    handleViewDetails(verification)
+                                  }
                                   className="inline-flex items-center justify-center p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                   title="View Details"
                                 >
@@ -519,7 +524,8 @@ const ManageIDVerificationsPage: React.FC = () => {
                                 </button>
 
                                 {/* Approve Button */}
-                                {verification.verification_status === "pending" && (
+                                {verification.verification_status ===
+                                  "pending" && (
                                   <button
                                     onClick={() =>
                                       handleAction(verification, "approve")
@@ -532,9 +538,12 @@ const ManageIDVerificationsPage: React.FC = () => {
                                 )}
 
                                 {/* Reject Button */}
-                                {verification.verification_status === "pending" && (
+                                {verification.verification_status ===
+                                  "pending" && (
                                   <button
-                                    onClick={() => handleAction(verification, "reject")}
+                                    onClick={() =>
+                                      handleAction(verification, "reject")
+                                    }
                                     className="inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                     title="Reject"
                                   >
@@ -547,7 +556,9 @@ const ManageIDVerificationsPage: React.FC = () => {
                                   onClick={() =>
                                     handleDeleteVerification(verification.id)
                                   }
-                                  disabled={deletingVerification === verification.id}
+                                  disabled={
+                                    deletingVerification === verification.id
+                                  }
                                   className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
                                     deletingVerification === verification.id
                                       ? "opacity-50 cursor-not-allowed"
@@ -601,7 +612,9 @@ const ManageIDVerificationsPage: React.FC = () => {
                     className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800"
                   >
                     <EyeIcon className="h-4 w-4" />
-                    <span>{showSensitiveData ? "Hide" : "Show"} Sensitive Data</span>
+                    <span>
+                      {showSensitiveData ? "Hide" : "Show"} Sensitive Data
+                    </span>
                   </button>
                 </div>
               </CardContent>
@@ -655,7 +668,8 @@ const ManageIDVerificationsPage: React.FC = () => {
                           Date of Birth
                         </label>
                         <p className="mt-1 text-sm text-gray-900">
-                          {showSensitiveData && selectedVerification.date_of_birth
+                          {showSensitiveData &&
+                          selectedVerification.date_of_birth
                             ? formatDate(selectedVerification.date_of_birth)
                             : "••••••••••"}
                         </p>
@@ -671,331 +685,334 @@ const ManageIDVerificationsPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-              {/* ID Information */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  ID Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      ID Type
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {formatIDType(selectedVerification.id_type)}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      ID Number
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {showSensitiveData
-                        ? selectedVerification.id_number
-                        : "••••••••••"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Issuing Country
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedVerification.issuing_country || "Not specified"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Issuing Authority
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedVerification.issuing_authority ||
-                        "Not specified"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Expiry Date
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {showSensitiveData && selectedVerification.expiry_date
-                        ? formatDate(selectedVerification.expiry_date)
-                        : "••••••••••"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Verification Status */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Verification Status
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Status
-                    </label>
-                    <div className="mt-1">
-                      {getStatusBadge(selectedVerification.verification_status)}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Submitted
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {formatDate(selectedVerification.submitted_at)}
-                    </p>
-                  </div>
-                  {selectedVerification.verified_at && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Verified
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {formatDate(selectedVerification.verified_at)}
-                      </p>
-                    </div>
-                  )}
-                  {selectedVerification.admin_notes && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Admin Notes
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedVerification.admin_notes}
-                      </p>
-                    </div>
-                  )}
-                  {selectedVerification.rejection_reason && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Rejection Reason
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedVerification.rejection_reason}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ID Images */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  ID Images
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {selectedVerification.front_image_url && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Front Image
-                      </label>
-                      <div className="relative">
-                        <img
-                          src={selectedVerification.front_image_url}
-                          alt="ID Front"
-                          className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                          onError={(e) => {
-                            console.error(
-                              "Error loading front image:",
-                              selectedVerification.front_image_url
-                            );
-                            (e.target as HTMLImageElement).src =
-                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+";
-                          }}
-                        />
-                        <div className="absolute top-2 right-2">
-                          <a
-                            href={selectedVerification.front_image_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
-                          >
-                            Open
-                          </a>
-                        </div>
+                  {/* ID Information */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      ID Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          ID Type
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {formatIDType(selectedVerification.id_type)}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          ID Number
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {showSensitiveData
+                            ? selectedVerification.id_number
+                            : "••••••••••"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Issuing Country
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {selectedVerification.issuing_country ||
+                            "Not specified"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Issuing Authority
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {selectedVerification.issuing_authority ||
+                            "Not specified"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Expiry Date
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {showSensitiveData && selectedVerification.expiry_date
+                            ? formatDate(selectedVerification.expiry_date)
+                            : "••••••••••"}
+                        </p>
                       </div>
                     </div>
-                  )}
-                  {selectedVerification.back_image_url && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Back Image
-                      </label>
-                      <div className="relative">
-                        <img
-                          src={selectedVerification.back_image_url}
-                          alt="ID Back"
-                          className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                          onError={(e) => {
-                            console.error(
-                              "Error loading back image:",
-                              selectedVerification.back_image_url
-                            );
-                            (e.target as HTMLImageElement).src =
-                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+";
-                          }}
-                        />
-                        <div className="absolute top-2 right-2">
-                          <a
-                            href={selectedVerification.back_image_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
-                          >
-                            Open
-                          </a>
+                  </div>
+
+                  {/* Verification Status */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Verification Status
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Status
+                        </label>
+                        <div className="mt-1">
+                          {getStatusBadge(
+                            selectedVerification.verification_status
+                          )}
                         </div>
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Submitted
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {formatDate(selectedVerification.submitted_at)}
+                        </p>
+                      </div>
+                      {selectedVerification.verified_at && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Verified
+                          </label>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {formatDate(selectedVerification.verified_at)}
+                          </p>
+                        </div>
+                      )}
+                      {selectedVerification.admin_notes && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Admin Notes
+                          </label>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {selectedVerification.admin_notes}
+                          </p>
+                        </div>
+                      )}
+                      {selectedVerification.rejection_reason && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Rejection Reason
+                          </label>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {selectedVerification.rejection_reason}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {selectedVerification.selfie_with_id_url && (
+                  </div>
+
+                  {/* ID Images */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      ID Images
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {selectedVerification.front_image_url && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Front Image
+                          </label>
+                          <div className="relative">
+                            <img
+                              src={selectedVerification.front_image_url}
+                              alt="ID Front"
+                              className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                              onError={(e) => {
+                                console.error(
+                                  "Error loading front image:",
+                                  selectedVerification.front_image_url
+                                );
+                                (e.target as HTMLImageElement).src =
+                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+";
+                              }}
+                            />
+                            <div className="absolute top-2 right-2">
+                              <a
+                                href={selectedVerification.front_image_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
+                              >
+                                Open
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {selectedVerification.back_image_url && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Back Image
+                          </label>
+                          <div className="relative">
+                            <img
+                              src={selectedVerification.back_image_url}
+                              alt="ID Back"
+                              className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                              onError={(e) => {
+                                console.error(
+                                  "Error loading back image:",
+                                  selectedVerification.back_image_url
+                                );
+                                (e.target as HTMLImageElement).src =
+                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+";
+                              }}
+                            />
+                            <div className="absolute top-2 right-2">
+                              <a
+                                href={selectedVerification.back_image_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
+                              >
+                                Open
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {selectedVerification.selfie_with_id_url && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Selfie with ID
+                          </label>
+                          <div className="relative">
+                            <img
+                              src={selectedVerification.selfie_with_id_url}
+                              alt="Selfie with ID"
+                              className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                              onError={(e) => {
+                                console.error(
+                                  "Error loading selfie image:",
+                                  selectedVerification.selfie_with_id_url
+                                );
+                                (e.target as HTMLImageElement).src =
+                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+";
+                              }}
+                            />
+                            <div className="absolute top-2 right-2">
+                              <a
+                                href={selectedVerification.selfie_with_id_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
+                              >
+                                Open
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {!selectedVerification.front_image_url &&
+                      !selectedVerification.back_image_url &&
+                      !selectedVerification.selfie_with_id_url && (
+                        <p className="text-sm text-gray-500 mt-2">
+                          No images uploaded
+                        </p>
+                      )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowDetailsModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Modal */}
+          {showActionModal && selectedVerification && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg w-full max-w-md">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {actionType === "approve"
+                      ? "Approve"
+                      : actionType === "reject"
+                      ? "Reject"
+                      : "Mark as Expired"}{" "}
+                    Verification
+                  </h2>
+                  <button
+                    onClick={() => setShowActionModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircleIcon className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Are you sure you want to {actionType} this ID verification?
+                  </p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Admin Notes
+                    </label>
+                    <textarea
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
+                      placeholder="Add notes about this decision..."
+                    />
+                  </div>
+
+                  {actionType === "reject" && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Selfie with ID
+                        Rejection Reason *
                       </label>
-                      <div className="relative">
-                        <img
-                          src={selectedVerification.selfie_with_id_url}
-                          alt="Selfie with ID"
-                          className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                          onError={(e) => {
-                            console.error(
-                              "Error loading selfie image:",
-                              selectedVerification.selfie_with_id_url
-                            );
-                            (e.target as HTMLImageElement).src =
-                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBVbmF2YWlsYWJsZTwvdGV4dD4KPC9zdmc+";
-                          }}
-                        />
-                        <div className="absolute top-2 right-2">
-                          <a
-                            href={selectedVerification.selfie_with_id_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
-                          >
-                            Open
-                          </a>
-                        </div>
-                      </div>
+                      <textarea
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
+                        placeholder="Please provide a reason for rejection..."
+                        required
+                      />
                     </div>
                   )}
                 </div>
-                {!selectedVerification.front_image_url &&
-                  !selectedVerification.back_image_url &&
-                  !selectedVerification.selfie_with_id_url && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      No images uploaded
-                    </p>
-                  )}
-              </div>
-            </div>
 
-            <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200">
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Action Modal */}
-      {showActionModal && selectedVerification && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {actionType === "approve"
-                  ? "Approve"
-                  : actionType === "reject"
-                  ? "Reject"
-                  : "Mark as Expired"}{" "}
-                Verification
-              </h2>
-              <button
-                onClick={() => setShowActionModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XCircleIcon className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <p className="text-sm text-gray-600">
-                Are you sure you want to {actionType} this ID verification?
-              </p>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Admin Notes
-                </label>
-                <textarea
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
-                  placeholder="Add notes about this decision..."
-                />
-              </div>
-
-              {actionType === "reject" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rejection Reason *
-                  </label>
-                  <textarea
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
-                    placeholder="Please provide a reason for rejection..."
-                    required
-                  />
+                <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowActionModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdateStatus}
+                    disabled={
+                      updatingStatus === selectedVerification.id ||
+                      (actionType === "reject" && !rejectionReason.trim())
+                    }
+                    className={`px-4 py-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      actionType === "approve"
+                        ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
+                        : actionType === "reject"
+                        ? "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                        : "bg-gray-600 hover:bg-gray-700 focus:ring-gray-500"
+                    }`}
+                  >
+                    {updatingStatus === selectedVerification.id ? (
+                      <LoadingSpinner size="sm" />
+                    ) : actionType === "approve" ? (
+                      "Approve"
+                    ) : actionType === "reject" ? (
+                      "Reject"
+                    ) : (
+                      "Mark as Expired"
+                    )}
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
-
-            <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200">
-              <button
-                onClick={() => setShowActionModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateStatus}
-                disabled={
-                  updatingStatus === selectedVerification.id ||
-                  (actionType === "reject" && !rejectionReason.trim())
-                }
-                className={`px-4 py-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  actionType === "approve"
-                    ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
-                    : actionType === "reject"
-                    ? "bg-red-600 hover:bg-red-700 focus:ring-red-500"
-                    : "bg-gray-600 hover:bg-gray-700 focus:ring-gray-500"
-                }`}
-              >
-                {updatingStatus === selectedVerification.id ? (
-                  <LoadingSpinner size="sm" />
-                ) : actionType === "approve" ? (
-                  "Approve"
-                ) : actionType === "reject" ? (
-                  "Reject"
-                ) : (
-                  "Mark as Expired"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
         </div>
       </motion.div>
     </div>

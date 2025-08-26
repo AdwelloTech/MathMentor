@@ -102,9 +102,13 @@ const ManageTutorsPage: React.FC = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (tutor) =>
-          tutor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          tutor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          tutor.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+          (tutor.full_name ?? "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (tutor.email ?? "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (tutor.phone ?? "").toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -636,7 +640,7 @@ const ManageTutorsPage: React.FC = () => {
                       </div>
                     )}
 
-                    {selectedTutor.experience_years && (
+                    {selectedTutor.experience_years != null && (
                       <div>
                         <span className="text-sm font-medium text-gray-500">
                           Experience:
@@ -647,7 +651,7 @@ const ManageTutorsPage: React.FC = () => {
                       </div>
                     )}
 
-                    {selectedTutor.hourly_rate && (
+                    {selectedTutor.hourly_rate != null && (
                       <div>
                         <span className="text-sm font-medium text-gray-500">
                           Hourly Rate:

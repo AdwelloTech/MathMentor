@@ -1288,7 +1288,7 @@ const TutorDashboard: React.FC = () => {
                   Curriculum Vitae
                 </h2>
 
-                {(profile?.cv_url || application?.cv_file_name) && (
+                {profile?.cv_url || application?.cv_file_name ? (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex items-center">
                       <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
@@ -1300,25 +1300,6 @@ const TutorDashboard: React.FC = () => {
                           File:{" "}
                           {application?.cv_file_name ||
                             profile?.cv_file_name ||
-                            "CV file"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {profile?.cv_url || application?.cv_file_name ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center">
-                      <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
-                      <div className="flex-1">
-                        <h3 className="text-sm font-medium text-green-800">
-                          CV Uploaded Successfully
-                        </h3>
-                        <p className="text-sm text-green-700 mt-1">
-                          File:{" "}
-                          {profile?.cv_file_name ||
-                            application?.cv_file_name ||
                             "CV file"}
                         </p>
                       </div>

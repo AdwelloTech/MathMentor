@@ -15,8 +15,6 @@ interface FlashcardSet {
 }
 
 import { flashcards } from "@/lib/flashcards";
-// import { flashcards } from "@/lib/flashcards";
-// import type { Flashcard, FlashcardSet } from "@/types/flashcards";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,23 +54,28 @@ const FlashcardStudyPage: React.FC = () => {
     (async () => {
       const s = await flashcards.student.getSet(setId);
       setSetData(s);
+      setIndex(0);
+      setShowBack(false);
     })();
   }, [setId]);
 
   const current = setData?.cards?.[index];
+
   const next = () => {
+    if (!setData || setData.cards.length === 0) return;
     setShowBack(false);
-    if (!setData) return;
-    setIndex((i) => (i + 1) % (setData.cards.length || 1));
+    setIndex((i) => (i + 1) % setData.cards.length);
   };
+
   const prev = () => {
+    if (!setData || setData.cards.length === 0) return;
     setShowBack(false);
-    if (!setData) return;
     setIndex((i) => (i - 1 + setData.cards.length) % setData.cards.length);
   };
 
   const downloadVectorFastPdf = () => {
-    if (!setData) return;
+    if (!setData || !setData.cards?.length) return;
+
     const dd: any = {
       pageSize: "A4",
       pageMargins: [36, 36, 36, 36],
@@ -90,13 +93,9 @@ const FlashcardStudyPage: React.FC = () => {
         10,
         Math.floor((cardW - innerPad * 2) / (fontSz * 0.6))
       );
-      const linesApprox = Math.max(
-        1,
-        Math.ceil((text || "").length / approxCharsPerLine)
-      );
+      const linesApprox = Math.max(1, Math.ceil((text || "").length / approxCharsPerLine));
       const estBlockH = linesApprox * lineH;
-      const topOffset =
-        -cardH + Math.floor(cardH / 2) - Math.floor(estBlockH / 2);
+      const topOffset = -cardH + Math.floor(cardH / 2) - Math.floor(estBlockH / 2);
       const svg = `<svg width="${cardW}" height="${cardH}" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" rx="16" ry="16" width="${cardW}" height="${cardH}" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" />
       </svg>`;
@@ -125,33 +124,18 @@ const FlashcardStudyPage: React.FC = () => {
     };
 
     setData.cards.forEach((c, idx) => {
-      if (idx > 0) {
-        dd.content.push({ text: "", pageBreak: "before" });
-      }
+      if (idx > 0) dd.content.push({ text: "", pageBreak: "before" });
 
-      dd.content.push({
-        text: "Front",
-        bold: true,
-        fontSize: 14,
-        margin: [2, 0, 0, 4],
-      });
+      dd.content.push({ text: "Front", bold: true, fontSize: 14, margin: [2, 0, 0, 4] });
       dd.content.push(makeCard(c.front_text, true));
-      dd.content.push({
-        text: "Back",
-        bold: true,
-        fontSize: 14,
-        margin: [2, 12, 0, 4],
-      });
+      dd.content.push({ text: "Back", bold: true, fontSize: 14, margin: [2, 12, 0, 4] });
       dd.content.push(makeCard(c.back_text, false));
     });
 
     pdfMake
       .createPdf(dd)
       .download(
-        `${(setData.title || "flashcards").replace(
-          /[^a-z0-9\-\_]+/gi,
-          "_"
-        )}_fast.pdf`
+        `${(setData.title || "flashcards").replace(/[^a-z0-9\-\_]+/gi, "_")}_fast.pdf`
       );
   };
 
@@ -164,18 +148,17 @@ const FlashcardStudyPage: React.FC = () => {
               <BookOpen className="h-8 w-8 text-yellow-400" />
             </div>
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold text-green-900">
-                Loading Flashcards
-              </h3>
-              <p className="text-base text-slate-600">
-                Preparing your study session...
-              </p>
+              <h3 className="text-xl font-semibold text-green-900">Loading Flashcards</h3>
+              <p className="text-base text-slate-600">Preparing your study session...</p>
             </div>
           </CardContent>
         </Card>
       </div>
     );
   }
+
+  const total = setData.cards.length || 1;
+  const progressPct = Math.round(((index + 1) / total) * 100);
 
   return (
     <div className="min-h-screen ">
@@ -244,20 +227,14 @@ const FlashcardStudyPage: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <motion.div
-              animate={{ rotate: showBack ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
+            <motion.div animate={{ rotate: showBack ? 180 : 0 }} transition={{ duration: 0.3 }}>
               <RotateCcw className="h-4 w-4" />
             </motion.div>
             <span className="text-sm font-medium">Click card to flip</span>
-            {showBack ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
+            {showBack ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </motion.div>
 
+          {/* Flip Card */}
           <motion.div
             className="relative cursor-pointer"
             style={{ perspective: "1200px" }}
@@ -268,80 +245,57 @@ const FlashcardStudyPage: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <motion.div
-              className="relative select-none"
-              style={{
-                width: "min(90vw, 700px)",
-                height: "clamp(300px, 50vw, 420px)",
-                transformStyle: "preserve-3d",
-              }}
-              animate={{ rotateY: showBack ? 180 : 0 }}
-              transition={{
-                duration: 0.6,
-                ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for smoother animation
-              }}
+            <div
+              className="relative select-none overflow-hidden rounded-3xl"
+              style={{ width: "min(90vw, 700px)", height: "clamp(300px, 50vw, 420px)" }}
             >
-              {/* Front Side */}
               <motion.div
-                className="absolute inset-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
-                style={{
-                  backfaceVisibility: "hidden",
-                  WebkitBackfaceVisibility: "hidden",
-                }}
-                animate={{
-                  opacity: showBack ? 0 : 1,
-                }}
-                transition={{
-                  duration: 0.1,
-                  delay: showBack ? 0 : 0.25, // Show content after flip starts
-                }}
+                className="relative select-none"
+                style={{ width: "100%", height: "100%", transformStyle: "preserve-3d" }}
+                animate={{ rotateY: showBack ? 180 : 0 }}
+                transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
-                <div className="absolute inset-0 flex items-center justify-center p-10">
-                  <div className="text-center space-y-4">
-                    <div className="inline-flex items-center gap-2 bg-green-900/10 text-green-900 px-3 py-1 rounded-full text-sm font-medium">
-                      <BookOpen className="h-4 w-4" />
-                      Front
-                    </div>
-                    <div className="text-2xl lg:text-3xl font-bold text-green-900 whitespace-pre-wrap leading-relaxed">
-                      {current?.front_text}
+                {/* Front Side */}
+                <motion.div
+                  className="absolute inset-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
+                  style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+                  animate={{ opacity: showBack ? 0 : 1 }}
+                  transition={{ duration: 0.1, delay: showBack ? 0 : 0.25 }}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center p-10">
+                    <div className="text-center space-y-4">
+                      <div className="inline-flex items-center gap-2 bg-green-900/10 text-green-900 px-3 py-1 rounded-full text-sm font-medium">
+                        <BookOpen className="h-4 w-4" />
+                        Front
+                      </div>
+                      <div className="text-2xl lg:text-3xl font-bold text-green-900 whitespace-pre-wrap leading-relaxed">
+                        {current?.front_text}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
-                {/* Subtle gradient overlay */}
-              </motion.div>
-
-              {/* Back Side */}
-              <motion.div
-                className="absolute inset-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
-                style={{
-                  backfaceVisibility: "hidden",
-                  WebkitBackfaceVisibility: "hidden",
-                  transform: "rotateY(180deg)",
-                }}
-                animate={{
-                  opacity: showBack ? 1 : 0,
-                }}
-                transition={{
-                  duration: 0.1,
-                  delay: showBack ? 0.25 : 0, // Show content after flip completes
-                }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center p-10">
-                  <div className="text-center space-y-4">
-                    <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">
-                      <Sparkles className="h-4 w-4" />
-                      Back
-                    </div>
-                    <div className="text-xl lg:text-2xl font-semibold text-slate-800 whitespace-pre-wrap leading-relaxed">
-                      {current?.back_text}
+                {/* Back Side */}
+                <motion.div
+                  className="absolute inset-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
+                  style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                  animate={{ opacity: showBack ? 1 : 0 }}
+                  transition={{ duration: 0.1, delay: showBack ? 0.25 : 0 }}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center p-10">
+                    <div className="text-center space-y-4">
+                      <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">
+                        <Sparkles className="h-4 w-4" />
+                        Back
+                      </div>
+                      <div className="text-xl lg:text-2xl font-semibold text-slate-800 whitespace-pre-wrap leading-relaxed">
+                        {current?.back_text}
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Subtle gradient overlay */}
+                </motion.div>
               </motion.div>
-            </motion.div>
+            </div>
           </motion.div>
         </div>
 
@@ -365,22 +319,16 @@ const FlashcardStudyPage: React.FC = () => {
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
             <CardContent className="px-6 py-4">
               <div className="flex items-center gap-4">
-                <div className="text-lg font-bold text-green-900">
-                  {index + 1}
-                </div>
+                <div className="text-lg font-bold text-green-900">{index + 1}</div>
                 <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-green-900 to-yellow-400 rounded-full"
                     initial={{ width: 0 }}
-                    animate={{
-                      width: `${((index + 1) / setData.cards.length) * 100}%`,
-                    }}
+                    animate={{ width: `${((index + 1) / total) * 100}%` }}
                     transition={{ duration: 0.3 }}
-                  ></motion.div>
+                  />
                 </div>
-                <div className="text-lg font-bold text-slate-600">
-                  {setData.cards.length}
-                </div>
+                <div className="text-lg font-bold text-slate-600">{setData.cards.length}</div>
               </div>
             </CardContent>
           </Card>
@@ -405,29 +353,21 @@ const FlashcardStudyPage: React.FC = () => {
         >
           <Card className="bg-gradient-to-br from-green-900 to-green-800 border-0 shadow-xl rounded-2xl text-white">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-yellow-400 mb-2">
-                {setData.cards.length}
-              </div>
+              <div className="text-3xl font-bold text-yellow-400 mb-2">{setData.cards.length}</div>
               <div className="text-sm font-medium opacity-90">Total Cards</div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-yellow-400 to-yellow-500 border-0 shadow-xl rounded-2xl text-white">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-green-900 mb-2">
-                {index + 1}
-              </div>
-              <div className="text-sm font-medium text-green-900 opacity-90">
-                Current Card
-              </div>
+              <div className="text-3xl font-bold text-green-900 mb-2">{index + 1}</div>
+              <div className="text-sm font-medium text-green-900 opacity-90">Current Card</div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-slate-700 to-slate-800 border-0 shadow-xl rounded-2xl text-white">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-yellow-400 mb-2">
-                {Math.round(((index + 1) / setData.cards.length) * 100)}%
-              </div>
+              <div className="text-3xl font-bold text-yellow-400 mb-2">{progressPct}%</div>
               <div className="text-sm font-medium opacity-90">Progress</div>
             </CardContent>
           </Card>

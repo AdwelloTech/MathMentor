@@ -15,11 +15,34 @@ import {
   DocumentArrowUpIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { getActiveProfileImage } from "@/lib/profileImages";
 import ProfileImageUpload from "@/components/ui/ProfileImageUpload";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+// Note: toast functionality removed as it's not available in this project
 
 interface TutorProfileFormData {
   email: string;
@@ -124,7 +147,6 @@ const TutorProfile: React.FC = () => {
         }
 
         // Update form data with fresh profile data
-        if (profileData) {
           setFormData({
             email: user.email || "",
             firstName: profileData.first_name || "",
@@ -146,23 +168,10 @@ const TutorProfile: React.FC = () => {
             cvFileName: profileData.cv_file_name || "",
           });
 
-          // Set profile image URL
-          setCurrentProfileImageUrl(profileData.profile_image_url || null);
-        }
-
-        // Also try to get the active profile image from profile_images table
-        const activeImage = await getActiveProfileImage(user.id);
-        if (activeImage) {
-          // Get the public URL for the active image
-          const {
-            data: { publicUrl },
-          } = supabase.storage
-            .from("profile-images")
-            .getPublicUrl(activeImage.file_path);
-
-          if (publicUrl) {
-            setCurrentProfileImageUrl(publicUrl);
-          }
+        // Load active profile image
+        if (profileData.id) {
+          const imageUrl = await getActiveProfileImage(profileData.id);
+          setCurrentProfileImageUrl(imageUrl);
         }
       } catch (error) {
         console.error("Error loading profile data:", error);
@@ -174,136 +183,27 @@ const TutorProfile: React.FC = () => {
     loadProfileData();
   }, [user?.id]);
 
-  // Update profile image URL when profile changes
-  useEffect(() => {
-    if (profile?.profile_image_url && !currentProfileImageUrl) {
-      setCurrentProfileImageUrl(profile.profile_image_url);
-    }
-  }, [profile?.profile_image_url, currentProfileImageUrl]);
-
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type } = e.target;
-
-    if (type === "number") {
-      const numValue = value === "" ? undefined : Number(value);
-      setFormData((prev) => ({
-        ...prev,
-        [name]: numValue,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle CV file upload
-  const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type with enhanced security
-    const isValidPDF = await validatePDFFile(file);
-    if (!isValidPDF) {
-      setCvUploadError("Please upload a valid PDF file");
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setCvUploadError("File size must be less than 5MB");
-      return;
-    }
-
-    setIsUploadingCV(true);
-    setCvUploadError(null);
-
-    try {
-      if (!user?.id) {
-        throw new Error("User not authenticated");
-      }
-
-      // Create a unique file path
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/cv/${Date.now()}.${fileExt}`;
-      const filePath = `cv-uploads/${fileName}`;
-
-      // Upload file to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("cv-uploads")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Get the public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("cv-uploads").getPublicUrl(filePath);
-
-      // Update the profile with CV information
-      const updateData = {
-        cv_file_name: file.name,
-        cv_url: publicUrl,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update(updateData)
-        .eq("user_id", user.id);
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      // Update form data
-      setFormData((prev) => ({
-        ...prev,
-        cvFileName: file.name,
-        cvUrl: publicUrl,
-      }));
-
-      // Update AuthContext
-      if (updateProfile) {
-        await updateProfile({
-          cv_file_name: file.name,
-          cv_url: publicUrl,
-        });
-      }
-
-      console.log("CV uploaded successfully:", publicUrl);
-    } catch (error: any) {
-      console.error("CV upload error:", error);
-      setCvUploadError(
-        error.message || "Failed to upload CV. Please try again."
-      );
-    } finally {
-      setIsUploadingCV(false);
-    }
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleArrayInputChange = (
-    field: keyof TutorProfileFormData,
-    value: string
-  ) => {
-    const array = value
-      .split(",")
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
-    setFormData((prev) => ({
-      ...prev,
-      [field]: array,
-    }));
+  const handleArrayChange = (name: string, value: string[]) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleNumberChange = (name: string, value: number | undefined) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleBooleanChange = (name: string, value: boolean) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handle profile image change
@@ -346,18 +246,18 @@ const TutorProfile: React.FC = () => {
         emergency_contact: formData.emergencyContact || null,
         qualification: formData.qualification || null,
         experience_years: formData.experienceYears || null,
-        specializations: formData.specializations || null,
+        specializations: formData.specializations || [],
         hourly_rate: formData.hourlyRate || null,
         availability: formData.availability || null,
         bio: formData.bio || null,
-        certifications: formData.certifications || null,
-        languages: formData.languages || null,
+        certifications: formData.certifications || [],
+        languages: formData.languages || [],
         cv_url: formData.cvUrl || null,
         cv_file_name: formData.cvFileName || null,
         updated_at: new Date().toISOString(),
       };
 
-      console.log("Updating tutor profile with data:", updateData);
+      console.log("Updating profile with data:", updateData);
 
       // Update the profile in the database
       const { data, error } = await supabase
@@ -372,7 +272,7 @@ const TutorProfile: React.FC = () => {
         throw error;
       }
 
-      console.log("Tutor profile updated successfully:", data);
+      console.log("Profile updated successfully:", data);
 
       // Update AuthContext with the new profile data
       if (updateProfile) {
@@ -399,26 +299,158 @@ const TutorProfile: React.FC = () => {
       }
 
       setSaveStatus("success");
-
-      // Reset success status after 3 seconds
-      setTimeout(() => {
-        setSaveStatus("idle");
-      }, 3000);
-    } catch (error: any) {
-      console.error("Failed to save tutor profile:", error);
+      setErrorMessage("");
+    } catch (error) {
+      console.error("Error updating profile:", error);
       setSaveStatus("error");
       setErrorMessage(
-        error.message || "Failed to save profile. Please try again."
+        error instanceof Error ? error.message : "Failed to update profile"
       );
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.id) return;
+
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      setCvUploadError("Please upload a PDF file");
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setCvUploadError("File size must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingCV(true);
+    setCvUploadError(null);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/cv/${Date.now()}.${fileExt}`;
+      const filePath = `cv-uploads/${fileName}`;
+
+      // Upload file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("cv-uploads")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("cv-uploads")
+        .getPublicUrl(fileName);
+
+      if (!urlData.publicUrl) {
+        throw new Error("Failed to get public URL");
+      }
+
+      // Update form data
+      setFormData((prev) => ({
+        ...prev,
+        cvUrl: urlData.publicUrl,
+        cvFileName: file.name,
+      }));
+
+      // Update profile in database
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          cv_url: urlData.publicUrl,
+          cv_file_name: file.name,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update AuthContext
+      if (updateProfile) {
+        await updateProfile({
+          cv_url: urlData.publicUrl,
+          cv_file_name: file.name,
+        });
+      }
+
+      console.log("CV uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading CV:", error);
+      setCvUploadError(
+        error instanceof Error ? error.message : "Failed to upload CV"
+      );
+    } finally {
+      setIsUploadingCV(false);
+    }
+  };
+
+  const handleCVRemove = async () => {
+    if (!user?.id || !formData.cvUrl) return;
+
+    try {
+      // Extract file path from URL
+      const urlParts = formData.cvUrl.split("/");
+      const fileName = urlParts[urlParts.length - 1];
+      const filePath = `${user.id}/cv/${fileName}`;
+
+      // Remove file from storage
+      const { error: deleteError } = await supabase.storage
+        .from("cv-uploads")
+        .remove([filePath]);
+
+      if (deleteError) {
+        console.error("Error deleting file:", deleteError);
+      }
+
+      // Update form data
+      setFormData((prev) => ({
+        ...prev,
+        cvUrl: "",
+        cvFileName: "",
+      }));
+
+      // Update profile in database
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          cv_url: null,
+          cv_file_name: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update AuthContext
+      if (updateProfile) {
+        await updateProfile({
+          cv_url: undefined,
+          cv_file_name: undefined,
+        });
+      }
+
+      console.log("CV removed successfully!");
+    } catch (error) {
+      console.error("Error removing CV:", error);
+      console.error("Failed to remove CV");
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <LoadingSpinner size="lg" text="Loading profile..." />
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner />
       </div>
     );
   }
@@ -428,30 +460,40 @@ const TutorProfile: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="card"
     >
-      <div className="card-header">
-        <div className="flex items-center">
-          <AcademicCapIcon className="h-6 w-6 text-primary-600 mr-3" />
-          <h2 className="text-xl font-semibold text-gray-900">Tutor Profile</h2>
+      <Card className="shadow-lg border-0 bg-white rounded-2xl overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white pb-8">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-yellow-400 rounded-xl">
+              <AcademicCapIcon className="h-6 w-6 text-emerald-900" />
         </div>
-        <p className="mt-1 text-sm text-gray-600">
-          View and update your professional information and teaching
-          preferences.
-        </p>
+            <div>
+              <CardTitle className="text-xl font-semibold text-white">
+                Tutor Profile
+              </CardTitle>
+              <CardDescription className="text-emerald-100 mt-1">
+                View and update your professional information and
+                qualifications.
+              </CardDescription>
       </div>
+          </div>
+        </CardHeader>
 
-      <div className="card-body">
+        <CardContent className="p-8 space-y-8">
         {/* Profile Image Section */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-8 pb-6 border-b border-gray-200"
-        >
-          <div className="flex items-center mb-4">
-            <PhotoIcon className="h-5 w-5 text-primary-600 mr-2" />
-            <h3 className="text-lg font-medium text-gray-900">Profile Photo</h3>
+            className="text-center"
+          >
+            <div className="flex items-center mb-6">
+              <div className="p-2 bg-yellow-400/10 rounded-xl mr-3">
+                <PhotoIcon className="h-5 w-5 text-emerald-900" />
+              </div>
+              <h3 className="text-xl font-medium text-slate-900">
+                Profile Photo
+              </h3>
           </div>
           <div className="flex justify-center">
             {user?.id && profile?.id && (
@@ -463,497 +505,404 @@ const TutorProfile: React.FC = () => {
               />
             )}
           </div>
+            <Separator className="mt-8" />
         </motion.div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
+            <div className="space-y-6">
+              <div className="flex items-center mb-6">
+                <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
+                  <UserIcon className="h-5 w-5 text-emerald-900" />
+                </div>
+                <h3 className="text-xl font-medium text-slate-900">
+                  Basic Information
+                </h3>
+              </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Full Name */}
-            <div className="form-group">
-              <label htmlFor="firstName" className="form-label">
-                <UserIcon className="h-4 w-4 text-gray-500 mr-1" />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="firstName"
+                    className="text-base font-medium text-slate-700"
+                  >
                 First Name
-              </label>
-              <input
-                type="text"
+                  </Label>
+                  <Input
                 id="firstName"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
-                className="input"
                 placeholder="Enter your first name"
                 required
+                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="lastName" className="form-label">
-                <UserIcon className="h-4 w-4 text-gray-500 mr-1" />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="lastName"
+                    className="text-base font-medium text-slate-700"
+                  >
                 Last Name
-              </label>
-              <input
-                type="text"
+                  </Label>
+                  <Input
                 id="lastName"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
-                className="input"
                 placeholder="Enter your last name"
                 required
+                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
               />
             </div>
 
-            {/* Email (Read-only) */}
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="email"
+                    className="text-base font-medium text-slate-700"
+                  >
                 Email Address
-              </label>
-              <input
-                type="email"
+                  </Label>
+                  <Input
                 id="email"
                 name="email"
+                    type="email"
                 value={formData.email}
-                className="input bg-gray-50 cursor-not-allowed"
                 disabled
                 readOnly
+                    className="h-12 rounded-2xl bg-slate-50 cursor-not-allowed border-slate-200"
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Email address cannot be changed here. Contact support if needed.
+                  <p className="text-xs text-slate-500">
+                    Email address cannot be changed here. Contact support if
+                    needed.
               </p>
             </div>
 
-            {/* Date of Birth */}
-            <div className="form-group">
-              <label htmlFor="dateOfBirth" className="form-label">
-                <CalendarIcon className="h-4 w-4 text-gray-500 mr-1" />
-                Date of Birth
-              </label>
-              <input
-                type="date"
-                id="dateOfBirth"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
-                onChange={handleInputChange}
-                className="input"
-              />
-            </div>
-          </div>
-
-          {/* Contact Information */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Contact Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="form-group">
-                <label htmlFor="phone" className="form-label">
-                  <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="phone"
+                    className="text-base font-medium text-slate-700"
+                  >
                   Phone Number
-                </label>
-                <input
-                  type="tel"
+                  </Label>
+                  <Input
                   id="phone"
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="input"
                   placeholder="Enter your phone number"
+                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="emergencyContact" className="form-label">
-                  <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  Emergency Contact
-                </label>
-                <input
-                  type="tel"
-                  id="emergencyContact"
-                  name="emergencyContact"
-                  value={formData.emergencyContact}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dateOfBirth"
+                    className="text-base font-medium text-slate-700"
+                  >
+                    Date of Birth
+                  </Label>
+                  <Input
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    type="date"
+                    value={formData.dateOfBirth}
                   onChange={handleInputChange}
-                  className="input"
-                  placeholder="Emergency contact number"
+                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                 />
               </div>
 
-              <div className="form-group md:col-span-2">
-                <label htmlFor="address" className="form-label">
-                  <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="gender"
+                    className="text-base font-medium text-slate-700"
+                  >
+                    Gender
+                  </Label>
+                  <Select
+                    value={formData.gender || ""}
+                    onValueChange={(value) =>
+                      handleSelectChange("gender", value)
+                    }
+                  >
+                    <SelectTrigger className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="address"
+                  className="text-base font-medium text-slate-700"
+                >
                   Address
-                </label>
-                <input
-                  type="text"
+                </Label>
+                <Textarea
                   id="address"
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className="input"
                   placeholder="Enter your address"
+                  rows={3}
+                  className="rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="gender" className="form-label">
-                  <UserIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  Gender
-                </label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender || ""}
-                  onChange={handleInputChange}
-                  className="input"
+              <div className="space-y-2">
+                <Label
+                  htmlFor="emergencyContact"
+                  className="text-base font-medium text-slate-700"
                 >
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
+                  Emergency Contact
+                </Label>
+                <Input
+                  id="emergencyContact"
+                  name="emergencyContact"
+                  value={formData.emergencyContact}
+                  onChange={handleInputChange}
+                  placeholder="Enter emergency contact information"
+                  className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                />
             </div>
           </div>
 
+            <Separator />
+
           {/* Professional Information */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              <BriefcaseIcon className="h-5 w-5 text-blue-500 inline mr-2" />
+            <div className="space-y-6">
+              <div className="flex items-center mb-6">
+                <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
+                  <AcademicCapIcon className="h-5 w-5 text-emerald-900" />
+                </div>
+                <h3 className="text-xl font-medium text-slate-900">
               Professional Information
             </h3>
+              </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="form-group">
-                <label htmlFor="qualification" className="form-label">
-                  <AcademicCapIcon className="h-4 w-4 text-gray-500 mr-1" />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="qualification"
+                    className="text-base font-medium text-slate-700"
+                  >
                   Qualification
-                </label>
-                <input
-                  type="text"
+                  </Label>
+                  <Input
                   id="qualification"
                   name="qualification"
                   value={formData.qualification}
                   onChange={handleInputChange}
-                  className="input"
-                  placeholder="e.g., Bachelor's in Mathematics, Teaching Certificate"
+                    placeholder="Enter your qualification"
+                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="experienceYears" className="form-label">
-                  <BriefcaseIcon className="h-4 w-4 text-gray-500 mr-1" />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="experienceYears"
+                    className="text-base font-medium text-slate-700"
+                  >
                   Years of Experience
-                </label>
-                <input
-                  type="number"
+                  </Label>
+                  <Input
                   id="experienceYears"
                   name="experienceYears"
+                    type="number"
                   value={formData.experienceYears || ""}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Number of years"
+                    onChange={(e) =>
+                      handleNumberChange(
+                        "experienceYears",
+                        parseInt(e.target.value) || undefined
+                      )
+                    }
+                    placeholder="Enter years of experience"
                   min="0"
                   max="50"
+                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="hourlyRate" className="form-label">
-                  <CurrencyDollarIcon className="h-4 w-4 text-gray-500 mr-1" />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="hourlyRate"
+                    className="text-base font-medium text-slate-700"
+                  >
                   Hourly Rate ($)
-                </label>
-                <input
-                  type="number"
+                  </Label>
+                  <Input
                   id="hourlyRate"
                   name="hourlyRate"
+                    type="number"
                   value={formData.hourlyRate || ""}
-                  onChange={handleInputChange}
-                  className="input"
-                  placeholder="Your hourly rate"
+                    onChange={(e) =>
+                      handleNumberChange(
+                        "hourlyRate",
+                        parseFloat(e.target.value) || undefined
+                      )
+                    }
+                    placeholder="Enter your hourly rate"
                   min="0"
                   step="0.01"
+                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="availability" className="form-label">
-                  <CalendarIcon className="h-4 w-4 text-gray-500 mr-1" />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="availability"
+                    className="text-base font-medium text-slate-700"
+                  >
                   Availability
-                </label>
-                <input
-                  type="text"
+                  </Label>
+                  <Input
                   id="availability"
                   name="availability"
                   value={formData.availability}
                   onChange={handleInputChange}
-                  className="input"
-                  placeholder="e.g., Weekdays 3-8 PM, Weekends 9 AM-5 PM"
+                    placeholder="e.g., Weekdays 9 AM - 5 PM"
+                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                 />
               </div>
-
-              <div className="form-group md:col-span-2">
-                <label htmlFor="specializations" className="form-label">
-                  <AcademicCapIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  Specializations
-                </label>
-                <input
-                  type="text"
-                  id="specializations"
-                  name="specializations"
-                  value={formData.specializations.join(", ")}
-                  onChange={(e) =>
-                    handleArrayInputChange("specializations", e.target.value)
-                  }
-                  className="input"
-                  placeholder="e.g., Algebra, Calculus, SAT Prep, Special Education"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Separate multiple specializations with commas
-                </p>
               </div>
 
-              <div className="form-group md:col-span-2">
-                <label htmlFor="certifications" className="form-label">
-                  <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  Certifications
-                </label>
-                <input
-                  type="text"
-                  id="certifications"
-                  name="certifications"
-                  value={formData.certifications.join(", ")}
-                  onChange={(e) =>
-                    handleArrayInputChange("certifications", e.target.value)
-                  }
-                  className="input"
-                  placeholder="e.g., Teaching License, Math Specialist, ESL Certificate"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Separate multiple certifications with commas
-                </p>
-              </div>
-
-              <div className="form-group md:col-span-2">
-                <label htmlFor="languages" className="form-label">
-                  <GlobeAltIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  Languages Spoken
-                </label>
-                <input
-                  type="text"
-                  id="languages"
-                  name="languages"
-                  value={formData.languages.join(", ")}
-                  onChange={(e) =>
-                    handleArrayInputChange("languages", e.target.value)
-                  }
-                  className="input"
-                  placeholder="e.g., English, Spanish, French"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Separate multiple languages with commas
-                </p>
-              </div>
-
-              <div className="form-group md:col-span-2">
-                <label htmlFor="bio" className="form-label">
-                  <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-1" />
+              <div className="space-y-2">
+                <Label
+                  htmlFor="bio"
+                  className="text-base font-medium text-slate-700"
+                >
                   Bio
-                </label>
-                <textarea
+                </Label>
+                <Textarea
                   id="bio"
                   name="bio"
                   value={formData.bio}
                   onChange={handleInputChange}
+                  placeholder="Tell us about yourself and your teaching approach"
                   rows={4}
-                  className="input resize-none"
-                  placeholder="Tell us about your teaching philosophy, experience, and what makes you a great tutor..."
+                  className="rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  This will be visible to potential students
-                </p>
-              </div>
             </div>
           </div>
 
-          {/* CV Information */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              <DocumentTextIcon className="h-5 w-5 text-green-500 inline mr-2" />
-              CV Upload
-            </h3>
-
-            {/* Show existing CV if uploaded */}
-            {formData.cvFileName && formData.cvUrl && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <CheckCircleIcon className="h-6 w-6 text-green-600 mr-3" />
-                    <div>
-                      <h4 className="text-sm font-medium text-green-800">
-                        CV Uploaded Successfully
-                      </h4>
-                      <p className="text-sm text-green-700 mt-1">
-                        File: {formData.cvFileName}
-                      </p>
-                      {formData.cvUrl && (
-                        <a
-                          href={formData.cvUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-green-600 hover:text-green-800 underline mt-1 inline-block"
-                        >
-                          View CV
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                      setFormData((prev) => ({
-                        ...prev,
-                        cvFileName: "",
-                        cvUrl: "",
-                      }));
-                      // Clear from database
-                      if (updateProfile) {
-                          await updateProfile({
-                          cv_file_name: undefined,
-                          cv_url: undefined,
-                        });
-                        }
-                      } catch (error) {
-                        console.error("Error removing CV:", error);
-                        setCvUploadError("Failed to remove CV. Please try again.");
-                      }
-                    }}
-                    className="text-red-600 hover:text-red-800"
-                    title="Remove CV"
-                  >
-                    <XCircleIcon className="h-5 w-5" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
+            <Separator />
 
             {/* CV Upload Section */}
-            {!formData.cvFileName && (
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <DocumentArrowUpIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Upload Your CV
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Upload your curriculum vitae to showcase your qualifications
-                    and experience
-                  </p>
+            <div className="space-y-6">
+              <div className="flex items-center mb-6">
+                <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
+                  <DocumentArrowUpIcon className="h-5 w-5 text-emerald-900" />
+                </div>
+                <h3 className="text-xl font-medium text-slate-900">
+                  CV/Resume
+            </h3>
+              </div>
 
-                  {cvUploadError && (
-                    <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
-                      <p className="text-sm text-red-600">{cvUploadError}</p>
+              {formData.cvFileName && formData.cvUrl ? (
+                <div className="p-4 bg-emerald-50 rounded-xl border-2 border-emerald-200">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <DocumentArrowUpIcon className="h-5 w-5 text-emerald-600" />
+                      <span className="text-sm font-medium text-emerald-800">
+                        File: {formData.cvFileName}
+                      </span>
                     </div>
-                  )}
-
-                  <label className="btn btn-primary cursor-pointer">
-                    {isUploadingCV ? (
-                      <>
-                        <LoadingSpinner size="sm" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <DocumentArrowUpIcon className="h-4 w-4 mr-2" />
-                        Choose File
-                      </>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      <Button
+                    type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(formData.cvUrl, "_blank")}
+                        className="text-emerald-600 border-emerald-200 hover:bg-emerald-100"
+                      >
+                        View
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCVRemove}
+                        className="text-red-600 border-red-200 hover:bg-red-100"
+                      >
+                        Remove
+                      </Button>
+                </div>
+                    </div>
+                </div>
+              ) : (
+                <div className="p-6 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 text-center">
+                  <DocumentArrowUpIcon className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <p className="text-slate-600 mb-4">
+                    Upload your CV/Resume (PDF format, max 5MB)
+                  </p>
                     <input
                       type="file"
-                      accept=".pdf,.doc,.docx"
+                    accept=".pdf"
                       onChange={handleCVUpload}
                       className="hidden"
-                      disabled={isUploadingCV}
-                    />
-                  </label>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Accepted formats: PDF, DOC, DOCX (Max 5MB)
-                  </p>
-                </div>
+                    id="cv-upload"
+                  />
+                  <Label
+                    htmlFor="cv-upload"
+                    className="cursor-pointer inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
+                  >
+                    Choose File
+                  </Label>
               </div>
             )}
 
-            {/* Update CV Section */}
-            {formData.cvFileName && (
-              <div className="mt-4">
-                <label className="btn btn-secondary cursor-pointer">
-                  <DocumentArrowUpIcon className="h-4 w-4 mr-2" />
-                  Update CV
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleCVUpload}
-                    className="hidden"
-                    disabled={isUploadingCV}
-                  />
-                </label>
-                {isUploadingCV && (
-                  <div className="mt-2 flex items-center text-sm text-gray-600">
-                    <LoadingSpinner size="sm" />
-                    <span className="ml-2">Uploading new CV...</span>
-                  </div>
-                )}
-              </div>
+              {cvUploadError && (
+                <Alert variant="destructive">
+                  <ExclamationTriangleIcon className="h-4 w-4" />
+                  <AlertDescription>{cvUploadError}</AlertDescription>
+                </Alert>
             )}
           </div>
 
-          {/* Save Status Messages */}
+            {/* Success/Error Messages */}
           {saveStatus === "success" && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center p-3 bg-green-50 border border-green-200 rounded-lg"
-            >
-              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-              <p className="text-sm text-green-600">
+              <Alert className="border-green-200 bg-green-50 text-green-800">
+                <CheckCircleIcon className="h-4 w-4" />
+                <AlertDescription>
                 Profile updated successfully!
-              </p>
-            </motion.div>
+                </AlertDescription>
+              </Alert>
           )}
 
           {saveStatus === "error" && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center p-3 bg-red-50 border border-red-200 rounded-lg"
-            >
-              <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
-              <p className="text-sm text-red-600">{errorMessage}</p>
-            </motion.div>
+              <Alert variant="destructive">
+                <ExclamationTriangleIcon className="h-4 w-4" />
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-end pt-6 border-t border-gray-200">
-            <button
+            <div className="flex justify-end">
+              <Button
               type="submit"
               disabled={isSaving}
-              className="btn btn-primary min-w-[140px]"
+                className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-semibold hover:bg-emerald-700 transition-all duration-200 disabled:opacity-50 flex items-center space-x-2 shadow-lg hover:shadow-xl"
             >
               {isSaving ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  Saving...
+                    <span>Saving...</span>
                 </>
               ) : (
-                "Save Changes"
+                  <span>Save Changes</span>
               )}
-            </button>
+              </Button>
           </div>
         </form>
-      </div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 };

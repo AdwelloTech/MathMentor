@@ -633,7 +633,7 @@ const ClassSchedulingPage: React.FC = () => {
                                   slot.isSelected
                                     ? "bg-[#16803D] text-white ring-2 ring-[#199421] ring-offset-1"
                                     : slot.isAvailable
-                                    ? "bg-gray-50 hover:bg-gray-100 text-gray-700 hover:bg-[#16803D] hover:text-white"
+                                    ? "bg-gray-50 hover:bg-gray-100 text-gray-700 hover:bg-[#16803D] hover:text-black"
                                     : "bg-red-50 text-red-500 cursor-not-allowed"
                                 } ${
                                   slot.isDisabled

@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { getRoleContainerClass } from "@/utils/roleStyles";
 
 interface TutorPageWrapperProps {
   children: React.ReactNode;
@@ -8,45 +7,29 @@ interface TutorPageWrapperProps {
 }
 
 /**
- * Wrapper component for tutor pages that automatically sets the background
- * to match between the body and inner wrapper for seamless appearance.
- * Uses additive class management to avoid clobbering other body classes.
+ * Wrapper component for tutor pages that provides consistent styling
+ * similar to the student side but with tutor-appropriate theming.
  *
- * @param backgroundClass - Tailwind background class (e.g., "bg-green-50", "bg-blue-100")
+ * @param backgroundClass - Tailwind background class (e.g., "bg-gradient-to-br from-slate-50 to-slate-100")
  * @param className - Additional CSS classes for the wrapper
  * @param children - Page content
  */
 const TutorPageWrapper: React.FC<TutorPageWrapperProps> = ({
   children,
-  backgroundClass,
+  backgroundClass = "bg-gradient-to-br from-slate-50 to-slate-100",
   className = "",
 }) => {
   useEffect(() => {
-    // Only add classes if backgroundClass is non-empty
-    if (backgroundClass && backgroundClass.trim()) {
-      const classes = backgroundClass.trim().split(/\s+/).filter(Boolean);
-      classes.forEach((cls) => {
-        document.body.classList.add(cls);
-      });
+    // Set the background class on the body element for seamless appearance
+    document.body.className = backgroundClass;
 
-      // Cleanup: remove the classes when component unmounts
-      return () => {
-        classes.forEach((cls) => {
-          document.body.classList.remove(cls);
-        });
-      };
-    }
+    // Cleanup: remove the background when component unmounts
+    return () => {
+      document.body.className = "";
+    };
   }, [backgroundClass]);
 
-  const containerClass = backgroundClass
-    ? `${getRoleContainerClass("tutor")} ${backgroundClass} ${className}`.trim()
-    : `${getRoleContainerClass("tutor")} ${className}`.trim();
-
-  return (
-    <div className={containerClass}>
-      {children}
-    </div>
-  );
+  return <div className={`min-h-screen ${className}`}>{children}</div>;
 };
 
 export default TutorPageWrapper;

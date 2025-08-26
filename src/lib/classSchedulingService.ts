@@ -614,10 +614,11 @@ export const classSchedulingService = {
         .eq("tutor_id", tutorId);
 
       // Get review statistics from session_ratings table
-      const { data: reviews } = await supabase
+      const { data: reviews, error: ratingsError } = await supabase
         .from("session_ratings")
         .select("rating")
         .eq("tutor_id", tutorId);
+      if (ratingsError) throw ratingsError;
 
       // Calculate stats
       const totalClasses = classes?.length || 0;
@@ -643,10 +644,11 @@ export const classSchedulingService = {
       let totalStudents = 0;
       const classIds = (classes ?? []).map((c) => c.id);
       if (classIds.length > 0) {
-        const { data: uniqueStudents } = await supabase
+        const { data: uniqueStudents, error: studentsError } = await supabase
           .from("class_bookings")
           .select("student_id")
           .in("class_id", classIds);
+        if (studentsError) throw studentsError;
         totalStudents = new Set((uniqueStudents ?? []).map((b) => b.student_id))
           .size;
       }

@@ -116,7 +116,7 @@ const ManageTutorsPage: React.FC = () => {
 
   const handleViewClasses = async (tutor: Tutor) => {
     try {
-      const classes = await adminTutorService.getTutorClasses(tutor.user_id);
+      const classes = await adminTutorService.getTutorClasses(tutor.id);
       setTutorClasses(classes);
       setSelectedTutor(tutor);
       setShowClassesModal(true);

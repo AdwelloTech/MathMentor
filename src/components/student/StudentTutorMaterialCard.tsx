@@ -18,7 +18,6 @@ import {
   getStudentTutorMaterialSubjectColor,
   truncateStudentTutorMaterialText,
   incrementStudentTutorMaterialViewCountUnique,
-  incrementStudentTutorMaterialDownloadCount,
   type StudentTutorMaterialCardProps,
 } from "@/lib/studentTutorMaterials";
 import { Button } from "@/components/ui/button";
@@ -91,41 +90,6 @@ const StudentTutorMaterialCard: React.FC<
     onView();
   };
 
-  const handleDownload = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (!hasAccess || !fileUrl) return;
-
-    try {
-      // Increment download count
-      await incrementStudentTutorMaterialDownloadCount(id);
-
-      // Force download by fetching the file and creating a blob
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName || "download";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading file:", error);
-      // Fallback: try direct download
-      const link = document.createElement("a");
-      link.href = fileUrl;
-      link.download = fileName || "download";
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
   return (
     <Card
       role={hasAccess ? "button" : undefined}
@@ -135,7 +99,23 @@ const StudentTutorMaterialCard: React.FC<
       onKeyDown={
         hasAccess
           ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
+              // Only handle when the card itself is focused, not child elements
+              if (e.currentTarget !== e.target) return;
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleView();
+              } else if (e.key === " ") {
+                // Emulate native button: Space activates on keyup
+                e.preventDefault();
+              }
+            }
+          : undefined
+      }
+      onKeyUp={
+        hasAccess
+          ? (e) => {
+              if (e.currentTarget !== e.target) return;
+              if (e.key === " ") {
                 e.preventDefault();
                 handleView();
               }

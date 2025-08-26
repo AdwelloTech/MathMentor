@@ -300,7 +300,11 @@ const DashboardLayout: React.FC = () => {
       setDismissedIds((prev) => new Set(prev).add(requestId));
       setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
       if (accepted.jitsi_meeting_url) {
-        window.open(accepted.jitsi_meeting_url, "_blank");
+        window.open(
+          accepted.jitsi_meeting_url,
+          "_blank",
+          "noopener,noreferrer"
+        );
       }
     } catch (e) {
       console.error(e);

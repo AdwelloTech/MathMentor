@@ -43,6 +43,7 @@ export interface TutorStats {
   approved: number;
   pending: number;
   rejected: number;
+  under_review: number;
   recentRegistrations: number;
 }
 
@@ -121,9 +122,9 @@ class AdminTutorService {
         const application = applicationMap.get(tutor.user_id);
         return {
           ...tutor,
-          application_status: application?.application_status || null,
-          submitted_at: application?.submitted_at || null,
-          reviewed_at: application?.reviewed_at || null,
+          application_status: application?.application_status ?? undefined,
+          submitted_at: application?.submitted_at ?? undefined,
+          reviewed_at: application?.reviewed_at ?? undefined,
         };
       });
 
@@ -169,9 +170,9 @@ class AdminTutorService {
       // Transform the data
       return {
         ...tutor,
-        application_status: application?.application_status || null,
-        submitted_at: application?.submitted_at || null,
-        reviewed_at: application?.reviewed_at || null,
+        application_status: application?.application_status ?? undefined,
+        submitted_at: application?.submitted_at ?? undefined,
+        reviewed_at: application?.reviewed_at ?? undefined,
       };
     } catch (error) {
       console.error("Error in getTutorById:", error);

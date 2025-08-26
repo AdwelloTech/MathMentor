@@ -96,14 +96,26 @@ export const packagePricingService = {
     const current = await this.getCurrentStudentPackage(userId);
     if (current?.package_type === packageType) return;
 
-    // Prevent downgrade from client-side invocation
-    const order = ["free", "silver", "gold"] as const;
-    if (
-      current &&
-      order.indexOf(packageType as any) <=
-        order.indexOf(current.package_type as any)
-    ) {
-      throw new Error("Downgrade not allowed");
+    // Prevent downgrade: target cheaper than current (monthly or yearly)
+    if (current) {
+      const curMonthly = current.price_monthly ?? 0;
+      const tgtMonthly = target.price_monthly ?? 0;
+      const curYearly = current.price_yearly ?? 0;
+      const tgtYearly = target.price_yearly ?? 0;
+
+      // Log prices for debugging
+      console.log(
+        `Package comparison - Current: ${current.package_type} ($${curMonthly}/mo, $${curYearly}/yr), Target: ${packageType} ($${tgtMonthly}/mo, $${tgtYearly}/yr)`
+      );
+
+      const cheaperMonthly = tgtMonthly < curMonthly;
+      const cheaperYearly = tgtYearly < curYearly;
+
+      if (cheaperMonthly || cheaperYearly) {
+        throw new Error(
+          `Downgrade not allowed: ${packageType} is cheaper than current ${current.package_type}`
+        );
+      }
     }
 
     // Determine payment requirement from pricing

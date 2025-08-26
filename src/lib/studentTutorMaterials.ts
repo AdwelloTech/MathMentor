@@ -180,11 +180,11 @@ export const incrementStudentTutorMaterialViewCount = async (
 export const incrementStudentTutorMaterialViewCountUnique = async (
   materialId: string,
   studentId: string
-): Promise<void> => {
+): Promise<boolean> => {
   try {
-    if (!studentId) return;
+    if (!studentId) return false;
 
-    const { error } = await supabase.rpc(
+    const { data, error } = await supabase.rpc(
       "increment_tutor_note_view_count_unique",
       {
         material_id: materialId,
@@ -194,13 +194,17 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
 
     if (error) {
       console.warn("Error incrementing unique view count (RPC):", error);
+      return false;
     }
+
+    // Assume the function returns { count: number } indicating rows inserted/updated
+    return Boolean((data as { count?: number }).count);
   } catch (error) {
     console.warn(
       "Error in incrementStudentTutorMaterialViewCountUnique:",
       error
     );
-    // Don't throw error - view tracking failure shouldn't break the component
+    return false;
   }
 };
 

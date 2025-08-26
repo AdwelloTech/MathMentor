@@ -172,18 +172,23 @@ export const quizService = {
 
       if (questionError) throw questionError;
 
-      // Create answers for this question
-      for (const answerData of questionData.answers) {
-        const { error: answerError } = await supabase
-          .from("quiz_answers")
-          .insert({
-            question_id: question.id,
-            answer_text: answerData.answer_text,
-            is_correct: answerData.is_correct,
-            answer_order: answerData.answer_order,
-          });
+      // Create answers for this question (only for multiple choice and true/false)
+      if (
+        questionData.question_type !== "short_answer" &&
+        questionData.answers
+      ) {
+        for (const answerData of questionData.answers) {
+          const { error: answerError } = await supabase
+            .from("quiz_answers")
+            .insert({
+              question_id: question.id,
+              answer_text: answerData.answer_text,
+              is_correct: answerData.is_correct,
+              answer_order: answerData.answer_order,
+            });
 
-        if (answerError) throw answerError;
+          if (answerError) throw answerError;
+        }
       }
 
       return question;

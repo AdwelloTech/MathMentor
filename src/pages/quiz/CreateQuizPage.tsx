@@ -340,7 +340,11 @@ const CreateQuizPage: React.FC = () => {
         questions: included,
       };
 
-      await quizService.quizzes.create(profile!.id, createQuizData);
+      if (!profile?.id) {
+        toast.error("You must be signed in to create a quiz.");
+        return;
+      }
+      await quizService.quizzes.create(profile.id, createQuizData);
       navigate("/quizzes", {
         state: { message: "Quiz created successfully!" },
       });
@@ -781,20 +785,62 @@ const CreateQuizPage: React.FC = () => {
                               | "true_false"
                               | "short_answer";
                             setQuestions((prev) =>
-                              prev.map((q, idx) =>
-                                idx === questionIndex
-                                  ? {
-                                      ...q,
-                                      question_type: nextType,
-                                      answers:
-                                        nextType === "short_answer"
-                                          ? []
-                                          : q.question_type === "short_answer"
-                                          ? []
-                                          : q.answers,
-                                    }
-                                  : q
-                              )
+                              prev.map((q, idx) => {
+                                if (idx !== questionIndex) return q;
+                                if (nextType === "short_answer") {
+                                  return {
+                                    ...q,
+                                    question_type: nextType,
+                                    answers: [],
+                                  };
+                                }
+                                // Seed defaults when moving into MC/TF
+                                if (nextType === "true_false") {
+                                  return {
+                                    ...q,
+                                    question_type: nextType,
+                                    answers: [
+                                      {
+                                        answer_text: "True",
+                                        is_correct: true,
+                                        answer_order: 1,
+                                      },
+                                      {
+                                        answer_text: "False",
+                                        is_correct: false,
+                                        answer_order: 2,
+                                      },
+                                    ],
+                                  };
+                                }
+                                // multiple_choice: 4 options with placeholders; mark first as correct
+                                return {
+                                  ...q,
+                                  question_type: nextType,
+                                  answers: [
+                                    {
+                                      answer_text: "Option 1",
+                                      is_correct: true,
+                                      answer_order: 1,
+                                    },
+                                    {
+                                      answer_text: "Option 2",
+                                      is_correct: false,
+                                      answer_order: 2,
+                                    },
+                                    {
+                                      answer_text: "Option 3",
+                                      is_correct: false,
+                                      answer_order: 3,
+                                    },
+                                    {
+                                      answer_text: "Option 4",
+                                      is_correct: false,
+                                      answer_order: 4,
+                                    },
+                                  ],
+                                };
+                              })
                             );
                           }}
                           className="px-3 py-1 border border-gray-300 rounded-md text-sm"

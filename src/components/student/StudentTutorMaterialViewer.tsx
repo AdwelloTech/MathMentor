@@ -20,6 +20,7 @@ import {
   incrementStudentTutorMaterialViewCountUnique,
   type StudentTutorMaterial,
 } from "@/lib/studentTutorMaterials";
+import { isSafeUrl } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,14 +57,14 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
       if (isOpen && user && !hasTrackedInSession) {
         try {
-          await incrementStudentTutorMaterialViewCountUnique(
-            material.id,
-            user.id
-          );
-
-          // Update the local view count after successful tracking
-          if (onViewCountUpdate) {
-            console.log("Updating local view count by 1");
+          // Only bump locally if server really incremented
+          const didIncrement =
+            await incrementStudentTutorMaterialViewCountUnique(
+              material.id,
+              user.id
+            );
+          if (didIncrement && onViewCountUpdate) {
+            console.log("Unique view tracked—updating local count");
             onViewCountUpdate(material.id, 1);
           }
 
@@ -111,6 +112,9 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
       // Force download by fetching the file and creating a blob
       const response = await fetch(material.file_url!);
+      if (!response.ok) {
+        throw new Error(`Download failed with status ${response.status}`);
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -130,6 +134,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
       link.href = material.file_url!;
       link.download = material.file_name || "download";
       link.target = "_blank";
+      link.rel = "noopener noreferrer";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -139,8 +144,13 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
   };
 
   const handleViewFile = () => {
-    if (material.file_url) {
+    if (material.file_url && isSafeUrl(material.file_url)) {
       window.open(material.file_url, "_blank", "noopener,noreferrer");
+    } else if (material.file_url) {
+      console.warn(
+        "Blocked opening potentially unsafe URL:",
+        material.file_url
+      );
     }
   };
 
@@ -324,7 +334,11 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                       <CardContent>
                         <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
                           <iframe
-                            src={material.file_url || ""}
+                            src={
+                              material.file_url && isSafeUrl(material.file_url)
+                                ? material.file_url
+                                : ""
+                            }
                             title={`PDF: ${material.file_name || "document"}`}
                             className="w-full h-[700px] border border-slate-300 rounded-lg shadow-inner"
                             style={{ minHeight: "700px" }}

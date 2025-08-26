@@ -37,7 +37,7 @@ interface GenerateAIRequest {
   gradeLevel?: string;
   numQuestions?: number;
   difficulty?: "easy" | "medium" | "hard";
-  questionType?: "multiple_choice" | "true_false";
+  questionType?: "multiple_choice" | "true_false" | "short_answer";
   title?: string;
   pdfText?: string;
 }
@@ -58,7 +58,7 @@ interface AIAnswer {
 
 interface AIQuestion {
   question_text: string;
-  question_type: "multiple_choice" | "true_false";
+  question_type: "multiple_choice" | "true_false" | "short_answer";
   points: number;
   answers: AIAnswer[];
 }
@@ -349,6 +349,9 @@ ${contextLine} Create ${numQuestions} ${difficulty} multiple choice questions fo
               answers[0].is_correct = true;
             }
           }
+        } else if (questionType === "short_answer") {
+          // Short answer questions don't have predefined options
+          answers = [];
         }
 
         return {

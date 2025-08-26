@@ -126,7 +126,8 @@ export type CreateQuestionData =
       is_ai_generated?: boolean;
       ai_status?: "pending" | "approved" | "discarded";
       ai_metadata?: Record<string, any>;
-      // no answers here
+      // For short answer, disallow answers entirely at the type level
+      answers?: never;
     };
 
 export interface CreateAnswerData {

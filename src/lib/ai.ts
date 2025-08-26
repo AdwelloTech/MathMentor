@@ -35,8 +35,9 @@ export async function generateAIQuestions(
     | "true_false"
     | "short_answer" = "multiple_choice",
   title?: string,
-  pdfText?: string
-) {
+  pdfText?: string,
+  pdfBase64?: string
+): Promise<GeneratedAIQuestion[]> {
   try {
     const payload: GenerateAIRequest =
       typeof argsOrSubject === "string"
@@ -48,6 +49,7 @@ export async function generateAIQuestions(
             questionType,
             title,
             pdfText,
+            pdfBase64,
           }
         : argsOrSubject;
 
@@ -135,6 +137,15 @@ export async function generateAIFlashcards(
 export async function uploadPdfForAI(
   file: File
 ): Promise<{ pdfBase64: string; fileName: string; fileSize: number }> {
+  // Basic client-side validation; server must still enforce limits
+  const maxBytes = 10 * 1024 * 1024; // 10MB
+  if (file.size > maxBytes) {
+    throw new Error("PDF exceeds 10MB limit");
+  }
+  if (file.type !== "application/pdf") {
+    throw new Error("Only PDF files are allowed");
+  }
+
   const form = new FormData();
   form.append("file", file);
   const res = await fetch("/api/ai/pdf/upload", {

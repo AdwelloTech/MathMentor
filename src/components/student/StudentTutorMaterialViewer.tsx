@@ -95,17 +95,21 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
       // Increment download count
       console.log("Calling incrementStudentTutorMaterialDownloadCount...");
-      await incrementStudentTutorMaterialDownloadCount(material.id);
+      const didIncrement = await incrementStudentTutorMaterialDownloadCount(
+        material.id
+      );
       console.log("Download count increment completed");
 
       // Update the local download count after successful tracking
-      if (onDownloadCountUpdate) {
+      if (didIncrement && onDownloadCountUpdate) {
         console.log(
           "Calling onDownloadCountUpdate with material ID:",
           material.id
         );
         onDownloadCountUpdate(material.id, 1);
         console.log("Local download count update completed");
+      } else if (!didIncrement) {
+        console.log("Download count increment failed, skipping local update");
       } else {
         console.warn("onDownloadCountUpdate callback is not provided!");
       }
@@ -129,15 +133,22 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
       console.log("File download completed successfully");
     } catch (error) {
       console.error("Error downloading file:", error);
-      // Fallback: try direct download
-      const link = document.createElement("a");
-      link.href = material.file_url!;
-      link.download = material.file_name || "download";
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Fallback: try direct download if URL is safe
+      if (material.file_url && isSafeUrl(material.file_url)) {
+        const link = document.createElement("a");
+        link.href = material.file_url;
+        link.download = material.file_name || "download";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else if (material.file_url) {
+        console.warn(
+          "Blocked opening potentially unsafe URL (fallback):",
+          material.file_url
+        );
+      }
     } finally {
       setLoading(false);
     }

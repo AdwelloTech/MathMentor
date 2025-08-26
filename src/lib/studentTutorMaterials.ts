@@ -187,7 +187,7 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
     const { data, error } = await supabase.rpc(
       "increment_tutor_note_view_count_unique",
       {
-        material_id: materialId,
+        note_id: materialId,
         user_id: studentId,
       }
     );
@@ -210,25 +210,26 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
 
 export const incrementStudentTutorMaterialDownloadCount = async (
   materialId: string
-): Promise<void> => {
+): Promise<boolean> => {
   try {
     console.log("Starting download count increment for material:", materialId);
 
     const { error } = await supabase.rpc(
       "increment_tutor_note_download_count",
       {
-        material_id: materialId,
+        note_id: materialId,
       }
     );
 
     if (error) {
       console.warn("Error incrementing download count:", error);
-      // Don't throw error - download tracking failure shouldn't break the component
+      return false;
     } else {
       console.log("Download count updated successfully");
+      return true;
     }
   } catch (error) {
     console.warn("Error in incrementStudentTutorMaterialDownloadCount:", error);
-    // Don't throw error - download tracking failure shouldn't break the component
+    return false;
   }
 };

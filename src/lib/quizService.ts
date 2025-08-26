@@ -55,17 +55,21 @@ export const quizService = {
 
         if (questionError) throw questionError;
 
-        // Create answers for this question
-        for (const answerData of questionData.answers) {
+        // Create answers for this question (only for non-short-answer)
+        if (
+          questionData.question_type !== "short_answer" &&
+          questionData.answers &&
+          questionData.answers.length > 0
+        ) {
+          const rows = questionData.answers.map((a) => ({
+            question_id: question.id,
+            answer_text: a.answer_text,
+            is_correct: a.is_correct,
+            answer_order: a.answer_order,
+          }));
           const { error: answerError } = await supabase
             .from("quiz_answers")
-            .insert({
-              question_id: question.id,
-              answer_text: answerData.answer_text,
-              is_correct: answerData.is_correct,
-              answer_order: answerData.answer_order,
-            });
-
+            .insert(rows);
           if (answerError) throw answerError;
         }
       }

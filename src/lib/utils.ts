@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(...inputs));
 }
 
 /**
@@ -15,15 +15,33 @@ export function isSafeUrl(url: string | null | undefined): boolean {
   }
 
   try {
-    const urlObj = new URL(url, window.location.href);
+    // SSR-safe base URL
+    const base =
+      typeof window !== "undefined" && window?.location?.href
+        ? window.location.href
+        : "https://app.mathmentor.ai/";
+    const urlObj = new URL(url, base);
 
     // Allow http, https, blob, and data protocols
     if (!["http:", "https:", "blob:", "data:"].includes(urlObj.protocol)) {
       return false;
     }
 
-    // Additional security checks can be added here
-    // For example, checking against a whitelist of allowed domains
+    // For data: restrict to expected MIME types (e.g., PDFs and images)
+    if (urlObj.protocol === "data:") {
+      // Only allow PDFs and images
+      const dataUrlPattern =
+        /^data:(application\/pdf|image\/(png|jpg|jpeg|gif|webp|svg\+xml|bmp))(;base64)?,/i;
+      if (!dataUrlPattern.test(url)) {
+        return false;
+      }
+    }
+
+    // Optional: enforce allowed hosts for http/https (e.g., your Supabase storage)
+    // const allowedHosts = new Set(["your-supabase-project.supabase.co", "app.mathmentor.ai"]);
+    // if ((urlObj.protocol === "http:" || urlObj.protocol === "https:") && !allowedHosts.has(urlObj.host)) {
+    //   return false;
+    // }
 
     return true;
   } catch {

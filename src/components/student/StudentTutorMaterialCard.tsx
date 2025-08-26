@@ -77,12 +77,14 @@ const StudentTutorMaterialCard: React.FC<
 
     try {
       // Increment download count
-      await incrementStudentTutorMaterialDownloadCount(id);
+      const didIncrement = await incrementStudentTutorMaterialDownloadCount(id);
 
       // Update the local download count after successful tracking
-      if (onDownloadCountUpdate) {
+      if (didIncrement && onDownloadCountUpdate) {
         console.log("Updating local download count by 1");
         onDownloadCountUpdate(id, 1);
+      } else if (!didIncrement) {
+        console.log("Download count increment failed, skipping local update");
       }
 
       // Force download by fetching the file and creating a blob

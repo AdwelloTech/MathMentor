@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { supabase as adminSupabase } from "./supabase";
+import { TutorApplicationStatus } from "../types/auth";
 
 export interface TutorApplication {
   id: string;
@@ -13,7 +14,7 @@ export interface TutorApplication {
   cv_url: string;
   cv_file_size: number;
   additional_notes: string | null;
-  application_status: "pending" | "approved" | "rejected";
+  application_status: TutorApplicationStatus;
   admin_notes: string | null;
   rejection_reason: string | null;
   submitted_at: string;
@@ -38,6 +39,7 @@ export interface ApplicationStats {
   pending: number;
   approved: number;
   rejected: number;
+  under_review: number;
   recentApplications: number;
 }
 
@@ -166,6 +168,7 @@ export class AdminTutorApplicationService {
           pending: 0,
           approved: 0,
           rejected: 0,
+          under_review: 0,
           recentApplications: 0,
         };
       }
@@ -180,6 +183,9 @@ export class AdminTutorApplicationService {
       const rejected =
         applications?.filter((app) => app.application_status === "rejected")
           .length || 0;
+      const under_review =
+        applications?.filter((app) => app.application_status === "under_review")
+          .length || 0;
 
       // Recent applications (last 7 days)
       const oneWeekAgo = new Date();
@@ -193,6 +199,7 @@ export class AdminTutorApplicationService {
         pending,
         approved,
         rejected,
+        under_review,
         recentApplications,
       };
     } catch (error) {
@@ -202,6 +209,7 @@ export class AdminTutorApplicationService {
         pending: 0,
         approved: 0,
         rejected: 0,
+        under_review: 0,
         recentApplications: 0,
       };
     }
@@ -322,14 +330,14 @@ export class AdminTutorApplicationService {
         created_at: data.created_at,
         updated_at: data.updated_at,
         // New fields
-        postcode: data.postcode || 'N/A',
+        postcode: data.postcode || "N/A",
         past_experience: data.past_experience,
         weekly_availability: data.weekly_availability,
         employment_status: data.employment_status,
         education_level: data.education_level,
         average_weekly_hours: data.average_weekly_hours,
         expected_hourly_rate: data.expected_hourly_rate,
-        based_in_country: data.based_in_country || 'Not specified',
+        based_in_country: data.based_in_country || "Not specified",
       };
 
       return application;

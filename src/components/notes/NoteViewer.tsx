@@ -24,14 +24,14 @@ interface NoteViewerProps {
 }
 
 const NoteViewer: React.FC<NoteViewerProps> = ({ note, isOpen, onClose }) => {
+  if (!note) return null;
+
   useEffect(() => {
     if (isOpen && note) {
       // Increment view count when note is opened
       incrementNoteViewCount(note.id).catch(console.error);
     }
-  }, [isOpen, note]);
-
-  if (!note) return null;
+  }, [isOpen, note?.id]);
 
   const subjectColor = getSubjectColor(note.subject_color);
 

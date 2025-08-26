@@ -93,6 +93,15 @@ const PackagesPage: React.FC = () => {
     try {
       setUpgrading(packageType);
 
+      // TEMP HARD GUARD: prevent paid upgrades until server verification is live
+      // Set VITE_SECURE_UPGRADES=true in .env when server-side verification is implemented
+      const requiresPayment = ["silver", "gold"].includes(packageType);
+      if (requiresPayment && !import.meta.env.VITE_SECURE_UPGRADES) {
+        throw new Error(
+          "Paid upgrades are temporarily unavailable while we finalize secure verification."
+        );
+      }
+
       // Secure package upgrade with payment verification
       await packagePricingService.confirmAndUpgrade(
         user.id,

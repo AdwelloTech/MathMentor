@@ -34,7 +34,7 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRatingSubmit = async () => {
-    if (!user || rating === 0) {
+    if (rating === 0) {
       toast.error("Please select a rating");
       return;
     }
@@ -42,9 +42,15 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
     setIsSubmitting(true);
 
     try {
+      const studentId = profile?.id ?? user?.id;
+      if (!studentId) {
+        toast.error("You must be signed in to submit a rating.");
+        return;
+      }
+
       const ratingData: CreateRatingData = {
         session_id: session.id,
-        student_id: (profile?.id ?? user?.id)!,
+        student_id: studentId,
         tutor_id: session.tutor.id, // Use tutor.id instead of session.tutor.id
         rating,
         review_text: reviewText.trim() || undefined,

@@ -37,6 +37,9 @@ const TutorRatingsPage: React.FC = () => {
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<"date" | "rating">("date");
 
+  // Always call hooks at top level; the hook should handle undefined tutorId gracefully
+  const { ratings, stats, loading, error } = useSessionRating(profile?.id);
+
   // Early return while profile is loading/undefined
   if (!profile) {
     return (
@@ -47,8 +50,6 @@ const TutorRatingsPage: React.FC = () => {
       </div>
     );
   }
-
-  const { ratings, stats, loading, error } = useSessionRating(profile.id);
 
   if (loading) {
     return (

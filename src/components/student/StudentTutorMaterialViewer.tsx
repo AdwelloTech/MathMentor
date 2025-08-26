@@ -89,7 +89,8 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
   const handleViewFile = () => {
     if (material.file_url) {
-      window.open(material.file_url, "_blank");
+      // Prevent reverse tabnabbing
+      window.open(material.file_url, "_blank", "noopener,noreferrer");
     }
   };
 

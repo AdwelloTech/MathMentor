@@ -4,7 +4,7 @@ import type {
   TutorClass,
   ClassBooking,
   TutorAvailability,
-  ZoomMeeting,
+  JitsiMeeting,
   ClassReview,
   CreateClassFormData,
   UpdateClassFormData,
@@ -271,14 +271,15 @@ export const classSchedulingService = {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Extract unique tutor IDs for batch queries
-      const tutorIds = [
-        ...new Set(
-          data
-            .map((classRecord) => classRecord.tutor?.id || classRecord.tutor_id)
-            .filter((id) => id) // Remove any null/undefined IDs
-        ),
-      ];
+      // Early exit to avoid .in(..., []) and extra queries
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      // Extract unique tutor user IDs consistent with session_ratings.tutor_id
+      const tutorIds = Array.from(
+        new Set(data.map((c) => c.tutor_id).filter(Boolean))
+      ) as string[];
 
       // Batch fetch all tutor ratings
       const { data: allReviews } = await supabase
@@ -295,25 +296,28 @@ export const classSchedulingService = {
         ratingsMap.get(review.tutor_id)!.push(review.rating);
       });
 
-      // Batch fetch all tutor profiles for subjects
+      // Batch fetch tutor profiles for subjects (keyed by user_id)
       const { data: tutorProfiles } = await supabase
         .from("profiles")
-        .select("id, subjects")
-        .in("id", tutorIds);
+        .select("user_id, subjects")
+        .in("user_id", tutorIds);
 
       // Create subjects map
       const subjectsMap = new Map<string, string[]>();
       tutorProfiles?.forEach((profile) => {
-        subjectsMap.set(profile.id, profile.subjects || []);
+        subjectsMap.set(profile.user_id, profile.subjects || []);
       });
 
       // Transform to search results using batched data
       const results: ClassSearchResult[] = data.map((classRecord) => {
-        const tutorId = classRecord.tutor?.id || classRecord.tutor_id;
+        const tutorId = classRecord.tutor_id;
         const ratings = ratingsMap.get(tutorId) || [];
         const averageRating =
           ratings.length > 0
-            ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+            ? Math.round(
+                ((ratings.reduce((a, b) => a + b, 0) /
+                  ratings.length) as number) * 10
+              ) / 10
             : 0;
 
         const subjects = subjectsMap.get(tutorId) || [];
@@ -634,13 +638,16 @@ export const classSchedulingService = {
           : 0;
 
       // Get unique students count
-      const { data: uniqueStudents } = await supabase
-        .from("class_bookings")
-        .select("student_id")
-        .in("class_id", classes?.map((c) => c.id) || []);
-
-      const totalStudents = new Set(uniqueStudents?.map((b) => b.student_id))
-        .size;
+      let totalStudents = 0;
+      const classIds = (classes ?? []).map((c) => c.id);
+      if (classIds.length > 0) {
+        const { data: uniqueStudents } = await supabase
+          .from("class_bookings")
+          .select("student_id")
+          .in("class_id", classIds);
+        totalStudents = new Set((uniqueStudents ?? []).map((b) => b.student_id))
+          .size;
+      }
 
       // Get this month's stats
       const now = new Date();

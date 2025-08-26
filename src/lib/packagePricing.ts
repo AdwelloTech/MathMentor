@@ -93,12 +93,11 @@ export const packagePricingService = {
       throw new Error("Payment verification required for paid packages");
     }
 
-    // TODO: Implement server-side payment verification
-    // For now, fall back to direct update until database function is implemented
-    console.warn(
-      "Server-side payment verification not yet implemented. Using direct update."
+    // TODO: Implement server-side payment verification (e.g., Supabase RPC or webhook)
+    // Do not upgrade until verification exists to prevent abuse.
+    throw new Error(
+      "Paid package upgrade requires server-side verification; not yet implemented."
     );
-    return this.updateStudentPackage(userId, packageType);
 
     // Future implementation:
     // Call Supabase RPC function for secure payment verification

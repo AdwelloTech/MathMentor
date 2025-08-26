@@ -127,19 +127,24 @@ const StudentTutorMaterialCard: React.FC<
 
   return (
     <Card
-      role="button"
-      tabIndex={0}
+      role={hasAccess ? "button" : undefined}
+      tabIndex={hasAccess ? 0 : -1}
       aria-disabled={!hasAccess}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleView();
-        }
-      }}
+      aria-label={`View material: ${title || "Untitled Material"}`}
+      onKeyDown={
+        hasAccess
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleView();
+              }
+            }
+          : undefined
+      }
       className={`group transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg h-[245px] w-full md:w-[400px] flex flex-col overflow-hidden ${
         !hasAccess ? "opacity-75" : ""
       } ${isPremium ? "ring-2 ring-yellow-400/20" : ""}`}
-      onClick={handleView}
+      onClick={hasAccess ? handleView : undefined}
     >
       {/* Premium Indicator */}
       {isPremium && (

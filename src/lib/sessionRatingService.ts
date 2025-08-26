@@ -80,7 +80,7 @@ export const sessionRatingService = {
       .single();
 
     if (error) {
-      console.error("Error creating rating:", error);
+      console.error("Error creating rating:", error.message);
       throw new Error(`Failed to create rating: ${error.message}`);
     }
 
@@ -111,7 +111,7 @@ export const sessionRatingService = {
       .single();
 
     if (error) {
-      console.error("Error updating rating:", error);
+      console.error("Error updating rating:", error.message);
       throw new Error(`Failed to update rating: ${error.message}`);
     }
 
@@ -240,7 +240,12 @@ export const sessionRatingService = {
     sessionId: string,
     studentId: string
   ): Promise<boolean> => {
-    console.log("🔍 hasStudentRated called with:", { sessionId, studentId });
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("🔍 hasStudentRated called with:", {
+        sessionId,
+        studentId,
+      });
+    }
 
     const { data, error } = await supabase
       .from("session_ratings")
@@ -249,19 +254,23 @@ export const sessionRatingService = {
       .eq("student_id", studentId)
       .single();
 
-    console.log("🔍 hasStudentRated result:", {
-      data,
-      error,
-      errorCode: error?.code,
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("🔍 hasStudentRated result:", {
+        data,
+        error,
+        errorCode: error?.code,
+      });
+    }
 
     if (error && error.code !== "PGRST116") {
-      console.error("Error checking if student rated:", error);
+      console.error("Error checking if student rated:", error.message);
       throw new Error(`Failed to check rating: ${error.message}`);
     }
 
     const result = !!data;
-    console.log("🔍 hasStudentRated returning:", result);
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("🔍 hasStudentRated returning:", result);
+    }
     return result;
   },
 
@@ -274,21 +283,29 @@ export const sessionRatingService = {
       .eq("student_id", currentUserId);
 
     if (error) {
-      console.error("Error deleting rating:", error);
+      console.error("Error deleting rating:", error.message);
       throw new Error(`Failed to delete rating: ${error.message}`);
     }
   },
 
-  // Debug function to check database state
+  // Debug function to check database state (development only)
   debugSessionRatings: async (sessionId: string): Promise<any> => {
-    console.log("🔍 Debug: Checking all ratings for session:", sessionId);
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Debug function not available in production");
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("🔍 Debug: Checking all ratings for session:", sessionId);
+    }
 
     // Check without any filters first
     const { data: allData, error: allError } = await supabase
       .from("session_ratings")
       .select("*");
 
-    console.log("🔍 All ratings in database:", { allData, allError });
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("🔍 All ratings in database:", { allData, allError });
+    }
 
     // Check with session filter
     const { data: sessionData, error: sessionError } = await supabase
@@ -296,7 +313,12 @@ export const sessionRatingService = {
       .select("*")
       .eq("session_id", sessionId);
 
-    console.log("🔍 Ratings for this session:", { sessionData, sessionError });
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("🔍 Ratings for this session:", {
+        sessionData,
+        sessionError,
+      });
+    }
 
     return { allData, sessionData };
   },

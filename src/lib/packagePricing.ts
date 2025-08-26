@@ -83,8 +83,35 @@ export const packagePricingService = {
     packageType: string,
     paymentIntentId?: string
   ): Promise<void> {
+    // Normalize and validate target package
+    const target = await this.getByType(packageType);
+    if (!target) {
+      throw new Error(`Unknown package type: ${packageType}`);
+    }
+    if (!target.is_active) {
+      throw new Error(`Package ${packageType} is not active`);
+    }
+
+    // Idempotency: already on target
+    const current = await this.getCurrentStudentPackage(userId);
+    if (current?.package_type === packageType) return;
+
+    // Prevent downgrade from client-side invocation
+    const order = ["free", "silver", "gold"] as const;
+    if (
+      current &&
+      order.indexOf(packageType as any) <=
+        order.indexOf(current.package_type as any)
+    ) {
+      throw new Error("Downgrade not allowed");
+    }
+
+    // Determine payment requirement from pricing
+    const requiresPayment =
+      (target.price_monthly ?? 0) > 0 || (target.price_yearly ?? 0) > 0;
+
     // For free packages, proceed with direct update
-    if (packageType === "free") {
+    if (!requiresPayment) {
       return this.updateStudentPackage(userId, packageType);
     }
 

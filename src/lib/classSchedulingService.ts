@@ -282,14 +282,15 @@ export const classSchedulingService = {
       ) as string[];
 
       // Batch fetch all tutor ratings
-      const { data: allReviews } = await supabase
+      const { data: allReviews, error: reviewsError } = await supabase
         .from("session_ratings")
         .select("tutor_id, rating")
         .in("tutor_id", tutorIds);
+      if (reviewsError) throw reviewsError;
 
       // Group ratings by tutor_id
       const ratingsMap = new Map<string, number[]>();
-      allReviews?.forEach((review) => {
+      (allReviews || []).forEach((review) => {
         if (!ratingsMap.has(review.tutor_id)) {
           ratingsMap.set(review.tutor_id, []);
         }
@@ -297,14 +298,15 @@ export const classSchedulingService = {
       });
 
       // Batch fetch tutor profiles for subjects (keyed by user_id)
-      const { data: tutorProfiles } = await supabase
+      const { data: tutorProfiles, error: profilesError } = await supabase
         .from("profiles")
         .select("user_id, subjects")
         .in("user_id", tutorIds);
+      if (profilesError) throw profilesError;
 
       // Create subjects map
       const subjectsMap = new Map<string, string[]>();
-      tutorProfiles?.forEach((profile) => {
+      (tutorProfiles || []).forEach((profile) => {
         subjectsMap.set(profile.user_id, profile.subjects || []);
       });
 

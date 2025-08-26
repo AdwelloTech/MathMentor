@@ -141,6 +141,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const isTutorApproved = tutorApplication?.application_status === "approved";
   const isTutorPending = tutorApplication?.application_status === "pending";
   const isTutorRejected = tutorApplication?.application_status === "rejected";
+  const isTutorUnderReview =
+    tutorApplication?.application_status === "under_review";
   const isTutorActive = profile?.is_active !== false; // Default to true if not set
 
   // Check ID verification status

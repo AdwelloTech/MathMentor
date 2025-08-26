@@ -119,6 +119,7 @@ const StudentTutorMaterialCard: React.FC<
       link.href = fileUrl;
       link.download = fileName || "download";
       link.target = "_blank";
+      link.rel = "noopener noreferrer";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

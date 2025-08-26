@@ -24,8 +24,6 @@ interface NoteViewerProps {
 }
 
 const NoteViewer: React.FC<NoteViewerProps> = ({ note, isOpen, onClose }) => {
-  if (!note) return null;
-
   useEffect(() => {
     if (isOpen && note) {
       // Increment view count when note is opened
@@ -33,13 +31,18 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ note, isOpen, onClose }) => {
     }
   }, [isOpen, note?.id]);
 
-  const subjectColor = getSubjectColor(note.subject_color);
+  const subjectColor = getSubjectColor(note?.subject_color ?? null);
 
-  // Sanitize HTML content to prevent XSS
-  const sanitizedNoteContent = useMemo(
-    () => DOMPurify.sanitize(formatNoteContent(note.content)),
-    [note.content]
-  );
+  // Sanitize HTML content to prevent XSS (null-safe)
+  const sanitizedNoteContent = useMemo(() => {
+    const raw = note?.content ?? "";
+    return DOMPurify.sanitize(formatNoteContent(raw));
+  }, [note?.content]);
+
+  // Guard after hooks are declared
+  if (!isOpen || !note) {
+    return null;
+  }
 
   return (
     <AnimatePresence>

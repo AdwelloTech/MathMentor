@@ -222,11 +222,16 @@ export class AdminTutorApplicationService {
     adminNotes?: string
   ): Promise<boolean> {
     try {
-      const updateData = {
+      const updateData: Record<string, unknown> = {
         application_status: "approved",
-        admin_notes: adminNotes,
         updated_at: new Date().toISOString(),
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: adminId,
+        approved_by: adminId,
       };
+      if (typeof adminNotes !== "undefined") {
+        updateData.admin_notes = adminNotes;
+      }
 
       const { data, error } = await supabase
         .from("tutor_applications")
@@ -239,7 +244,6 @@ export class AdminTutorApplicationService {
         return false;
       }
 
-      return true;
       return true;
     } catch (error) {
       console.error("❌ Error approving application:", error);
@@ -255,12 +259,16 @@ export class AdminTutorApplicationService {
     adminNotes?: string
   ): Promise<boolean> {
     try {
-      const updateData = {
+      const updateData: Record<string, unknown> = {
         application_status: "rejected",
         rejection_reason: rejectionReason,
-        admin_notes: adminNotes,
         updated_at: new Date().toISOString(),
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: adminId,
       };
+      if (typeof adminNotes !== "undefined") {
+        updateData.admin_notes = adminNotes;
+      }
 
       const { data, error } = await supabase
         .from("tutor_applications")
@@ -273,7 +281,6 @@ export class AdminTutorApplicationService {
         return false;
       }
 
-      return true;
       return true;
     } catch (error) {
       console.error("❌ Error rejecting application:", error);
@@ -311,9 +318,25 @@ export class AdminTutorApplicationService {
         applicant_email: data.applicant_email,
         full_name: data.full_name,
         phone_number: data.phone_number,
-        subjects: Array.isArray(data.subjects)
-          ? data.subjects
-          : JSON.parse(data.subjects || "[]"),
+        subjects: (() => {
+          try {
+            if (Array.isArray(data.subjects)) return data.subjects;
+            if (
+              typeof data.subjects === "string" &&
+              data.subjects.trim().length
+            ) {
+              return JSON.parse(data.subjects);
+            }
+            return [];
+          } catch (e) {
+            console.error(
+              "❌ Error parsing subjects for application:",
+              data.id,
+              e
+            );
+            return [];
+          }
+        })(),
         specializes_learning_disabilities:
           data.specializes_learning_disabilities || false,
         cv_file_name: data.cv_file_name,
@@ -330,14 +353,14 @@ export class AdminTutorApplicationService {
         created_at: data.created_at,
         updated_at: data.updated_at,
         // New fields
-        postcode: data.postcode || "N/A",
+        postcode: data.postcode ?? "N/A",
         past_experience: data.past_experience,
         weekly_availability: data.weekly_availability,
         employment_status: data.employment_status,
         education_level: data.education_level,
         average_weekly_hours: data.average_weekly_hours,
         expected_hourly_rate: data.expected_hourly_rate,
-        based_in_country: data.based_in_country || "Not specified",
+        based_in_country: data.based_in_country ?? "Not specified",
       };
 
       return application;

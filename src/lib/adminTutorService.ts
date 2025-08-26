@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 
 export interface Tutor {
   id: string;
@@ -83,13 +83,13 @@ class AdminTutorService {
     try {
       // Get all tutors first
       const { data: tutors, error: tutorsError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'tutor')
-        .order('created_at', { ascending: false });
+        .from("profiles")
+        .select("*")
+        .eq("role", "tutor")
+        .order("created_at", { ascending: false });
 
       if (tutorsError) {
-        console.error('Error fetching tutors:', tutorsError);
+        console.error("Error fetching tutors:", tutorsError);
         throw tutorsError;
       }
 
@@ -99,25 +99,25 @@ class AdminTutorService {
 
       // Get all tutor applications
       const { data: applications, error: applicationsError } = await supabase
-        .from('tutor_applications')
-        .select('*')
-        .order('submitted_at', { ascending: false });
+        .from("tutor_applications")
+        .select("*")
+        .order("submitted_at", { ascending: false });
 
       if (applicationsError) {
-        console.error('Error fetching applications:', applicationsError);
+        console.error("Error fetching applications:", applicationsError);
         throw applicationsError;
       }
 
       // Create a map of user_id to application for quick lookup
       const applicationMap = new Map();
-      applications?.forEach(app => {
+      applications?.forEach((app) => {
         if (!applicationMap.has(app.user_id)) {
           applicationMap.set(app.user_id, app);
         }
       });
 
       // Transform the data to include application information
-      const transformedTutors = tutors.map(tutor => {
+      const transformedTutors = tutors.map((tutor) => {
         const application = applicationMap.get(tutor.user_id);
         return {
           ...tutor,
@@ -129,7 +129,7 @@ class AdminTutorService {
 
       return transformedTutors;
     } catch (error) {
-      console.error('Error in getAllTutors:', error);
+      console.error("Error in getAllTutors:", error);
       throw error;
     }
   }
@@ -138,14 +138,14 @@ class AdminTutorService {
     try {
       // Get tutor profile
       const { data: tutor, error: tutorError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', tutorId)
-        .eq('role', 'tutor')
+        .from("profiles")
+        .select("*")
+        .eq("id", tutorId)
+        .eq("role", "tutor")
         .single();
 
       if (tutorError) {
-        console.error('Error fetching tutor:', tutorError);
+        console.error("Error fetching tutor:", tutorError);
         throw tutorError;
       }
 
@@ -153,14 +153,14 @@ class AdminTutorService {
 
       // Get tutor application
       const { data: applications, error: applicationsError } = await supabase
-        .from('tutor_applications')
-        .select('*')
-        .eq('user_id', tutor.user_id)
-        .order('submitted_at', { ascending: false })
+        .from("tutor_applications")
+        .select("*")
+        .eq("user_id", tutor.user_id)
+        .order("submitted_at", { ascending: false })
         .limit(1);
 
       if (applicationsError) {
-        console.error('Error fetching applications:', applicationsError);
+        console.error("Error fetching applications:", applicationsError);
         throw applicationsError;
       }
 
@@ -174,7 +174,7 @@ class AdminTutorService {
         reviewed_at: application?.reviewed_at || null,
       };
     } catch (error) {
-      console.error('Error in getTutorById:', error);
+      console.error("Error in getTutorById:", error);
       throw error;
     }
   }
@@ -182,16 +182,16 @@ class AdminTutorService {
   async updateTutorStatus(tutorId: string, isActive: boolean): Promise<void> {
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ is_active: isActive })
-        .eq('id', tutorId);
+        .eq("id", tutorId);
 
       if (error) {
-        console.error('Error updating tutor status:', error);
+        console.error("Error updating tutor status:", error);
         throw error;
       }
     } catch (error) {
-      console.error('Error in updateTutorStatus:', error);
+      console.error("Error in updateTutorStatus:", error);
       throw error;
     }
   }
@@ -200,18 +200,18 @@ class AdminTutorService {
     try {
       // First, delete related records (tutor applications, classes, etc.)
       // Note: This is a simplified version. In production, you might want to handle this more carefully
-      
+
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .delete()
-        .eq('id', tutorId);
+        .eq("id", tutorId);
 
       if (error) {
-        console.error('Error deleting tutor:', error);
+        console.error("Error deleting tutor:", error);
         throw error;
       }
     } catch (error) {
-      console.error('Error in deleteTutor:', error);
+      console.error("Error in deleteTutor:", error);
       throw error;
     }
   }
@@ -220,13 +220,13 @@ class AdminTutorService {
     try {
       // Get tutor classes
       const { data: classes, error: classesError } = await supabase
-        .from('tutor_classes')
-        .select('*')
-        .eq('tutor_id', tutorId)
-        .order('date', { ascending: false });
+        .from("tutor_classes")
+        .select("*")
+        .eq("tutor_id", tutorId)
+        .order("date", { ascending: false });
 
       if (classesError) {
-        console.error('Error fetching tutor classes:', classesError);
+        console.error("Error fetching tutor classes:", classesError);
         throw classesError;
       }
 
@@ -236,53 +236,53 @@ class AdminTutorService {
 
       // Get class types
       const { data: classTypes, error: classTypesError } = await supabase
-        .from('class_types')
-        .select('*');
+        .from("class_types")
+        .select("*");
 
       if (classTypesError) {
-        console.error('Error fetching class types:', classTypesError);
+        console.error("Error fetching class types:", classTypesError);
         throw classTypesError;
       }
 
       // Create a map of class type IDs to class type objects
       const classTypeMap = new Map();
-      classTypes?.forEach(type => {
+      classTypes?.forEach((type) => {
         classTypeMap.set(type.id, type);
       });
 
       // Get jitsi meetings for all classes
-      const classIds = classes.map(c => c.id);
+      const classIds = classes.map((c) => c.id);
       const { data: jitsiMeetings, error: jitsiError } = await supabase
-        .from('jitsi_meetings')
-        .select('*')
-        .in('class_id', classIds);
+        .from("jitsi_meetings")
+        .select("*")
+        .in("class_id", classIds);
 
       if (jitsiError) {
-        console.error('Error fetching jitsi meetings:', jitsiError);
+        console.error("Error fetching jitsi meetings:", jitsiError);
         throw jitsiError;
       }
 
       // Create a map of class IDs to jitsi meeting objects
       const jitsiMap = new Map();
-      jitsiMeetings?.forEach(jitsi => {
+      jitsiMeetings?.forEach((jitsi) => {
         jitsiMap.set(jitsi.class_id, jitsi);
       });
 
       // Combine the data
-      const enrichedClasses = classes.map(classItem => ({
+      const enrichedClasses = classes.map((classItem) => ({
         ...classItem,
         class_type: classTypeMap.get(classItem.class_type_id) || {
           id: classItem.class_type_id,
-          name: 'Unknown',
+          name: "Unknown",
           duration_minutes: 0,
-          description: null
+          description: null,
         },
         jitsi_meeting: jitsiMap.get(classItem.id) || null,
       }));
 
       return enrichedClasses;
     } catch (error) {
-      console.error('Error in getTutorClasses:', error);
+      console.error("Error in getTutorClasses:", error);
       throw error;
     }
   }
@@ -291,50 +291,59 @@ class AdminTutorService {
     try {
       // Get total tutors
       const { count: total, error: totalError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'tutor');
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "tutor");
 
       if (totalError) throw totalError;
 
       // Get active tutors
       const { count: active, error: activeError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'tutor')
-        .eq('is_active', true);
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "tutor")
+        .eq("is_active", true);
 
       if (activeError) throw activeError;
 
       // Get inactive tutors
       const { count: inactive, error: inactiveError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'tutor')
-        .eq('is_active', false);
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "tutor")
+        .eq("is_active", false);
 
       if (inactiveError) throw inactiveError;
 
       // Get application status counts
       const { data: applications, error: applicationsError } = await supabase
-        .from('tutor_applications')
-        .select('application_status');
+        .from("tutor_applications")
+        .select("application_status");
 
       if (applicationsError) throw applicationsError;
 
-      const approved = applications?.filter(app => app.application_status === 'approved').length || 0;
-      const pending = applications?.filter(app => app.application_status === 'pending').length || 0;
-      const rejected = applications?.filter(app => app.application_status === 'rejected').length || 0;
+      const approved =
+        applications?.filter((app) => app.application_status === "approved")
+          .length || 0;
+      const pending =
+        applications?.filter((app) => app.application_status === "pending")
+          .length || 0;
+      const rejected =
+        applications?.filter((app) => app.application_status === "rejected")
+          .length || 0;
+      const under_review =
+        applications?.filter((app) => app.application_status === "under_review")
+          .length || 0;
 
       // Get recent registrations (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const { count: recentRegistrations, error: recentError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'tutor')
-        .gte('created_at', thirtyDaysAgo.toISOString());
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "tutor")
+        .gte("created_at", thirtyDaysAgo.toISOString());
 
       if (recentError) throw recentError;
 
@@ -345,13 +354,14 @@ class AdminTutorService {
         approved,
         pending,
         rejected,
+        under_review,
         recentRegistrations: recentRegistrations || 0,
       };
     } catch (error) {
-      console.error('Error in getTutorStats:', error);
+      console.error("Error in getTutorStats:", error);
       throw error;
     }
   }
 }
 
-export const adminTutorService = new AdminTutorService(); 
+export const adminTutorService = new AdminTutorService();

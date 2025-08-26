@@ -326,14 +326,11 @@ export default function InstantSessionPage() {
 
       <div className="max-w-2xl mx-auto relative z-10">
         {/* Header Section */}
-        <div className="text-center mb-8 pt-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full mb-4">
-            <SparklesIcon className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="text-center mb-8 pt-20">
+          <h1 className="text-3xl font-bold text-green-900 mb-2">
             Instant Session
           </h1>
-          <p className="text-lg text-gray-600 flex items-center justify-center gap-2">
+          <p className="text-lg text-gray-700 flex items-center justify-center gap-2">
             <ClockIcon className="w-5 h-5" />
             <span>15 minutes • Get tutoring help immediately</span>
           </p>
@@ -345,8 +342,8 @@ export default function InstantSessionPage() {
           {status === "idle" && (
             <div className="p-8">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-4">
-                  <AcademicCapIcon className="w-6 h-6 text-green-600" />
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-900 rounded-full mb-4">
+                  <AcademicCapIcon className="w-6 h-6 text-white" />
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
                   Need tutoring help?
@@ -528,8 +525,8 @@ export default function InstantSessionPage() {
         <div className="grid md:grid-cols-3 gap-4 mt-8 mb-16">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <ClockIcon className="w-4 h-4 text-green-600" />
+              <div className="w-8 h-8 bg-green-900 rounded-lg flex items-center justify-center">
+                <ClockIcon className="w-4 h-4 text-white" />
               </div>
               <h3 className="font-semibold text-gray-900">Quick Sessions</h3>
             </div>
@@ -540,8 +537,8 @@ export default function InstantSessionPage() {
 
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <UserGroupIcon className="w-4 h-4 text-emerald-600" />
+              <div className="w-8 h-8 bg-green-900 rounded-lg flex items-center justify-center">
+                <UserGroupIcon className="w-4 h-4 text-white" />
               </div>
               <h3 className="font-semibold text-gray-900">Expert Tutors</h3>
             </div>
@@ -552,8 +549,8 @@ export default function InstantSessionPage() {
 
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <SparklesIcon className="w-4 h-4 text-green-600" />
+              <div className="w-8 h-8 bg-green-900 rounded-lg flex items-center justify-center">
+                <SparklesIcon className="w-4 h-4 text-white" />
               </div>
               <h3 className="font-semibold text-gray-900">Instant Connect</h3>
             </div>

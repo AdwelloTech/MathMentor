@@ -157,7 +157,7 @@ const FlashcardStudyPage: React.FC = () => {
 
   if (!setData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-2xl rounded-2xl">
           <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
             <div className="animate-spin p-4 bg-green-900 rounded-2xl">
@@ -178,7 +178,7 @@ const FlashcardStudyPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-yellow-50">
+    <div className="min-h-screen ">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-900/5 rounded-full blur-3xl animate-pulse"></div>
@@ -228,7 +228,7 @@ const FlashcardStudyPage: React.FC = () => {
 
           <Button
             onClick={downloadVectorFastPdf}
-            className="bg-gradient-to-r from-green-900 to-green-800 hover:from-green-800 hover:to-green-700 text-yellow-400 font-semibold px-6 py-3 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+            className="bg-yellow-400 text-black font-semibold px-6 py-3 rounded-2xl shadow-xl hover:scale-105 transition-all duration-200 "
           >
             <Download className="mr-2 h-5 w-5" />
             Download PDF
@@ -258,10 +258,18 @@ const FlashcardStudyPage: React.FC = () => {
             )}
           </motion.div>
 
-          {/* 3D Flip Card */}
           <motion.div
-            className="relative [perspective:1200px] cursor-pointer"
+            className="relative cursor-pointer"
+            style={{ perspective: "1200px" }}
+            role="button"
+            tabIndex={0}
             onClick={() => setShowBack((s) => !s)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setShowBack((s) => !s);
+              }
+            }}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -269,21 +277,33 @@ const FlashcardStudyPage: React.FC = () => {
             whileTap={{ scale: 0.98 }}
           >
             <motion.div
-              className="bg-gradient-to-br from-white via-white to-slate-50 border border-slate-200/50 rounded-3xl shadow-2xl select-none relative overflow-hidden"
+              className="relative select-none"
               style={{
                 width: "min(90vw, 700px)",
                 height: "clamp(300px, 50vw, 420px)",
                 transformStyle: "preserve-3d",
               }}
               animate={{ rotateY: showBack ? 180 : 0 }}
-              transition={{ duration: 0.7, ease: "easeInOut" }}
+              transition={{
+                duration: 0.6,
+                ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for smoother animation
+              }}
             >
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-green-900/5 via-transparent to-yellow-400/5 rounded-3xl"></div>
-
               {/* Front Side */}
-              {!showBack ? (
-                /* Front Side */
+              <motion.div
+                className="absolute inset-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
+                style={{
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                }}
+                animate={{
+                  opacity: showBack ? 0 : 1,
+                }}
+                transition={{
+                  duration: 0.1,
+                  delay: showBack ? 0 : 0.25, // Show content after flip starts
+                }}
+              >
                 <div className="absolute inset-0 flex items-center justify-center p-10">
                   <div className="text-center space-y-4">
                     <div className="inline-flex items-center gap-2 bg-green-900/10 text-green-900 px-3 py-1 rounded-full text-sm font-medium">
@@ -295,12 +315,27 @@ const FlashcardStudyPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              ) : (
-                /* Back Side */
-                <div
-                  className="absolute inset-0 flex items-center justify-center p-10"
-                  style={{ transform: "rotateY(180deg)" }}
-                >
+
+                {/* Subtle gradient overlay */}
+              </motion.div>
+
+              {/* Back Side */}
+              <motion.div
+                className="absolute inset-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
+                style={{
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                }}
+                animate={{
+                  opacity: showBack ? 1 : 0,
+                }}
+                transition={{
+                  duration: 0.1,
+                  delay: showBack ? 0.25 : 0, // Show content after flip completes
+                }}
+              >
+                <div className="absolute inset-0 flex items-center justify-center p-10">
                   <div className="text-center space-y-4">
                     <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">
                       <Sparkles className="h-4 w-4" />
@@ -311,10 +346,9 @@ const FlashcardStudyPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              )}
 
-              {/* Subtle shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-3xl pointer-events-none"></div>
+                {/* Subtle gradient overlay */}
+              </motion.div>
             </motion.div>
           </motion.div>
         </div>
@@ -329,7 +363,7 @@ const FlashcardStudyPage: React.FC = () => {
           <Button
             onClick={prev}
             variant="outline"
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-yellow-400 transition-all duration-300 font-semibold"
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-white transition-all duration-300 font-semibold"
             disabled={!setData?.cards.length}
           >
             <ChevronLeft className="h-5 w-5" />
@@ -362,7 +396,7 @@ const FlashcardStudyPage: React.FC = () => {
           <Button
             onClick={next}
             variant="outline"
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-yellow-400 transition-all duration-300 font-semibold"
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-white transition-all duration-300 font-semibold"
             disabled={!setData?.cards.length}
           >
             Next

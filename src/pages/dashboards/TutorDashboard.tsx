@@ -305,7 +305,7 @@ const TutorDashboard: React.FC = () => {
       const { data, error } = await supabase
         .from("id_verifications")
         .select("*")
-        .eq("user_id", profile.id) // Use profile.id instead of user.id
+        .eq("user_id", user.id) // Match id_verifications.user_id to auth user's ID
         .order("submitted_at", { ascending: false })
         .limit(1);
 
@@ -347,9 +347,19 @@ const TutorDashboard: React.FC = () => {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.includes("pdf") && !file.type.includes("document")) {
-      setUploadError("Please upload a PDF or Word document");
-      return;
+    const allowedTypes = new Set([
+      "application/pdf",
+      "application/msword", // .doc
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+    ]);
+    if (!allowedTypes.has(file.type)) {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (!ext || !["pdf", "doc", "docx"].includes(ext)) {
+        setUploadError(
+          "Please upload a PDF or Word document (.pdf, .doc, .docx)"
+        );
+        return;
+      }
     }
 
     // Validate file size (max 5MB)
@@ -376,6 +386,7 @@ const TutorDashboard: React.FC = () => {
       console.error("CV upload error:", error);
       setUploadError("Failed to upload CV. Please try again.");
     } finally {
+      setIsUploading(false);
       setLoading(false);
     }
   };
@@ -1277,21 +1288,7 @@ const TutorDashboard: React.FC = () => {
                   Curriculum Vitae
                 </h2>
 
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
-                    <div className="flex-1">
-                      <h3 className="text-sm font-medium text-green-800">
-                        CV Uploaded Successfully
-                      </h3>
-                      <p className="text-sm text-green-700 mt-1">
-                        File: {application?.cv_file_name || "CV file"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {profile?.cv_url ? (
+                {profile?.cv_url || application?.cv_file_name ? (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex items-center">
                       <CheckCircleIcon className="h-8 w-8 text-green-600 mr-3" />
@@ -1300,7 +1297,10 @@ const TutorDashboard: React.FC = () => {
                           CV Uploaded Successfully
                         </h3>
                         <p className="text-sm text-green-700 mt-1">
-                          File: {profile.cv_file_name}
+                          File:{" "}
+                          {application?.cv_file_name ||
+                            profile?.cv_file_name ||
+                            "CV file"}
                         </p>
                       </div>
                     </div>

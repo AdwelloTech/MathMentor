@@ -49,9 +49,9 @@ const CreateEditFlashcardSetPage: React.FC = () => {
   const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium"
   );
-  const [pdfBase64, setPdfBase64] = useState("");
-  const [pdfName, setPdfName] = useState<string | null>(null);
-  const [pdfSize, setPdfSize] = useState(0);
+  const [pdfs, setPdfs] = useState<
+    Array<{ pdfBase64: string; fileName: string; fileSize: number }>
+  >([]);
 
   useEffect(() => {
     if (!isEdit || !setId) return;
@@ -232,11 +232,11 @@ const CreateEditFlashcardSetPage: React.FC = () => {
         numCards: aiNumCards,
         title,
         difficulty: aiDifficulty,
-        pdfBase64: pdfBase64 || undefined,
+        pdfs: pdfs.length > 0 ? pdfs : undefined,
       });
 
       // Map AI cards directly to flashcard format with pending status
-      const mapped: DraftCard[] = aiCards.map((card) => ({
+      const mapped: DraftCard[] = aiCards.map((card: any) => ({
         front: card.front_text,
         back: card.back_text,
         aiGenerated: true,
@@ -392,56 +392,85 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                 id="flashcards-pdf"
                 type="file"
                 accept="application/pdf"
+                multiple
                 onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
+                  const files = Array.from(e.target.files || []);
+                  if (files.length === 0) return;
+
+                  if (files.length > 10) {
+                    toast.error("Maximum 10 PDF files allowed per selection");
+                    return;
+                  }
+
                   try {
-                    const { pdfBase64, fileName, fileSize } =
-                      await uploadPdfForAI(file);
-                    setPdfBase64(pdfBase64);
-                    setPdfName(fileName);
-                    setPdfSize(fileSize);
-                    toast.success("PDF uploaded for AI context");
+                    const currentCount = pdfs.length;
+                    if (currentCount + files.length > 10) {
+                      toast.error("You can upload up to 10 PDFs in total");
+                      return;
+                    }
+
+                    const { pdfs: uploadedPdfs } = await uploadPdfForAI(files);
+                    setPdfs((prev) => [...prev, ...uploadedPdfs]);
+
+                    const newTotal = currentCount + uploadedPdfs.length;
+                    if (newTotal === 1) {
+                      toast.success("1 PDF uploaded for AI context");
+                    } else {
+                      toast.success(
+                        `${uploadedPdfs.length} PDF${
+                          uploadedPdfs.length > 1 ? "s" : ""
+                        } added to AI context (Total: ${newTotal}/10)`
+                      );
+                    }
                   } catch (err: any) {
                     console.error(err);
-                    toast.error(err?.message || "Failed to upload PDF");
+                    toast.error(err?.message || "Failed to upload PDFs");
                   }
                 }}
                 className="hidden"
               />
-              <Button variant="outline" size="sm" asChild>
-                <label
-                  htmlFor="flashcards-pdf"
-                  className="inline-flex items-center cursor-pointer"
-                >
-                  Choose PDF
-                </label>
-              </Button>
-              {pdfName ? (
-                <Badge variant="secondary" className="text-xs">
-                  {pdfName} ({pdfSize ? Math.round(pdfSize / 1024) : 0}KB)
-                </Badge>
+              <label
+                htmlFor="flashcards-pdf"
+                className="inline-flex items-center px-3 py-2 bg-white border rounded-md text-sm cursor-pointer hover:bg-gray-50"
+              >
+                Choose PDFs (up to 10)
+              </label>
+              {pdfs.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {pdfs.map((pdf, index) => (
+                    <span
+                      key={index}
+                      className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1 flex items-center gap-1"
+                    >
+                      {pdf.fileName} (${Math.round(pdf.fileSize / 1024)} KB)
+                      <button
+                        onClick={() =>
+                          setPdfs((prev) => prev.filter((_, i) => i !== index))
+                        }
+                        className="ml-1 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center"
+                        title="Remove PDF"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
               ) : (
-                <span className="text-xs text-gray-500">No file selected</span>
+                <span className="text-xs text-gray-500">No files selected</span>
               )}
             </div>
-            {pdfName && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setPdfBase64("");
-                  setPdfName(null);
-                  setPdfSize(0);
-                }}
+            {pdfs.length > 0 && (
+              <button
+                onClick={() => setPdfs([])}
                 className="text-xs text-gray-600 hover:text-gray-900"
               >
-                Clear
-              </Button>
+                Clear All
+              </button>
             )}
           </div>
           <p className="mt-1 text-xs text-gray-500">
-            PDF up to 10MB. We'll use its text as AI context.
+            PDFs up to 10MB each, maximum 10 files. We'll use their text as AI
+            context.
           </p>
         </div>
 

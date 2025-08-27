@@ -19,26 +19,57 @@ const StudentLayoutContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { backgroundClass } = useStudentBackground();
+  const appliedClassRef = useRef<string | null>(null);
 
   // Set body background to match the inner wrapper background (non-destructive)
-  const prevClassesRef = useRef<string[]>([]);
   useEffect(() => {
-    // Cleanup from previous render on update
-    prevClassesRef.current.forEach((c) => document.body.classList.remove(c));
+    const body = document.body;
+    const prevClass = appliedClassRef.current;
 
-    // Only add classes if backgroundClass is non-empty
-    if (backgroundClass && backgroundClass.trim()) {
-      const classes = backgroundClass.trim().split(/\s+/).filter(Boolean);
-      classes.forEach((c) => document.body.classList.add(c));
-      prevClassesRef.current = classes;
-    } else {
-      prevClassesRef.current = [];
+    // Remove previous background class if it exists and is different
+    if (prevClass && prevClass !== backgroundClass) {
+      // Split prevClass by spaces to handle multiple classes
+      const prevClasses = prevClass.split(/\s+/).filter(Boolean);
+      prevClasses.forEach((cls) => body.classList.remove(cls));
     }
 
+    // Add new background class if it exists and isn't already applied
+    if (backgroundClass) {
+      // Split backgroundClass by spaces to handle multiple classes (e.g., gradients)
+      const classes = backgroundClass.split(/\s+/).filter(Boolean);
+
+      // Check if all classes are already applied
+      const allClassesApplied = classes.every((cls) =>
+        body.classList.contains(cls)
+      );
+
+      if (!allClassesApplied) {
+        // Remove any existing background classes first
+        const existingClasses = Array.from(body.classList).filter(
+          (cls) =>
+            cls.startsWith("bg-") ||
+            cls.startsWith("from-") ||
+            cls.startsWith("via-") ||
+            cls.startsWith("to-")
+        );
+        existingClasses.forEach((cls) => body.classList.remove(cls));
+
+        // Add new classes
+        classes.forEach((cls) => body.classList.add(cls));
+      }
+    }
+
+    // Update ref to track the currently applied class
+    appliedClassRef.current = backgroundClass;
+
+    // Cleanup: remove the background class when component unmounts
     return () => {
-      // Remove classes when unmounting
-      prevClassesRef.current.forEach((c) => document.body.classList.remove(c));
-      prevClassesRef.current = [];
+      if (appliedClassRef.current) {
+        // Split backgroundClass by spaces to handle multiple classes
+        const classes = appliedClassRef.current.split(/\s+/).filter(Boolean);
+        classes.forEach((cls) => body.classList.remove(cls));
+        appliedClassRef.current = null;
+      }
     };
   }, [backgroundClass]);
 

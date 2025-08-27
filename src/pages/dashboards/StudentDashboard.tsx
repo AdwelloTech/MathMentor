@@ -717,7 +717,9 @@ const StudentDashboard: React.FC = () => {
                             key={quiz.id}
                             className="flex items-center space-x-3 p-3 bg-[#D5FFC5] rounded-[10px] shadow-sm cursor-pointer hover:bg-[#C5F0B5] transition-colors duration-200"
                             onClick={() =>
-                              navigate(`/student/take-quiz/${quiz.id}`)
+                              quiz.attempt_id
+                                ? navigate(`/student/take-quiz/${quiz.attempt_id}`)
+                                : console.warn('No attempt available for quiz', quiz.id)
                             }
                           >
                             <div className="flex-1 min-w-0">

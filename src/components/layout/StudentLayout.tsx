@@ -28,12 +28,35 @@ const StudentLayoutContent: React.FC = () => {
 
     // Remove previous background class if it exists and is different
     if (prevClass && prevClass !== backgroundClass) {
-      body.classList.remove(prevClass);
+      // Split prevClass by spaces to handle multiple classes
+      const prevClasses = prevClass.split(/\s+/).filter(Boolean);
+      prevClasses.forEach((cls) => body.classList.remove(cls));
     }
 
     // Add new background class if it exists and isn't already applied
-    if (backgroundClass && !body.classList.contains(backgroundClass)) {
-      body.classList.add(backgroundClass);
+    if (backgroundClass) {
+      // Split backgroundClass by spaces to handle multiple classes (e.g., gradients)
+      const classes = backgroundClass.split(/\s+/).filter(Boolean);
+
+      // Check if all classes are already applied
+      const allClassesApplied = classes.every((cls) =>
+        body.classList.contains(cls)
+      );
+
+      if (!allClassesApplied) {
+        // Remove any existing background classes first
+        const existingClasses = Array.from(body.classList).filter(
+          (cls) =>
+            cls.startsWith("bg-") ||
+            cls.startsWith("from-") ||
+            cls.startsWith("via-") ||
+            cls.startsWith("to-")
+        );
+        existingClasses.forEach((cls) => body.classList.remove(cls));
+
+        // Add new classes
+        classes.forEach((cls) => body.classList.add(cls));
+      }
     }
 
     // Update ref to track the currently applied class
@@ -42,7 +65,9 @@ const StudentLayoutContent: React.FC = () => {
     // Cleanup: remove the background class when component unmounts
     return () => {
       if (appliedClassRef.current) {
-        body.classList.remove(appliedClassRef.current);
+        // Split backgroundClass by spaces to handle multiple classes
+        const classes = appliedClassRef.current.split(/\s+/).filter(Boolean);
+        classes.forEach((cls) => body.classList.remove(cls));
         appliedClassRef.current = null;
       }
     };

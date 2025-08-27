@@ -110,13 +110,12 @@ const StudentProfile: React.FC = () => {
             email: user.email || "",
             firstName: profileData.first_name || "",
             lastName: profileData.last_name || "",
-            phone: profileData.phone ?? undefined,
-            address: profileData.address ?? undefined,
-
+            phone: profileData.phone || "",
+            address: profileData.address || "",
             gender: profileData.gender ?? undefined,
-            emergencyContact: profileData.emergency_contact ?? undefined,
-            age: profileData.age ?? undefined,
-            gradeLevelId: profileData.grade_level_id ?? undefined,
+            emergencyContact: profileData.emergency_contact || "",
+            age: profileData.age || undefined,
+            gradeLevelId: profileData.grade_level_id || undefined,
             currentGrade: profileData.current_grade || "",
             academicSet: profileData.academic_set || undefined,
             hasLearningDisabilities:
@@ -185,6 +184,9 @@ const StudentProfile: React.FC = () => {
           ? { learningNeedsDescription: "" }
           : {}),
       }));
+    } else if (type === "number") {
+      const numValue = value === "" ? undefined : Number(value);
+      setFormData((prev) => ({ ...prev, [name]: numValue as any }));
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -207,10 +209,21 @@ const StudentProfile: React.FC = () => {
     // Update the AuthContext profile data with the new image URL
     if (updateProfile && profile) {
       try {
-        await updateProfile({
-          profile_image_url: imageUrl || undefined,
-        });
-        console.log("AuthContext updated with new profile image URL");
+        // Build raw updates object (may contain undefined values)
+        const rawUpdates = {
+          // Keep null to explicitly clear the image in AuthContext as well
+          profile_image_url: imageUrl,
+        };
+
+        // Remove undefined keys so Dexie.update leaves them untouched
+        const updates = Object.fromEntries(
+          Object.entries(rawUpdates).filter(([, v]) => v !== undefined)
+        );
+
+        if (Object.keys(updates).length > 0) {
+          await updateProfile(updates);
+          console.log("AuthContext updated with new profile image URL");
+        }
       } catch (error) {
         console.error("Failed to update AuthContext:", error);
       }
@@ -279,21 +292,38 @@ const StudentProfile: React.FC = () => {
 
       // Update AuthContext with the new profile data
       if (updateProfile) {
-        await updateProfile({
+        // Build raw updates object (may contain undefined values)
+        const rawUpdates = {
           first_name: updateData.first_name,
           last_name: updateData.last_name,
           full_name: updateData.full_name,
-          phone: updateData.phone || undefined,
-          address: updateData.address || undefined,
-          date_of_birth: updateData.date_of_birth || undefined,
-          gender: updateData.gender || undefined,
-          emergency_contact: updateData.emergency_contact || undefined,
-          age: updateData.age || undefined,
-          grade_level_id: updateData.grade_level_id || undefined,
+          phone: updateData.phone, // allow null
+          address: updateData.address, // allow null
+          gender: updateData.gender, // allow null
+          emergency_contact: updateData.emergency_contact, // allow null
+          age: updateData.age, // allow null
+          grade_level_id: updateData.grade_level_id, // allow null
           has_learning_disabilities: updateData.has_learning_disabilities,
-          learning_needs_description:
-            updateData.learning_needs_description || undefined,
-        });
+          learning_needs_description: updateData.learning_needs_description, // allow null
+          // Keep AuthContext in sync for the rest as well
+          current_grade: updateData.current_grade,
+          academic_set: updateData.academic_set,
+          parent_name: updateData.parent_name,
+          parent_phone: updateData.parent_phone,
+          parent_email: updateData.parent_email,
+          city: updateData.city,
+          postcode: updateData.postcode,
+          school_name: updateData.school_name,
+        };
+
+        // Remove undefined keys so Dexie.update leaves them untouched
+        const updates = Object.fromEntries(
+          Object.entries(rawUpdates).filter(([, v]) => v !== undefined)
+        );
+
+        if (Object.keys(updates).length > 0) {
+          await updateProfile(updates);
+        }
       }
 
       setSaveStatus("success");
@@ -315,7 +345,7 @@ const StudentProfile: React.FC = () => {
 
   // Group grade levels by category for better UX
   const groupedGradeLevels = React.useMemo(() => {
-    return gradeLevels.reduce((acc, gradeLevel) => {
+    return (gradeLevels ?? []).reduce((acc, gradeLevel) => {
       const category = gradeLevel.category;
       if (!acc[category]) {
         acc[category] = [];
@@ -343,7 +373,7 @@ const StudentProfile: React.FC = () => {
   }
 
   return (
-    <div className="max-w-full mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -423,6 +453,8 @@ const StudentProfile: React.FC = () => {
                       onChange={handleInputChange}
                       placeholder="Enter your first name"
                       required
+                      maxLength={50}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -441,6 +473,8 @@ const StudentProfile: React.FC = () => {
                       onChange={handleInputChange}
                       placeholder="Enter your last name"
                       required
+                      maxLength={50}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -585,6 +619,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.schoolName}
                       onChange={handleInputChange}
                       placeholder="Enter your school name"
+                      maxLength={100}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -619,6 +655,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.phone}
                       onChange={handleInputChange}
                       placeholder="Enter your phone number"
+                      maxLength={20}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -637,6 +675,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.emergencyContact}
                       onChange={handleInputChange}
                       placeholder="Emergency contact number"
+                      maxLength={20}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -654,6 +694,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.city}
                       onChange={handleInputChange}
                       placeholder="Enter your city"
+                      maxLength={50}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -671,6 +713,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.postcode}
                       onChange={handleInputChange}
                       placeholder="Enter your postcode"
+                      maxLength={20}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -691,6 +735,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.address}
                       onChange={handleInputChange}
                       placeholder="Enter your full address (optional)"
+                      maxLength={200}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -748,6 +794,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.parentName}
                       onChange={handleInputChange}
                       placeholder="Enter parent/guardian name"
+                      maxLength={100}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -766,6 +814,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.parentPhone}
                       onChange={handleInputChange}
                       placeholder="Enter parent/guardian phone number"
+                      maxLength={20}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -784,6 +834,8 @@ const StudentProfile: React.FC = () => {
                       value={formData.parentEmail}
                       onChange={handleInputChange}
                       placeholder="Enter parent/guardian email address"
+                      maxLength={100}
+                      showCharCount
                       className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                     />
                   </div>
@@ -854,6 +906,8 @@ const StudentProfile: React.FC = () => {
                         onChange={handleInputChange}
                         rows={4}
                         placeholder="Please describe your specific learning challenges, accommodations needed, or any other information that would help us provide better support..."
+                        maxLength={500}
+                        showCharCount
                         className="resize-none rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
                       />
                       <p className="text-sm text-slate-500">

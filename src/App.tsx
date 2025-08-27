@@ -12,13 +12,8 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import TutorLayout from "./components/layout/TutorLayout";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
-import AdminDashboard from "./pages/dashboards/AdminDashboard";
-import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
-import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
-import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
-import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
-import ManageQuizzesPage from "./pages/admin/ManageQuizzesPage";
-import AdminManageFlashcardsPage from "./pages/admin/ManageFlashcardsPage";
+
+import AdminLayout from "./components/layout/AdminLayout";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
@@ -78,12 +73,13 @@ function App() {
       <Routes>
         {/* Reset password route - always accessible regardless of auth status */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Admin login - accessible regardless of regular user session */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
 
         {/* Public routes */}
         {!user && !isAdminLoggedIn ? (
           <>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
@@ -91,6 +87,15 @@ function App() {
         ) : (
           <>
             {/* Protected routes */}
+            {/* Admin routes */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/" element={<DashboardLayout />}>
               <Route index element={<DashboardRoute />} />
               <Route path="dashboard" element={<DashboardRoute />} />
@@ -122,64 +127,6 @@ function App() {
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="id-verification" element={<IDVerificationPage />} />
-
-              {/* Admin routes */}
-              <Route
-                path="admin"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/students"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageStudentsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/tutor-applications"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageTutorApplicationsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/tutors"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageTutorsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/id-verifications"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageIDVerificationsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/quizzes"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <ManageQuizzesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="admin/flashcards"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AdminManageFlashcardsPage />
-                  </ProtectedRoute>
-                }
-              />
 
               {/* Principal routes */}
               <Route

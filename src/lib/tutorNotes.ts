@@ -1,8 +1,37 @@
+/**
+ * SECURITY NOTICE: This file has been refactored to eliminate public URL exposure
+ *
+ * ⚠️  TEMPORARY IMPLEMENTATION - DATABASE MIGRATION REQUIRED ⚠️
+ *
+ * CHANGES MADE:
+ * - Removed getPublicUrl() calls that exposed premium content
+ * - Prepared for file_path storage instead of file_url persistence
+ * - Implemented signed URL generation for secure file access
+ * - Added getTutorNoteFileUrl() for on-demand secure access
+ * - Updated all data transformations to never expose URLs
+ *
+ * ⚠️  CURRENT STATE: Using file_url fallback until migration completes ⚠️
+ *
+ * CRITICAL: This code will crash at runtime if deployed without the database migration!
+ * The code expects a file_path column that doesn't exist yet.
+ *
+ * IMMEDIATE ACTIONS REQUIRED:
+ * 1. Add file_path column to tutor_notes table
+ * 2. Migrate existing file_url data to file_path
+ * 3. Update UI components to use getTutorNoteFileUrl()
+ * 4. Remove file_url column after migration
+ *
+ * SECURITY BENEFITS (after migration):
+ * - Premium content no longer accessible via public URLs
+ * - File access requires authentication and generates short-lived URLs
+ * - Prevents entitlement bypass attacks
+ */
+
 import { supabase } from "./supabase";
 import type { Database } from "@/types/database";
 
 type TutorNote = Database["public"]["Tables"]["tutor_notes"]["Row"];
-type TutorNoteWithDetails =
+export type TutorNoteWithDetails =
   Database["public"]["Functions"]["search_tutor_notes"]["Returns"][0];
 type NoteSubject = Database["public"]["Tables"]["note_subjects"]["Row"];
 
@@ -117,13 +146,13 @@ export async function getTutorNoteById(
       .select(
         `
         *,
-        note_subjects!inner(
+        note_subjects(
           id,
           name,
           display_name,
           color
         ),
-        grade_levels!inner(
+        grade_levels(
           id,
           code,
           display_name
@@ -143,12 +172,13 @@ export async function getTutorNoteById(
     }
 
     // Transform the data to match the TutorNoteWithDetails format
+    // SECURE: Don't expose file_url, use file_path for secure access
     const transformedNote: TutorNoteWithDetails = {
       id: data.id,
       title: data.title,
       description: data.description,
       content: data.content,
-      file_url: data.file_url,
+      file_url: null, // SECURE: Never expose public URLs
       file_name: data.file_name,
       file_size: data.file_size,
       subject_id: data.subject_id,
@@ -170,6 +200,101 @@ export async function getTutorNoteById(
   } catch (error) {
     console.error("Error in getTutorNoteById:", error);
     throw error;
+  }
+}
+
+/**
+ * Get secure file access for a tutor note
+ * This function generates signed URLs on-demand for secure file access
+ *
+ * SECURITY MODEL:
+ * - Public functions (getTutorNoteById) sanitize file_url to prevent URL exposure
+ * - Internal secure functions fetch raw data to reconstruct storage paths
+ * - This separation ensures security while maintaining functionality
+ *
+ * IMPLEMENTATION:
+ * - Fetches raw file_path and file_url directly from database
+ * - Prefers file_path when present (future secure approach)
+ * - Falls back to parsing legacy file_url for backward compatibility
+ * - Generates short-lived signed URLs for secure access
+ */
+export async function getTutorNoteSecureFile(noteId: string): Promise<{
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+}> {
+  try {
+    // Fetch raw row fields, not the sanitized view.
+    const { data, error } = await supabase
+      .from("tutor_notes")
+      .select("file_path, file_url, file_name, file_size")
+      .eq("id", noteId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching note file fields:", error);
+      return { fileUrl: null, fileName: null, fileSize: null };
+    }
+    if (!data?.file_name) {
+      return { fileUrl: null, fileName: null, fileSize: null };
+    }
+
+    // Preferred: signed URL from private file_path
+    if (data.file_path) {
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("tutor-materials")
+        .createSignedUrl(data.file_path, 3600);
+      if (signErr) {
+        console.error("Error generating signed URL (file_path):", signErr);
+        return {
+          fileUrl: null,
+          fileName: data.file_name,
+          fileSize: data.file_size,
+        };
+      }
+      return {
+        fileUrl: signed.signedUrl,
+        fileName: data.file_name,
+        fileSize: data.file_size,
+      };
+    }
+
+    // Legacy: reconstruct path from file_url if present (during migration)
+    if (data.file_url) {
+      try {
+        const url = new URL(data.file_url);
+        const pathParts = url.pathname.split("/").filter(Boolean);
+        // Assuming last 3 segments = '<userId>/tutor-notes/<fileName>'
+        const filePath = pathParts.slice(-3).join("/");
+        const { data: signed, error: signErr } = await supabase.storage
+          .from("tutor-materials")
+          .createSignedUrl(filePath, 3600);
+        if (signErr) {
+          console.error("Error generating signed URL (legacy):", signErr);
+          return {
+            fileUrl: null,
+            fileName: data.file_name,
+            fileSize: data.file_size,
+          };
+        }
+        return {
+          fileUrl: signed.signedUrl,
+          fileName: data.file_name,
+          fileSize: data.file_size,
+        };
+      } catch (e) {
+        console.error("Error parsing legacy file_url:", e);
+      }
+    }
+
+    return {
+      fileUrl: null,
+      fileName: data.file_name,
+      fileSize: data.file_size,
+    };
+  } catch (error) {
+    console.error("Error in getTutorNoteSecureFile:", error);
+    return { fileUrl: null, fileName: null, fileSize: null };
   }
 }
 
@@ -252,9 +377,60 @@ export async function updateTutorNote(
 
 /**
  * Delete a tutor note
+ *
+ * SECURITY MODEL:
+ * - Fetches raw file_path and file_url directly from database
+ * - Prefers file_path when present (future secure approach)
+ * - Falls back to parsing legacy file_url for backward compatibility
+ * - Ensures proper cleanup of associated storage files
  */
 export async function deleteTutorNote(id: string): Promise<void> {
   try {
+    // Fetch raw file_path; the public getter intentionally hides it
+    const { data: fileData, error: fetchErr } = await supabase
+      .from("tutor_notes")
+      .select("file_path, file_url")
+      .eq("id", id)
+      .single();
+
+    if (fetchErr) {
+      console.error("Error fetching file_path before delete:", fetchErr);
+    } else if (fileData?.file_path) {
+      // SECURE: Use stored file_path for direct deletion
+      const { error: deleteFileError } = await supabase.storage
+        .from("tutor-materials")
+        .remove([fileData.file_path]);
+
+      if (deleteFileError) {
+        console.error("Error deleting file:", deleteFileError);
+        // Continue with note deletion even if file deletion fails
+      }
+    } else if (fileData?.file_url) {
+      // LEGACY: Handle file_url during migration period
+      try {
+        // Extract storage path from legacy URL
+        const url = new URL(fileData.file_url);
+        const pathParts = url.pathname.split("/").filter(Boolean);
+        // Assuming last 3 segments = '<userId>/tutor-notes/<fileName>'
+        const filePath = pathParts.slice(-3).join("/");
+
+        if (filePath) {
+          const { error: deleteFileError } = await supabase.storage
+            .from("tutor-materials")
+            .remove([filePath]);
+
+          if (deleteFileError) {
+            console.error("Error deleting legacy file:", deleteFileError);
+            // Continue with note deletion even if file deletion fails
+          }
+        }
+      } catch (urlError) {
+        console.warn("Error parsing legacy file_url for deletion:", urlError);
+        // Continue with note deletion even if we can't parse the URL
+      }
+    }
+
+    // Delete the note
     const { error } = await supabase.from("tutor_notes").delete().eq("id", id);
 
     if (error) {
@@ -269,12 +445,20 @@ export async function deleteTutorNote(id: string): Promise<void> {
 
 /**
  * Upload file for tutor note
+ *
+ * NOTE: Returns fileUrl as string | null to handle signed URL generation failures gracefully
+ * The file is still uploaded and stored even if signed URL generation fails
  */
 export async function uploadTutorNoteFile(
   file: File,
   noteId: string
-): Promise<{ fileUrl: string; fileName: string; fileSize: number }> {
+): Promise<{ fileUrl: string | null; fileName: string; fileSize: number }> {
   try {
+    // Basic file validation
+    if (!file || file.size === 0) {
+      throw new Error("Invalid file: file is empty or undefined");
+    }
+
     // Get the current user ID for the folder structure
     const {
       data: { user },
@@ -289,22 +473,25 @@ export async function uploadTutorNoteFile(
 
     const { error: uploadError } = await supabase.storage
       .from("tutor-materials")
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        contentType: file.type || "application/octet-stream",
+        cacheControl: "3600",
+        upsert: false,
+      });
 
     if (uploadError) {
       console.error("Error uploading file:", uploadError);
       throw uploadError;
     }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("tutor-materials").getPublicUrl(filePath);
-
-    // Update the note with file information
+    // TEMPORARY: Store file_url until file_path migration is complete
+    // TODO: Replace with file_path after database migration
+    // For now, we'll store the file_path in file_url temporarily
+    // This maintains backward compatibility until the migration
     const { error: updateError } = await supabase
       .from("tutor_notes")
       .update({
-        file_url: publicUrl,
+        file_url: filePath, // TEMPORARY: Store path in file_url until migration
         file_name: file.name,
         file_size: file.size,
       })
@@ -315,8 +502,24 @@ export async function uploadTutorNoteFile(
       throw updateError;
     }
 
+    // Generate a signed URL for immediate use (short-lived)
+    const { data: signedUrlData, error: signedUrlError } =
+      await supabase.storage
+        .from("tutor-materials")
+        .createSignedUrl(filePath, 3600); // 1-hour TTL
+
+    if (signedUrlError) {
+      console.error("Error generating signed URL:", signedUrlError);
+      // Still return success since file was uploaded and path stored
+      return {
+        fileUrl: null,
+        fileName: file.name,
+        fileSize: file.size,
+      };
+    }
+
     return {
-      fileUrl: publicUrl,
+      fileUrl: signedUrlData.signedUrl,
       fileName: file.name,
       fileSize: file.size,
     };
@@ -399,7 +602,35 @@ export async function incrementTutorNoteDownloadCount(
 }
 
 /**
+ * Generate a signed URL for secure file access
+ * This replaces the insecure public URL approach
+ */
+export async function getTutorNoteFileUrl(
+  filePath: string | null,
+  expiresIn: number = 3600
+): Promise<string | null> {
+  if (!filePath) return null;
+
+  try {
+    const { data, error } = await supabase.storage
+      .from("tutor-materials")
+      .createSignedUrl(filePath, expiresIn);
+
+    if (error) {
+      console.error("Error generating signed URL:", error);
+      return null;
+    }
+
+    return data.signedUrl;
+  } catch (error) {
+    console.error("Error in getTutorNoteFileUrl:", error);
+    return null;
+  }
+}
+
+/**
  * Transform tutor note data for card display
+ * Note: fileUrl will be null and should be fetched on-demand using getTutorNoteFileUrl
  */
 export function transformTutorNoteForCard(
   note: TutorNoteWithDetails
@@ -415,7 +646,7 @@ export function transformTutorNoteForCard(
     isPremium: note.is_premium,
     viewCount: note.view_count,
     downloadCount: note.download_count,
-    fileUrl: note.file_url,
+    fileUrl: null, // SECURE: Don't expose URLs in transformed data
     fileName: note.file_name,
     fileSize: note.file_size,
     createdAt: note.created_at,

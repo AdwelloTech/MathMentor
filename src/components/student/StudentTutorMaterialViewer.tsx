@@ -117,7 +117,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                       </h2>
                       <div className="flex flex-col items-start space-x-3">
                         {material.is_premium && (
-                          <Badge className="bg-yellow-400 text-black border-0 text-xs font-bold hover:bg-yellow-400">
+                          <Badge className="bg-gradient-to-r from-green-600 to-green-500 text-white border-0 text-xs font-bold hover:from-green-500 hover:to-green-600">
                             PREMIUM
                           </Badge>
                         )}

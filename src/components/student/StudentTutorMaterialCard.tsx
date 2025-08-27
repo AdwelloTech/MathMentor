@@ -153,7 +153,7 @@ const StudentTutorMaterialCard: React.FC<
               {title || "Untitled Material"}
             </h3>
             {isPremium && (
-              <Badge className="bg-yellow-400 text-black border-0 text-xs font-bold">
+              <Badge className="bg-gradient-to-r from-green-600 to-green-500 text-white border-0 text-xs font-bold">
                 PREMIUM
               </Badge>
             )}

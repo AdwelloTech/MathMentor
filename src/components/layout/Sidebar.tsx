@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { getActiveProfileImage, getProfileImageUrl } from "@/lib/profileImages";
 import type { ProfileImage } from "@/types/auth";
+import mathMentorLogo from "@/assets/math-mentor-logo.png";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -55,27 +56,39 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Fetch profile image when component mounts or profile changes
   useEffect(() => {
-    const fetchProfileImage = async () => {
-      if (profile?.user_id) {
-        try {
-          const activeImage = await getActiveProfileImage(profile.user_id);
-          if (activeImage) {
-            setProfileImage(activeImage);
-            const imageUrl = getProfileImageUrl(activeImage.file_path);
-            setProfileImageUrl(imageUrl);
-          } else {
-            setProfileImage(null);
-            setProfileImageUrl(null);
-          }
-        } catch (error) {
-          console.error("Error fetching profile image:", error);
+    let cancelled = false;
+    const currentUserId = profile?.user_id ?? null;
+
+    // If user logs out or no profile, clear immediately
+    if (!currentUserId) {
+      setProfileImage(null);
+      setProfileImageUrl(null);
+      return;
+    }
+
+    (async () => {
+      try {
+        const activeImage = await getActiveProfileImage(currentUserId);
+        if (cancelled) return;
+        if (activeImage) {
+          setProfileImage(activeImage);
+          setProfileImageUrl(getProfileImageUrl(activeImage.file_path));
+        } else {
+          setProfileImage(null);
+          setProfileImageUrl(null);
+        }
+      } catch (error) {
+        console.error("Error fetching profile image:", error);
+        if (!cancelled) {
           setProfileImage(null);
           setProfileImageUrl(null);
         }
       }
-    };
+    })();
 
-    fetchProfileImage();
+    return () => {
+      cancelled = true;
+    };
   }, [profile?.user_id]);
 
   // Add admin-specific navigation
@@ -299,9 +312,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               transition={{ duration: 0.2 }}
             >
               <img
-                src="/src/assets/math-mentor-logo.png"
-                alt="Math Mentor Logo"
-                className="h-16 w-16 text-white"
+                src={mathMentorLogo}
+                alt="Math Mentor logo"
+                className="h-16 w-16"
               />
             </motion.div>
           </div>
@@ -337,7 +350,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
               {isHovered && (
                 <span className="overflow-hidden whitespace-nowrap text-gray-400">
-                  {useMemo(() => item.name, [item.name])}
+                  {item.name}
                 </span>
               )}
             </div>
@@ -390,7 +403,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </motion.div>
               {isHovered && (
                 <span className="overflow-hidden whitespace-nowrap font-medium">
-                  {useMemo(() => item.name, [item.name])}
+                  {item.name}
                 </span>
               )}
             </div>
@@ -416,6 +429,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Enhanced Profile Section with modern design and profile image
   const ProfileSection = () => {
+    const displayName = profile?.full_name || "User";
+    const displayRole = profile?.role ? getRoleDisplayName(profile.role) : "User";
+
     return (
       <motion.div
         className="border-t border-gray-200/50 pt-6 mt-6 mb-4"
@@ -463,17 +479,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             {isHovered && (
               <div className="flex flex-col overflow-hidden">
                 <span className="text-sm font-semibold text-gray-900 truncate max-w-32">
-                  {useMemo(
-                    () => profile?.full_name || "User",
-                    [profile?.full_name]
-                  )}
+                  {displayName}
                 </span>
                 <span className="text-xs text-gray-500 truncate max-w-32">
-                  {useMemo(
-                    () =>
-                      profile?.role ? getRoleDisplayName(profile.role) : "User",
-                    [profile?.role]
-                  )}
+                  {displayRole}
                 </span>
               </div>
             )}
@@ -542,7 +551,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </motion.button>
                 </div>
 
-                <div className="flex grow flex-col bg-white/95 backdrop-blur-xl border-r border-gray-200/50 px-6 pb-4 shadow-2xl">
+                <div className="flex grow flex-col bg-[#FFFFE4] backdrop-blur-xl border-r border-gray-200/50 px-6 pb-4 shadow-2xl">
                   <div className="flex flex-col h-full overflow-y-auto">
                     <LogoSection />
                     <NavigationSection />
@@ -564,7 +573,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         transition={{ duration: 0.5 }}
       >
         <motion.div
-          className="flex grow flex-col bg-white/95 backdrop-blur-xl border-r border-gray-200/50 shadow-xl"
+          className="flex grow flex-col bg-[#FFFFE4] backdrop-blur-xl border-r border-gray-200/50 shadow-xl"
           animate={{
             width: isHovered ? 320 : 80,
           }}

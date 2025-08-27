@@ -9,6 +9,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import TutorLayout from "./components/layout/TutorLayout";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 
@@ -68,7 +69,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Routes>
         {/* Reset password route - always accessible regardless of auth status */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -117,23 +118,6 @@ function App() {
                 element={<QuizAttemptReviewPage />}
               />
 
-              <Route
-                path="tutor/manage-materials"
-                element={<ManageMaterialsPage />}
-              />
-              <Route
-                path="tutor/flashcards"
-                element={<ManageFlashcardsPage />}
-              />
-              <Route
-                path="tutor/flashcards/create"
-                element={<CreateEditFlashcardSetPage />}
-              />
-              <Route
-                path="tutor/flashcards/edit/:setId"
-                element={<CreateEditFlashcardSetPage />}
-              />
-
               {/* View flashcards set - accessible to any logged-in role */}
               <Route
                 path="flashcards/:setId"
@@ -169,10 +153,25 @@ function App() {
                 path="tutor/*"
                 element={
                   <ProtectedRoute requiredRole="tutor">
-                    <TutorDashboard />
+                    <TutorLayout />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route index element={<TutorDashboard />} />
+                <Route
+                  path="manage-materials"
+                  element={<ManageMaterialsPage />}
+                />
+                <Route path="flashcards" element={<ManageFlashcardsPage />} />
+                <Route
+                  path="flashcards/create"
+                  element={<CreateEditFlashcardSetPage />}
+                />
+                <Route
+                  path="flashcards/edit/:setId"
+                  element={<CreateEditFlashcardSetPage />}
+                />
+              </Route>
 
               {/* Student routes */}
               <Route

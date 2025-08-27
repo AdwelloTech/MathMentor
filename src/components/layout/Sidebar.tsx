@@ -518,6 +518,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Collapsible Profile Section
   const ProfileSection = () => {
+    const displayName = profile?.full_name || "User";
+    const displayRole = profile?.role ? getRoleDisplayName(profile.role) : "User";
+
     return (
       <div className="border-t border-gray-200/50 pt-4 mt-4 mb-8">
         <div

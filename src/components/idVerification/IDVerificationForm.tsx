@@ -189,33 +189,35 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg"
+      className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border-0"
     >
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center space-x-3">
-          <IdentificationIcon className="h-8 w-8 text-blue-600" />
+      <div className="p-8 border-b-2 border-gray-100">
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-green-900 rounded-2xl shadow-lg">
+            <IdentificationIcon className="h-8 w-8 text-yellow-400" />
+          </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-3xl font-bold text-green-900">
               ID Verification
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-base text-slate-600 mt-2">
               Please provide your identification documents for verification
             </p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-8">
+      <form onSubmit={handleSubmit} className="p-8 space-y-8">
         {/* ID Type and Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-base font-semibold text-gray-700 mb-3">
               ID Type *
             </label>
             <select
               value={formData.id_type || ""}
               onChange={(e) => handleInputChange("id_type", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200"
             >
               <option value="national_id">National ID</option>
               <option value="passport">Passport</option>
@@ -226,45 +228,49 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-base font-semibold text-gray-700 mb-3">
               ID Number *
             </label>
             <input
               type="text"
               value={formData.id_number || ""}
               onChange={(e) => handleInputChange("id_number", e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.id_number ? "border-red-500" : "border-gray-300"
+              className={`w-full px-4 py-3 border-2 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200 ${
+                errors.id_number ? "border-red-500" : "border-gray-200"
               }`}
               placeholder="Enter your ID number"
             />
             {errors.id_number && (
-              <p className="mt-1 text-sm text-red-600">{errors.id_number}</p>
+              <p className="mt-2 text-sm text-red-600 font-medium">
+                {errors.id_number}
+              </p>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-base font-semibold text-gray-700 mb-3">
               Full Name *
             </label>
             <input
               type="text"
               value={formData.full_name || ""}
               onChange={(e) => handleInputChange("full_name", e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.full_name ? "border-red-500" : "border-gray-300"
+              className={`w-full px-4 py-3 border-2 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200 ${
+                errors.full_name ? "border-red-500" : "border-gray-200"
               }`}
               placeholder="Enter your full name"
             />
             {errors.full_name && (
-              <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
+              <p className="mt-2 text-sm text-red-600 font-medium">
+                {errors.full_name}
+              </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-base font-semibold text-gray-700 mb-3">
               Date of Birth
             </label>
             <input
@@ -273,31 +279,33 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
               onChange={(e) =>
                 handleInputChange("date_of_birth", e.target.value)
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-base font-semibold text-gray-700 mb-3">
               Expiry Date
             </label>
             <input
               type="date"
               value={formData.expiry_date || ""}
               onChange={(e) => handleInputChange("expiry_date", e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.expiry_date ? "border-red-500" : "border-gray-300"
+              className={`w-full px-4 py-3 border-2 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200 ${
+                errors.expiry_date ? "border-red-500" : "border-gray-200"
               }`}
             />
             {errors.expiry_date && (
-              <p className="mt-1 text-sm text-red-600">{errors.expiry_date}</p>
+              <p className="mt-2 text-sm text-red-600 font-medium">
+                {errors.expiry_date}
+              </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-base font-semibold text-gray-700 mb-3">
               Issuing Country
             </label>
             <input
@@ -306,14 +314,14 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
               onChange={(e) =>
                 handleInputChange("issuing_country", e.target.value)
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200"
               placeholder="e.g., Sri Lanka"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-base font-semibold text-gray-700 mb-3">
             Issuing Authority
           </label>
           <input
@@ -322,23 +330,25 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
             onChange={(e) =>
               handleInputChange("issuing_authority", e.target.value)
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200"
             placeholder="e.g., Department of Registration of Persons"
           />
         </div>
 
         {/* Image Upload Section */}
-        <div className="space-y-6">
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="space-y-8">
+          <div className="border-t-2 border-gray-100 pt-8">
+            <h3 className="text-2xl font-bold text-green-900 mb-6">
               Upload Documents
             </h3>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start space-x-3">
-                <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-medium">Important:</p>
-                  <ul className="mt-1 space-y-1">
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 mb-8 shadow-lg">
+              <div className="flex items-start space-x-4">
+                <div className="p-2 bg-blue-600 rounded-2xl shadow-lg">
+                  <ExclamationTriangleIcon className="h-6 w-6 text-white mt-0.5" />
+                </div>
+                <div className="text-base text-blue-800">
+                  <p className="font-bold mb-3">Important:</p>
+                  <ul className="space-y-2">
                     <li>• All images must be clear and legible</li>
                     <li>• Maximum file size: 5MB per image</li>
                     <li>• Supported formats: JPEG, PNG, WebP</li>
@@ -351,35 +361,35 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Front Image */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-base font-semibold text-gray-700 mb-3">
                 Front Image *
               </label>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {previews.front_image ? (
                   <div className="relative">
                     <img
                       src={previews.front_image}
                       alt="Front ID"
-                      className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                      className="w-full h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-lg"
                     />
                     <button
                       type="button"
                       onClick={() => removeFile("front_image")}
-                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg transition-colors duration-200"
                     >
-                      <XCircleIcon className="h-4 w-4" />
+                      <XCircleIcon className="h-5 w-5" />
                     </button>
                   </div>
                 ) : (
                   <div
                     onClick={() => fileInputRefs.front_image.current?.click()}
-                    className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                    className="w-full h-48 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50 transition-all duration-200 shadow-sm"
                   >
-                    <CameraIcon className="h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600">
+                    <CameraIcon className="h-10 w-10 text-gray-400 mb-3" />
+                    <p className="text-base text-gray-600 font-medium">
                       Click to upload front image
                     </p>
                   </div>
@@ -394,39 +404,41 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
                   className="hidden"
                 />
                 {errors.front_image && (
-                  <p className="text-sm text-red-600">{errors.front_image}</p>
+                  <p className="text-sm text-red-600 font-medium">
+                    {errors.front_image}
+                  </p>
                 )}
               </div>
             </div>
 
             {/* Back Image */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-base font-semibold text-gray-700 mb-3">
                 Back Image *
               </label>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {previews.back_image ? (
                   <div className="relative">
                     <img
                       src={previews.back_image}
                       alt="Back ID"
-                      className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                      className="w-full h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-lg"
                     />
                     <button
                       type="button"
                       onClick={() => removeFile("back_image")}
-                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg transition-colors duration-200"
                     >
-                      <XCircleIcon className="h-4 w-4" />
+                      <XCircleIcon className="h-5 w-5" />
                     </button>
                   </div>
                 ) : (
                   <div
                     onClick={() => fileInputRefs.back_image.current?.click()}
-                    className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                    className="w-full h-48 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50 transition-all duration-200 shadow-sm"
                   >
-                    <CameraIcon className="h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600">
+                    <CameraIcon className="h-10 w-10 text-gray-400 mb-3" />
+                    <p className="text-base text-gray-600 font-medium">
                       Click to upload back image
                     </p>
                   </div>
@@ -441,30 +453,32 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
                   className="hidden"
                 />
                 {errors.back_image && (
-                  <p className="text-sm text-red-600">{errors.back_image}</p>
+                  <p className="text-sm text-red-600 font-medium">
+                    {errors.back_image}
+                  </p>
                 )}
               </div>
             </div>
 
             {/* Selfie with ID */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-base font-semibold text-gray-700 mb-3">
                 Selfie with ID *
               </label>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {previews.selfie_with_id ? (
                   <div className="relative">
                     <img
                       src={previews.selfie_with_id}
                       alt="Selfie with ID"
-                      className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                      className="w-full h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-lg"
                     />
                     <button
                       type="button"
                       onClick={() => removeFile("selfie_with_id")}
-                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg transition-colors duration-200"
                     >
-                      <XCircleIcon className="h-4 w-4" />
+                      <XCircleIcon className="h-5 w-5" />
                     </button>
                   </div>
                 ) : (
@@ -472,10 +486,10 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
                     onClick={() =>
                       fileInputRefs.selfie_with_id.current?.click()
                     }
-                    className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                    className="w-full h-48 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50 transition-all duration-200 shadow-sm"
                   >
-                    <CameraIcon className="h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600">
+                    <CameraIcon className="h-10 w-10 text-gray-400 mb-3" />
+                    <p className="text-base text-gray-600 font-medium">
                       Click to upload selfie
                     </p>
                   </div>
@@ -493,7 +507,7 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
                   className="hidden"
                 />
                 {errors.selfie_with_id && (
-                  <p className="text-sm text-red-600">
+                  <p className="text-sm text-red-600 font-medium">
                     {errors.selfie_with_id}
                   </p>
                 )}
@@ -503,12 +517,12 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
         </div>
 
         {/* Submit Buttons */}
-        <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+        <div className="flex items-center justify-end space-x-6 pt-8 border-t-2 border-gray-100">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="px-8 py-3 border-2 border-gray-300 rounded-2xl text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
             >
               Cancel
             </button>
@@ -516,7 +530,7 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="px-8 py-3 bg-green-900 text-white rounded-2xl hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
           >
             {loading ? (
               <>
@@ -525,7 +539,7 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
               </>
             ) : (
               <>
-                <ArrowUpTrayIcon className="h-5 w-5" />
+                <ArrowUpTrayIcon className="h-6 w-6" />
                 <span>Submit Verification</span>
               </>
             )}

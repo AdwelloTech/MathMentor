@@ -10,10 +10,31 @@ import {
   updateTutorNote,
   incrementTutorNoteDownloadCount,
   type UpdateTutorNoteData,
-  type TutorNoteWithDetails,
 } from "@/lib/tutorNotes";
+import type { Database } from "@/types/database";
 import RichTextEditor from "@/components/notes/RichTextEditor";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import toast from "react-hot-toast";
+import {
+  DESCRIPTION_MAX_LENGTH,
+  NOTE_TITLE_MAX_LENGTH,
+} from "@/constants/form";
+
+type TutorNoteWithDetails =
+  Database["public"]["Functions"]["search_tutor_notes"]["Returns"][0];
 
 interface EditTutorNoteModalProps {
   isOpen: boolean;
@@ -56,6 +77,11 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
       });
     }
   }, [note]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,16 +264,18 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                   >
                     Material Title *
                   </label>
-                  <input
+                  <Input
                     type="text"
                     id="title"
                     value={formData.title}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full"
                     placeholder="Enter the title of your study material"
                     required
+                    maxLength={NOTE_TITLE_MAX_LENGTH}
+                    showCharCount
                   />
                 </div>
 
@@ -259,15 +287,16 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                   >
                     Description
                   </label>
-                  <textarea
+                  <Textarea
                     id="description"
+                    name="description"
+                    placeholder="Enter a detailed description of the study material..."
                     value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Brief description of the material (optional)"
+                    onChange={handleInputChange}
+                    maxLength={DESCRIPTION_MAX_LENGTH}
+                    className="w-full"
+                    rows={4}
+                    showCharCount
                   />
                 </div>
 

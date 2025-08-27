@@ -9,6 +9,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import TutorLayout from "./components/layout/TutorLayout";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
@@ -72,7 +73,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Routes>
         {/* Reset password route - always accessible regardless of auth status */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -112,23 +113,6 @@ function App() {
               <Route
                 path="quiz/attempt/:attemptId"
                 element={<QuizAttemptReviewPage />}
-              />
-
-              <Route
-                path="tutor/manage-materials"
-                element={<ManageMaterialsPage />}
-              />
-              <Route
-                path="tutor/flashcards"
-                element={<ManageFlashcardsPage />}
-              />
-              <Route
-                path="tutor/flashcards/create"
-                element={<CreateEditFlashcardSetPage />}
-              />
-              <Route
-                path="tutor/flashcards/edit/:setId"
-                element={<CreateEditFlashcardSetPage />}
               />
 
               {/* View flashcards set - accessible to any logged-in role */}
@@ -216,10 +200,25 @@ function App() {
                 path="tutor/*"
                 element={
                   <ProtectedRoute requiredRole="tutor">
-                    <TutorDashboard />
+                    <TutorLayout />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route index element={<TutorDashboard />} />
+                <Route
+                  path="manage-materials"
+                  element={<ManageMaterialsPage />}
+                />
+                <Route path="flashcards" element={<ManageFlashcardsPage />} />
+                <Route
+                  path="flashcards/create"
+                  element={<CreateEditFlashcardSetPage />}
+                />
+                <Route
+                  path="flashcards/edit/:setId"
+                  element={<CreateEditFlashcardSetPage />}
+                />
+              </Route>
 
               {/* Student routes */}
               <Route
@@ -308,27 +307,6 @@ function App() {
 
               {/* Tutor application route - accessible to all logged-in users */}
               <Route path="apply-tutor" element={<TutorApplicationPage />} />
-
-              {/* Student routes */}
-              <Route
-                path="student"
-                element={
-                  <ProtectedRoute requiredRole="student">
-                    <StudentLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<StudentDashboard />} />
-                <Route path="book-session" element={<BookSessionPage />} />
-                <Route
-                  path="book-consultation"
-                  element={<BookConsultationPage />}
-                />
-                <Route
-                  path="manage-sessions"
-                  element={<ManageSessionsPage />}
-                />
-              </Route>
 
               {/* Error routes */}
               <Route path="unauthorized" element={<UnauthorizedPage />} />

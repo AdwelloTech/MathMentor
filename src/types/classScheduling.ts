@@ -147,6 +147,10 @@ export interface UpdateClassFormData {
   subject_id?: string | null;
   title?: string;
   description?: string;
+  class_type_id?: string;
+  date?: string;
+  start_time?: string;
+  end_time?: string;
   max_students?: number;
   price_per_session?: number;
   status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';

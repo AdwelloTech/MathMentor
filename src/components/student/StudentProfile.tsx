@@ -285,7 +285,6 @@ const StudentProfile: React.FC = () => {
           full_name: updateData.full_name,
           phone: updateData.phone || undefined,
           address: updateData.address || undefined,
-          date_of_birth: updateData.date_of_birth || undefined,
           gender: updateData.gender || undefined,
           emergency_contact: updateData.emergency_contact || undefined,
           age: updateData.age || undefined,
@@ -343,7 +342,7 @@ const StudentProfile: React.FC = () => {
   }
 
   return (
-    <div className="max-w-full mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

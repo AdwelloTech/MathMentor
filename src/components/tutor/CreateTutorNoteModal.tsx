@@ -112,7 +112,25 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
       onNoteCreated();
     } catch (error) {
       console.error("Error creating material:", error);
-      toast.error("Failed to create material. Please try again.");
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to create material. Please try again.";
+
+      if (error instanceof Error) {
+        if (error.message.includes("Title is required")) {
+          errorMessage = "Please enter a title for the material.";
+        } else if (error.message.includes("User ID is required")) {
+          errorMessage = "You must be logged in to create materials.";
+        } else if (error.message.includes("foreign key")) {
+          errorMessage = "Invalid subject selected. Please try again.";
+        } else if (error.message.includes("duplicate key")) {
+          errorMessage = "A material with this title already exists.";
+        } else if (error.message.includes("permission")) {
+          errorMessage = "You don't have permission to create materials.";
+        }
+      }
+
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
       setUploadingFile(false);

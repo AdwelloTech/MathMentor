@@ -1,24 +1,21 @@
 /**
  * SECURITY NOTICE: This file has been refactored to eliminate public URL exposure
  *
- * ⚠️  TEMPORARY IMPLEMENTATION - DATABASE MIGRATION REQUIRED ⚠️
+ * ⚠️  TEMPORARY IMPLEMENTATION - DATABASE MIGRATION IN PROGRESS ⚠️
  *
  * CHANGES MADE:
  * - Removed getPublicUrl() calls that exposed premium content
- * - Prepared for file_path storage instead of file_url persistence
  * - Implemented signed URL generation for secure file access
- * - Added getTutorNoteFileUrl() for on-demand secure access
  * - Updated all data transformations to never expose URLs
+ * - Fixed queries to work with current database schema (no file_path column yet)
+ * - Added fallback logic for missing RPC functions
  *
- * ⚠️  CURRENT STATE: Using file_url fallback until migration completes ⚠️
+ * ⚠️  CURRENT STATE: Using file_url for file paths during migration ⚠️
  *
- * CRITICAL: This code will crash at runtime if deployed without the database migration!
- * The code expects a file_path column that doesn't exist yet.
- *
- * IMMEDIATE ACTIONS REQUIRED:
+ * IMMEDIATE ACTIONS REQUIRED (when ready for migration):
  * 1. Add file_path column to tutor_notes table
  * 2. Migrate existing file_url data to file_path
- * 3. Update UI components to use getTutorNoteFileUrl()
+ * 3. Update functions to use file_path instead of file_url
  * 4. Remove file_url column after migration
  *
  * SECURITY BENEFITS (after migration):
@@ -224,9 +221,10 @@ export async function getTutorNoteSecureFile(noteId: string): Promise<{
 }> {
   try {
     // Fetch raw row fields, not the sanitized view.
+    // Note: file_path column doesn't exist yet during migration, only select existing columns
     const { data, error } = await supabase
       .from("tutor_notes")
-      .select("file_path, file_url, file_name, file_size")
+      .select("file_url, file_name, file_size")
       .eq("id", noteId)
       .single();
 
@@ -238,13 +236,22 @@ export async function getTutorNoteSecureFile(noteId: string): Promise<{
       return { fileUrl: null, fileName: null, fileSize: null };
     }
 
-    // Preferred: signed URL from private file_path
-    if (data.file_path) {
+    // TEMPORARY: During migration, file_path doesn't exist yet
+    // The file path is stored directly in file_url field
+    let filePath = null;
+
+    if (data.file_url) {
+      // Current: file path is stored directly in file_url during migration
+      // This should be the path like "userId/tutor-notes/filename.ext"
+      filePath = data.file_url;
+    }
+
+    if (filePath) {
       const { data: signed, error: signErr } = await supabase.storage
         .from("tutor-materials")
-        .createSignedUrl(data.file_path, 3600);
+        .createSignedUrl(filePath, 3600);
       if (signErr) {
-        console.error("Error generating signed URL (file_path):", signErr);
+        console.error("Error generating signed URL:", signErr);
         return {
           fileUrl: null,
           fileName: data.file_name,
@@ -256,34 +263,6 @@ export async function getTutorNoteSecureFile(noteId: string): Promise<{
         fileName: data.file_name,
         fileSize: data.file_size,
       };
-    }
-
-    // Legacy: reconstruct path from file_url if present (during migration)
-    if (data.file_url) {
-      try {
-        const url = new URL(data.file_url);
-        const pathParts = url.pathname.split("/").filter(Boolean);
-        // Assuming last 3 segments = '<userId>/tutor-notes/<fileName>'
-        const filePath = pathParts.slice(-3).join("/");
-        const { data: signed, error: signErr } = await supabase.storage
-          .from("tutor-materials")
-          .createSignedUrl(filePath, 3600);
-        if (signErr) {
-          console.error("Error generating signed URL (legacy):", signErr);
-          return {
-            fileUrl: null,
-            fileName: data.file_name,
-            fileSize: data.file_size,
-          };
-        }
-        return {
-          fileUrl: signed.signedUrl,
-          fileName: data.file_name,
-          fileSize: data.file_size,
-        };
-      } catch (e) {
-        console.error("Error parsing legacy file_url:", e);
-      }
     }
 
     return {
@@ -305,6 +284,15 @@ export async function createTutorNote(
   userId: string
 ): Promise<TutorNote> {
   try {
+    // Validate required fields
+    if (!noteData.title || !noteData.title.trim()) {
+      throw new Error("Title is required");
+    }
+
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
     const { data, error } = await supabase
       .from("tutor_notes")
       .insert({
@@ -315,6 +303,9 @@ export async function createTutorNote(
         grade_level_id: noteData.gradeLevelId || null,
         created_by: userId,
         is_premium: noteData.isPremium,
+        is_active: true,
+        view_count: 0,
+        download_count: 0,
         tags: noteData.tags || [],
       })
       .select()
@@ -385,47 +376,25 @@ export async function updateTutorNote(
  */
 export async function deleteTutorNote(id: string): Promise<void> {
   try {
-    // Fetch raw file_path; the public getter intentionally hides it
+    // Fetch raw file_url; the public getter intentionally hides it
+    // Note: file_path column doesn't exist yet during migration
     const { data: fileData, error: fetchErr } = await supabase
       .from("tutor_notes")
-      .select("file_path, file_url")
+      .select("file_url")
       .eq("id", id)
       .single();
 
     if (fetchErr) {
-      console.error("Error fetching file_path before delete:", fetchErr);
-    } else if (fileData?.file_path) {
-      // SECURE: Use stored file_path for direct deletion
+      console.error("Error fetching file_url before delete:", fetchErr);
+    } else if (fileData?.file_url) {
+      // TEMPORARY: During migration, file path is stored directly in file_url
       const { error: deleteFileError } = await supabase.storage
         .from("tutor-materials")
-        .remove([fileData.file_path]);
+        .remove([fileData.file_url]);
 
       if (deleteFileError) {
         console.error("Error deleting file:", deleteFileError);
         // Continue with note deletion even if file deletion fails
-      }
-    } else if (fileData?.file_url) {
-      // LEGACY: Handle file_url during migration period
-      try {
-        // Extract storage path from legacy URL
-        const url = new URL(fileData.file_url);
-        const pathParts = url.pathname.split("/").filter(Boolean);
-        // Assuming last 3 segments = '<userId>/tutor-notes/<fileName>'
-        const filePath = pathParts.slice(-3).join("/");
-
-        if (filePath) {
-          const { error: deleteFileError } = await supabase.storage
-            .from("tutor-materials")
-            .remove([filePath]);
-
-          if (deleteFileError) {
-            console.error("Error deleting legacy file:", deleteFileError);
-            // Continue with note deletion even if file deletion fails
-          }
-        }
-      } catch (urlError) {
-        console.warn("Error parsing legacy file_url for deletion:", urlError);
-        // Continue with note deletion even if we can't parse the URL
       }
     }
 
@@ -552,12 +521,14 @@ export async function incrementTutorNoteViewCount(
 /**
  * Increment the view count for a tutor note (unique per user)
  * Only counts one view per user per note
+ * Note: Falls back to regular view count if unique RPC doesn't exist
  */
 export async function incrementTutorNoteViewCountUnique(
   noteId: string,
   userId: string
 ): Promise<void> {
   try {
+    // Try the unique view count RPC first
     const { error } = await supabase.rpc(
       "increment_tutor_note_view_count_unique",
       {
@@ -567,12 +538,19 @@ export async function incrementTutorNoteViewCountUnique(
     );
 
     if (error) {
-      console.error("Error incrementing unique tutor note view count:", error);
-      throw error;
+      // If the unique RPC doesn't exist, fall back to regular view count
+      console.debug("Unique view count RPC not available, using regular view count:", error.message);
+      await incrementTutorNoteViewCount(noteId);
     }
   } catch (error) {
-    console.error("Error in incrementTutorNoteViewCountUnique:", error);
-    throw error;
+    console.warn("Error with unique view count, falling back to regular view count:", error);
+    // Fall back to regular view count increment
+    try {
+      await incrementTutorNoteViewCount(noteId);
+    } catch (fallbackError) {
+      console.error("Error incrementing view count:", fallbackError);
+      // Don't throw error - view tracking failure shouldn't break functionality
+    }
   }
 }
 

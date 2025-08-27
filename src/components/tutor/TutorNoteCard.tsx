@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   StarIcon,
@@ -13,6 +13,8 @@ import {
   getTutorNoteSubjectColor,
   truncateTutorNoteText,
   incrementTutorNoteViewCountUnique,
+  getTutorNoteSecureFile,
+  incrementTutorNoteDownloadCount,
   type TutorNoteCardProps,
 } from "@/lib/tutorNotes";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,23 +45,25 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
   isDeleting = false,
 }) => {
   const { user } = useAuth();
-  const hasFile = fileUrl && fileName;
+  const hasFile = fileName && fileSize;
+  const [loadingFile, setLoadingFile] = useState(false);
+  const [secureFileUrl, setSecureFileUrl] = useState<string | null>(null);
 
-  // Track unique view when component mounts (student views the material)
+  // Track unique view when component mounts (only for student views, not tutor views)
   useEffect(() => {
     const trackUniqueView = async () => {
-      if (user) {
+      if (user && user.role === 'student') {
         try {
           await incrementTutorNoteViewCountUnique(id, user.id);
         } catch (error) {
-          console.error("Error tracking unique view:", error);
-          // Don't throw error - view tracking failure shouldn't break the component
+          // View tracking failure shouldn't break the component - log at debug level
+          console.debug("View tracking failed:", error);
         }
       }
     };
 
-    // Only track view if user is authenticated (student viewing)
-    if (user) {
+    // Only track view if user is authenticated AND is a student
+    if (user && user.role === 'student') {
       trackUniqueView();
     }
   }, [id, user]);
@@ -73,6 +77,87 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
       return;
     }
     onEdit();
+  };
+
+  const handleViewFile = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!hasFile) return;
+
+    if (secureFileUrl) {
+      window.open(secureFileUrl, "_blank");
+      return;
+    }
+
+    // Load secure file URL if not available
+    setLoadingFile(true);
+    try {
+      const secureFile = await getTutorNoteSecureFile(id);
+      if (secureFile.fileUrl) {
+        setSecureFileUrl(secureFile.fileUrl);
+        window.open(secureFile.fileUrl, "_blank");
+      }
+    } catch (error) {
+      console.error("Error loading secure file URL:", error);
+    } finally {
+      setLoadingFile(false);
+    }
+  };
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!hasFile) return;
+
+    let fileUrl = secureFileUrl;
+
+    // Load secure file URL if not available
+    if (!fileUrl) {
+      setLoadingFile(true);
+      try {
+        const secureFile = await getTutorNoteSecureFile(id);
+        if (secureFile.fileUrl) {
+          fileUrl = secureFile.fileUrl;
+          setSecureFileUrl(fileUrl);
+        } else {
+          setLoadingFile(false);
+          return;
+        }
+      } catch (error) {
+        console.error("Error loading secure file URL:", error);
+        setLoadingFile(false);
+        return;
+      }
+      setLoadingFile(false);
+    }
+
+    try {
+      // Increment download count
+      await incrementTutorNoteDownloadCount(id);
+
+      // Force download by fetching the file and creating a blob
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName || "download";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      // Fallback: try direct download
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      link.download = fileName || "download";
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
@@ -147,6 +232,32 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
           </span>
 
           <div className="flex items-center space-x-2">
+            {hasFile && (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleViewFile}
+                  disabled={loadingFile}
+                  className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                  title="View file"
+                >
+                  <EyeIcon className="h-4 w-4" />
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleDownload}
+                  disabled={loadingFile}
+                  className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                  title="Download file"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                </motion.button>
+              </>
+            )}
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

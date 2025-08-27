@@ -4,29 +4,17 @@ import {
   XMarkIcon,
   DocumentArrowUpIcon,
   DocumentTextIcon,
-  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import {
   updateTutorNote,
   incrementTutorNoteDownloadCount,
+  getTutorNoteSecureFile,
   type UpdateTutorNoteData,
 } from "@/lib/tutorNotes";
 import type { Database } from "@/types/database";
 import RichTextEditor from "@/components/notes/RichTextEditor";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import toast from "react-hot-toast";
 import {
   DESCRIPTION_MAX_LENGTH,
@@ -57,6 +45,8 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
   subjects,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [secureFileUrl, setSecureFileUrl] = useState<string | null>(null);
+  const [loadingFile, setLoadingFile] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -65,7 +55,29 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
     isPremium: false,
   });
 
-  // Initialize form data when note changes
+  const hasFile = note.file_name && note.file_size;
+
+  // Load secure file URL when note changes
+  const loadSecureFileUrl = async () => {
+    if (note && note.id && note.file_name && note.file_size) {
+      setLoadingFile(true);
+      try {
+        const secureFile = await getTutorNoteSecureFile(note.id);
+        setSecureFileUrl(secureFile.fileUrl);
+        if (!secureFile.fileUrl) {
+          console.warn("Failed to generate secure file URL for note:", note.id);
+        }
+      } catch (error) {
+        console.error("Error loading secure file URL:", error);
+        setSecureFileUrl(null);
+        toast.error("Unable to load file access. Please try refreshing the page.");
+      } finally {
+        setLoadingFile(false);
+      }
+    }
+  };
+
+  // Initialize form data and load secure file URL when note changes
   useEffect(() => {
     if (note) {
       setFormData({
@@ -75,8 +87,12 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
         subjectId: note.subject_id || "",
         isPremium: note.is_premium,
       });
+      // Reset secure file URL when note changes
+      setSecureFileUrl(null);
+      // Load secure file URL if there's a file
+      loadSecureFileUrl();
     }
-  }, [note]);
+  }, [note?.id]); // Only depend on note.id to avoid unnecessary re-renders
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -125,8 +141,6 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
       onClose();
     }
   };
-
-  const hasFile = note.file_url && note.file_name;
 
   return (
     <AnimatePresence>
@@ -183,15 +197,25 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                         <span className="text-sm text-gray-600">File: </span>
                         <button
                           type="button"
-                          onClick={() => {
-                            if (note.file_url) {
-                              window.open(note.file_url, "_blank");
+                          onClick={async () => {
+                            if (secureFileUrl) {
+                              window.open(secureFileUrl, "_blank");
+                            } else if (!loadingFile) {
+                              // Try to reload secure URL if not available
+                              await loadSecureFileUrl();
+                              // After loading, try to open if URL is now available
+                              if (secureFileUrl) {
+                                window.open(secureFileUrl, "_blank");
+                              } else {
+                                toast.error("Unable to access file. Please try again.");
+                              }
                             }
                           }}
                           className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium text-sm"
                           title="Click to view file"
+                          disabled={loadingFile}
                         >
-                          {note.file_name}
+                          {loadingFile ? "Loading..." : note.file_name}
                         </button>
                         <span className="text-sm text-gray-600">
                           ({(note.file_size || 0) / 1024 / 1024} MB)
@@ -200,26 +224,36 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                       <div className="flex items-center space-x-2">
                         <button
                           type="button"
-                          onClick={() => {
-                            if (note.file_url) {
-                              window.open(note.file_url, "_blank");
+                          onClick={async () => {
+                            if (secureFileUrl) {
+                              window.open(secureFileUrl, "_blank");
+                            } else if (!loadingFile) {
+                              // Try to reload secure URL if not available
+                              await loadSecureFileUrl();
+                              // After loading, try to open if URL is now available
+                              if (secureFileUrl) {
+                                window.open(secureFileUrl, "_blank");
+                              } else {
+                                toast.error("Unable to access file. Please try again.");
+                              }
                             }
                           }}
                           className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors duration-200 text-xs font-medium"
                           title="Click to view file"
+                          disabled={loadingFile}
                         >
-                          View File
+                          {loadingFile ? "Loading..." : "View File"}
                         </button>
                         <button
                           type="button"
                           onClick={async () => {
-                            if (note.file_url) {
+                            if (secureFileUrl) {
                               try {
                                 // Increment download count
                                 await incrementTutorNoteDownloadCount(note.id);
 
                                 // Force download by fetching the file and creating a blob
-                                const response = await fetch(note.file_url!);
+                                const response = await fetch(secureFileUrl);
                                 const blob = await response.blob();
                                 const url = window.URL.createObjectURL(blob);
                                 const link = document.createElement("a");
@@ -231,25 +265,41 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                                 document.body.removeChild(link);
                                 window.URL.revokeObjectURL(url);
                               } catch (error) {
-                                console.error(
-                                  "Error tracking download:",
-                                  error
-                                );
-                                // Fallback: try direct download
-                                const link = document.createElement("a");
-                                link.href = note.file_url!;
-                                link.download = note.file_name || "download";
-                                link.target = "_blank";
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
+                                console.error("Error downloading file:", error);
+                                toast.error("Failed to download file. Please try again.");
+                              }
+                            } else if (!loadingFile) {
+                              // Try to reload secure URL if not available
+                              await loadSecureFileUrl();
+                              // After loading, try to download if URL is now available
+                              if (secureFileUrl) {
+                                try {
+                                  await incrementTutorNoteDownloadCount(note.id);
+                                  const response = await fetch(secureFileUrl);
+                                  const blob = await response.blob();
+                                  const url = window.URL.createObjectURL(blob);
+                                  const link = document.createElement("a");
+                                  link.href = url;
+                                  link.download = note.file_name || "download";
+                                  link.style.display = "none";
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  window.URL.revokeObjectURL(url);
+                                } catch (error) {
+                                  console.error("Error downloading file:", error);
+                                  toast.error("Failed to download file. Please try again.");
+                                }
+                              } else {
+                                toast.error("Unable to access file for download. Please try again.");
                               }
                             }
                           }}
                           className="text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded-md transition-colors duration-200 text-xs font-medium"
                           title="Download file"
+                          disabled={loadingFile}
                         >
-                          Download
+                          {loadingFile ? "Loading..." : "Download"}
                         </button>
                       </div>
                     </div>

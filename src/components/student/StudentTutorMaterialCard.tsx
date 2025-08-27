@@ -72,20 +72,17 @@ const StudentTutorMaterialCard: React.FC<
     // Track the view when user clicks View button
     if (user && !hasTrackedView.current) {
       try {
-        console.log("Tracking view for material:", id);
         await incrementTutorNoteViewCountUnique(id, user.id);
-        console.log("View tracking completed successfully");
 
         // Update the local view count after successful tracking
         if (onViewCountUpdate) {
-          console.log("Updating local view count by 1");
           onViewCountUpdate(id, 1);
         }
 
         // Mark that we've tracked this view
         hasTrackedView.current = true;
       } catch (error) {
-        console.error("Error tracking view:", error);
+        console.debug("View tracking failed:", error);
         // Don't throw error - view tracking failure shouldn't break the component
       }
     }

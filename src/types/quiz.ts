@@ -97,17 +97,31 @@ export interface CreateQuizData {
   questions: CreateQuestionData[];
 }
 
-export interface CreateQuestionData {
-  question_text: string;
-  question_type: "multiple_choice" | "true_false";
-  points: number;
-  question_order: number;
-  // Optional AI augmentation flags when creating questions
-  is_ai_generated?: boolean;
-  ai_status?: "pending" | "approved" | "discarded";
-  ai_metadata?: Record<string, any>;
-  answers: CreateAnswerData[];
-}
+export type CreateQuestionData =
+  | {
+      question_text: string;
+      question_type: "multiple_choice" | "true_false";
+      points: number;
+      question_order: number;
+      // Optional AI augmentation flags when creating questions
+      is_ai_generated?: boolean;
+      ai_status?: "pending" | "approved" | "discarded";
+      ai_metadata?: Record<string, any>;
+      answers: CreateAnswerData[]; // required for MCQ/TF
+    }
+  | {
+      question_text: string;
+      question_type: "short_answer";
+      points: number;
+      question_order: number;
+      // Optional AI augmentation flags when creating questions
+      is_ai_generated?: boolean;
+      ai_status?: "pending" | "approved" | "discarded";
+      ai_metadata?: Record<string, any>;
+      // For short-answer: either accept zero predefined answers (manual grading)
+      // or allow a list of acceptable textual answers used for auto-grading.
+      answers?: CreateAnswerData[];
+    };
 
 export interface CreateAnswerData {
   answer_text: string;

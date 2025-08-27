@@ -33,7 +33,6 @@ import type { Database } from "@/types/database";
 type TutorNote = Database["public"]["Tables"]["tutor_notes"]["Row"];
 export type TutorNoteWithDetails =
   Database["public"]["Functions"]["search_tutor_notes"]["Returns"][0];
-type NoteSubject = Database["public"]["Tables"]["note_subjects"]["Row"];
 
 // Re-export getNoteSubjects from notes.ts for convenience
 export { getNoteSubjects } from "./notes";
@@ -160,7 +159,7 @@ export async function getTutorNoteById(
       `
       )
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching tutor note:", error);

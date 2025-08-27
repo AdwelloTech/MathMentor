@@ -19,15 +19,15 @@ import { BookOpen, User, GraduationCap } from "lucide-react";
 import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 import { flashcards } from "@/lib/flashcards";
 import type { FlashcardSet } from "@/types/flashcards";
-import { getNoteSubjects } from "@/lib/notes";
+
 import { useNavigate } from "react-router-dom";
+import { subjectsService } from "@/lib/subjects";
+import type { Subject } from "@/types/subject";
 
 const FlashcardsListPage: React.FC = () => {
   const [sets, setSets] = useState<FlashcardSet[]>([]);
   const [subject, setSubject] = useState("");
-  const [subjects, setSubjects] = useState<
-    { id: string; name: string; display_name: string }[]
-  >([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -55,11 +55,11 @@ const FlashcardsListPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const s = await getNoteSubjects();
-        console.log("Loaded subjects:", s); // Debug log
-        setSubjects(s || []);
-      } catch (error) {
-        console.error("Error loading subjects:", error);
+        const s = await subjectsService.listActive();
+        setSubjects(s);
+      } catch (e) {
+        console.error("Failed to load subjects:", e);
+        // Keep UI usable with empty list on error
         setSubjects([]);
       }
     })();
@@ -173,8 +173,8 @@ const FlashcardsListPage: React.FC = () => {
                       </CardTitle>
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge
-                          variant="secondary"
-                          className="bg-green-900/10 text-white hover:bg-green-900/20 rounded-xl px-3 py-1"
+                          variant="outline"
+                          className="border-yellow-400 text-yellow-700 bg-yellow-50 rounded-xl px-3 py-1"
                         >
                           {s.subject}
                         </Badge>

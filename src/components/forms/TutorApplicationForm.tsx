@@ -86,7 +86,11 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
     expected_hourly_rate: undefined,
   });
 
-  const [errors, setErrors] = useState<Partial<TutorApplicationFormData>>({});
+  type TutorApplicationFormErrors = Partial<
+    Record<keyof TutorApplicationFormData, string>
+  >;
+
+  const [errors, setErrors] = useState<TutorApplicationFormErrors>({});
 
   // Handle form field changes
   const handleInputChange = (
@@ -200,7 +204,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
 
   // Validate form
   const validateForm = (): boolean => {
-    const newErrors: Partial<TutorApplicationFormData> = {};
+    const newErrors: TutorApplicationFormErrors = {};
 
     if (!formData.full_name.trim()) {
       newErrors.full_name = "Full name is required";
@@ -286,19 +290,19 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
         cv_file_name: cvFileName,
         cv_url: cvUrl,
         cv_file_size: cvFileSize,
-        additional_notes: formData.additional_notes?.trim() || null,
+        additional_notes: formData.additional_notes?.trim() || undefined,
 
         // New required fields
         postcode: formData.postcode.trim(),
         based_in_country: formData.based_in_country.trim(),
 
         // New optional fields
-        past_experience: formData.past_experience?.trim() || null,
-        weekly_availability: formData.weekly_availability?.trim() || null,
-        employment_status: formData.employment_status?.trim() || null,
-        education_level: formData.education_level?.trim() || null,
-        average_weekly_hours: formData.average_weekly_hours || null,
-        expected_hourly_rate: formData.expected_hourly_rate || null,
+        past_experience: formData.past_experience?.trim() || undefined,
+        weekly_availability: formData.weekly_availability?.trim() || undefined,
+        employment_status: formData.employment_status?.trim() || undefined,
+        education_level: formData.education_level?.trim() || undefined,
+        average_weekly_hours: formData.average_weekly_hours || undefined,
+        expected_hourly_rate: formData.expected_hourly_rate || undefined,
       };
 
       await db.tutorApplications.create(applicationData);

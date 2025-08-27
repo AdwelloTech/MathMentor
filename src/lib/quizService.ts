@@ -627,6 +627,71 @@ export const quizService = {
       return quizzesWithAttempts;
     },
 
+    // Get recent quizzes that the student has attempted or completed
+    getRecentQuizzes: async (studentId: string): Promise<Quiz[]> => {
+      try {
+        // Get student's profile ID
+        const { data: studentProfile, error: studentProfileError } =
+          await supabase
+            .from("profiles")
+            .select("id")
+            .eq("user_id", studentId)
+            .single();
+
+        if (studentProfileError) throw studentProfileError;
+
+        // Get recent quiz attempts
+        const { data: attempts, error: attemptsError } = await supabase
+          .from("quiz_attempts")
+          .select(
+            `
+            id,
+            quiz_id,
+            status,
+            score,
+            max_score,
+            correct_answers,
+            total_questions,
+            created_at,
+            quiz:quizzes(
+              id,
+              title,
+              description,
+              subject,
+              grade_level,
+              time_limit_minutes,
+              total_questions,
+              total_points,
+              created_at,
+              tutor:profiles(id, full_name, email)
+            )
+          `
+          )
+          .eq("student_id", studentProfile.id)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (attemptsError) throw attemptsError;
+
+        // Transform the data to match the expected Quiz format
+        const recentQuizzes =
+          attempts?.map((attempt) => ({
+            ...attempt.quiz,
+            attempt_status: attempt.status,
+            attempt_score: attempt.score,
+            attempt_max_score: attempt.max_score,
+            attempt_correct_answers: attempt.correct_answers,
+            attempt_total_questions: attempt.total_questions,
+            attempt_id: attempt.id,
+          })) || [];
+
+        return recentQuizzes;
+      } catch (error) {
+        console.error("Error fetching recent quizzes:", error);
+        throw error;
+      }
+    },
+
     // Get quiz with questions and answers for taking
     getQuizForTaking: async (quizId: string): Promise<Quiz> => {
       const { data, error } = await supabase
@@ -847,6 +912,8 @@ export const quizService = {
       studentAnswers: StudentAnswer[];
       questions: Question[];
     }> => {
+      console.log("Fetching attempt details for ID:", attemptId);
+
       const { data: attempt, error: attemptError } = await supabase
         .from("quiz_attempts")
         .select(
@@ -861,7 +928,18 @@ export const quizService = {
         .eq("id", attemptId)
         .single();
 
-      if (attemptError) throw attemptError;
+      if (attemptError) {
+        console.error("Error fetching attempt:", attemptError);
+        throw attemptError;
+      }
+
+      if (!attempt) {
+        throw new Error(`Attempt with ID ${attemptId} not found`);
+      }
+
+      console.log("Attempt found:", attempt);
+
+      console.log("Fetching student answers for attempt:", attemptId);
 
       const { data: studentAnswers, error: answersError } = await supabase
         .from("student_answers")
@@ -882,7 +960,14 @@ export const quizService = {
         )
         .eq("attempt_id", attemptId);
 
-      if (answersError) throw answersError;
+      if (answersError) {
+        console.error("Error fetching student answers:", answersError);
+        throw answersError;
+      }
+
+      console.log("Student answers found:", studentAnswers);
+
+      console.log("Fetching questions for quiz:", attempt.quiz_id);
 
       const { data: questions, error: questionsError } = await supabase
         .from("quiz_questions")
@@ -901,13 +986,21 @@ export const quizService = {
         .eq("quiz_id", attempt.quiz_id)
         .order("question_order", { ascending: true });
 
-      if (questionsError) throw questionsError;
+      if (questionsError) {
+        console.error("Error fetching questions:", questionsError);
+        throw questionsError;
+      }
 
-      return {
+      console.log("Questions found:", questions);
+
+      const result = {
         attempt,
         studentAnswers: studentAnswers || [],
         questions: questions || [],
       };
+
+      console.log("Returning attempt details:", result);
+      return result;
     },
   },
 };

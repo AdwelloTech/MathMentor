@@ -24,6 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 import {
   Dialog,
   DialogContent,
@@ -161,367 +162,373 @@ const ManageSessionsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-900"></div>
+      <StudentPageWrapper backgroundClass="bg-gradient-to-br from-green-50 to-yellow-50">
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-900"></div>
+            </div>
           </div>
         </div>
-      </div>
+      </StudentPageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold text-green-900 mb-3">
-            My Sessions
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Manage your upcoming sessions and join classes
-          </p>
-        </motion.div>
-
-        {/* Error Message */}
-        {error && (
+    <StudentPageWrapper backgroundClass="bg-gradient-to-br from-green-50 to-yellow-50">
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
           >
-            <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
-                {error}
-              </AlertDescription>
-            </Alert>
+            <h1 className="text-4xl font-bold text-green-900 mb-3">
+              My Sessions
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Manage your upcoming sessions and join classes
+            </p>
           </motion.div>
-        )}
 
-        {/* Sessions List */}
-        <div className="space-y-6">
-          {filteredUpcomingBookings.map((booking, index) => {
-            const session = booking.class;
-            if (!session) return null;
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mb-6"
+            >
+              <Alert className="border-red-200 bg-red-50">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">
+                  {error}
+                </AlertDescription>
+              </Alert>
+            </motion.div>
+          )}
 
-            const isJoinable = isSessionJoinable(booking);
+          {/* Sessions List */}
+          <div className="space-y-6">
+            {filteredUpcomingBookings.map((booking, index) => {
+              const session = booking.class;
+              if (!session) return null;
 
-            return (
-              <motion.div
-                key={booking.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-900">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      {/* Session Info */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-green-900 to-green-700 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold text-lg">
-                              {session.tutor?.full_name?.charAt(0) || "T"}
+              const isJoinable = isSessionJoinable(booking);
+
+              return (
+                <motion.div
+                  key={booking.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-900">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        {/* Session Info */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className="w-12 h-12 bg-gradient-to-r from-green-900 to-green-700 rounded-full flex items-center justify-center">
+                              <span className="text-white font-semibold text-lg">
+                                {session.tutor?.full_name?.charAt(0) || "T"}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-green-900 text-lg">
+                                {session.tutor?.full_name || "Tutor"}
+                              </p>
+                              <p className="text-sm text-gray-600">Tutor</p>
+                            </div>
+                            <Badge
+                              className={getStatusColor(booking.booking_status)}
+                            >
+                              <span className="mr-1">
+                                {getStatusIcon(booking.booking_status)}
+                              </span>
+                              <span className="capitalize font-medium">
+                                {booking.booking_status}
+                              </span>
+                            </Badge>
+                          </div>
+
+                          {/* Subject */}
+                          <h3 className="text-xl font-bold text-green-900 mb-2">
+                            {session.title}
+                          </h3>
+                          {session.description && (
+                            <p className="text-gray-700 mb-4 leading-relaxed">
+                              {session.description}
+                            </p>
+                          )}
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div className="flex items-center gap-3 text-gray-700">
+                              <CalendarDays className="w-5 h-5 text-green-700" />
+                              <span className="font-medium">
+                                {formatDate(session.date)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-gray-700">
+                              <Clock className="w-5 h-5 text-green-700" />
+                              <span className="font-medium">
+                                {formatTime(session.start_time)} -{" "}
+                                {formatTime(session.end_time)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-gray-700">
+                              <DollarSign className="w-5 h-5 text-yellow-500" />
+                              <span className="font-bold text-yellow-600">
+                                ${booking.payment_amount}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-col gap-3 ml-6">
+                          {/* Join Session Button */}
+                          {booking.booking_status === "confirmed" && (
+                            <Button
+                              onClick={() => handleJoinSession(booking)}
+                              disabled={!isJoinable}
+                              className={
+                                isJoinable
+                                  ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              }
+                              size="lg"
+                            >
+                              <Video className="w-5 h-5 mr-2" />
+                              {isJoinable ? "Join Now" : "Join Session"}
+                            </Button>
+                          )}
+
+                          {/* View Details Button */}
+                          <Button
+                            onClick={() => {
+                              setSelectedBooking(booking);
+                              setShowDetails(true);
+                            }}
+                            variant="outline"
+                            size="lg"
+                            className="border-2 border-green-900 text-green-900 hover:bg-green-50 hover:border-green-800 transition-all duration-200"
+                          >
+                            <Eye className="w-5 h-5 mr-2" />
+                            Details
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* No Sessions Message */}
+          {filteredUpcomingBookings.length === 0 && !loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-16"
+            >
+              <Card className="max-w-md mx-auto">
+                <CardContent className="p-8">
+                  <Calendar className="w-20 h-20 text-green-300 mx-auto mb-6" />
+                  <h3 className="text-2xl font-bold text-green-900 mb-3">
+                    No upcoming sessions
+                  </h3>
+                  <p className="text-gray-600 mb-6 text-lg">
+                    Ready to start learning? Book your first session!
+                  </p>
+                  <Button
+                    onClick={() => navigate("/student/book-session")}
+                    className="bg-green-900 hover:bg-green-800 text-white text-lg px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+                    size="lg"
+                  >
+                    Book Your First Session
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Session Details Modal */}
+          <Dialog open={showDetails} onOpenChange={setShowDetails}>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-green-900">
+                  Session Details
+                </DialogTitle>
+              </DialogHeader>
+
+              {selectedBooking && (
+                <div className="space-y-6">
+                  {/* Basic Info */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <h3 className="text-lg font-semibold text-green-900 mb-4">
+                        Session Information
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Title
+                          </label>
+                          <p className="text-green-900 font-semibold text-lg">
+                            {selectedBooking.class?.title}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Status
+                          </label>
+                          <Badge
+                            className={getStatusColor(
+                              selectedBooking.booking_status
+                            )}
+                          >
+                            <span className="mr-1">
+                              {getStatusIcon(selectedBooking.booking_status)}
+                            </span>
+                            <span className="capitalize font-medium">
+                              {selectedBooking.booking_status}
+                            </span>
+                          </Badge>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Date
+                          </label>
+                          <p className="text-gray-900 font-medium">
+                            {selectedBooking.class?.date &&
+                              formatDate(selectedBooking.class.date)}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Time
+                          </label>
+                          <p className="text-gray-900 font-medium">
+                            {selectedBooking.class?.start_time &&
+                              selectedBooking.class?.end_time &&
+                              `${formatTime(
+                                selectedBooking.class.start_time
+                              )} - ${formatTime(
+                                selectedBooking.class.end_time
+                              )}`}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Duration
+                          </label>
+                          <p className="text-gray-900 font-medium">
+                            {selectedBooking.class?.duration_minutes} minutes
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Amount Paid
+                          </label>
+                          <p className="text-yellow-600 font-bold text-lg">
+                            ${selectedBooking.payment_amount}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Description */}
+                  {selectedBooking.class?.description && (
+                    <Card>
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold text-green-900 mb-3">
+                          Description
+                        </h3>
+                        <p className="text-gray-700 leading-relaxed">
+                          {selectedBooking.class.description}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Tutor Info */}
+                  {selectedBooking.class?.tutor && (
+                    <Card>
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold text-green-900 mb-3">
+                          Tutor
+                        </h3>
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 bg-gradient-to-r from-green-900 to-green-700 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-xl">
+                              {selectedBooking.class.tutor.full_name.charAt(0)}
                             </span>
                           </div>
                           <div>
                             <p className="font-semibold text-green-900 text-lg">
-                              {session.tutor?.full_name || "Tutor"}
+                              {selectedBooking.class.tutor.full_name}
                             </p>
-                            <p className="text-sm text-gray-600">Tutor</p>
+                            <p className="text-gray-600">
+                              {selectedBooking.class.tutor.email}
+                            </p>
                           </div>
-                          <Badge
-                            className={getStatusColor(booking.booking_status)}
-                          >
-                            <span className="mr-1">
-                              {getStatusIcon(booking.booking_status)}
-                            </span>
-                            <span className="capitalize font-medium">
-                              {booking.booking_status}
-                            </span>
-                          </Badge>
                         </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
-                        {/* Subject */}
-                        <h3 className="text-xl font-bold text-green-900 mb-2">
-                          {session.title}
+                  {/* Session Notes */}
+                  {selectedBooking.notes && (
+                    <Card>
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold text-green-900 mb-3">
+                          Session Notes
                         </h3>
-                        {session.description && (
-                          <p className="text-gray-700 mb-4 leading-relaxed">
-                            {session.description}
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
+                          <p className="text-gray-700 leading-relaxed">
+                            {selectedBooking.notes}
                           </p>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                          <div className="flex items-center gap-3 text-gray-700">
-                            <CalendarDays className="w-5 h-5 text-green-700" />
-                            <span className="font-medium">
-                              {formatDate(session.date)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-gray-700">
-                            <Clock className="w-5 h-5 text-green-700" />
-                            <span className="font-medium">
-                              {formatTime(session.start_time)} -{" "}
-                              {formatTime(session.end_time)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-gray-700">
-                            <DollarSign className="w-5 h-5 text-yellow-500" />
-                            <span className="font-bold text-yellow-600">
-                              ${booking.payment_amount}
-                            </span>
-                          </div>
                         </div>
-                      </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
-                      {/* Actions */}
-                      <div className="flex flex-col gap-3 ml-6">
-                        {/* Join Session Button */}
-                        {booking.booking_status === "confirmed" && (
+                  {/* Join Session */}
+                  {selectedBooking.class?.jitsi_meeting_url &&
+                    selectedBooking.booking_status === "confirmed" && (
+                      <Card>
+                        <CardContent className="p-6">
+                          <h3 className="text-lg font-semibold text-green-900 mb-3">
+                            Join Session
+                          </h3>
                           <Button
-                            onClick={() => handleJoinSession(booking)}
-                            disabled={!isJoinable}
+                            onClick={() => handleJoinSession(selectedBooking)}
+                            disabled={!isSessionJoinable(selectedBooking)}
                             className={
-                              isJoinable
+                              isSessionJoinable(selectedBooking)
                                 ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
                             }
                             size="lg"
                           >
                             <Video className="w-5 h-5 mr-2" />
-                            {isJoinable ? "Join Now" : "Join Session"}
+                            {isSessionJoinable(selectedBooking)
+                              ? "Join Session Now"
+                              : "Available 5 Min Before Start"}
                           </Button>
-                        )}
-
-                        {/* View Details Button */}
-                        <Button
-                          onClick={() => {
-                            setSelectedBooking(booking);
-                            setShowDetails(true);
-                          }}
-                          variant="outline"
-                          size="lg"
-                          className="border-2 border-green-900 text-green-900 hover:bg-green-50 hover:border-green-800 transition-all duration-200"
-                        >
-                          <Eye className="w-5 h-5 mr-2" />
-                          Details
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
+                        </CardContent>
+                      </Card>
+                    )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
-
-        {/* No Sessions Message */}
-        {filteredUpcomingBookings.length === 0 && !loading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-16"
-          >
-            <Card className="max-w-md mx-auto">
-              <CardContent className="p-8">
-                <Calendar className="w-20 h-20 text-green-300 mx-auto mb-6" />
-                <h3 className="text-2xl font-bold text-green-900 mb-3">
-                  No upcoming sessions
-                </h3>
-                <p className="text-gray-600 mb-6 text-lg">
-                  Ready to start learning? Book your first session!
-                </p>
-                <Button
-                  onClick={() => navigate("/student/book-session")}
-                  className="bg-green-900 hover:bg-green-800 text-white text-lg px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
-                  size="lg"
-                >
-                  Book Your First Session
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* Session Details Modal */}
-        <Dialog open={showDetails} onOpenChange={setShowDetails}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-green-900">
-                Session Details
-              </DialogTitle>
-            </DialogHeader>
-
-            {selectedBooking && (
-              <div className="space-y-6">
-                {/* Basic Info */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-green-900 mb-4">
-                      Session Information
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Title
-                        </label>
-                        <p className="text-green-900 font-semibold text-lg">
-                          {selectedBooking.class?.title}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Status
-                        </label>
-                        <Badge
-                          className={getStatusColor(
-                            selectedBooking.booking_status
-                          )}
-                        >
-                          <span className="mr-1">
-                            {getStatusIcon(selectedBooking.booking_status)}
-                          </span>
-                          <span className="capitalize font-medium">
-                            {selectedBooking.booking_status}
-                          </span>
-                        </Badge>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Date
-                        </label>
-                        <p className="text-gray-900 font-medium">
-                          {selectedBooking.class?.date &&
-                            formatDate(selectedBooking.class.date)}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Time
-                        </label>
-                        <p className="text-gray-900 font-medium">
-                          {selectedBooking.class?.start_time &&
-                            selectedBooking.class?.end_time &&
-                            `${formatTime(
-                              selectedBooking.class.start_time
-                            )} - ${formatTime(selectedBooking.class.end_time)}`}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Duration
-                        </label>
-                        <p className="text-gray-900 font-medium">
-                          {selectedBooking.class?.duration_minutes} minutes
-                        </p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Amount Paid
-                        </label>
-                        <p className="text-yellow-600 font-bold text-lg">
-                          ${selectedBooking.payment_amount}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Description */}
-                {selectedBooking.class?.description && (
-                  <Card>
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold text-green-900 mb-3">
-                        Description
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed">
-                        {selectedBooking.class.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Tutor Info */}
-                {selectedBooking.class?.tutor && (
-                  <Card>
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold text-green-900 mb-3">
-                        Tutor
-                      </h3>
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-gradient-to-r from-green-900 to-green-700 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-xl">
-                            {selectedBooking.class.tutor.full_name.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-green-900 text-lg">
-                            {selectedBooking.class.tutor.full_name}
-                          </p>
-                          <p className="text-gray-600">
-                            {selectedBooking.class.tutor.email}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Session Notes */}
-                {selectedBooking.notes && (
-                  <Card>
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold text-green-900 mb-3">
-                        Session Notes
-                      </h3>
-                      <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
-                        <p className="text-gray-700 leading-relaxed">
-                          {selectedBooking.notes}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Join Session */}
-                {selectedBooking.class?.jitsi_meeting_url &&
-                  selectedBooking.booking_status === "confirmed" && (
-                    <Card>
-                      <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold text-green-900 mb-3">
-                          Join Session
-                        </h3>
-                        <Button
-                          onClick={() => handleJoinSession(selectedBooking)}
-                          disabled={!isSessionJoinable(selectedBooking)}
-                          className={
-                            isSessionJoinable(selectedBooking)
-                              ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          }
-                          size="lg"
-                        >
-                          <Video className="w-5 h-5 mr-2" />
-                          {isSessionJoinable(selectedBooking)
-                            ? "Join Session Now"
-                            : "Available 5 Min Before Start"}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
-    </div>
+    </StudentPageWrapper>
   );
 };
 

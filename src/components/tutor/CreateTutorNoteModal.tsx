@@ -17,6 +17,16 @@ import {
 import { getNoteSubjects } from "@/lib/notes";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DESCRIPTION_MAX_LENGTH,
   NOTE_TITLE_MAX_LENGTH,
@@ -219,25 +229,27 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                 <h2 className="text-2xl font-bold text-gray-900">
                   Create New Study Material
                 </h2>
-                <button
+                <Button
                   onClick={handleClose}
                   disabled={loading || uploadingFile}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                  variant="ghost"
+                  size="sm"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                 >
                   <XMarkIcon className="h-6 w-6" />
-                </button>
+                </Button>
               </div>
 
               {/* Content */}
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {/* Title */}
-                <div>
-                  <label
+                <div className="space-y-2">
+                  <Label
                     htmlFor="title"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="text-sm font-medium text-gray-700"
                   >
                     Material Title *
-                  </label>
+                  </Label>
                   <Input
                     type="text"
                     id="title"
@@ -254,13 +266,13 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                 </div>
 
                 {/* Description */}
-                <div>
-                  <label
+                <div className="space-y-2">
+                  <Label
                     htmlFor="description"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="text-sm font-medium text-gray-700"
                   >
                     Description
-                  </label>
+                  </Label>
                   <Textarea
                     id="description"
                     name="description"
@@ -274,35 +286,37 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                 </div>
 
                 {/* Subject */}
-                <div>
-                  <label
+                <div className="space-y-2">
+                  <Label
                     htmlFor="subject"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="text-sm font-medium text-gray-700"
                   >
                     Subject *
-                  </label>
-                  <select
-                    id="subject"
+                  </Label>
+                  <Select
                     value={formData.subjectId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, subjectId: e.target.value })
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, subjectId: value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">Select a subject</option>
-                    {subjects.map((subject) => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.display_name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject.id} value={subject.id}>
+                          {subject.display_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Content */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">
                     Content
-                  </label>
+                  </Label>
                   <RichTextEditor
                     value={formData.content}
                     onChange={(content) =>
@@ -313,10 +327,10 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                 </div>
 
                 {/* File Upload */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">
                     Upload File
-                  </label>
+                  </Label>
                   <div
                     className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
                       isDragOver
@@ -393,8 +407,10 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <button
+                          <Button
                             type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => {
                               // Create a temporary URL for the file and open it
                               const fileUrl = URL.createObjectURL(selectedFile);
@@ -405,13 +421,15 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                                 1000
                               );
                             }}
-                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors duration-200 text-xs font-medium"
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                             title="Click to view file"
                           >
                             View File
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => {
                               // Force download by creating a blob URL
                               const fileUrl = URL.createObjectURL(selectedFile);
@@ -428,11 +446,11 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                                 1000
                               );
                             }}
-                            className="text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded-md transition-colors duration-200 text-xs font-medium"
+                            className="text-green-600 hover:text-green-800 hover:bg-green-50"
                             title="Download file"
                           >
                             Download
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -441,21 +459,23 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
 
                 {/* Premium Toggle */}
                 <div className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="isPremium"
                     checked={formData.isPremium}
-                    onChange={(e) =>
-                      setFormData({ ...formData, isPremium: e.target.checked })
+                    onCheckedChange={(checked) =>
+                      setFormData({
+                        ...formData,
+                        isPremium: checked as boolean,
+                      })
                     }
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <label
+                  <Label
                     htmlFor="isPremium"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-medium text-gray-700 cursor-pointer"
                   >
                     Mark as Premium Material
-                  </label>
+                  </Label>
                   <span className="text-xs text-gray-500">
                     (Only accessible to premium package students)
                   </span>
@@ -463,22 +483,23 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
 
                 {/* Actions */}
                 <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
-                  <button
+                  <Button
                     type="button"
                     onClick={handleClose}
                     disabled={loading || uploadingFile}
-                    className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
+                    variant="outline"
+                    className="px-6 py-3"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
                     disabled={loading || uploadingFile}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2"
+                    className="px-6 py-3 bg-[#16803D] hover:bg-[#0F5A2A] text-white shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     {loading || uploadingFile ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                         <span>
                           {uploadingFile ? "Uploading..." : "Creating..."}
                         </span>
@@ -486,7 +507,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                     ) : (
                       <span>Create Study Material</span>
                     )}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>

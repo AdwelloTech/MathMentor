@@ -551,7 +551,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </motion.button>
                 </div>
 
-                <div className="flex grow flex-col bg-white/95 backdrop-blur-xl border-r border-gray-200/50 px-6 pb-4 shadow-2xl">
+                <div className="flex grow flex-col bg-[#FFFFE4] backdrop-blur-xl border-r border-gray-200/50 px-6 pb-4 shadow-2xl">
                   <div className="flex flex-col h-full overflow-y-auto">
                     <LogoSection />
                     <NavigationSection />
@@ -573,7 +573,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         transition={{ duration: 0.5 }}
       >
         <motion.div
-          className="flex grow flex-col bg-white/95 backdrop-blur-xl border-r border-gray-200/50 shadow-xl"
+          className="flex grow flex-col bg-[#FFFFE4] backdrop-blur-xl border-r border-gray-200/50 shadow-xl"
           animate={{
             width: isHovered ? 320 : 80,
           }}

@@ -17,10 +17,12 @@ import {
   formatFileSize,
   getStudentTutorMaterialSubjectColor,
   truncateStudentTutorMaterialText,
-  incrementStudentTutorMaterialViewCountUnique,
-  incrementStudentTutorMaterialDownloadCount,
   type StudentTutorMaterialCardProps,
 } from "@/lib/studentTutorMaterials";
+import {
+  incrementTutorNoteViewCountUnique,
+  incrementTutorNoteDownloadCount,
+} from "@/lib/tutorNotes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -71,7 +73,7 @@ const StudentTutorMaterialCard: React.FC<
     if (user && !hasTrackedView.current) {
       try {
         console.log("Tracking view for material:", id);
-        await incrementStudentTutorMaterialViewCountUnique(id, user.id);
+        await incrementTutorNoteViewCountUnique(id, user.id);
         console.log("View tracking completed successfully");
 
         // Update the local view count after successful tracking
@@ -98,7 +100,7 @@ const StudentTutorMaterialCard: React.FC<
 
     try {
       // Increment download count
-      await incrementStudentTutorMaterialDownloadCount(id);
+      await incrementTutorNoteDownloadCount(id);
 
       // Force download by fetching the file and creating a blob
       const response = await fetch(fileUrl);
@@ -153,7 +155,7 @@ const StudentTutorMaterialCard: React.FC<
               {title || "Untitled Material"}
             </h3>
             {isPremium && (
-              <Badge className="bg-yellow-400 text-black border-0 text-xs font-bold">
+              <Badge className="bg-gradient-to-r from-green-600 to-green-500 text-white border-0 text-xs font-bold">
                 PREMIUM
               </Badge>
             )}

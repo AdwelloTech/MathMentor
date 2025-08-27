@@ -11,7 +11,10 @@ import {
   CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
+import { validateDocumentFile } from "@/constants/form";
 
 interface TutorProfileEditProps {
   isOpen: boolean;
@@ -118,8 +121,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
     if (!file) return;
 
     // Validate file type
-    if (!file.type.includes("pdf") && !file.type.includes("document")) {
-      setUploadError("Please upload a PDF or Word document");
+    if (!validateDocumentFile(file)) {
+      setUploadError("Please upload a PDF (.pdf) or Word (.doc, .docx) file");
       return;
     }
 
@@ -172,8 +175,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
         specializations.push("Learning Disabilities");
       }
 
-      // Prepare updates object
-      const updates = {
+      // Build raw updates object (may contain undefined values)
+      const rawUpdates = {
         first_name,
         last_name,
         full_name: formData.full_name,
@@ -183,16 +186,21 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
         qualification: formData.qualification,
         experience_years: formData.experience_years
           ? parseInt(formData.experience_years)
-          : null,
+          : undefined,
         hourly_rate: formData.hourly_rate
           ? parseFloat(formData.hourly_rate)
-          : null,
+          : undefined,
         availability: formData.availability,
         languages: formData.languages,
         certifications: formData.certifications,
         profile_completed: true, // Mark profile as completed
         updated_at: new Date().toISOString(),
       };
+
+      // Remove undefined keys so Dexie.update leaves them untouched
+      const updates = Object.fromEntries(
+        Object.entries(rawUpdates).filter(([, v]) => v !== undefined)
+      );
 
       await updateProfile(updates);
       toast.success("Profile updated successfully!");
@@ -256,7 +264,7 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                 >
                   Full Name *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="full_name"
                   value={formData.full_name}
@@ -266,6 +274,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                   className="input w-full"
                   placeholder="Enter your full name"
                   required
+                  maxLength={100}
+                  showCharCount
                 />
               </div>
 
@@ -298,7 +308,7 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                 >
                   Bio/Introduction *
                 </label>
-                <textarea
+                <Textarea
                   id="bio"
                   value={formData.bio}
                   onChange={(e) => handleInputChange("bio", e.target.value)}
@@ -306,6 +316,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                   className="input w-full"
                   placeholder="Write a short description about yourself, your teaching style, and experience..."
                   required
+                  maxLength={1000}
+                  showCharCount
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Students will see this when choosing a tutor
@@ -376,7 +388,7 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                 >
                   Qualification *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="qualification"
                   value={formData.qualification}
@@ -386,6 +398,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                   className="input w-full"
                   placeholder="e.g., Bachelor's in Mathematics, Master's in Education"
                   required
+                  maxLength={200}
+                  showCharCount
                 />
               </div>
 
@@ -443,7 +457,7 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                 >
                   Availability
                 </label>
-                <textarea
+                <Textarea
                   id="availability"
                   value={formData.availability}
                   onChange={(e) =>
@@ -452,6 +466,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                   rows={2}
                   className="input w-full"
                   placeholder="e.g., Monday-Friday 6PM-9PM, Weekends 9AM-5PM"
+                  maxLength={300}
+                  showCharCount
                 />
               </div>
             </div>

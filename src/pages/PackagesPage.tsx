@@ -8,6 +8,7 @@ import type { Database } from "../types/database";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 
 import {
   CheckCircle,
@@ -203,7 +204,7 @@ const PackagesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-yellow-50 relative overflow-hidden">
+    <StudentPageWrapper backgroundClass="bg-gradient-to-br from-green-50 via-white to-yellow-50">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-green-900/5 rounded-full blur-3xl animate-pulse"></div>
@@ -220,9 +221,6 @@ const PackagesPage: React.FC = () => {
           className="text-center mb-12"
         >
           <div className="inline-flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-br from-green-900 to-green-800 rounded-2xl shadow-lg">
-              <Sparkles className="h-7 w-7 text-yellow-400" />
-            </div>
             <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-green-900 via-green-800 to-green-700 bg-clip-text text-transparent">
               Select Package
             </h1>
@@ -262,17 +260,14 @@ const PackagesPage: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mb-12"
           >
-            <Card className="bg-gradient-to-br from-green-900 via-green-800 to-green-900 border-0 shadow-2xl rounded-3xl text-white overflow-hidden">
+            <Card className="bg-green-900 border-0 shadow-2xl rounded-3xl text-white overflow-hidden">
               <CardContent className="p-8 relative">
                 {/* Background Pattern */}
 
                 <div className="relative">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="p-3 bg-yellow-400 rounded-2xl shadow-lg">
-                      {getPackageIcon(currentPackage.package_type)}
-                    </div>
                     <div>
-                      <h2 className="text-xl font-semibold text-yellow-400 mb-1">
+                      <h2 className="text-xl font-semibold text-white mb-1">
                         Your Current Package
                       </h2>
                       <p className="text-3xl font-bold text-white">
@@ -286,13 +281,13 @@ const PackagesPage: React.FC = () => {
                     {canUpgrade("gold") &&
                       " Consider upgrading to unlock even more features!"}
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     {packagePricingService
                       .getFeaturesList(currentPackage.features)
                       .map((feature, index) => (
                         <div
                           key={index}
-                          className="flex items-center gap-3 text-green-100 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3"
+                          className="flex items-center gap-3 text-white bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3"
                         >
                           <CheckCircle className="w-5 h-5 text-yellow-400 flex-shrink-0" />
                           <span className="font-medium">{feature}</span>
@@ -320,9 +315,9 @@ const PackagesPage: React.FC = () => {
                   isCurrentPackage(pkg.package_type)
                     ? "bg-gradient-to-br from-green-900 to-green-800 text-white scale-105"
                     : pkg.package_type === "gold"
-                    ? "bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 text-white"
+                    ? "bg-gradient-to-br from-green-900 to-green-800 text-white scale-105"
                     : pkg.package_type === "silver"
-                    ? "bg-gradient-to-br from-slate-400 via-slate-500 to-slate-600 text-white"
+                    ? "bg-gradient-to-br from-green-900 to-green-800 text-white scale-105"
                     : "bg-gradient-to-br from-white via-white to-slate-50 text-slate-900"
                 }`}
               >
@@ -336,19 +331,7 @@ const PackagesPage: React.FC = () => {
                   <div className="relative flex flex-col h-full">
                     {/* Package Header */}
                     <div className="text-center mb-6">
-                      <div className="flex justify-center mb-4">
-                        <div
-                          className={`p-4 rounded-3xl shadow-lg ${
-                            isCurrentPackage(pkg.package_type) ||
-                            pkg.package_type === "gold" ||
-                            pkg.package_type === "silver"
-                              ? "bg-white/20 backdrop-blur-sm"
-                              : "bg-gradient-to-br from-green-900 to-green-800"
-                          }`}
-                        >
-                          {getPackageIcon(pkg.package_type)}
-                        </div>
-                      </div>
+                      <div className="flex justify-center mb-4"></div>
                       <h3 className="text-2xl font-bold mb-4">
                         {pkg.display_name}
                       </h3>
@@ -444,23 +427,6 @@ const PackagesPage: React.FC = () => {
                       </div>
 
                       {/* Secure Payment Note */}
-                      {pkg.package_type !== "free" &&
-                        !isCurrentPackage(pkg.package_type) && (
-                          <div className="text-center">
-                            <div
-                              className={`text-sm font-medium px-4 py-2 rounded-full inline-flex items-center gap-2 ${
-                                isCurrentPackage(pkg.package_type) ||
-                                pkg.package_type === "gold" ||
-                                pkg.package_type === "silver"
-                                  ? "bg-white/20 backdrop-blur-sm text-white"
-                                  : "bg-green-50 text-green-700"
-                              }`}
-                            >
-                              <Shield className="w-4 h-4" />
-                              Secure Payment Required
-                            </div>
-                          </div>
-                        )}
                     </div>
                   </div>
                 </CardContent>
@@ -619,7 +585,7 @@ const PackagesPage: React.FC = () => {
           </motion.div>
         </motion.div>
       )}
-    </div>
+    </StudentPageWrapper>
   );
 };
 

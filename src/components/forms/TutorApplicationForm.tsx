@@ -10,6 +10,8 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { db } from "@/lib/db";
 import toast from "react-hot-toast";
 import type { TutorApplicationFormData } from "@/types/auth";
@@ -406,7 +408,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
             >
               Postcode *
             </label>
-            <input
+            <Input
               type="text"
               id="postcode"
               value={formData.postcode}
@@ -416,6 +418,8 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
               }`}
               placeholder="Enter your postcode"
               required
+              maxLength={20}
+              showCharCount
             />
             {errors.postcode && (
               <p className="text-red-500 text-sm mt-1">{errors.postcode}</p>
@@ -430,7 +434,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
             >
               Based in which country? *
             </label>
-            <input
+            <Input
               type="text"
               id="based_in_country"
               value={formData.based_in_country}
@@ -442,6 +446,8 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
               }`}
               placeholder="e.g., United Kingdom, United States, etc."
               required
+              maxLength={50}
+              showCharCount
             />
             {errors.based_in_country && (
               <p className="text-red-500 text-sm mt-1">
@@ -537,7 +543,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
               >
                 Past Teaching/Tutoring Experience
               </label>
-              <textarea
+              <Textarea
                 id="past_experience"
                 value={formData.past_experience}
                 onChange={(e) =>
@@ -546,6 +552,8 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
                 rows={3}
                 className="input w-full"
                 placeholder="Describe your previous teaching or tutoring experience..."
+                maxLength={500}
+                showCharCount
               />
             </div>
 
@@ -557,7 +565,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
               >
                 Weekly Availability
               </label>
-              <textarea
+              <Textarea
                 id="weekly_availability"
                 value={formData.weekly_availability}
                 onChange={(e) =>
@@ -566,6 +574,8 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
                 rows={3}
                 className="input w-full"
                 placeholder="Describe your weekly availability for tutoring sessions..."
+                maxLength={300}
+                showCharCount
               />
             </div>
 
@@ -577,7 +587,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
               >
                 Current Employment Status
               </label>
-              <input
+              <Input
                 type="text"
                 id="employment_status"
                 value={formData.employment_status}
@@ -586,6 +596,8 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
                 }
                 className="input w-full"
                 placeholder="e.g., Full-time teacher, Part-time tutor, Freelance, etc."
+                maxLength={100}
+                showCharCount
               />
             </div>
 
@@ -597,7 +609,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
               >
                 Highest Level of Education
               </label>
-              <input
+              <Input
                 type="text"
                 id="education_level"
                 value={formData.education_level}
@@ -606,6 +618,8 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
                 }
                 className="input w-full"
                 placeholder="e.g., Bachelor's degree, Master's degree, PhD, etc."
+                maxLength={100}
+                showCharCount
               />
             </div>
 
@@ -764,7 +778,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
           >
             Additional Notes (Optional)
           </label>
-          <textarea
+          <Textarea
             id="additional_notes"
             value={formData.additional_notes}
             onChange={(e) =>
@@ -773,6 +787,8 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
             rows={4}
             className="input w-full"
             placeholder="Tell us anything else you'd like us to know about your teaching experience, achievements, or why you want to join our team..."
+            maxLength={1000}
+            showCharCount
           />
         </div>
 

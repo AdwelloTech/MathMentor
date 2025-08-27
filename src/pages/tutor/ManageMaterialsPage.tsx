@@ -69,7 +69,7 @@ const ManageMaterialsPage: React.FC = () => {
       setSubjects(subjectsData);
     } catch (error) {
       console.error("Error loading data:", error);
-      toast.error("Failed to load materials");
+      toast.error("Failed to load materials. Please refresh the page.");
     } finally {
       setLoading(false);
     }

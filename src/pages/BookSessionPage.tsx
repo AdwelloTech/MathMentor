@@ -378,6 +378,7 @@ const BookSessionPage: React.FC = () => {
             const tutor = sessionResult.tutor;
             const isBooking = bookingLoading === session.id;
 
+            // ... existing code ...
             return (
               <motion.div
                 key={session.id}
@@ -405,10 +406,17 @@ const BookSessionPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <CardTitle className="text-green-900 text-xl leading-tight">
+                    {/* Title & Subject */}
+                    <h3 className="text-lg font-semibold text-gray-900 mt-2">
                       {session.title}
-                    </CardTitle>
-
+                    </h3>
+                    {session.subject && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {session.subject.display_name}
+                        </span>
+                      </div>
+                    )}
                     {session.description && (
                       <CardDescription className="text-gray-700 line-clamp-2">
                         {session.description}

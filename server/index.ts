@@ -3,7 +3,6 @@ import path from "path";
 import dotenv from "dotenv";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-// PDF processing temporarily simplified
 import multer from "multer";
 
 // PDF text extraction using pdf.js-extract (Node.js optimized)
@@ -494,6 +493,20 @@ app.post("/api/ai/flashcards", async (req: Request, res: Response) => {
       pdfBase64?: string;
       pdfs?: Array<{ pdfBase64: string; fileName: string; fileSize: number }>;
     } = req.body || {};
+
+    // Debug: Log received request data
+    console.log('🧠 Server: Received flashcard generation request:', {
+      subject,
+      gradeLevel,
+      numCards,
+      title,
+      difficulty,
+      hasPdfText: !!pdfText,
+      pdfTextLength: pdfText?.length || 0,
+      pdfTextPreview: pdfText?.substring(0, 200) + '...' || 'none',
+      hasPdfBase64: !!pdfBase64,
+      hasPdfs: !!pdfs && pdfs.length > 0
+    });
 
     if (!subject) {
       return res.status(400).json({ error: "subject is required" });
@@ -990,6 +1003,74 @@ ${contextLine}${pdfContext}
 
 app.listen(PORT, () => {
   console.log(`AI server listening on http://localhost:${PORT}`);
+});
+
+// PDF text extraction endpoint
+const pdfUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB per file
+    files: 10, // Maximum 10 files
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow PDF files
+    if (file.mimetype === "application/pdf") {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF files are allowed"));
+    }
+  },
+});
+
+app.post("/api/ai/pdf/extract-text", pdfUpload.array("files", 10), async (req: Request, res: Response) => {
+  try {
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      return res.status(400).json({ error: "No PDF files provided" });
+    }
+
+    const results = [];
+
+    for (const file of req.files as Express.Multer.File[]) {
+      try {
+        console.log(`📄 Processing PDF: ${file.originalname} (${file.size} bytes)`);
+
+        // Convert buffer to base64
+        const pdfBase64 = file.buffer.toString("base64");
+
+        // Extract text using existing function
+        const { text, truncated } = await extractPdfTextFromBase64(pdfBase64);
+
+        results.push({
+          fileName: file.originalname,
+          fileSize: file.size,
+          pdfText: text,
+          truncated,
+        });
+
+        console.log(`📄 Extracted ${text.length} characters from ${file.originalname}`);
+      } catch (fileError) {
+        console.error(`❌ Error processing ${file.originalname}:`, fileError);
+        results.push({
+          fileName: file.originalname,
+          fileSize: file.size,
+          pdfText: "",
+          truncated: false,
+          error: "Failed to extract text from this PDF",
+        });
+      }
+    }
+
+    res.status(200).json({
+      pdfs: results,
+      totalFiles: results.length,
+    });
+  } catch (error) {
+    console.error("❌ PDF extraction endpoint error:", error);
+    res.status(500).json({
+      error: "Failed to extract text from PDFs",
+      details: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
 });
 
 // Global error handler (handles multer errors and others)

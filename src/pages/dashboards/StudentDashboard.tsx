@@ -31,6 +31,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPackageDisplayName, getPackageFeatures } from "@/utils/permissions";
+import { STUDENT_INSTANT_SESSION_BACKGROUND } from "@/utils/roleStyles";
 import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 import {
   Card,
@@ -48,7 +49,6 @@ import type { Quiz } from "@/types/quiz";
 import type { FlashcardSet } from "@/types/flashcards";
 
 // Import the images
-import bellIcon from "../../assets/bell.png";
 import logoutIcon from "../../assets/logout.png";
 
 interface DashboardData {
@@ -325,7 +325,7 @@ const StudentDashboard: React.FC = () => {
 
   if (data.loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-green-100 p-6 relative">
+      <div className={`min-h-screen ${STUDENT_INSTANT_SESSION_BACKGROUND} p-6 relative`}>
         {/* Background pattern for depth */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
         <div className="max-w-7xl mx-auto space-y-8 relative z-10">

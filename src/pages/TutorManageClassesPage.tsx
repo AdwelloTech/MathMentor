@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { classSchedulingService } from "../lib/classSchedulingService";
 import { TutorClass, ClassType } from "../types/classScheduling";
-import { subjectsService } from '@/lib/subjects';
-import type { Subject } from '@/types/subject';
+import { subjectsService } from "@/lib/subjects";
+import type { Subject } from "@/types/subject";
 import {
   CalendarDays,
   Clock,
@@ -51,7 +51,10 @@ const TutorManageClassesPage: React.FC = () => {
     if (user) {
       loadClasses();
       loadClassTypes();
-      subjectsService.listActive().then(setSubjects).catch(() => {});
+      subjectsService
+        .listActive()
+        .then(setSubjects)
+        .catch(() => {});
     }
   }, [user]);
 
@@ -125,14 +128,14 @@ const TutorManageClassesPage: React.FC = () => {
     try {
       setError(null);
       console.log("Updating class with data:", updatedClass);
-      
+
       const updatedData = await classSchedulingService.classes.update(
         editingClass.id,
         updatedClass
       );
-      
+
       console.log("Class updated successfully:", updatedData);
-      
+
       setClasses((prev) =>
         prev.map((c) => (c.id === editingClass.id ? updatedData : c))
       );
@@ -140,12 +143,12 @@ const TutorManageClassesPage: React.FC = () => {
       setSelectedClass(null);
       setShowDetails(false);
       setError(null); // Clear error on success
-      
+
       toast.success("Class updated successfully!");
     } catch (err) {
       console.error("Error updating class:", err);
       setError("Failed to update class");
-      
+
       // Show more detailed error message
       let errorMessage = "An unexpected error occurred";
       if (err instanceof Error) {
@@ -159,7 +162,7 @@ const TutorManageClassesPage: React.FC = () => {
           errorMessage = String(err.hint);
         }
       }
-      
+
       toast.error(`Failed to update class: ${errorMessage}`);
     }
   };
@@ -676,66 +679,82 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
     end_time: classItem.end_time,
     max_students: classItem.max_students,
     price_per_session: classItem.price_per_session,
-    status: classItem.status as "scheduled" | "in_progress" | "completed" | "cancelled",
+    status: classItem.status as
+      | "scheduled"
+      | "in_progress"
+      | "completed"
+      | "cancelled",
   });
   const [subjects, setSubjects] = useState<Subject[]>([]);
 
   useEffect(() => {
-    subjectsService.listActive().then(setSubjects).catch(() => {});
+    subjectsService
+      .listActive()
+      .then(setSubjects)
+      .catch(() => {});
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.title.trim()) {
       toast.error("Title is required");
       return;
     }
-    
+
     if (!formData.class_type_id) {
       toast.error("Class type is required");
       return;
     }
-    
+
     if (!formData.date) {
       toast.error("Date is required");
       return;
     }
-    
+
     if (!formData.start_time) {
       toast.error("Start time is required");
       return;
     }
-    
+
     // Calculate end time if start time changed
     let updatedFormData = { ...formData };
-    
+
     if (formData.start_time && formData.class_type_id) {
-      const classType = classTypes.find(ct => ct.id === formData.class_type_id);
+      const classType = classTypes.find(
+        (ct) => ct.id === formData.class_type_id
+      );
       if (classType) {
         const startTime = new Date(`2000-01-01T${formData.start_time}`);
-        const endTime = new Date(startTime.getTime() + classType.duration_minutes * 60000);
+        const endTime = new Date(
+          startTime.getTime() + classType.duration_minutes * 60000
+        );
         const endTimeString = endTime.toTimeString().slice(0, 5);
         updatedFormData.end_time = endTimeString;
       }
     }
-    
+
     // Ensure numeric fields are properly typed
-    if (typeof updatedFormData.max_students === 'string') {
+    if (typeof updatedFormData.max_students === "string") {
       updatedFormData.max_students = parseInt(updatedFormData.max_students, 10);
     }
-    if (typeof updatedFormData.price_per_session === 'string') {
-      updatedFormData.price_per_session = parseFloat(updatedFormData.price_per_session);
+    if (typeof updatedFormData.price_per_session === "string") {
+      updatedFormData.price_per_session = parseFloat(
+        updatedFormData.price_per_session
+      );
     }
-    
+
     // Convert form data to the expected format
     const submitData: Partial<TutorClass> = {
       ...updatedFormData,
-      subject_id: updatedFormData.subject_id === "none" ? undefined : updatedFormData.subject_id,
+      subject_id:
+        updatedFormData.subject_id === "none"
+          ? undefined
+          : updatedFormData.subject_id,
       description: updatedFormData.description || undefined,
     };
-    
+
     console.log("Submitting form data:", submitData);
     onSave(submitData);
   };
@@ -804,7 +823,10 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="subject" className="text-sm font-bold text-gray-900">
+            <Label
+              htmlFor="subject"
+              className="text-sm font-bold text-gray-900"
+            >
               Subject
             </Label>
             <Select
@@ -905,7 +927,9 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
                   const parsed = parseInt(value, 10);
                   setFormData({
                     ...formData,
-                    max_students: Number.isNaN(parsed) ? formData.max_students : parsed,
+                    max_students: Number.isNaN(parsed)
+                      ? formData.max_students
+                      : parsed,
                   });
                 }
               }}
@@ -935,7 +959,9 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
                   const parsed = parseFloat(value);
                   setFormData({
                     ...formData,
-                    price_per_session: Number.isNaN(parsed) ? formData.price_per_session : parsed,
+                    price_per_session: Number.isNaN(parsed)
+                      ? formData.price_per_session
+                      : parsed,
                   });
                 }
               }}

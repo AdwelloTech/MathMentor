@@ -163,8 +163,14 @@ const StudentDashboard: React.FC = () => {
         id: booking.id,
         tutor: booking.class?.tutor?.full_name || booking.tutor_name,
         subject: booking.class?.title,
-        time: formatUpcomingTime(booking.class?.date, booking.class?.start_time),
-        duration: getDuration(booking.class?.start_time, booking.class?.end_time),
+        time: formatUpcomingTime(
+          booking.class?.date,
+          booking.class?.start_time
+        ),
+        duration: getDuration(
+          booking.class?.start_time,
+          booking.class?.end_time
+        ),
         type: booking.class?.class_type?.name || booking.class_type,
         date: booking.class?.date,
         startTime: booking.class?.start_time,
@@ -197,14 +203,16 @@ const StudentDashboard: React.FC = () => {
       );
       if (recent.length > 0) return recent.slice(0, 3);
 
-      const available =
-        await quizService.studentQuizzes.getAvailableQuizzes(profile.user_id);
+      const available = await quizService.studentQuizzes.getAvailableQuizzes(
+        profile.user_id
+      );
       return available.slice(0, 3);
     } catch (error) {
       console.error("Error loading recent quizzes:", error);
       try {
-        const available =
-          await quizService.studentQuizzes.getAvailableQuizzes(profile.user_id);
+        const available = await quizService.studentQuizzes.getAvailableQuizzes(
+          profile.user_id
+        );
         return available.slice(0, 3);
       } catch (fallbackError) {
         console.error("Fallback quizzes error:", fallbackError);
@@ -403,10 +411,13 @@ const StudentDashboard: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-3">
-                      <CardTitle className="text-xl">My Learning Package</CardTitle>
+                      <CardTitle className="text-xl">
+                        My Learning Package
+                      </CardTitle>
                       <div className="space-y-2">
                         <p className="text-green-100">
-                          {getPackageProgress().used} of {getPackageProgress().total} sessions used
+                          {getPackageProgress().used} of{" "}
+                          {getPackageProgress().total} sessions used
                         </p>
                         <Progress
                           value={getPackageProgress().percentage}
@@ -414,22 +425,28 @@ const StudentDashboard: React.FC = () => {
                         />
                       </div>
                       <div className="flex items-center space-x-4 text-sm">
-                        <Badge variant="secondary" className="border-yellow-500/20">
+                        <Badge
+                          variant="secondary"
+                          className="border-yellow-500/20"
+                        >
                           {data.packageInfo?.display_name || "Free Package"}
                         </Badge>
                         <span className="text-green-100">
                           {data.packageInfo?.price_monthly
-                            ? `${formatCurrency(data.packageInfo.price_monthly)}/month`
+                            ? `${formatCurrency(
+                                data.packageInfo.price_monthly
+                              )}/month`
                             : "Free"}
                         </span>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-3xl font-bold">
-                        {getPackageProgress().total -
-                          getPackageProgress().used}
+                        {getPackageProgress().total - getPackageProgress().used}
                       </div>
-                      <div className="text-green-100 text-sm">sessions remaining</div>
+                      <div className="text-green-100 text-sm">
+                        sessions remaining
+                      </div>
                     </div>
                   </div>
                   <Button
@@ -479,8 +496,7 @@ const StudentDashboard: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-3xl font-bold">
-                        {getPackageProgress().total -
-                          getPackageProgress().used}
+                        {getPackageProgress().total - getPackageProgress().used}
                       </div>
                       <div className="text-green-100 text-sm">
                         sessions remaining
@@ -545,13 +561,17 @@ const StudentDashboard: React.FC = () => {
                       >
                         <stat.icon className="w-6 h-6 text-white" />
                       </div>
-                      <CardTitle className="text-2xl font-bold">{stat.value}</CardTitle>
+                      <CardTitle className="text-2xl font-bold">
+                        {stat.value}
+                      </CardTitle>
                       <CardDescription className="text-sm font-medium">
                         {stat.name}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-muted-foreground">{stat.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {stat.description}
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -584,30 +604,40 @@ const StudentDashboard: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {data.upcomingSessions.length > 0 ? (
-                      data.upcomingSessions.slice(0, 3).map((session, index) => (
-                        <motion.div
-                          key={session.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-yellow-50 rounded-xl border shadow-md shadow-gray-100/50"
-                        >
-                          <div className="bg-gradient-to-r from-green-600 to-green-700 w-10 h-10 rounded-full flex items-center justify-center">
-                            <VideoCameraIcon className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 truncate">
-                              {session.subject}
-                            </h4>
-                            <p className="text-sm text-gray-600">with {session.tutor}</p>
-                            <p className="text-xs text-gray-500">{session.type}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-gray-900 text-sm">{session.time}</p>
-                            <p className="text-xs text-gray-600">{session.duration}</p>
-                          </div>
-                        </motion.div>
-                      ))
+                      data.upcomingSessions
+                        .slice(0, 3)
+                        .map((session, index) => (
+                          <motion.div
+                            key={session.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-yellow-50 rounded-xl border shadow-md shadow-gray-100/50"
+                          >
+                            <div className="bg-gradient-to-r from-green-600 to-green-700 w-10 h-10 rounded-full flex items-center justify-center">
+                              <VideoCameraIcon className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 truncate">
+                                {session.subject}
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                with {session.tutor}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {session.type}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium text-gray-900 text-sm">
+                                {session.time}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {session.duration}
+                              </p>
+                            </div>
+                          </motion.div>
+                        ))
                     ) : (
                       <div className="text-center py-8">
                         <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -658,7 +688,9 @@ const StudentDashboard: React.FC = () => {
                     {/* Quizzes */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">Recent Quizzes</h4>
+                        <h4 className="font-medium text-gray-900">
+                          Recent Quizzes
+                        </h4>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -677,8 +709,15 @@ const StudentDashboard: React.FC = () => {
                             className="flex items-center space-x-3 p-3 bg-[#D5FFC5] rounded-[10px] shadow-sm cursor-pointer hover:bg-[#C5F0B5] transition-colors duration-200"
                             onClick={() =>
                               (quiz as any).attempt_id
-                                ? navigate(`/student/take-quiz/${(quiz as any).attempt_id}`)
-                                : console.warn("No attempt available for quiz", quiz.id)
+                                ? navigate(
+                                    `/student/take-quiz/${
+                                      (quiz as any).attempt_id
+                                    }`
+                                  )
+                                : console.warn(
+                                    "No attempt available for quiz",
+                                    quiz.id
+                                  )
                             }
                           >
                             <div className="flex-1 min-w-0">
@@ -700,14 +739,18 @@ const StudentDashboard: React.FC = () => {
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-500">No recent quiz activity</p>
+                        <p className="text-sm text-gray-500">
+                          No recent quiz activity
+                        </p>
                       )}
                     </div>
 
                     {/* Study Materials */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">Study Materials</h4>
+                        <h4 className="font-medium text-gray-900">
+                          Study Materials
+                        </h4>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div
@@ -718,7 +761,11 @@ const StudentDashboard: React.FC = () => {
                             <DocumentTextIcon className="w-4 h-4 text-white" />
                           </div>
                           <p className="text-sm font-medium text-black">
-                            {data.studyMaterials.filter((m) => (m as any).content).length}
+                            {
+                              data.studyMaterials.filter(
+                                (m) => (m as any).content
+                              ).length
+                            }
                           </p>
                           <p className="text-xs text-black">Notes</p>
                         </div>
@@ -780,7 +827,11 @@ const StudentDashboard: React.FC = () => {
                         action: () => navigate("/student/flashcards"),
                       },
                     ].map((action) => (
-                      <motion.div key={action.title} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <motion.div
+                        key={action.title}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
                         <Card
                           className="cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50 border-0"
                           onClick={action.action}
@@ -789,8 +840,12 @@ const StudentDashboard: React.FC = () => {
                             <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg">
                               <action.icon className="w-6 h-6 text-white" />
                             </div>
-                            <h3 className="font-semibold text-gray-900 mb-2">{action.title}</h3>
-                            <p className="text-sm text-gray-600 mb-4">{action.description}</p>
+                            <h3 className="font-semibold text-gray-900 mb-2">
+                              {action.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                              {action.description}
+                            </p>
                             <div className="bg-yellow-300 text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-all duration-200 shadow-md hover:shadow-lg">
                               Get Started
                             </div>

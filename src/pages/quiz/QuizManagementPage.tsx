@@ -8,7 +8,6 @@ import {
   TrashIcon,
   EyeIcon,
   AcademicCapIcon,
-  ClockIcon,
   UserGroupIcon,
   ChartBarIcon,
   DocumentTextIcon,
@@ -19,6 +18,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
 import type { Quiz, QuizStats } from "@/types/quiz";
 import toast from "react-hot-toast";
+import { getGradeLevelDisplayName } from "@/lib/gradeLevels";
 
 const QuizManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -68,7 +68,7 @@ const QuizManagementPage: React.FC = () => {
     try {
       await quizService.quizzes.delete(quizId);
       setQuizzes(quizzes.filter((quiz) => quiz.id !== quizId));
-      loadStats(); // Refresh stats
+      loadStats();
       toast.success("Quiz deleted successfully!");
     } catch (error) {
       console.error("Error deleting quiz:", error);
@@ -81,12 +81,10 @@ const QuizManagementPage: React.FC = () => {
   const handleToggleActive = async (quiz: Quiz) => {
     try {
       await quizService.quizzes.update(quiz.id, { is_active: !quiz.is_active });
-      setQuizzes(
-        quizzes.map((q) =>
-          q.id === quiz.id ? { ...q, is_active: !q.is_active } : q
-        )
+      setQuizzes((prev) =>
+        prev.map((q) => (q.id === quiz.id ? { ...q, is_active: !q.is_active } : q))
       );
-      loadStats(); // Refresh stats
+      loadStats();
       toast.success("Quiz status updated successfully!");
     } catch (error) {
       console.error("Error updating quiz:", error);
@@ -315,10 +313,8 @@ const QuizManagementPage: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {quizzes.map((quiz) => (
-                    <tr
-                      key={quiz.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
+                    <tr key={quiz.id} className="hover:bg-gray-50 transition-colors">
+                      {/* Quiz Details */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
@@ -329,37 +325,44 @@ const QuizManagementPage: React.FC = () => {
                           </div>
                         </div>
                       </td>
+
+                      {/* Subject & Grade */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {quiz.subject}
-                        </div>
+                        <div className="text-sm text-gray-900">{quiz.subject}</div>
                         <div className="text-sm text-gray-500">
-                          {quiz.grade_level || "All grades"}
+                          {getGradeLevelDisplayName(quiz.grade_level)}
                         </div>
                       </td>
+
+                      {/* Questions & Time */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {quiz.total_questions} questions • {quiz.total_points}{" "}
-                          points
+                          {quiz.total_questions} questions • {quiz.total_points} points
                         </div>
                         <div className="text-sm text-gray-500">
                           {quiz.time_limit_minutes} minutes
                         </div>
                       </td>
+
+                      {/* Status */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             quiz.is_active
-                              ? "bg-green-100 text-green-800 border border-green-200"
-                              : "bg-red-100 text-red-800 border border-red-200"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
                           }`}
                         >
                           {quiz.is_active ? "Active" : "Inactive"}
                         </span>
                       </td>
+
+                      {/* Created */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(quiz.created_at).toLocaleDateString()}
                       </td>
+
+                      {/* Actions */}
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
                           <button
@@ -370,9 +373,7 @@ const QuizManagementPage: React.FC = () => {
                             <EyeIcon className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() =>
-                              navigate(`/quiz/${quiz.id}/responses`)
-                            }
+                            onClick={() => navigate(`/quiz/${quiz.id}/responses`)}
                             className="text-indigo-600 hover:text-indigo-900 p-1 rounded-md hover:bg-indigo-50 transition-colors"
                             title="View Responses"
                           >
@@ -392,11 +393,7 @@ const QuizManagementPage: React.FC = () => {
                                 ? "text-red-600 hover:text-red-900 hover:bg-red-50"
                                 : "text-green-600 hover:text-green-900 hover:bg-green-50"
                             }`}
-                            title={
-                              quiz.is_active
-                                ? "Deactivate Quiz"
-                                : "Activate Quiz"
-                            }
+                            title={quiz.is_active ? "Deactivate Quiz" : "Activate Quiz"}
                           >
                             {quiz.is_active ? (
                               <XCircleIcon className="h-4 w-4" />

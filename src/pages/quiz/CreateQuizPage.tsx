@@ -11,8 +11,8 @@ import type { CreateQuizData, CreateQuestionData } from "@/types/quiz";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { GradeSelect } from "@/components/ui/GradeSelect";
 import {
   Select,
   SelectContent,
@@ -20,13 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { quizService } from "@/lib/quizService";
+import { getNoteSubjects } from "@/lib/notes";
+import { generateAIQuestions, uploadPdfForAI } from "@/lib/ai";
+import { getGradeLevelDisplayName } from "@/lib/gradeLevels";
+import type { CreateQuizData, CreateQuestionData } from "@/types/quiz";
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 type NoteSubject = {
@@ -65,9 +67,16 @@ const CreateQuizPage: React.FC = () => {
   const [questionFilter, setQuestionFilter] = useState<"all" | "manual" | "ai">(
     "all"
   );
+
+  // Multiple-PDF support (already referenced elsewhere in the file)
   const [pdfs, setPdfs] = useState<
     Array<{ pdfBase64: string; fileName: string; fileSize: number }>
   >([]);
+
+  // Also referenced by the uploader UI; define these so TS/JSX compiles
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [pdfName, setPdfName] = useState<string | null>(null);
+  const [pdfSize, setPdfSize] = useState<number | null>(null);
 
   // Quiz basic info
   const [quizData, setQuizData] = useState({
@@ -210,24 +219,27 @@ const CreateQuizPage: React.FC = () => {
         title: quizData.title || undefined,
         pdfs: pdfs.length > 0 ? pdfs : undefined,
       });
-      
+
       const mapped = ai.map((q: AIQuestion, idx: number) => ({
         question_text: q.question_text,
         question_type: q.question_type,
         points: q.points ?? 10,
         question_order: questions.length + idx + 1,
         is_ai_generated: true,
-        ai_status: q.ai_status || "pending",
+        ai_status: (q.ai_status || "pending") as
+          | "approved"
+          | "pending"
+          | "discarded"
+          | undefined,
         ai_metadata: q.ai_metadata,
         answers: q.answers.map((a: any, i: number) => ({
           answer_text: a.answer_text,
           is_correct: a.is_correct,
           answer_order: i + 1,
         })),
-      }));
+      })) as CreateQuestionData[];
       setQuestions((prev) => [...prev, ...mapped]);
       setQuestionFilter("ai");
-      // Reset number of questions to 1 after generation
       setAiNumQuestions(1);
       toast.success(
         `Generated ${mapped.length} question${mapped.length > 1 ? "s" : ""}`
@@ -243,7 +255,6 @@ const CreateQuizPage: React.FC = () => {
   const removeQuestion = (questionIndex: number) => {
     setQuestions((prev) => {
       const newQuestions = prev.filter((_, index) => index !== questionIndex);
-      // Update question order numbers
       return newQuestions.map((q, index) => ({
         ...q,
         question_order: index + 1,
@@ -256,7 +267,6 @@ const CreateQuizPage: React.FC = () => {
   };
 
   const getValidationReason = () => {
-    // Check for pending AI questions
     const pendingAIQuestions = questions.filter((q) => {
       const isAI = (q as any).is_ai_generated === true;
       const status = (q as any).ai_status as any;
@@ -294,7 +304,6 @@ const CreateQuizPage: React.FC = () => {
   };
 
   const validateStep2 = () => {
-    // Check for pending AI questions - must approve or discard all
     const pendingAIQuestions = questions.filter((q) => {
       const isAI = (q as any).is_ai_generated === true;
       const status = (q as any).ai_status as any;
@@ -302,16 +311,15 @@ const CreateQuizPage: React.FC = () => {
     });
 
     if (pendingAIQuestions.length > 0) {
-      return false; // Cannot create quiz with pending AI questions
+      return false;
     }
 
     const included = questions.filter((q) => {
       const isAI = (q as any).is_ai_generated === true;
       const status = (q as any).ai_status as any;
-      return !isAI || status === "approved"; // only approved AI go through
+      return !isAI || status === "approved";
     });
 
-    // Check if there are any valid questions
     if (included.length === 0) {
       return false;
     }
@@ -352,7 +360,7 @@ const CreateQuizPage: React.FC = () => {
         return !isAI || status === "approved";
       });
 
-      const totalPoints = included.reduce((sum, q) => sum + q.points, 0);
+      const totalPoints = included.reduce((sum, q) => sum + (q.points || 0), 0);
       const createQuizData: CreateQuizData = {
         ...quizData,
         total_questions: included.length,
@@ -372,23 +380,23 @@ const CreateQuizPage: React.FC = () => {
     }
   };
 
-  const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
+  const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
 
   return (
     <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
       {/* Animated background elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]" />
 
       {/* Floating decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse" />
       <div
         className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
         style={{ animationDelay: "1s" }}
-      ></div>
+      />
       <div
         className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
         style={{ animationDelay: "2s" }}
-      ></div>
+      />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-12 space-y-8">
         {/* Header */}
@@ -411,385 +419,327 @@ const CreateQuizPage: React.FC = () => {
           </p>
         </motion.div>
 
-        {/* Progress Steps */}
+        {/* Progress Steps + Step 1 Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex items-center justify-center space-x-4"
+          className="space-y-6"
         >
-          <div
-            className={`flex items-center ${
-              currentStep >= 1 ? "text-[#16803D]" : "text-gray-400"
-            }`}
-          >
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                currentStep >= 1
-                  ? "border-[#16803D] bg-[#16803D] text-white"
-                  : "border-gray-300"
-              }`}
+          <div className="flex items-center justify-center space-x-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Quiz Information
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quiz Title *
+              </label>
+              <Input
+                type="text"
+                value={quizData.title}
+                onChange={(e) => updateQuizData("title", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter quiz title"
+                maxLength={100}
+                showCharCount
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Subject *
+              </label>
+              <Select
+                value={quizData.subject}
+                onValueChange={(value) => updateQuizData("subject", value)}
+              >
+                <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Select a subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.name}>
+                      {subject.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Grade Level
+              </label>
+              <GradeSelect
+                value={quizData.grade_level}
+                onChange={(value) => updateQuizData("grade_level", value)}
+                placeholder="Select grade level"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Time Limit (minutes)
+              </label>
+              <input
+                type="number"
+                value={quizData.time_limit_minutes}
+                onChange={(e) => {
+                  const parsed = Number.parseInt(e.target.value, 10);
+                  const next = Number.isNaN(parsed)
+                    ? 1
+                    : Math.min(180, Math.max(1, parsed));
+                  updateQuizData("time_limit_minutes", next);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min={1}
+                max={180}
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description
+              </label>
+              <Textarea
+                value={quizData.description}
+                onChange={(e) => updateQuizData("description", e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter quiz description (optional)"
+                maxLength={500}
+                showCharCount
+              />
+            </div>
+          </div>
+
+          <div className="mt-8 flex items-center space-x-3">
+            <button
+              onClick={() => setCurrentStep(2)}
+              disabled={!validateStep1()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               1
-            </div>
-            <span className="ml-3 text-sm font-medium">Quiz Details</span>
-          </div>
-          <div className="flex-1 h-px bg-gray-300 max-w-32"></div>
-          <div
-            className={`flex items-center ${
-              currentStep >= 2 ? "text-[#16803D]" : "text-gray-400"
-            }`}
-          >
+            </button>
+            <span className="text-sm font-medium">Quiz Details</span>
+            <div className="flex-1 h-px bg-gray-300 max-w-32" />
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                currentStep >= 2
-                  ? "border-[#16803D] bg-[#16803D] text-white"
-                  : "border-gray-300"
+              className={`flex items-center ${
+                currentStep >= 2 ? "text-[#16803D]" : "text-gray-400"
               }`}
             >
-              2
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                  currentStep >= 2
+                    ? "border-[#16803D] bg-[#16803D] text-white"
+                    : "border-gray-300"
+                }`}
+              >
+                2
+              </div>
+              <span className="ml-3 text-sm font-medium">
+                Questions &amp; Answers
+              </span>
             </div>
-            <span className="ml-3 text-sm font-medium">
-              Questions & Answers
-            </span>
           </div>
         </motion.div>
-
-        {/* Step 1: Quiz Details */}
-        {currentStep === 1 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <div className="bg-green-100 w-8 h-8 rounded-lg flex items-center justify-center">
-                    <PlusIcon className="w-4 h-4 text-green-600" />
-                  </div>
-                  <span>Quiz Details</span>
-                </CardTitle>
-                <CardDescription>
-                  Set up your quiz basic information
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="quiz-title">Quiz Title *</Label>
-                    <Input
-                      id="quiz-title"
-                      type="text"
-                      value={quizData.title}
-                      onChange={(e) => updateQuizData("title", e.target.value)}
-                      placeholder="Enter quiz title"
-                      className="focus:ring-2 focus:ring-[#16803D] focus:border-[#16803D]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="quiz-subject">Subject *</Label>
-                    <Select
-                      value={quizData.subject}
-                      onValueChange={(value) => updateQuizData("subject", value)}
-                    >
-                      <SelectTrigger className="focus:ring-2 focus:ring-[#16803D] focus:border-[#16803D]">
-                        <SelectValue placeholder="Select a subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {subjects.map((subject) => (
-                          <SelectItem key={subject.id} value={subject.name}>
-                            {subject.display_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="quiz-grade">Grade Level</Label>
-                    <Input
-                      id="quiz-grade"
-                      type="text"
-                      value={quizData.grade_level}
-                      onChange={(e) =>
-                        updateQuizData("grade_level", e.target.value)
-                      }
-                      placeholder="e.g., Grade 10, High School"
-                      className="focus:ring-2 focus:ring-[#16803D] focus:border-[#16803D]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="quiz-time">Time Limit (minutes)</Label>
-                    <Input
-                      id="quiz-time"
-                      type="number"
-                      value={quizData.time_limit_minutes}
-                      onChange={(e) => {
-                        const raw = Number.parseInt(e.target.value || "0");
-                        const next = Number.isFinite(raw)
-                          ? Math.min(180, Math.max(1, raw))
-                          : 60;
-                        updateQuizData("time_limit_minutes", next);
-                      }}
-                      min="1"
-                      max="180"
-                      className="focus:ring-2 focus:ring-[#16803D] focus:border-[#16803D]"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="quiz-description">Description</Label>
-                    <Textarea
-                      id="quiz-description"
-                      value={quizData.description}
-                      onChange={(e) =>
-                        updateQuizData("description", e.target.value)
-                      }
-                      rows={3}
-                      placeholder="Enter quiz description (optional)"
-                      className="focus:ring-2 focus:ring-[#16803D] focus:border-[#16803D]"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={() => setCurrentStep(2)}
-                    disabled={!validateStep1()}
-                    className="bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white shadow-[0_2px_2px_0_#16803D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
-                  >
-                    Next: Questions & Answers
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
 
         {/* Step 2: Questions & Answers */}
         {currentStep === 2 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
             className="space-y-6"
           >
             {/* AI Generator */}
-            <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <div className="bg-purple-100 w-8 h-8 rounded-lg flex items-center justify-center">
-                    <PlusIcon className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <span>AI Question Generator</span>
-                </CardTitle>
-                <CardDescription>
-                  Generate questions automatically using AI
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Label>Show:</Label>
-                    <Select
-                      value={questionFilter}
-                      onValueChange={(value) => setQuestionFilter(value as any)}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="manual">Manual</SelectItem>
-                        <SelectItem value="ai">AI</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  AI Question Generator
+                </h3>
+                <div className="flex items-center space-x-2 text-sm">
+                  <label>Show:</label>
+                  <Select
+                    value={questionFilter}
+                    onValueChange={(value) => setQuestionFilter(value as any)}
+                  >
+                    <SelectTrigger className="px-2 py-1 border border-gray-300 rounded-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="manual">Manual</SelectItem>
+                      <SelectItem value="ai">AI</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Difficulty
+                  </label>
+                  <Select
+                    value={aiDifficulty}
+                    onValueChange={(value) => setAiDifficulty(value as any)}
+                  >
+                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Question Type
+                  </label>
+                  <Select
+                    value={aiQuestionType}
+                    onValueChange={(value) => setAiQuestionType(value as any)}
+                  >
+                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="multiple_choice">
+                        Multiple Choice
+                      </SelectItem>
+                      <SelectItem value="true_false">True/False</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Number of questions
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={aiNumQuestions}
+                    onChange={(e) =>
+                      setAiNumQuestions(
+                        Math.max(
+                          1,
+                          Math.min(20, parseInt(e.target.value || "1"))
+                        )
+                      )
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={handleGenerateAI}
+                    disabled={aiLoading}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Generating…
+                      </>
+                    ) : (
+                      "Generate with AI"
+                    )}
+                  </button>
+                </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Optional: Upload syllabus PDF for context
+                </label>
+                <div className="flex items-center justify-between rounded-md border-2 border-dashed border-gray-300 bg-gray-50 px-3 py-3">
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="quiz-create-pdf"
+                      type="file"
+                      accept="application/pdf"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const result = await uploadPdfForAI(file);
+                          let pdfBase64: string,
+                            fileName: string,
+                            fileSize: number;
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Difficulty</Label>
-                    <Select
-                      value={aiDifficulty}
-                      onValueChange={(value) => setAiDifficulty(value as any)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="easy">Easy</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="hard">Hard</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                          // Handle the actual return structure
+                          if ("pdfs" in result && result.pdfs.length > 0) {
+                            ({ pdfBase64, fileName, fileSize } =
+                              result.pdfs[0]);
+                          } else {
+                            // Fallback for direct return
+                            ({ pdfBase64, fileName, fileSize } = result as any);
+                          }
 
-                  <div className="space-y-2">
-                    <Label>Question Type</Label>
-                    <Select
-                      value={aiQuestionType}
-                      onValueChange={(value) => setAiQuestionType(value as any)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="multiple_choice">
-                          Multiple Choice
-                        </SelectItem>
-                        <SelectItem value="true_false">True/False</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                          setPdfBase64(pdfBase64);
+                          setPdfName(fileName);
+                          setPdfSize(fileSize);
 
-                  <div className="space-y-2">
-                    <Label>Number of questions</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={aiNumQuestions}
-                      onChange={(e) => {
-                        const raw = Number.parseInt(e.target.value || "0");
-                        const next = Number.isFinite(raw)
-                          ? Math.min(20, Math.max(1, raw))
-                          : 5;
-                        setAiNumQuestions(next);
+                          // also keep in the existing pdfs array used elsewhere
+                          setPdfs((prev) => [
+                            ...prev,
+                            { pdfBase64, fileName, fileSize },
+                          ]);
+                          toast.success("Syllabus loaded as AI context");
+                        } catch (err: any) {
+                          console.error(err);
+                          toast.error(err?.message || "Failed to read PDF");
+                        }
                       }}
+                      className="hidden"
                     />
-                  </div>
-
-                  <div className="flex items-end">
-                    <Button
-                      onClick={handleGenerateAI}
-                      disabled={aiLoading}
-                      className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-md hover:shadow-lg transition-all duration-200"
+                    <label
+                      htmlFor="quiz-create-pdf"
+                      className="inline-flex items-center px-3 py-2 bg-white border rounded-md text-sm cursor-pointer hover:bg-gray-50"
                     >
-                      {aiLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Generating…
-                        </>
-                      ) : (
-                        "Generate with AI"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Optional: Upload syllabus PDF for context</Label>
-                  <div className="flex items-center justify-between rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-4 hover:border-[#16803D] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <input
-                        id="quiz-create-pdf"
-                        type="file"
-                        accept="application/pdf"
-                        multiple
-                        onChange={async (e) => {
-                          const files = Array.from(e.target.files || []);
-                          if (files.length === 0) return;
-
-                          if (files.length > 10) {
-                            toast.error(
-                              "Maximum 10 PDF files allowed per selection"
-                            );
-                            return;
-                          }
-
-                          try {
-                            const currentCount = pdfs.length;
-                            if (currentCount + files.length > 10) {
-                              toast.error("You can upload up to 10 PDFs in total");
-                              return;
-                            }
-
-                            const { pdfs: uploadedPdfs } = await uploadPdfForAI(
-                              files
-                            );
-                            setPdfs((prev) => [...prev, ...uploadedPdfs]);
-
-                            const newTotal = currentCount + uploadedPdfs.length;
-                            if (newTotal === 1) {
-                              toast.success("1 PDF loaded as AI context");
-                            } else {
-                              toast.success(
-                                `${uploadedPdfs.length} PDF${
-                                  uploadedPdfs.length > 1 ? "s" : ""
-                                } added to AI context (Total: ${newTotal}/10)`
-                              );
-                            }
-                          } catch (err: any) {
-                            console.error(err);
-                            toast.error(err?.message || "Failed to read PDFs");
-                          }
-                        }}
-                        className="hidden"
-                      />
-                      <label
-                        htmlFor="quiz-create-pdf"
-                        className="inline-flex items-center px-3 py-2 bg-white border rounded-md text-sm cursor-pointer hover:bg-gray-50"
-                      >
-                        Choose PDFs (up to 10)
-                      </label>
-                      {pdfs.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {pdfs.map((pdf, index) => (
-                            <span
-                              key={index}
-                              className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1 flex items-center gap-1"
-                            >
-                              {pdf.fileName} (
-                              {(pdf.fileSize / 1024).toFixed(1)} KB)
-                              <button
-                                onClick={() =>
-                                  setPdfs((prev) =>
-                                    prev.filter((_, i) => i !== index)
-                                  )
-                                }
-                                className="ml-1 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center"
-                                title="Remove PDF"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-500">
-                          No files selected
-                        </span>
-                      )}
-                    </div>
-                    {pdfs.length > 0 && (
-                      <button
-                        onClick={() => setPdfs([])}
-                        className="text-xs text-gray-600 hover:text-gray-900"
-                      >
-                        Clear All
-                      </button>
+                      Choose PDF
+                    </label>
+                    {pdfName ? (
+                      <span className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1">
+                        {pdfName}
+                        {pdfSize && ` (${(pdfSize / 1024).toFixed(1)} KB)`}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-500">
+                        No file selected
+                      </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500">
-                    PDFs up to 10MB each, maximum 10 files. We'll use their text
-                    as AI context.
-                  </p>
+                  {pdfName && (
+                    <button
+                      onClick={() => {
+                        setPdfBase64(null);
+                        setPdfName(null);
+                        setPdfSize(null);
+                      }}
+                      className="text-xs text-gray-600 hover:text-gray-900"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+                <p className="mt-1 text-xs text-gray-500">
+                  PDF up to 10MB. We'll use its text as AI context.
+                </p>
+              </div>
+            </div>
 
             {/* Quiz Summary */}
-            <Card className="bg-blue-50 border-blue-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-blue-800 text-base">
-                  Quiz Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-blue-700 space-y-1">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-blue-800 mb-2">
+                Quiz Summary
+              </h3>
+              <div className="text-sm text-blue-700">
                 <p>
                   <strong>Title:</strong> {quizData.title}
                 </p>
@@ -798,7 +748,7 @@ const CreateQuizPage: React.FC = () => {
                 </p>
                 <p>
                   <strong>Grade Level:</strong>{" "}
-                  {quizData.grade_level || "Not specified"}
+                  {getGradeLevelDisplayName(quizData.grade_level)}
                 </p>
                 <p>
                   <strong>Time Limit:</strong> {quizData.time_limit_minutes}{" "}
@@ -810,8 +760,8 @@ const CreateQuizPage: React.FC = () => {
                 <p>
                   <strong>Total Points:</strong> {totalPoints}
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Question Management */}
             <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
@@ -837,7 +787,6 @@ const CreateQuizPage: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Questions */}
                 {visibleQuestions.length === 0 ? (
                   <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
                     <div className="text-gray-500 mb-4">
@@ -920,7 +869,7 @@ const CreateQuizPage: React.FC = () => {
                                   )
                                 }
                               >
-                                <SelectTrigger className="w-40">
+                                <SelectTrigger className="px-3 py-1 border border-gray-300 rounded-md text-sm">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -933,69 +882,69 @@ const CreateQuizPage: React.FC = () => {
                                 </SelectContent>
                               </Select>
                               <div className="flex items-center space-x-2">
-                                <Label className="text-sm text-gray-600">
+                                <span className="text-sm text-gray-600">
                                   Points:
-                                </Label>
-                                <Input
+                                </span>
+                                <input
                                   type="number"
                                   value={question.points}
                                   onChange={(e) => {
-                                    const raw = Number.parseInt(
-                                      e.target.value || "0"
+                                    const parsed = Number.parseInt(
+                                      e.target.value,
+                                      10
                                     );
-                                    const next = Number.isFinite(raw)
-                                      ? Math.min(100, Math.max(1, raw))
-                                      : 10;
-                                    updateQuestion(questionIndex, "points", next);
+                                    const next = Number.isNaN(parsed)
+                                      ? 1
+                                      : Math.min(100, Math.max(1, parsed));
+                                    updateQuestion(
+                                      questionIndex,
+                                      "points",
+                                      next
+                                    );
                                   }}
-                                  className="w-16"
-                                  min="1"
-                                  max="100"
+                                  className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"
+                                  min={1}
+                                  max={100}
                                 />
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
+                              <button
                                 onClick={() => removeQuestion(questionIndex)}
-                                className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                                className="text-red-600 hover:text-red-900"
+                                title="Remove Question"
                               >
                                 <TrashIcon className="h-4 w-4" />
-                              </Button>
+                              </button>
                               {isAI && aiStatus === "pending" && (
                                 <>
-                                  <Button
+                                  <button
                                     onClick={() =>
                                       approveAIQuestion(originalIndex)
                                     }
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
+                                    className="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-sm font-medium"
+                                    title="Approve AI question"
                                   >
                                     Approve
-                                  </Button>
-                                  <Button
+                                  </button>
+                                  <button
                                     onClick={() =>
                                       discardAIQuestion(originalIndex)
                                     }
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-red-100 text-red-700 border-red-200 hover:bg-red-200"
+                                    className="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-sm font-medium"
+                                    title="Discard AI question"
                                   >
                                     Discard
-                                  </Button>
+                                  </button>
                                 </>
                               )}
                             </div>
                           </div>
                         </CardHeader>
-                        <CardContent className="space-y-6">
-                          {/* Question Text */}
-                          <div className="space-y-2">
-                            <Label htmlFor={`question-${questionIndex}`}>
+                        <CardContent>
+                          <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
                               Question Text *
-                            </Label>
+                            </label>
                             <Textarea
-                              id={`question-${questionIndex}`}
                               value={question.question_text}
                               onChange={(e) =>
                                 updateQuestion(
@@ -1005,7 +954,10 @@ const CreateQuizPage: React.FC = () => {
                                 )
                               }
                               rows={3}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="Enter your question here"
+                              maxLength={300}
+                              showCharCount
                             />
                           </div>
 
@@ -1064,6 +1016,50 @@ const CreateQuizPage: React.FC = () => {
                               ))}
                             </div>
                           </div>
+
+                          {/* Show selected PDFs (if any) */}
+                          <div className="mt-4">
+                            {pdfs.length > 0 ? (
+                              <div className="space-y-2 text-sm text-gray-700">
+                                {pdfs.map((pdf, index) => (
+                                  <div
+                                    key={`${pdf.fileName}-${index}`}
+                                    className="flex items-center"
+                                  >
+                                    <span>
+                                      {pdf.fileName} (
+                                      {(pdf.fileSize / 1024).toFixed(1)} KB)
+                                    </span>
+                                    <button
+                                      onClick={() =>
+                                        setPdfs((prev) =>
+                                          prev.filter((_, i) => i !== index)
+                                        )
+                                      }
+                                      className="ml-2 text-gray-500 hover:text-red-500"
+                                      title="Remove PDF"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                                <button
+                                  onClick={() => setPdfs([])}
+                                  className="text-xs text-gray-600 hover:text-gray-900"
+                                >
+                                  Clear All
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-gray-500">
+                                No files selected
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-1">
+                              PDFs up to 10MB each, maximum 10 files. We'll use
+                              their text as AI context.
+                            </p>
+                          </div>
                         </CardContent>
                       </Card>
                     );
@@ -1107,7 +1103,7 @@ const CreateQuizPage: React.FC = () => {
                   {!validateStep2() && !loading && (
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
                       {getValidationReason()}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
                     </div>
                   )}
                 </div>

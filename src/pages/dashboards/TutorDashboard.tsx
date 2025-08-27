@@ -39,6 +39,8 @@ import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { validateDocumentFile } from "@/constants/form";
+import toast from "react-hot-toast";
 
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -350,8 +352,8 @@ const TutorDashboard: React.FC = () => {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.includes("pdf") && !file.type.includes("document")) {
-      setUploadError("Please upload a PDF or Word document");
+    if (!validateDocumentFile(file)) {
+      toast.error("Please upload a PDF (.pdf) or Word (.doc, .docx) file");
       return;
     }
 
@@ -379,7 +381,7 @@ const TutorDashboard: React.FC = () => {
       console.error("CV upload error:", error);
       setUploadError("Failed to upload CV. Please try again.");
     } finally {
-      setLoading(false);
+      setIsUploading(false);
     }
   };
 

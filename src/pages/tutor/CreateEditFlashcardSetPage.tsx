@@ -9,9 +9,12 @@ import { getNoteSubjects } from "@/lib/notes";
 import { generateAIFlashcards, uploadPdfForAI, extractTextFromPdf } from "@/lib/ai";
 import { subjectsService } from "@/lib/subjects";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { GradeSelect } from "@/components/ui/GradeSelect";
 import {
   Select,
   SelectContent,
@@ -19,9 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 
 // Local type to track AI workflow in UI
 type DraftCard = {
@@ -200,9 +200,13 @@ const CreateEditFlashcardSetPage: React.FC = () => {
         });
         // Remove existing cards
         await (await import("@/lib/supabase")).supabase
+
           .from("flashcards")
           .delete()
           .eq("set_id", setId);
+        if (deleteError) {
+          throw deleteError;
+        }
         // Reinsert with validation (only approved/manual)
         const validCardsForUpdate = includedCards.map((c, i) => ({
           set_id: setId,
@@ -317,39 +321,33 @@ const CreateEditFlashcardSetPage: React.FC = () => {
 
       <Card className="p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Set Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Set Title"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
-            <Select value={subject} onValueChange={setSubject}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjects.map((s) => (
-                  <SelectItem key={s.id} value={s.name}>
-                    {s.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="gradeLevel">Grade Level</Label>
-            <Input
-              id="gradeLevel"
-              value={gradeLevel}
-              onChange={(e) => setGradeLevel(e.target.value)}
-              placeholder="Grade (e.g., Grade 7)"
-            />
-          </div>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Set Title"
+            className="border rounded-md p-2"
+            maxLength={100}
+            showCharCount
+            charCountClassName="py-1"
+          />
+          <Select value={subject} onValueChange={(value) => setSubject(value)}>
+            <SelectTrigger className="border rounded-md p-2 bg-white">
+              <SelectValue placeholder="Select Subject" />
+            </SelectTrigger>
+            <SelectContent>
+              {subjects.map((s) => (
+                <SelectItem key={s.id} value={s.name}>
+                  {s.display_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <GradeSelect
+            value={gradeLevel}
+            onChange={(value) => setGradeLevel(value)}
+            placeholder="Select grade level"
+            className="border rounded-md p-2 bg-white"
+          />
         </div>
 
         <div className="flex items-center justify-between mt-4">
@@ -388,12 +386,15 @@ const CreateEditFlashcardSetPage: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Label className="text-sm text-gray-600">Difficulty:</Label>
+            <span className="text-sm text-gray-600">Difficulty:</span>
             <Select
               value={aiDifficulty}
               onValueChange={(value) => setAiDifficulty(value as any)}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger
+                className="border rounded-md p-2"
+                aria-label="Difficulty"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -569,6 +570,9 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                 }
                 className="min-h-[90px] w-full"
                 placeholder={`Front (term/question) #${idx + 1}`}
+                maxLength={200}
+                showCharCount
+                charCountClassName="py-1"
               />
               <div className="relative w-full">
                 <Textarea
@@ -582,6 +586,9 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                   }
                   className="min-h-[90px] w-full"
                   placeholder={`Back (definition/answer) #${idx + 1}`}
+                  maxLength={300}
+                  showCharCount
+                  charCountClassName="py-1"
                 />
                 <Button
                   onClick={() => removeCard(idx)}

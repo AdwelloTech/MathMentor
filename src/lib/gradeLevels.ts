@@ -1,5 +1,5 @@
-import { supabase } from './supabase';
-import type { GradeLevel } from '@/types/auth';
+import { supabase } from "./supabase";
+import type { GradeLevel } from "@/types/auth";
 
 // Cache for grade levels to avoid repeated database calls
 let gradeLevelsCache: GradeLevel[] | null = null;
@@ -11,36 +11,36 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
  */
 export const fetchGradeLevels = async (): Promise<GradeLevel[]> => {
   const now = Date.now();
-  
+
   // Return cached data if it's still fresh
-  if (gradeLevelsCache && (now - lastFetchTime) < CACHE_DURATION) {
+  if (gradeLevelsCache && now - lastFetchTime < CACHE_DURATION) {
     return gradeLevelsCache;
   }
 
   try {
-    console.log('Fetching grade levels from database...');
-    
+    console.log("Fetching grade levels from database...");
+
     const { data, error } = await supabase
-      .from('grade_levels')
-      .select('*')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
+      .from("grade_levels")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
 
     if (error) {
-      console.error('Error fetching grade levels:', error);
+      console.error("Error fetching grade levels:", error);
       throw error;
     }
 
     console.log(`Fetched ${data?.length || 0} grade levels`);
-    
+
     // Update cache
     gradeLevelsCache = data || [];
     lastFetchTime = now;
-    
+
     return gradeLevelsCache;
   } catch (error) {
-    console.error('Failed to fetch grade levels:', error);
-    
+    console.error("Failed to fetch grade levels:", error);
+
     // Return empty array on error, but log it
     return [];
   }
@@ -49,9 +49,11 @@ export const fetchGradeLevels = async (): Promise<GradeLevel[]> => {
 /**
  * Get grade levels grouped by category
  */
-export const getGradeLevelsByCategory = async (): Promise<Record<string, GradeLevel[]>> => {
+export const getGradeLevelsByCategory = async (): Promise<
+  Record<string, GradeLevel[]>
+> => {
   const gradeLevels = await fetchGradeLevels();
-  
+
   return gradeLevels.reduce((acc, gradeLevel) => {
     const category = gradeLevel.category;
     if (!acc[category]) {
@@ -65,17 +67,21 @@ export const getGradeLevelsByCategory = async (): Promise<Record<string, GradeLe
 /**
  * Find a grade level by ID
  */
-export const findGradeLevelById = async (id: string): Promise<GradeLevel | null> => {
+export const findGradeLevelById = async (
+  id: string
+): Promise<GradeLevel | null> => {
   const gradeLevels = await fetchGradeLevels();
-  return gradeLevels.find(gl => gl.id === id) || null;
+  return gradeLevels.find((gl) => gl.id === id) || null;
 };
 
 /**
  * Find a grade level by code
  */
-export const findGradeLevelByCode = async (code: string): Promise<GradeLevel | null> => {
+export const findGradeLevelByCode = async (
+  code: string
+): Promise<GradeLevel | null> => {
   const gradeLevels = await fetchGradeLevels();
-  return gradeLevels.find(gl => gl.code === code) || null;
+  return gradeLevels.find((gl) => gl.code === code) || null;
 };
 
 /**
@@ -86,8 +92,27 @@ export const clearGradeLevelsCache = (): void => {
   lastFetchTime = 0;
 };
 
+/**
+ * Get grade level display name by ID (synchronous version for UI display)
+ */
+export const getGradeLevelDisplayName = (
+  id: string | null | undefined
+): string => {
+  if (!id) return "Not specified";
+
+  // Check cache first
+  if (gradeLevelsCache) {
+    const gradeLevel = gradeLevelsCache.find((gl) => gl.id === id);
+    return gradeLevel?.display_name || "Unknown grade";
+  }
+
+  // If cache not available, return the ID for now
+  // In practice, this should rarely happen as the cache is populated on app load
+  return "Loading...";
+};
+
 // Import React for the hook
-import React from 'react';
+import React from "react";
 
 /**
  * React hook for fetching grade levels
@@ -104,8 +129,8 @@ export const useGradeLevels = () => {
       const data = await fetchGradeLevels();
       setGradeLevels(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load grade levels');
-      console.error('Error in useGradeLevels:', err);
+      setError(err.message || "Failed to load grade levels");
+      console.error("Error in useGradeLevels:", err);
     } finally {
       setLoading(false);
     }
@@ -124,6 +149,6 @@ export const useGradeLevels = () => {
     gradeLevels,
     loading,
     error,
-    refetch
+    refetch,
   };
-}; 
+};

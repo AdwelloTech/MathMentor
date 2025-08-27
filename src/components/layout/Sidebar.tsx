@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   XMarkIcon,
   AcademicCapIcon,
@@ -19,10 +18,13 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { getRoleDisplayName } from "@/utils/permissions";
-import { db } from "@/lib/db";
-import { supabase } from "@/lib/supabase";
 import type { TutorApplication } from "@/types/auth";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { getActiveProfileImage, getProfileImageUrl } from "@/lib/profileImages";
+import type { ProfileImage } from "@/types/auth";
+import mathMentorLogo from "@/assets/math-mentor-logo.png";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -49,6 +51,45 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { isAdminLoggedIn } = useAdmin();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
+  const [profileImage, setProfileImage] = useState<ProfileImage | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+
+  // Fetch profile image when component mounts or profile changes
+  useEffect(() => {
+    let cancelled = false;
+    const currentUserId = profile?.user_id ?? null;
+
+    // If user logs out or no profile, clear immediately
+    if (!currentUserId) {
+      setProfileImage(null);
+      setProfileImageUrl(null);
+      return;
+    }
+
+    (async () => {
+      try {
+        const activeImage = await getActiveProfileImage(currentUserId);
+        if (cancelled) return;
+        if (activeImage) {
+          setProfileImage(activeImage);
+          setProfileImageUrl(getProfileImageUrl(activeImage.file_path));
+        } else {
+          setProfileImage(null);
+          setProfileImageUrl(null);
+        }
+      } catch (error) {
+        console.error("Error fetching profile image:", error);
+        if (!cancelled) {
+          setProfileImage(null);
+          setProfileImageUrl(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.user_id]);
 
   // Add admin-specific navigation
   const adminNavigation = [
@@ -205,7 +246,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     return baseNavigation;
   };
 
-  const navigation = getNavigation();
+  // Memoize navigation items to prevent unnecessary re-renders
+  const navigation = useMemo(
+    () => getNavigation(),
+    [
+      profile?.role,
+      isAdminLoggedIn,
+      tutorApplication?.application_status,
+      idVerification?.verification_status,
+      profile?.is_active,
+      hasIDVerification,
+    ]
+  );
 
   const isActive = (href: string) => location.pathname === href;
 
@@ -244,356 +296,226 @@ const Sidebar: React.FC<SidebarProps> = ({
     return "Application pending approval";
   };
 
-  // Collapsible Logo Section
+  // Enhanced Logo Section with smooth animations
   const LogoSection = () => {
     return (
-      <div className="flex h-16 shrink-0 items-center mb-6 justify-center lg:justify-start">
+      <motion.div
+        className="flex h-16 shrink-0 items-center mb-8 justify-center lg:justify-start"
+        initial={{ opacity: 1, y: 0 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="flex items-center">
-          <div className="relative">
-            <img
-              src="/src/assets/math-mentor-logo.png"
-              alt="IEMS Logo"
-              className="h-8 w-8 text-green-600 text-center mx-auto"
-            />
+          <div className="relative group">
+            <motion.div
+              className="w-12 h-12 rounded-xl  flex items-center justify-center"
+              transition={{ duration: 0.2 }}
+            >
+              <img
+                src={mathMentorLogo}
+                alt="Math Mentor logo"
+                className="h-16 w-16"
+              />
+            </motion.div>
           </div>
         </div>
-      </div>
-    );
-  };
-
-  // Collapsible Navigation Item Component
-  const NavigationItem = ({ item, index }: { item: any; index: number }) => {
-    const isDisabled = item.disabled;
-    const active = isActive(item.href);
-
-    // Context-aware color logic
-    const getItemColor = (item: any) => {
-      // Priority-based colors
-      const highPriorityItems = ["Dashboard", "Profile", "Settings"];
-      const isHighPriority = highPriorityItems.includes(item.name);
-
-      // Role-based colors
-      const isAdminItem = adminNavigation.some((nav) => nav.name === item.name);
-      const isTutorItem = tutorNavigationItems.some(
-        (nav) => nav.name === item.name
-      );
-      const isStudentItem =
-        profile?.role === "student" &&
-        [
-          "Book a Session",
-          "My Sessions",
-          "Tutor Materials",
-          "Quizzes",
-          "Flash Cards",
-          "Packages",
-        ].includes(item.name);
-
-      // Section type colors
-      const isMainFeature = [
-        "Dashboard",
-        "Book a Session",
-        "My Sessions",
-        "Schedule Class",
-        "Manage Classes",
-      ].includes(item.name);
-      const isSettings = ["Settings", "Profile"].includes(item.name);
-      const isManagement = [
-        "Manage Students",
-        "Manage Tutors",
-        "Tutor Applications",
-        "ID Verifications",
-      ].includes(item.name);
-      const isContent = [
-        "Quizzes",
-        "Flash Cards",
-        "Tutor Materials",
-        "Manage Materials",
-      ].includes(item.name);
-
-      // Time-based color adaptation (subtle)
-      const hour = new Date().getHours();
-      const isDayTime = hour >= 6 && hour <= 18;
-
-      // Color assignment logic
-      if (isHighPriority) {
-        return { primary: "green", secondary: "emerald" };
-      }
-
-      if (profile?.role === "admin" || isAdminLoggedIn) {
-        if (isManagement) return { primary: "green", secondary: "emerald" };
-        if (isSettings) return { primary: "yellow", secondary: "amber" };
-        return { primary: "green", secondary: "emerald" };
-      }
-
-      if (profile?.role === "tutor") {
-        if (isMainFeature) return { primary: "green", secondary: "emerald" };
-        if (isContent) return { primary: "yellow", secondary: "amber" };
-        if (isSettings) return { primary: "yellow", secondary: "amber" };
-        return { primary: "green", secondary: "emerald" };
-      }
-
-      if (profile?.role === "student") {
-        if (isStudentItem) return { primary: "green", secondary: "emerald" };
-        if (isSettings) return { primary: "yellow", secondary: "amber" };
-        return { primary: "green", secondary: "emerald" };
-      }
-
-      // Default fallback
-      return { primary: "green", secondary: "emerald" };
-    };
-
-    const itemColors = getItemColor(item);
-    const isGreenActive = itemColors.primary === "green";
-
-    // Dynamic class generation for context-aware colors
-    const getActiveClasses = () => {
-      if (itemColors.primary === "green") {
-        return "text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm";
-      } else {
-        return "text-yellow-700 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 shadow-sm";
-      }
-    };
-
-    const getHoverClasses = () => {
-      if (itemColors.primary === "green") {
-        return "text-gray-700 hover:text-green-600 hover:bg-gradient-to-r hover:from-green-50/50 hover:to-emerald-50/50 border border-transparent hover:border-green-100";
-      } else {
-        return "text-gray-700 hover:text-yellow-600 hover:bg-gradient-to-r hover:from-yellow-50/50 hover:to-amber-50/50 border border-transparent hover:border-yellow-100";
-      }
-    };
-
-    // Simple animation variants
-    const itemVariants = {
-      hidden: {
-        opacity: 0,
-        x: -10,
-      },
-      visible: {
-        opacity: 1,
-        x: 0,
-        transition: {
-          duration: 0.3,
-          delay: index * 0.03,
-        },
-      },
-    };
-
-    if (isDisabled) {
-      return (
-        <motion.div
-          key={item.name}
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-          className="relative"
-        >
-          <div
-            className={cn(
-              "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden cursor-not-allowed",
-              active
-                ? "text-gray-400 bg-gray-100/50 border border-gray-200"
-                : "text-gray-400 bg-transparent hover:bg-gray-50/50 border border-transparent",
-              !isHovered && "justify-center"
-            )}
-            title={getTooltipMessage(item)}
-          >
-            <div className="relative opacity-50">
-              <item.icon className="h-5 w-5 shrink-0" />
-            </div>
-            <AnimatePresence>
-              {isHovered && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 0.5, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden whitespace-nowrap"
-                >
-                  {item.name}
-                </motion.span>
-              )}
-            </AnimatePresence>
-
-            {/* Status indicators */}
-            {isTutorPending && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-yellow-500 rounded-full" />
-            )}
-            {isTutorRejected && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
-            )}
-            {isTutorApproved && isIDVerificationPending && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full" />
-            )}
-            {isTutorApproved && isIDVerificationRejected && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
-            )}
-
-            {/* Status indicator text */}
-            <AnimatePresence>
-              {isHovered && (
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 0.6, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute bottom-1 right-2 text-xs overflow-hidden whitespace-nowrap"
-                >
-                  {isTutorPending && "App Pending"}
-                  {isTutorRejected && "App Rejected"}
-                  {!tutorApplication && "No App"}
-                  {isTutorApproved && !hasIDVerification && "Need ID"}
-                  {isTutorApproved && isIDVerificationPending && "ID Pending"}
-                  {isTutorApproved && isIDVerificationRejected && "ID Rejected"}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      );
-    }
-
-    return (
-      <motion.div
-        key={item.name}
-        variants={itemVariants}
-        initial="hidden"
-        animate="visible"
-        className="relative"
-      >
-        <Link
-          to={item.href}
-          onClick={() => setSidebarOpen(false)}
-          className={cn(
-            "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden",
-            active ? getActiveClasses() : getHoverClasses(),
-            !isHovered && "justify-center"
-          )}
-        >
-          <div className="relative">
-            <item.icon
-              className={cn(
-                "h-5 w-5 shrink-0 transition-colors duration-200",
-                active
-                  ? isGreenActive
-                    ? "text-green-600"
-                    : "text-yellow-600"
-                  : `text-gray-600 group-hover:text-${itemColors.primary}-600`
-              )}
-            />
-            {active && (
-              <div
-                className={cn(
-                  "absolute -top-1 -right-1 w-2 h-2 rounded-full",
-                  isGreenActive ? "bg-green-500" : "bg-yellow-500"
-                )}
-              />
-            )}
-          </div>
-
-          <AnimatePresence>
-            {isHovered && (
-              <motion.span
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.2 }}
-                className="group-hover:translate-x-1 transition-transform duration-200 overflow-hidden whitespace-nowrap"
-              >
-                {item.name}
-              </motion.span>
-            )}
-          </AnimatePresence>
-
-          {active && (
-            <div
-              className={cn(
-                "absolute inset-0 rounded-xl",
-                isGreenActive ? "bg-green-100/20" : "bg-yellow-100/20"
-              )}
-            />
-          )}
-        </Link>
       </motion.div>
     );
   };
 
-  // Simple Navigation Section
-  const NavigationSection = () => {
+  // Memoize individual navigation items
+  const NavigationItem = useCallback(
+    ({ item }: { item: any }) => {
+      const isDisabled = item.disabled;
+      const active = isActive(item.href);
+
+      if (isDisabled) {
+        return (
+          <motion.div
+            key={item.name}
+            className="relative group"
+            title={getTooltipMessage(item)}
+          >
+            <div
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-not-allowed",
+                active
+                  ? "text-gray-400 bg-gray-100/50"
+                  : "text-gray-400 hover:bg-gray-50/50",
+                !isHovered && "justify-start"
+              )}
+            >
+              <div className="relative opacity-40">
+                <item.icon className="h-5 w-5 shrink-0" />
+              </div>
+              {isHovered && (
+                <span className="overflow-hidden whitespace-nowrap text-gray-400">
+                  {item.name}
+                </span>
+              )}
+            </div>
+          </motion.div>
+        );
+      }
+
+      return (
+        <motion.div
+          key={item.name}
+          className="relative group"
+          whileHover={{ x: 4 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Link
+            to={item.href}
+            onClick={() => setSidebarOpen(false)}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 relative overflow-hidden",
+              active
+                ? "text-black bg-yellow-300 shadow-lg"
+                : "text-gray-700 hover:bg-gray-100/80 hover:text-gray-900",
+              !isHovered && "justify-start"
+            )}
+          >
+            {/* Active indicator */}
+            {active && (
+              <motion.div
+                className="absolute inset-0 bg-yellow-300 rounded-xl"
+                initial={{ scale: 1, opacity: 1 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            )}
+
+            <div className="relative z-10 flex items-center gap-3">
+              <motion.div
+                className="relative"
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <item.icon
+                  className={cn(
+                    "h-5 w-5 shrink-0 transition-colors duration-200",
+                    active
+                      ? "text-black"
+                      : "text-gray-600 group-hover:text-gray-900"
+                  )}
+                />
+              </motion.div>
+              {isHovered && (
+                <span className="overflow-hidden whitespace-nowrap font-medium">
+                  {item.name}
+                </span>
+              )}
+            </div>
+          </Link>
+        </motion.div>
+      );
+    },
+    [isHovered, isActive]
+  );
+
+  // Memoize the navigation section to prevent re-renders
+  const NavigationSection = useCallback(() => {
     return (
-      <div className="flex flex-1 flex-col space-y-1">
-        {navigation.map((item, index) => (
-          <NavigationItem key={item.name} item={item} index={index} />
+      <div className="flex flex-1 flex-col space-y-2">
+        {navigation.map((item) => (
+          <div key={item.name}>
+            <NavigationItem item={item} />
+          </div>
         ))}
       </div>
     );
-  };
+  }, [navigation, NavigationItem]);
 
-  // Collapsible Profile Section
+  // Enhanced Profile Section with modern design and profile image
   const ProfileSection = () => {
+    const displayName = profile?.full_name || "User";
+    const displayRole = profile?.role ? getRoleDisplayName(profile.role) : "User";
+
     return (
-      <div className="border-t border-gray-200/50 pt-4 mt-4 mb-8">
+      <motion.div
+        className="border-t border-gray-200/50 pt-6 mt-6 mb-4"
+        initial={{ opacity: 1, y: 0 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
         <div
           className={cn(
             "flex items-center",
-            isHovered ? "justify-between" : "justify-center"
+            isHovered ? "justify-between" : "justify-start"
           )}
         >
           {/* Profile Info */}
           <div className="flex items-center gap-3">
-            {/* Profile Avatar */}
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white font-semibold text-sm">
-                {profile?.full_name
-                  ? profile.full_name.charAt(0).toUpperCase()
-                  : "U"}
+            {/* Enhanced Profile Avatar with actual image */}
+            <motion.div
+              className="relative group"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-lg shadow-lg">
+                {profileImageUrl ? (
+                  <img
+                    src={profileImageUrl}
+                    alt={`${profile?.full_name || "User"}'s profile`}
+                    className="w-full h-full object-cover"
+                    onError={() => {
+                      // Fallback to initials if image fails to load
+                      setProfileImageUrl(null);
+                    }}
+                  />
+                ) : (
+                  <span>
+                    {profile?.full_name
+                      ? profile.full_name.charAt(0).toUpperCase()
+                      : "U"}
+                  </span>
+                )}
               </div>
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border-2 border-white" />
-            </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-3 border-white shadow-sm" />
+            </motion.div>
 
             {/* Profile Details */}
-            <AnimatePresence>
-              {isHovered && (
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col overflow-hidden whitespace-nowrap"
-                >
-                  <span className="text-sm font-medium text-gray-900 truncate max-w-32">
-                    {profile?.full_name || "User"}
-                  </span>
-                  <span className="text-xs text-gray-500 truncate max-w-32">
-                    {profile?.role ? getRoleDisplayName(profile.role) : "User"}
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {isHovered && (
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-semibold text-gray-900 truncate max-w-32">
+                  {displayName}
+                </span>
+                <span className="text-xs text-gray-500 truncate max-w-32">
+                  {displayRole}
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Logout Button */}
-          <AnimatePresence>
+          {/* Enhanced Logout Button */}
+          <AnimatePresence mode="wait">
             {isHovered && (
-              <motion.button
+              <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
-                onClick={onSignOut}
-                className="p-2 rounded-lg bg-green-50 border border-green-200 hover:bg-green-100 transition-colors duration-200"
+                transition={{ duration: 0.2, ease: "easeInOut" }}
               >
-                <ArrowRightOnRectangleIcon className="w-5 h-5 text-green-600" />
-              </motion.button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onSignOut}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+                >
+                  <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                </Button>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
   return (
     <>
-      {/* Mobile sidebar */}
+      {/* Enhanced Mobile sidebar with Aceternity design */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
@@ -601,47 +523,36 @@ const Sidebar: React.FC<SidebarProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
           >
             <motion.div
               className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+              onClick={() => setSidebarOpen(false)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSidebarOpen(false)}
             />
-
             <motion.div
               className="fixed inset-0 flex"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{
-                duration: 0.3,
-                ease: "easeOut",
-              }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
             >
               <div className="relative mr-16 flex w-full max-w-xs flex-1">
                 <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
                   <motion.button
                     type="button"
-                    className="-m-2.5 p-2.5"
+                    className="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 transition-colors"
                     onClick={() => setSidebarOpen(false)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <XMarkIcon className="h-6 w-6 text-white" />
+                    <XMarkIcon className="h-6 w-6" />
                   </motion.button>
                 </div>
 
-                <div className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 px-6 pb-4 shadow-2xl relative overflow-hidden">
-                  {/* Subtle background pattern */}
-                  <div className="absolute inset-0 opacity-20">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-200/10 via-transparent to-yellow-200/10" />
-                  </div>
-
-                  <div className="relative z-10 flex flex-col h-full overflow-y-auto">
+                <div className="flex grow flex-col bg-[#FFFFE4] backdrop-blur-xl border-r border-gray-200/50 px-6 pb-4 shadow-2xl">
+                  <div className="flex flex-col h-full overflow-y-auto">
                     <LogoSection />
                     <NavigationSection />
                     <div className="flex-1" />
@@ -654,30 +565,34 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Collapsible sidebar for desktop */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col">
+      {/* Enhanced Collapsible sidebar for desktop with Aceternity design */}
+      <motion.div
+        className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col"
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <motion.div
-          className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 shadow-xl relative overflow-hidden"
+          className="flex grow flex-col bg-[#FFFFE4] backdrop-blur-xl border-r border-gray-200/50 shadow-xl"
           animate={{
-            width: isHovered ? 288 : 80, // 288px = 72 * 4 (lg:w-72), 80px for collapsed
+            width: isHovered ? 320 : 80,
           }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          transition={{
+            duration: 0.4,
+            ease: [0.4, 0.0, 0.2, 1], // Custom easing for smooth collapse
+            delay: isHovered ? 0 : 0.1, // Small delay when collapsing to prevent breaking
+          }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          {/* Subtle background pattern */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-200/10 via-transparent to-yellow-200/10" />
-          </div>
-
-          <div className="relative z-10 flex flex-col h-full overflow-y-auto px-6 pb-4">
+          <div className="flex flex-col h-full overflow-y-auto px-4 py-6">
             <LogoSection />
             <NavigationSection />
             <div className="flex-1" />
             <ProfileSection />
           </div>
         </motion.div>
-      </div>
+      </motion.div>
     </>
   );
 };

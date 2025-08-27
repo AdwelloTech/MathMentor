@@ -7,6 +7,8 @@ import {
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   createTutorNote,
   uploadTutorNoteFile,
@@ -16,9 +18,7 @@ import { getNoteSubjects } from "@/lib/notes";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -27,9 +27,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import {
+  DESCRIPTION_MAX_LENGTH,
+  NOTE_TITLE_MAX_LENGTH,
+} from "@/constants/form";
 
 interface CreateTutorNoteModalProps {
   isOpen: boolean;
@@ -194,6 +195,14 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -251,6 +260,8 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                     className="w-full"
                     placeholder="Enter the title of your study material"
                     required
+                    maxLength={NOTE_TITLE_MAX_LENGTH}
+                    showCharCount
                   />
                 </div>
 
@@ -264,13 +275,13 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                   </Label>
                   <Textarea
                     id="description"
+                    name="description"
+                    placeholder="Enter a detailed description of the study material..."
                     value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={3}
+                    onChange={handleInputChange}
+                    maxLength={DESCRIPTION_MAX_LENGTH}
                     className="w-full"
-                    placeholder="Brief description of the material"
+                    rows={4}
                   />
                 </div>
 

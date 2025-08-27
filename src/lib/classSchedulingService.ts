@@ -388,24 +388,49 @@ export const classSchedulingService = {
       stripePaymentIntentId?: string
     ): Promise<ClassBooking> => {
       try {
-        // Use atomic RPC function to prevent race conditions
-        const { data, error } = await supabase.rpc("book_class_atomic", {
-          p_class_id: classId,
-          p_student_id: studentId,
-          p_payment_amount: paymentAmount,
-          p_stripe_payment_intent_id: stripePaymentIntentId || null,
-          p_payment_status: stripePaymentIntentId ? "paid" : "pending",
-        });
+        // First, check if the class has available spots
+        const { data: classData, error: classError } = await supabase
+          .from("tutor_classes")
+          .select("current_students, max_students")
+          .eq("id", classId)
+          .single();
 
-        if (error) {
-          if (error.message?.includes("Class is full") || error.code === "PGRST116") {
-            throw new Error("Class is full");
-          }
-          throw error;
+        if (classError) throw classError;
+        if (!classData) throw new Error("Class not found");
+
+        if (classData.current_students >= classData.max_students) {
+          throw new Error("Class is full");
         }
 
+        // Create the booking
+        const { data: bookingData, error: bookingError } = await supabase
+          .from("class_bookings")
+          .insert({
+            class_id: classId,
+            student_id: studentId,
+            payment_amount: paymentAmount,
+            stripe_payment_intent_id: stripePaymentIntentId || null,
+            payment_status: stripePaymentIntentId ? "paid" : "pending",
+            booking_status: "confirmed",
+          })
+          .select()
+          .single();
+
+        if (bookingError) throw bookingError;
+
+        // Update the class to increment current_students
+        const { error: updateError } = await supabase
+          .from("tutor_classes")
+          .update({
+            current_students: (classData.current_students || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", classId);
+
+        if (updateError) throw updateError;
+
         // Fetch the complete booking data with relations
-        const { data: bookingData, error: fetchError } = await supabase
+        const { data: completeBookingData, error: fetchError } = await supabase
           .from("class_bookings")
           .select(
             `
@@ -419,12 +444,12 @@ export const classSchedulingService = {
             student:profiles!class_bookings_student_id_fkey(id, full_name, email)
           `
           )
-          .eq("id", data.id)
+          .eq("id", bookingData.id)
           .single();
 
         if (fetchError) throw fetchError;
 
-        return bookingData;
+        return completeBookingData;
       } catch (error) {
         console.error("Error creating booking:", error);
         throw error;
@@ -537,7 +562,9 @@ export const classSchedulingService = {
     cancel: async (id: string): Promise<ClassBooking> => {
       try {
         // Get the booking first to get class_id
-        const existingBooking = await classSchedulingService.bookings.getById(id);
+        const existingBooking = await classSchedulingService.bookings.getById(
+          id
+        );
 
         if (!existingBooking) {
           throw new Error("Booking not found");
@@ -550,7 +577,10 @@ export const classSchedulingService = {
         });
 
         if (error) {
-          if (error.message?.includes("Booking not found") || error.code === "PGRST116") {
+          if (
+            error.message?.includes("Booking not found") ||
+            error.code === "PGRST116"
+          ) {
             throw new Error("Booking not found or already cancelled");
           }
           throw error;
@@ -861,7 +891,9 @@ export const classSchedulingService = {
 
   // Jitsi Integration
   jitsi: {
-    getMeetingDetails: async (classId: string): Promise<JitsiMeeting | null> => {
+    getMeetingDetails: async (
+      classId: string
+    ): Promise<JitsiMeeting | null> => {
       const { data, error } = await supabase
         .from("jitsi_meetings")
         .select("*")
@@ -890,9 +922,12 @@ export const classSchedulingService = {
     },
 
     generateManualMeeting: async (classId: string): Promise<any> => {
-      const { data, error } = await supabase.rpc("manual_generate_jitsi_for_class", {
-        class_uuid: classId,
-      });
+      const { data, error } = await supabase.rpc(
+        "manual_generate_jitsi_for_class",
+        {
+          class_uuid: classId,
+        }
+      );
 
       if (error) throw error;
       return data;

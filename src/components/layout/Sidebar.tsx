@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSignOut,
 }) => {
   const { profile } = useAuth();
-  const { isAdminLoggedIn } = useAdmin();
+  const { adminSession, loading: adminLoading } = useAdmin();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -158,7 +158,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
       ];
     }
-    if (profile?.role === "admin" || isAdminLoggedIn) {
+    // Show admin nav only for validated admin sessions
+    if (adminSession || (profile?.role === "admin" && !adminLoading)) {
       return adminNavigation;
     }
 

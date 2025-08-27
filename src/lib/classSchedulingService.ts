@@ -4,7 +4,6 @@ import type {
   TutorClass,
   ClassBooking,
   TutorAvailability,
-  ZoomMeeting,
   ClassReview,
   CreateClassFormData,
   UpdateClassFormData,
@@ -17,7 +16,64 @@ import type {
   StudentDashboardStats,
   ClassSearchFilters,
   ClassSearchResult,
+  JitsiMeeting,
 } from "@/types/classScheduling";
+
+/**
+ * Database Functions Required for Atomic Operations:
+ *
+ * These PostgreSQL functions need to be created in the database for the atomic booking operations:
+ *
+ * 1. book_class_atomic(p_class_id, p_student_id, p_payment_amount, p_stripe_payment_intent_id, p_payment_status)
+ *    - Atomically checks class capacity and creates booking in a single transaction
+ *    - Returns the created booking record or throws error if class is full
+ *
+ * 2. cancel_booking_atomic(p_booking_id, p_class_id)
+ *    - Atomically updates booking status and decrements current_students
+ *    - Prevents double-cancellation and ensures data consistency
+ *
+ * Example SQL for book_class_atomic:
+ * ```sql
+ * CREATE OR REPLACE FUNCTION book_class_atomic(
+ *   p_class_id UUID,
+ *   p_student_id UUID,
+ *   p_payment_amount NUMERIC,
+ *   p_stripe_payment_intent_id TEXT,
+ *   p_payment_status TEXT
+ * ) RETURNS class_bookings
+ * LANGUAGE plpgsql
+ * AS $$
+ * DECLARE
+ *   v_booking class_bookings;
+ * BEGIN
+ *   -- Atomically check capacity and increment counter
+ *   UPDATE tutor_classes
+ *      SET current_students = current_students + 1
+ *    WHERE id = p_class_id
+ *      AND current_students < max_students;
+ *
+ *   IF NOT FOUND THEN
+ *     RAISE EXCEPTION 'Class is full' USING ERRCODE = 'P0001';
+ *   END IF;
+ *
+ *   -- Create the booking
+ *   INSERT INTO class_bookings(
+ *     class_id, student_id, payment_amount,
+ *     stripe_payment_intent_id, payment_status,
+ *     booking_status
+ *   )
+ *   VALUES (
+ *     p_class_id, p_student_id, p_payment_amount,
+ *     p_stripe_payment_intent_id, p_payment_status,
+ *     'confirmed'
+ *   )
+ *   RETURNING * INTO v_booking;
+ *
+ *   RETURN v_booking;
+ * END;
+ * $$;
+ * ```
+ */
 
 export const classSchedulingService = {
   // Class Types
@@ -69,6 +125,7 @@ export const classSchedulingService = {
           {
             tutor_id: classData.tutor_id,
             class_type_id: classData.class_type_id,
+            subject_id: classData.subject_id ?? null,
             title: classData.title,
             description: classData.description,
             date: classData.date,
@@ -94,7 +151,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("id", classRecord.id)
@@ -112,7 +170,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("id", id)
@@ -132,7 +191,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("tutor_id", tutorId)
@@ -167,7 +227,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("tutor_id", tutorId)
@@ -201,7 +262,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .single();
@@ -235,7 +297,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("status", "scheduled")
@@ -324,46 +387,69 @@ export const classSchedulingService = {
       paymentAmount: number,
       stripePaymentIntentId?: string
     ): Promise<ClassBooking> => {
-      // Check if class is available
-      const classRecord = await classSchedulingService.classes.getById(classId);
-      if (classRecord.current_students >= classRecord.max_students) {
-        throw new Error("Class is full");
-      }
+      try {
+        // Use atomic RPC function to prevent race conditions
+        const { data, error } = await supabase.rpc("book_class_atomic", {
+          p_class_id: classId,
+          p_student_id: studentId,
+          p_payment_amount: paymentAmount,
+          p_stripe_payment_intent_id: stripePaymentIntentId || null,
+          p_payment_status: stripePaymentIntentId ? "paid" : "pending",
+        });
 
-      // Create booking
+        if (error) {
+          if (error.message?.includes("Class is full") || error.code === "PGRST116") {
+            throw new Error("Class is full");
+          }
+          throw error;
+        }
+
+        // Fetch the complete booking data with relations
+        const { data: bookingData, error: fetchError } = await supabase
+          .from("class_bookings")
+          .select(
+            `
+            *,
+            class:tutor_classes(
+              *,
+              class_type:class_types(*),
+              tutor:profiles(id, full_name, email),
+              subject:subjects(id, name, display_name, color)
+            ),
+            student:profiles!class_bookings_student_id_fkey(id, full_name, email)
+          `
+          )
+          .eq("id", data.id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        return bookingData;
+      } catch (error) {
+        console.error("Error creating booking:", error);
+        throw error;
+      }
+    },
+
+    getById: async (id: string): Promise<ClassBooking> => {
       const { data, error } = await supabase
         .from("class_bookings")
-        .insert([
-          {
-            class_id: classId,
-            student_id: studentId,
-            payment_amount: paymentAmount,
-            booking_status: "confirmed",
-            payment_status: stripePaymentIntentId ? "paid" : "pending",
-            stripe_payment_intent_id: stripePaymentIntentId || null,
-          },
-        ])
         .select(
           `
           *,
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
         )
+        .eq("id", id)
         .single();
 
       if (error) throw error;
-
-      // Update class current_students count
-      await supabase
-        .from("tutor_classes")
-        .update({ current_students: classRecord.current_students + 1 })
-        .eq("id", classId);
-
       return data;
     },
 
@@ -379,7 +465,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -408,7 +495,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -434,7 +522,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -446,19 +535,52 @@ export const classSchedulingService = {
     },
 
     cancel: async (id: string): Promise<ClassBooking> => {
-      const booking = await classSchedulingService.bookings.update(id, {
-        booking_status: "cancelled",
-      });
+      try {
+        // Get the booking first to get class_id
+        const existingBooking = await classSchedulingService.bookings.getById(id);
 
-      // Decrease class current_students count
-      if (booking.class) {
-        await supabase
-          .from("tutor_classes")
-          .update({ current_students: booking.class.current_students - 1 })
-          .eq("id", booking.class_id);
+        if (!existingBooking) {
+          throw new Error("Booking not found");
+        }
+
+        // Use atomic RPC function to prevent race conditions
+        const { data, error } = await supabase.rpc("cancel_booking_atomic", {
+          p_booking_id: id,
+          p_class_id: existingBooking.class_id,
+        });
+
+        if (error) {
+          if (error.message?.includes("Booking not found") || error.code === "PGRST116") {
+            throw new Error("Booking not found or already cancelled");
+          }
+          throw error;
+        }
+
+        // Fetch the updated booking data with relations
+        const { data: updatedBooking, error: fetchError } = await supabase
+          .from("class_bookings")
+          .select(
+            `
+            *,
+            class:tutor_classes(
+              *,
+              class_type:class_types(*),
+              tutor:profiles(id, full_name, email),
+              subject:subjects(id, name, display_name, color)
+            ),
+            student:profiles!class_bookings_student_id_fkey(id, full_name, email)
+          `
+          )
+          .eq("id", id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        return updatedBooking;
+      } catch (error) {
+        console.error("Error cancelling booking:", error);
+        throw error;
       }
-
-      return booking;
     },
   },
 

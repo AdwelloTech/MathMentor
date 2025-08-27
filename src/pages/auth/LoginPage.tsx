@@ -59,7 +59,8 @@ const LoginPage: React.FC = () => {
     try {
       setIsLoading(true);
       await signIn(data.email, data.password);
-      navigate("/dashboard");
+      const to = (location.state as any)?.from?.pathname || "/dashboard";
+      navigate(to, { replace: true });
     } catch (error: any) {
       setError("root", {
         message: error.message || "Invalid email or password",

@@ -26,7 +26,7 @@ interface AdminContextType {
   adminSession: AdminSession | null;
   isAdminLoggedIn: boolean;
   loginAsAdmin: (email: string, password: string) => Promise<boolean>;
-  logoutAdmin: () => void;
+  logoutAdmin: () => Promise<void>;
   loading: boolean;
 }
 
@@ -41,9 +41,15 @@ export function AdminProvider({ children }: AdminProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing admin session
+    // Check for existing admin session or token on app load
     const validateExistingSession = async () => {
       try {
+        // If token exists, optimistically consider admin logged in while validating
+        const hasToken = AdminAuthService.isLoggedIn();
+        if (hasToken && !adminSession) {
+          setLoading(true);
+        }
+
         const sessionValidation = await AdminAuthService.validateSession();
         if (sessionValidation.valid) {
           // Create admin session object
@@ -107,6 +113,11 @@ export function AdminProvider({ children }: AdminProviderProps) {
           };
 
           setAdminSession(session);
+        } else {
+          // If token was invalid, ensure we clear any lingering token-based state
+          if (hasToken) {
+            await AdminAuthService.logout();
+          }
         }
       } catch (error) {
         console.error("Error validating admin session:", error);
@@ -223,7 +234,8 @@ export function AdminProvider({ children }: AdminProviderProps) {
 
   const value: AdminContextType = {
     adminSession,
-    isAdminLoggedIn: !!adminSession,
+    // Consider presence of stored token as logged-in during initial app load
+    isAdminLoggedIn: !!adminSession || AdminAuthService.isLoggedIn(),
     loginAsAdmin,
     logoutAdmin,
     loading,

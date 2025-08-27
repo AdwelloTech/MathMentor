@@ -1,8 +1,8 @@
-﻿# Institute Enterprise Management System (IEMS)
+﻿## Institute Enterprise Management System (IEMS)
 
 A comprehensive, modern enterprise-level management system for educational institutions built with React/TypeScript, Node.js, and Supabase.
 
-### 🚀 Features
+## 🚀 Features
 
 ### 🔐 Authentication & Role-Based Access Control
 

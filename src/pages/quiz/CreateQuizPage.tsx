@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  PlusIcon,
-  TrashIcon,
-  ArrowLeftIcon,
-  CheckIcon,
-} from "@heroicons/react/24/outline";
+import { PlusIcon, TrashIcon, ArrowLeftIcon, CheckIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { quizService } from "@/lib/quizService";
+import { subjectsService } from "@/lib/subjects";
+import { generateAIQuestions, uploadPdfForAI } from "@/lib/ai";
+import type { CreateQuizData, CreateQuestionData } from "@/types/quiz";
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { GradeSelect } from "@/components/ui/GradeSelect";
@@ -90,8 +91,15 @@ const CreateQuizPage: React.FC = () => {
   useEffect(() => {
     const loadSubjects = async () => {
       try {
-        const subjectsData = await getNoteSubjects();
-        setSubjects(subjectsData);
+        const subjectsData = await subjectsService.listActive();
+        // Map Subject[] to NoteSubject[] with proper type handling
+        const mappedSubjects: NoteSubject[] = subjectsData.map(s => ({
+          id: s.id,
+          name: s.name,
+          display_name: s.display_name,
+          color: s.color || '' // Handle null/undefined color by defaulting to empty string
+        }));
+        setSubjects(mappedSubjects);
       } catch (error) {
         console.error("Error loading subjects:", error);
       }
@@ -224,7 +232,7 @@ const CreateQuizPage: React.FC = () => {
           | "discarded"
           | undefined,
         ai_metadata: q.ai_metadata,
-        answers: q.answers.map((a, i) => ({
+        answers: q.answers.map((a: any, i: number) => ({
           answer_text: a.answer_text,
           is_correct: a.is_correct,
           answer_order: i + 1,

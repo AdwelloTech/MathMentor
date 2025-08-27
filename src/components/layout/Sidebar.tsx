@@ -48,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSignOut,
 }) => {
   const { profile } = useAuth();
-  const { isAdminLoggedIn } = useAdmin();
+  const { adminSession, loading: adminLoading } = useAdmin();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [profileImage, setProfileImage] = useState<ProfileImage | null>(null);
@@ -106,16 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       href: "/admin/id-verifications",
       icon: IdentificationIcon,
     },
-    {
-      name: "Manage Quizzes",
-      href: "/admin/quizzes",
-      icon: DocumentTextIcon,
-    },
-    {
-      name: "Manage Flash Cards",
-      href: "/admin/flashcards",
-      icon: BookOpenIcon,
-    },
+    { name: "Subjects", href: "/admin/subjects", icon: BookOpenIcon },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];
@@ -213,7 +204,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
       ];
     }
-    if (profile?.role === "admin" || isAdminLoggedIn) {
+    // Show admin nav only for validated admin sessions
+    if (adminSession || (profile?.role === "admin" && !adminLoading)) {
       return adminNavigation;
     }
 
@@ -251,7 +243,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     () => getNavigation(),
     [
       profile?.role,
-      isAdminLoggedIn,
+      adminSession,
+      adminLoading,
       tutorApplication?.application_status,
       idVerification?.verification_status,
       profile?.is_active,
@@ -472,7 +465,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                 )}
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-3 border-white shadow-sm" />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm" />
             </motion.div>
 
             {/* Profile Details */}

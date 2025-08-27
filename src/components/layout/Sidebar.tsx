@@ -306,7 +306,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         return { primary: "green", secondary: "emerald" };
       }
 
-      if (profile?.role === "admin" || isAdminLoggedIn) {
+      if (profile?.role === "admin" || adminSession) {
         if (isManagement) return { primary: "green", secondary: "emerald" };
         if (isSettings) return { primary: "yellow", secondary: "amber" };
         return { primary: "green", secondary: "emerald" };
@@ -461,7 +461,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               className={cn(
                 "h-5 w-5 shrink-0 transition-colors duration-200",
                 active
-                  ? (isGreenActive ? "text-green-600" : "text-yellow-600")
+                  ? isGreenActive
+                    ? "text-green-600"
+                    : "text-yellow-600"
                   : "text-gray-600",
                 !active &&
                   (itemColors.primary === "green"
@@ -519,8 +521,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Collapsible Profile Section
   const ProfileSection = () => {
+    // Compute display values outside JSX to avoid inline useMemo calls
     const displayName = profile?.full_name || "User";
-    const displayRole = profile?.role ? getRoleDisplayName(profile.role) : "User";
+    const displayRole = profile?.role
+      ? getRoleDisplayName(profile.role)
+      : "User";
 
     return (
       <div className="border-t border-gray-200/50 pt-4 mt-4 mb-8">
@@ -533,34 +538,26 @@ const Sidebar: React.FC<SidebarProps> = ({
           {/* Profile Info */}
           <div className="flex items-center gap-3">
             {/* Profile Avatar */}
-            <div className="relative">
+            <motion.div className="relative">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white font-semibold text-sm">
                 {profile?.full_name
                   ? profile.full_name.charAt(0).toUpperCase()
                   : "U"}
               </div>
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border-2 border-white" />
-            </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm" />
+            </motion.div>
 
             {/* Profile Details */}
-            <AnimatePresence>
-              {isHovered && (
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col overflow-hidden whitespace-nowrap"
-                >
-                  <span className="text-sm font-medium text-gray-900 truncate max-w-32">
-                    {profile?.full_name || "User"}
-                  </span>
-                  <span className="text-xs text-gray-500 truncate max-w-32">
-                    {profile?.role ? getRoleDisplayName(profile.role) : "User"}
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {isHovered && (
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-semibold text-gray-900 truncate max-w-[8rem]">
+                  {displayName}
+                </span>
+                <span className="text-xs text-gray-500 truncate max-w-[8rem]">
+                  {displayRole}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Logout Button */}

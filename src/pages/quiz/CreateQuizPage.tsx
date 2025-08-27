@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { PlusIcon, TrashIcon, ArrowLeftIcon, CheckIcon } from "@heroicons/react/24/outline";
+import {
+  PlusIcon,
+  TrashIcon,
+  ArrowLeftIcon,
+  CheckIcon,
+} from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
 import { subjectsService } from "@/lib/subjects";
@@ -20,13 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { quizService } from "@/lib/quizService";
 import { getNoteSubjects } from "@/lib/notes";
-import { generateAIQuestions, uploadPdfForAI } from "@/lib/ai";
 import { getGradeLevelDisplayName } from "@/lib/gradeLevels";
-import type { CreateQuizData, CreateQuestionData } from "@/types/quiz";
-import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -93,11 +93,11 @@ const CreateQuizPage: React.FC = () => {
       try {
         const subjectsData = await subjectsService.listActive();
         // Map Subject[] to NoteSubject[] with proper type handling
-        const mappedSubjects: NoteSubject[] = subjectsData.map(s => ({
+        const mappedSubjects: NoteSubject[] = subjectsData.map((s) => ({
           id: s.id,
           name: s.name,
           display_name: s.display_name,
-          color: s.color || '' // Handle null/undefined color by defaulting to empty string
+          color: s.color || "", // Handle null/undefined color by defaulting to empty string
         }));
         setSubjects(mappedSubjects);
       } catch (error) {

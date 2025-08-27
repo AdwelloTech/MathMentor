@@ -173,8 +173,8 @@ const FlashcardsListPage: React.FC = () => {
                       </CardTitle>
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge
-                          variant="secondary"
-                          className="bg-green-900/10 text-white hover:bg-green-900/20 rounded-xl px-3 py-1"
+                          variant="outline"
+                          className="border-yellow-400 text-yellow-700 bg-yellow-50 rounded-xl px-3 py-1"
                         >
                           {s.subject}
                         </Badge>

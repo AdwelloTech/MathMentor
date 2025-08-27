@@ -40,6 +40,9 @@ const DashboardLayout: React.FC = () => {
   const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
   const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
 
+  // Hide the global header on all student pages
+  const isStudentDashboardRoute = location.pathname.startsWith("/student");
+
   // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);

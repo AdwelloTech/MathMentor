@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import { useAdmin } from "./contexts/AdminContext";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
@@ -12,6 +12,13 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import TutorLayout from "./components/layout/TutorLayout";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
+
+import AdminDashboard from "./pages/dashboards/AdminDashboard";
+import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
+import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
+import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
+import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
+import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
 
 import AdminLayout from "./components/layout/AdminLayout";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
@@ -82,6 +89,9 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            {/* Ensure admin routes redirect to admin login when unauthenticated */}
+            <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+            <Route path="/admin/*" element={<Navigate to="/admin/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         ) : (
@@ -345,20 +355,35 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user } = useAuth();
-  const { isAdminLoggedIn } = useAdmin();
+  const { user, loading } = useAuth();
+  const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
+  const location = useLocation();
 
   // For admin routes, check admin session
   if (requiredRole === "admin") {
+    if (adminLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <LoadingSpinner size="lg" />
+        </div>
+      );
+    }
     if (!isAdminLoggedIn) {
-      return <Navigate to="/admin/login" replace />;
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
     return <>{children}</>;
   }
 
   // For other routes, check regular user session
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (user.role !== requiredRole) {

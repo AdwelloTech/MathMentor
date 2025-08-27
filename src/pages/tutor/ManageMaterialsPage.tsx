@@ -7,9 +7,6 @@ import {
   FunnelIcon,
   StarIcon,
   DocumentTextIcon,
-  DocumentArrowUpIcon,
-  PencilIcon,
-  TrashIcon,
   EyeIcon,
   ArrowDownTrayIcon,
   BookOpenIcon,
@@ -23,16 +20,15 @@ import TutorPageWrapper from "@/components/ui/TutorPageWrapper";
 import {
   searchTutorNotes,
   getTutorNotesByTutorId,
-  getNoteSubjects,
   deleteTutorNote,
   transformTutorNoteForCard,
   type TutorNoteWithDetails,
-  type TutorNoteCardProps,
 } from "@/lib/tutorNotes";
+import { subjectsService } from "@/lib/subjects";
 import toast from "react-hot-toast";
 
 const ManageMaterialsPage: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [notes, setNotes] = useState<TutorNoteWithDetails[]>([]);
   const [subjects, setSubjects] = useState<
     Array<{
@@ -66,7 +62,7 @@ const ManageMaterialsPage: React.FC = () => {
       setLoading(true);
       const [notesData, subjectsData] = await Promise.all([
         getTutorNotesByTutorId(user!.id),
-        getNoteSubjects(),
+        subjectsService.listActive(),
       ]);
 
       setNotes(notesData);
@@ -83,7 +79,6 @@ const ManageMaterialsPage: React.FC = () => {
     try {
       const searchResults = await searchTutorNotes({
         searchTerm,
-        subjectFilter: selectedSubject || undefined,
         tutorId: user!.id,
       });
       setNotes(searchResults);
@@ -153,8 +148,13 @@ const ManageMaterialsPage: React.FC = () => {
       (note.description &&
         note.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
+    const selectedObj = subjects.find((s) => s.id === selectedSubject);
     const matchesSubject =
-      !selectedSubject || note.subject_id === selectedSubject;
+      !selectedSubject ||
+      note.subject_id === selectedSubject ||
+      (selectedObj &&
+        (note.subject_display_name === selectedObj.display_name ||
+          note.subject_name === selectedObj.name));
 
     return matchesSearch && matchesSubject;
   });

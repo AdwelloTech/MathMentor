@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { instantSessionService } from "../../lib/instantSessionService";
 import { useAuth } from "../../contexts/AuthContext";
+import { STUDENT_INSTANT_SESSION_BACKGROUND } from "../../utils/roleStyles";
 import StudentPageWrapper from "../../components/ui/StudentPageWrapper";
 import {
   ClockIcon,
@@ -310,7 +311,7 @@ export default function InstantSessionPage() {
   };
 
   return (
-    <StudentPageWrapper backgroundClass="bg-gradient-to-br from-green-50 via-yellow-50 to-green-100">
+    <StudentPageWrapper backgroundClass={STUDENT_INSTANT_SESSION_BACKGROUND}>
       <div className="relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>

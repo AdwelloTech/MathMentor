@@ -3,19 +3,30 @@ import { AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
-  Search,
-  Filter,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  BookOpenIcon,
+  StarIcon,
+  DocumentTextIcon,
+  EyeIcon,
+  ArrowDownTrayIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
+import {
+  Loader2,
+  GraduationCap,
   BookOpen,
   Star,
+  Sparkles,
+  Filter,
+  Search,
+  X,
   FileText,
   Eye,
   Download,
-  Sparkles,
-  X,
-  Loader2,
-  GraduationCap,
   TrendingUp,
 } from "lucide-react";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import StudentTutorMaterialCard from "@/components/student/StudentTutorMaterialCard";
 import StudentTutorMaterialViewer from "@/components/student/StudentTutorMaterialViewer";
 import {
@@ -103,11 +114,11 @@ const TutorMaterialsPage: React.FC = () => {
       if (searchTerm.trim()) {
         const term = searchTerm.toLowerCase().trim();
         filtered = filtered.filter(
-          (material) =>
-            material.title?.toLowerCase().includes(term) ||
-            material.description?.toLowerCase().includes(term) ||
-            material.subject_display_name?.toLowerCase().includes(term) ||
-            material.tutor_name?.toLowerCase().includes(term)
+            (material) =>
+              material.title?.toLowerCase().includes(term) ||
+              material.description?.toLowerCase().includes(term) ||
+              material.subject_display_name?.toLowerCase().includes(term) ||
+              material.tutor_name?.toLowerCase().includes(term)
         );
       }
 
@@ -172,7 +183,7 @@ const TutorMaterialsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 animate-spin text-green-900 mx-auto" />
           <div className="space-y-2">
@@ -189,7 +200,7 @@ const TutorMaterialsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">

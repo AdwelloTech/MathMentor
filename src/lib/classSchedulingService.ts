@@ -4,7 +4,6 @@ import type {
   TutorClass,
   ClassBooking,
   TutorAvailability,
-  ZoomMeeting,
   ClassReview,
   CreateClassFormData,
   UpdateClassFormData,
@@ -17,7 +16,64 @@ import type {
   StudentDashboardStats,
   ClassSearchFilters,
   ClassSearchResult,
+  JitsiMeeting,
 } from "@/types/classScheduling";
+
+/**
+ * Database Functions Required for Atomic Operations:
+ *
+ * These PostgreSQL functions need to be created in the database for the atomic booking operations:
+ *
+ * 1. book_class_atomic(p_class_id, p_student_id, p_payment_amount, p_stripe_payment_intent_id, p_payment_status)
+ *    - Atomically checks class capacity and creates booking in a single transaction
+ *    - Returns the created booking record or throws error if class is full
+ *
+ * 2. cancel_booking_atomic(p_booking_id, p_class_id)
+ *    - Atomically updates booking status and decrements current_students
+ *    - Prevents double-cancellation and ensures data consistency
+ *
+ * Example SQL for book_class_atomic:
+ * ```sql
+ * CREATE OR REPLACE FUNCTION book_class_atomic(
+ *   p_class_id UUID,
+ *   p_student_id UUID,
+ *   p_payment_amount NUMERIC,
+ *   p_stripe_payment_intent_id TEXT,
+ *   p_payment_status TEXT
+ * ) RETURNS class_bookings
+ * LANGUAGE plpgsql
+ * AS $$
+ * DECLARE
+ *   v_booking class_bookings;
+ * BEGIN
+ *   -- Atomically check capacity and increment counter
+ *   UPDATE tutor_classes
+ *      SET current_students = current_students + 1
+ *    WHERE id = p_class_id
+ *      AND current_students < max_students;
+ *
+ *   IF NOT FOUND THEN
+ *     RAISE EXCEPTION 'Class is full' USING ERRCODE = 'P0001';
+ *   END IF;
+ *
+ *   -- Create the booking
+ *   INSERT INTO class_bookings(
+ *     class_id, student_id, payment_amount,
+ *     stripe_payment_intent_id, payment_status,
+ *     booking_status
+ *   )
+ *   VALUES (
+ *     p_class_id, p_student_id, p_payment_amount,
+ *     p_stripe_payment_intent_id, p_payment_status,
+ *     'confirmed'
+ *   )
+ *   RETURNING * INTO v_booking;
+ *
+ *   RETURN v_booking;
+ * END;
+ * $$;
+ * ```
+ */
 
 export const classSchedulingService = {
   // Class Types
@@ -50,6 +106,23 @@ export const classSchedulingService = {
     create: async (
       classData: CreateClassFormData & { tutor_id: string }
     ): Promise<TutorClass> => {
+      // Validate subject_id if provided to prevent foreign key constraint errors
+      // This ensures the subject exists and is active before creating the class
+      if (classData.subject_id) {
+        const { data: subjectData, error: subjectError } = await supabase
+          .from("subjects")
+          .select("id")
+          .eq("id", classData.subject_id)
+          .eq("is_active", true)
+          .single();
+
+        if (subjectError || !subjectData) {
+          throw new Error(
+            `Invalid subject selected. Please select a valid subject.`
+          );
+        }
+      }
+
       // Get class type details
       const classType = await classSchedulingService.classTypes.getById(
         classData.class_type_id
@@ -69,6 +142,7 @@ export const classSchedulingService = {
           {
             tutor_id: classData.tutor_id,
             class_type_id: classData.class_type_id,
+            subject_id: classData.subject_id ?? null,
             title: classData.title,
             description: classData.description,
             date: classData.date,
@@ -94,7 +168,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("id", classRecord.id)
@@ -112,7 +187,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("id", id)
@@ -132,7 +208,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("tutor_id", tutorId)
@@ -167,7 +244,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("tutor_id", tutorId)
@@ -201,7 +279,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .single();
@@ -235,7 +314,8 @@ export const classSchedulingService = {
           `
           *,
           class_type:class_types(*),
-          tutor:profiles(id, full_name, email)
+          tutor:profiles(id, full_name, email),
+          subject:subjects(id, name, display_name, color)
         `
         )
         .eq("status", "scheduled")
@@ -274,9 +354,9 @@ export const classSchedulingService = {
       // Transform to search results with additional info
       const results: ClassSearchResult[] = await Promise.all(
         data.map(async (classRecord) => {
-          // Get tutor rating and reviews
+          // Get tutor rating and reviews from session_ratings table
           const { data: reviews } = await supabase
-            .from("class_reviews")
+            .from("session_ratings")
             .select("rating")
             .eq("tutor_id", classRecord.tutor_id);
 
@@ -324,46 +404,94 @@ export const classSchedulingService = {
       paymentAmount: number,
       stripePaymentIntentId?: string
     ): Promise<ClassBooking> => {
-      // Check if class is available
-      const classRecord = await classSchedulingService.classes.getById(classId);
-      if (classRecord.current_students >= classRecord.max_students) {
-        throw new Error("Class is full");
-      }
+      try {
+        // First, check if the class has available spots
+        const { data: classData, error: classError } = await supabase
+          .from("tutor_classes")
+          .select("current_students, max_students")
+          .eq("id", classId)
+          .single();
 
-      // Create booking
-      const { data, error } = await supabase
-        .from("class_bookings")
-        .insert([
-          {
+        if (classError) throw classError;
+        if (!classData) throw new Error("Class not found");
+
+        if (classData.current_students >= classData.max_students) {
+          throw new Error("Class is full");
+        }
+
+        // Create the booking
+        const { data: bookingData, error: bookingError } = await supabase
+          .from("class_bookings")
+          .insert({
             class_id: classId,
             student_id: studentId,
             payment_amount: paymentAmount,
-            booking_status: "confirmed",
-            payment_status: stripePaymentIntentId ? "paid" : "pending",
             stripe_payment_intent_id: stripePaymentIntentId || null,
-          },
-        ])
+            payment_status: stripePaymentIntentId ? "paid" : "pending",
+            booking_status: "confirmed",
+          })
+          .select()
+          .single();
+
+        if (bookingError) throw bookingError;
+
+        // Update the class to increment current_students
+        const { error: updateError } = await supabase
+          .from("tutor_classes")
+          .update({
+            current_students: (classData.current_students || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", classId);
+
+        if (updateError) throw updateError;
+
+        // Fetch the complete booking data with relations
+        const { data: completeBookingData, error: fetchError } = await supabase
+          .from("class_bookings")
+          .select(
+            `
+            *,
+            class:tutor_classes(
+              *,
+              class_type:class_types(*),
+              tutor:profiles(id, full_name, email),
+              subject:subjects(id, name, display_name, color)
+            ),
+            student:profiles!class_bookings_student_id_fkey(id, full_name, email)
+          `
+          )
+          .eq("id", bookingData.id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        return completeBookingData;
+      } catch (error) {
+        console.error("Error creating booking:", error);
+        throw error;
+      }
+    },
+
+    getById: async (id: string): Promise<ClassBooking> => {
+      const { data, error } = await supabase
+        .from("class_bookings")
         .select(
           `
           *,
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
         )
+        .eq("id", id)
         .single();
 
       if (error) throw error;
-
-      // Update class current_students count
-      await supabase
-        .from("tutor_classes")
-        .update({ current_students: classRecord.current_students + 1 })
-        .eq("id", classId);
-
       return data;
     },
 
@@ -379,7 +507,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -408,7 +537,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -434,7 +564,8 @@ export const classSchedulingService = {
           class:tutor_classes(
             *,
             class_type:class_types(*),
-            tutor:profiles(id, full_name, email)
+            tutor:profiles(id, full_name, email),
+            subject:subjects(id, name, display_name, color)
           ),
           student:profiles!class_bookings_student_id_fkey(id, full_name, email)
         `
@@ -446,19 +577,91 @@ export const classSchedulingService = {
     },
 
     cancel: async (id: string): Promise<ClassBooking> => {
-      const booking = await classSchedulingService.bookings.update(id, {
-        booking_status: "cancelled",
-      });
+      try {
+        // Get the booking first to get class_id
+        const existingBooking = await classSchedulingService.bookings.getById(id);
 
-      // Decrease class current_students count
-      if (booking.class) {
-        await supabase
-          .from("tutor_classes")
-          .update({ current_students: booking.class.current_students - 1 })
-          .eq("id", booking.class_id);
+        if (!existingBooking) {
+          throw new Error("Booking not found");
+        }
+
+        // Try atomic RPC first
+        const { error: rpcError } = await supabase.rpc("cancel_booking_atomic", {
+          p_booking_id: id,
+          p_class_id: existingBooking.class_id,
+        });
+
+        if (rpcError) {
+          // Graceful fallback if RPC does not exist or is not exposed
+          const rpcMissing =
+            rpcError.code === "42883" ||
+            rpcError.message?.includes("Could not find the function") ||
+            rpcError.message?.includes("function public.cancel_booking_atomic") ||
+            rpcError.message?.includes("cancel_booking_atomic");
+
+          if (!rpcMissing) {
+            // Other errors (e.g., permission), rethrow
+            if (
+              rpcError.message?.includes("Booking not found") ||
+              rpcError.code === "PGRST116"
+            ) {
+              throw new Error("Booking not found or already cancelled");
+            }
+            throw rpcError;
+          }
+
+          // Fallback path: update booking then decrement class count
+          // 1) Update booking status to cancelled (idempotent-ish)
+          const updated = await classSchedulingService.bookings.update(id, {
+            booking_status: "cancelled",
+          });
+
+          // 2) Decrement class current_students safely
+          if (updated.class_id) {
+            const { data: classRow, error: classFetchErr } = await supabase
+              .from("tutor_classes")
+              .select("current_students")
+              .eq("id", updated.class_id)
+              .single();
+            if (classFetchErr) throw classFetchErr;
+
+            const newCount = Math.max((classRow?.current_students || 1) - 1, 0);
+            const { error: classUpdateErr } = await supabase
+              .from("tutor_classes")
+              .update({ current_students: newCount, updated_at: new Date().toISOString() })
+              .eq("id", updated.class_id);
+            if (classUpdateErr) throw classUpdateErr;
+          }
+
+          // Return the full, updated booking
+          return await classSchedulingService.bookings.getById(id);
+        }
+
+        // If RPC succeeded, fetch and return the updated record
+        const { data: updatedBooking, error: fetchError } = await supabase
+          .from("class_bookings")
+          .select(
+            `
+            *,
+            class:tutor_classes(
+              *,
+              class_type:class_types(*),
+              tutor:profiles(id, full_name, email),
+              subject:subjects(id, name, display_name, color)
+            ),
+            student:profiles!class_bookings_student_id_fkey(id, full_name, email)
+          `
+          )
+          .eq("id", id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        return updatedBooking;
+      } catch (error) {
+        console.error("Error cancelling booking:", error);
+        throw error;
       }
-
-      return booking;
     },
   },
 
@@ -527,14 +730,14 @@ export const classSchedulingService = {
       is_anonymous?: boolean;
     }): Promise<ClassReview> => {
       const { data, error } = await supabase
-        .from("class_reviews")
+        .from("session_ratings")
         .insert([review])
         .select(
           `
-          *,
-          student:profiles!class_reviews_student_id_fkey(id, full_name),
-          tutor:profiles!class_reviews_tutor_id_fkey(id, full_name)
-        `
+           *,
+           student:profiles!session_ratings_student_id_fkey(id, full_name),
+           tutor:profiles!session_ratings_tutor_id_fkey(id, full_name)
+         `
         )
         .single();
 
@@ -544,13 +747,13 @@ export const classSchedulingService = {
 
     getByTutorId: async (tutorId: string): Promise<ClassReview[]> => {
       const { data, error } = await supabase
-        .from("class_reviews")
+        .from("session_ratings")
         .select(
           `
-          *,
-          student:profiles!class_reviews_student_id_fkey(id, full_name),
-          tutor:profiles!class_reviews_tutor_id_fkey(id, full_name)
-        `
+           *,
+           student:profiles!session_ratings_student_id_fkey(id, full_name),
+           tutor:profiles!session_ratings_tutor_id_fkey(id, full_name)
+         `
         )
         .eq("tutor_id", tutorId)
         .order("created_at", { ascending: false });
@@ -561,15 +764,15 @@ export const classSchedulingService = {
 
     getByClassId: async (classId: string): Promise<ClassReview[]> => {
       const { data, error } = await supabase
-        .from("class_reviews")
+        .from("session_ratings")
         .select(
           `
-          *,
-          student:profiles!class_reviews_student_id_fkey(id, full_name),
-          tutor:profiles!class_reviews_tutor_id_fkey(id, full_name)
-        `
+           *,
+           student:profiles!session_ratings_student_id_fkey(id, full_name),
+           tutor:profiles!session_ratings_tutor_id_fkey(id, full_name)
+         `
         )
-        .eq("class_id", classId)
+        .eq("session_id", classId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -586,9 +789,9 @@ export const classSchedulingService = {
         .select("id, status, price_per_session, current_students")
         .eq("tutor_id", tutorId);
 
-      // Get review statistics
+      // Get review statistics from session_ratings table
       const { data: reviews } = await supabase
-        .from("class_reviews")
+        .from("session_ratings")
         .select("rating")
         .eq("tutor_id", tutorId);
 
@@ -739,7 +942,9 @@ export const classSchedulingService = {
 
   // Jitsi Integration
   jitsi: {
-    getMeetingDetails: async (classId: string): Promise<JitsiMeeting | null> => {
+    getMeetingDetails: async (
+      classId: string
+    ): Promise<JitsiMeeting | null> => {
       const { data, error } = await supabase
         .from("jitsi_meetings")
         .select("*")
@@ -768,9 +973,12 @@ export const classSchedulingService = {
     },
 
     generateManualMeeting: async (classId: string): Promise<any> => {
-      const { data, error } = await supabase.rpc("manual_generate_jitsi_for_class", {
-        class_uuid: classId,
-      });
+      const { data, error } = await supabase.rpc(
+        "manual_generate_jitsi_for_class",
+        {
+          class_uuid: classId,
+        }
+      );
 
       if (error) throw error;
       return data;

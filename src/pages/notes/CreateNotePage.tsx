@@ -8,8 +8,11 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import { getNoteSubjects, getStudyNoteById } from "@/lib/notes";
+import { NOTE_TITLE_MAX_LENGTH } from "@/constants/form";
 import toast from "react-hot-toast";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import type { Database } from "@/types/database";
@@ -235,14 +238,16 @@ const CreateNotePage: React.FC = () => {
             >
               Note Title *
             </label>
-            <input
+            <Input
               type="text"
               id="title"
               value={formData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full"
               placeholder="Enter note title..."
               required
+              maxLength={NOTE_TITLE_MAX_LENGTH}
+              showCharCount
             />
           </div>
 
@@ -287,13 +292,15 @@ const CreateNotePage: React.FC = () => {
             >
               Description (Optional)
             </label>
-            <textarea
+            <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
               rows={3}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               placeholder="Brief description of your note..."
+              maxLength={300}
+              showCharCount
             />
           </div>
 

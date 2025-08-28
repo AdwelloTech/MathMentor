@@ -72,20 +72,38 @@ const QuizResultsPage: React.FC = () => {
   const loadAttemptDetails = async (attemptId: string) => {
     try {
       setLoading(true);
+      console.log("Loading attempt details for ID:", attemptId);
+
       const details = await quizService.studentQuizzes.getAttemptDetails(
         attemptId
       );
+
+      console.log("Attempt details loaded:", details);
       setSelectedAttempt(details);
     } catch (error) {
       console.error("Error loading attempt details:", error);
-      toast.error("Failed to load attempt details");
+
+      // Check if it's a "not found" error
+      if (error instanceof Error && error.message.includes("not found")) {
+        toast.error("Quiz attempt not found. It may have been deleted.");
+      } else {
+        toast.error("Failed to load attempt details. Please try again.");
+      }
+
+      // Navigate back to quiz dashboard if attempt not found
+      setTimeout(() => {
+        navigate("/student/quizzes");
+      }, 2000);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -96,7 +114,7 @@ const QuizResultsPage: React.FC = () => {
 
   const getScoreColor = (percentage: number) => {
     if (percentage >= 80) return "text-green-900";
-    if (percentage >= 60) return "text-yellow-600";
+    if (percentage >= 60) return "text-yellow-700";
     return "text-red-600";
   };
 
@@ -245,16 +263,32 @@ const QuizResultsPage: React.FC = () => {
                               <Clock className="h-4 w-4 text-green-600" />
                               <span className="text-sm font-medium">
                                 {attempt.completed_at
-                                  ? `Completed in ${Math.round(
-                                      (new Date(
+                                  ? (() => {
+                                      const endMs = Date.parse(
+                                        attempt.completed_at as string
+                                      );
+                                      const startMs = attempt.started_at
+                                        ? Date.parse(
+                                            attempt.started_at as string
+                                          )
+                                        : NaN;
+                                      if (
+                                        Number.isFinite(endMs) &&
+                                        Number.isFinite(startMs)
+                                      ) {
+                                        const minutes = Math.max(
+                                          0,
+                                          Math.round(
+                                            (endMs - (startMs as number)) /
+                                              60000
+                                          )
+                                        );
+                                        return `Completed in ${minutes} minutes`;
+                                      }
+                                      return `Completed: ${formatDate(
                                         attempt.completed_at
-                                      ).getTime() -
-                                        new Date(
-                                          attempt.started_at
-                                        ).getTime()) /
-                                        1000 /
-                                        60
-                                    )} minutes`
+                                      )}`;
+                                    })()
                                   : "In progress"}
                               </span>
                             </div>
@@ -267,7 +301,10 @@ const QuizResultsPage: React.FC = () => {
                           </div>
 
                           <Button
-                            onClick={() => loadAttemptDetails(attempt.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              loadAttemptDetails(attempt.id);
+                            }}
                             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
                           >
                             <BarChart3 className="h-4 w-4 mr-2" />
@@ -344,8 +381,7 @@ const QuizResultsPage: React.FC = () => {
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>
-                      Started:{" "}
-                      {formatDate(selectedAttempt?.attempt.started_at || "")}
+                      Started: {formatDate(selectedAttempt?.attempt.started_at)}
                     </span>
                   </div>
                   {selectedAttempt?.attempt.completed_at && (
@@ -353,7 +389,7 @@ const QuizResultsPage: React.FC = () => {
                       <Clock className="h-4 w-4 mr-2" />
                       <span>
                         Completed:{" "}
-                        {formatDate(selectedAttempt.attempt.completed_at)}
+                        {formatDate(selectedAttempt?.attempt.completed_at)}
                       </span>
                     </div>
                   )}
@@ -416,10 +452,17 @@ const QuizResultsPage: React.FC = () => {
                               {studentAnswer?.points_earned || 0}/
                               {question.points} points
                             </span>
-                            {isCorrect ? (
+                            {isCorrect === true ? (
                               <CheckCircle className="h-5 w-5 text-green-600" />
-                            ) : (
+                            ) : isCorrect === false ? (
                               <XCircle className="h-5 w-5 text-red-600" />
+                            ) : (
+                              <>
+                                <Clock className="h-5 w-5 text-yellow-600" />
+                                <span className="text-sm text-yellow-700">
+                                  Pending grading
+                                </span>
+                              </>
                             )}
                           </div>
                         </div>

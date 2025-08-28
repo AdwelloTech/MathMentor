@@ -405,7 +405,7 @@ const StudentDashboard: React.FC = () => {
               </Card>
             </motion.div>
 
-            {/* Package Card */}
+            {/* Package Status Card (gradient) */}
             <motion.div variants={itemVariants}>
               <Card className="bg-gradient-to-r from-green-600 to-green-700 text-white border-0 shadow-2xl shadow-green-900/20">
                 <CardContent className="p-6">
@@ -433,63 +433,7 @@ const StudentDashboard: React.FC = () => {
                         </Badge>
                         <span className="text-green-100">
                           {data.packageInfo?.price_monthly
-                            ? `${formatCurrency(
-                                data.packageInfo.price_monthly
-                              )}/month`
-                            : "Free"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold">
-                        {getPackageProgress().total - getPackageProgress().used}
-                      </div>
-                      <div className="text-green-100 text-sm">
-                        sessions remaining
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    className="mt-4 bg-yellow-300 text-black hover:bg-yellow-200 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
-                    onClick={() => navigate("/packages")}
-                  >
-                    <CurrencyDollarIcon className="w-4 h-4 mr-2" />
-                    Manage Package
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Package Status Card (gradient) */}
-            <motion.div variants={itemVariants}>
-              <Card className="bg-gradient-to-r from-green-600 to-green-700 text-white border-0 shadow-2xl shadow-green-900/20">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-3">
-                      <CardTitle className="text-xl">
-                        My Learning Package
-                      </CardTitle>
-                      <div className="space-y-2">
-                        <p className="text-green-100">
-                          {getPackageProgress().used} of{" "}
-                          {getPackageProgress().total} sessions used
-                        </p>
-                        <Progress
-                          value={getPackageProgress().percentage}
-                          className="w-64 h-2 bg-white [&>div]:bg-yellow-400"
-                        />
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <Badge
-                          variant="secondary"
-                          className=" border-yellow-500/20"
-                        >
-                          {data.packageInfo?.display_name || "Free Package"}
-                        </Badge>
-                        <span className="text-green-100">
-                          {data.packageInfo?.price_monthly
-                            ? formatCurrency(data.packageInfo.price_monthly) +
-                              "/month"
+                            ? `${formatCurrency(data.packageInfo.price_monthly)}/month`
                             : "Free"}
                         </span>
                       </div>
@@ -581,8 +525,8 @@ const StudentDashboard: React.FC = () => {
             {/* Main Content Grid (tall cards) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Upcoming Sessions (tall) */}
-              <motion.div variants={itemVariants}>
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+              <motion.div variants={itemVariants} className="h-full">
+                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-full min-h-[500px]">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -639,7 +583,7 @@ const StudentDashboard: React.FC = () => {
                           </motion.div>
                         ))
                     ) : (
-                      <div className="text-center py-8">
+                      <div className="flex flex-col items-center justify-center h-full pt-20 pb-12 px-4">
                         <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                           <CalendarDaysIcon className="w-8 h-8 text-gray-400" />
                         </div>

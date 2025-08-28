@@ -1,23 +1,22 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getRoleContainerClass } from "@/utils/roleStyles";
+import TutorDashboard from "@/pages/dashboards/TutorDashboard";
 
 const TutorLayout: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // If we're on the main tutor route, show the dashboard
+  if (location.pathname === "/tutor" || location.pathname === "/tutor/") {
+    return <TutorDashboard />;
+  }
+
+  // For nested routes, show the specific page
   return (
-    <div className={getRoleContainerClass("tutor")}>
-      {/* Main content */}
-      <main className="py-10">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Outlet />
-          </motion.div>
-        </div>
-      </main>
+    <div className="min-h-screen bg-gray-50">
+      {/* Page content */}
+      <Outlet />
     </div>
   );
 };

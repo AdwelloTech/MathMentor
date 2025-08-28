@@ -9,15 +9,16 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
-import TutorLayout from "./components/layout/TutorLayout";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
-import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
+import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
+import ManageQuizzesPage from "./pages/admin/ManageQuizzesPage";
+import AdminManageFlashcardsPage from "./pages/admin/ManageFlashcardsPage";
 import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
 
 import AdminLayout from "./components/layout/AdminLayout";
@@ -62,10 +63,12 @@ import NotFoundPage from "./pages/NotFoundPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import TutorApplicationPage from "./pages/TutorApplicationPage";
 import IDVerificationPage from "./pages/IDVerificationPage";
+import TutorLayout from "./components/layout/TutorLayout";
 
 function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
   const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
+  const location = useLocation();
 
   // Show loading spinner while checking authentication
   if (loading || adminLoading) {
@@ -76,43 +79,68 @@ function App() {
     );
   }
 
+  // Check if user is fully authenticated (both user and profile exist)
+  const isUserAuthenticated = user && profile;
+  
+  // Check if we're on admin routes
+  const isOnAdminRoute = location.pathname.startsWith("/admin");
+  
+  // List of public routes that don't require authentication
+  const publicRoutes = [
+    "/login",
+    "/admin/login", 
+    "/register", 
+    "/forgot-password", 
+    "/reset-password"
+  ];
+  const isOnPublicRoute = publicRoutes.includes(location.pathname);
+
+  // If on admin login, always show it (it's a public route)
+  if (location.pathname === "/admin/login") {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Routes>
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+        </Routes>
+      </div>
+    );
+  }
+
+  // Special handling for admin routes
+  if (isOnAdminRoute && location.pathname !== "/admin/login") {
+    // For admin routes (except login), check admin authentication
+    if (!isAdminLoggedIn) {
+      return (
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            <Route path="*" element={<Navigate to="/admin/login" replace />} />
+          </Routes>
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <Routes>
-        {/* Reset password route - always accessible regardless of auth status */}
+        {/* Public routes - always accessible */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        {/* Admin login - accessible regardless of regular user session */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
-
-        {/* Public routes */}
-        {!user && !isAdminLoggedIn ? (
+        
+        {/* Handle authentication-based routing */}
+        {!isUserAuthenticated && !isAdminLoggedIn ? (
+          // Show auth pages when no user is logged in
           <>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            {/* Ensure admin routes redirect to admin login when unauthenticated */}
-            <Route
-              path="/admin"
-              element={<Navigate to="/admin/login" replace />}
-            />
-            <Route
-              path="/admin/*"
-              element={<Navigate to="/admin/login" replace />}
-            />
+            {/* Redirect any other route to login */}
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         ) : (
+          // Show protected routes when user is authenticated
           <>
-            {/* Protected routes */}
-            {/* Admin routes */}
-            <Route
-              path="/admin/*"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            />
+            {/* Main application routes */}
             <Route path="/" element={<DashboardLayout />}>
               <Route index element={<DashboardRoute />} />
               <Route path="dashboard" element={<DashboardRoute />} />
@@ -145,6 +173,24 @@ function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="id-verification" element={<IDVerificationPage />} />
 
+              {/* Admin routes with nested structure */}
+              <Route
+                path="admin/*"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="students" element={<ManageStudentsPage />} />
+                <Route path="tutor-applications" element={<ManageTutorApplicationsPage />} />
+                <Route path="tutors" element={<ManageTutorsPage />} />
+                <Route path="id-verifications" element={<ManageIDVerificationsPage />} />
+                <Route path="quizzes" element={<ManageQuizzesPage />} />
+                <Route path="flashcards" element={<AdminManageFlashcardsPage />} />
+              </Route>
+
               {/* Principal routes */}
               <Route
                 path="principal/*"
@@ -174,12 +220,10 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<TutorDashboard />} />
                 <Route
                   path="manage-materials"
                   element={<ManageMaterialsPage />}
                 />
-                <Route path="ratings" element={<TutorRatingsPage />} />
                 <Route path="flashcards" element={<ManageFlashcardsPage />} />
                 <Route
                   path="flashcards/create"
@@ -284,7 +328,7 @@ function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 
-            {/* Redirect auth routes to dashboard */}
+            {/* Redirect auth routes to dashboard when already logged in */}
             <Route
               path="/login"
               element={<Navigate to="/dashboard" replace />}
@@ -297,7 +341,6 @@ function App() {
               path="/forgot-password"
               element={<Navigate to="/dashboard" replace />}
             />
-            {/* Note: /reset-password is handled separately above */}
           </>
         )}
       </Routes>
@@ -306,9 +349,20 @@ function App() {
 }
 
 // Dashboard route component that redirects to appropriate dashboard
+// Dashboard route component that redirects to appropriate dashboard
 function DashboardRoute() {
   const { user, profile, loading } = useAuth();
-  const { adminSession, isAdminLoggedIn } = useAdmin();
+  const { adminSession, isAdminLoggedIn, loading: adminLoading } = useAdmin();
+  const location = useLocation();
+
+  // Wait for both auth contexts to finish loading
+  if (loading || adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   // Check for admin session first
   if (isAdminLoggedIn && adminSession) {
@@ -320,7 +374,7 @@ function DashboardRoute() {
   }
 
   // Wait for profile to load before redirecting
-  if (loading || !profile) {
+  if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <LoadingSpinner size="lg" />
@@ -331,7 +385,18 @@ function DashboardRoute() {
   // Use profile.role as primary source, fallback to user.role
   const userRole = profile?.role || user.role;
 
-  // Redirect to role-specific dashboard
+  // Only redirect if user is on the root path or dashboard path
+  // This prevents redirecting users who are already on valid sub-routes
+  const currentPath = location.pathname;
+  const isOnRootOrDashboard =
+    currentPath === "/" || currentPath === "/dashboard";
+
+  if (!isOnRootOrDashboard) {
+    // User is on a sub-route, don't redirect them
+    return null;
+  }
+
+  // Redirect to role-specific dashboard only when on root paths
   switch (userRole) {
     case "admin":
       return <Navigate to="/admin" replace />;
@@ -363,9 +428,17 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
-  const location = useLocation();
+
+  // Wait for both auth contexts to finish loading
+  if (loading || adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   // For admin routes, check admin session
   if (requiredRole === "admin") {
@@ -394,7 +467,10 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user.role !== requiredRole) {
+  // Use profile.role as primary source, fallback to user.role
+  const userRole = profile?.role || user.role;
+
+  if (userRole !== requiredRole) {
     return <Navigate to="/unauthorized" replace />;
   }
 

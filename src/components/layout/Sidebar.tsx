@@ -125,6 +125,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       return [
         { name: "Dashboard", href: "/student", icon: AcademicCapIcon },
         {
+          name: "Instant Session",
+          href: "/student/instant-session",
+          icon: SparklesIcon,
+        },
+        {
           name: "Book a Session",
           href: "/student/book-session",
           icon: CalendarDaysIcon,

@@ -1,15 +1,15 @@
 import React from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import TutorDashboard from "@/pages/dashboards/TutorDashboard";
+import AdminDashboard from "@/pages/dashboards/AdminDashboard";
 
-const TutorLayout: React.FC = () => {
+const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // If we're on the main tutor route, show the dashboard
-  if (location.pathname === "/tutor" || location.pathname === "/tutor/") {
-    return <TutorDashboard />;
+  // If we're on the main admin route, show the dashboard
+  if (location.pathname === "/admin" || location.pathname === "/admin/") {
+    return <AdminDashboard />;
   }
 
   // For nested routes, show the specific page
@@ -21,4 +21,4 @@ const TutorLayout: React.FC = () => {
   );
 };
 
-export default TutorLayout;
+export default AdminLayout;

@@ -37,7 +37,7 @@ import {
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 import { quizService } from "@/lib/quizService";
-import { getNoteSubjects } from "@/lib/notes";
+import { subjectsService } from "@/lib/subjects";
 import type { Quiz } from "@/types/quiz";
 import toast from "react-hot-toast";
 
@@ -71,7 +71,7 @@ const StudentQuizDashboard: React.FC = () => {
 
       const [quizzesData, subjectsData] = await Promise.all([
         quizService.studentQuizzes.getAvailableQuizzes(user!.id),
-        getNoteSubjects(),
+        subjectsService.listActive(),
       ]);
 
       console.log("Quizzes loaded:", quizzesData);
@@ -79,7 +79,7 @@ const StudentQuizDashboard: React.FC = () => {
 
       setAllQuizzes(quizzesData);
       setQuizzes(quizzesData);
-      setSubjects(subjectsData);
+      setSubjects(subjectsData as any);
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Failed to load quizzes");

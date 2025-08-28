@@ -25,6 +25,7 @@ import {
   LightBulbIcon,
   BookOpenIcon,
 } from "@heroicons/react/24/outline";
+import { Star } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
 import { db } from "@/lib/db";
@@ -39,6 +40,8 @@ import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { validateDocumentFile } from "@/constants/form";
+import toast from "react-hot-toast";
 
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -350,8 +353,8 @@ const TutorDashboard: React.FC = () => {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.includes("pdf") && !file.type.includes("document")) {
-      setUploadError("Please upload a PDF or Word document");
+    if (!validateDocumentFile(file)) {
+      toast.error("Please upload a PDF (.pdf) or Word (.doc, .docx) file");
       return;
     }
 
@@ -379,7 +382,7 @@ const TutorDashboard: React.FC = () => {
       console.error("CV upload error:", error);
       setUploadError("Failed to upload CV. Please try again.");
     } finally {
-      setLoading(false);
+      setIsUploading(false);
     }
   };
 
@@ -977,11 +980,11 @@ const TutorDashboard: React.FC = () => {
                         disabled: !isActiveTutor,
                       },
                       {
-                        title: "Manage Materials",
-                        description: "Upload study resources",
-                        icon: BookOpenIcon,
+                        title: "Ratings",
+                        description: "View student feedback",
+                        icon: Star,
                         color: "from-yellow-500 to-yellow-600",
-                        action: () => navigate("/tutor/manage-materials"),
+                        action: () => navigate("/tutor/ratings"),
                         disabled: !isActiveTutor,
                       },
                     ].map((action, index) => (

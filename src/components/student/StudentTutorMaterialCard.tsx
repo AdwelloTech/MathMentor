@@ -17,10 +17,12 @@ import {
   formatFileSize,
   getStudentTutorMaterialSubjectColor,
   truncateStudentTutorMaterialText,
-  incrementStudentTutorMaterialViewCountUnique,
-  incrementStudentTutorMaterialDownloadCount,
   type StudentTutorMaterialCardProps,
 } from "@/lib/studentTutorMaterials";
+import {
+  incrementTutorNoteViewCountUnique,
+  incrementTutorNoteDownloadCount,
+} from "@/lib/tutorNotes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -70,20 +72,17 @@ const StudentTutorMaterialCard: React.FC<
     // Track the view when user clicks View button
     if (user && !hasTrackedView.current) {
       try {
-        console.log("Tracking view for material:", id);
-        await incrementStudentTutorMaterialViewCountUnique(id, user.id);
-        console.log("View tracking completed successfully");
+        await incrementTutorNoteViewCountUnique(id, user.id);
 
         // Update the local view count after successful tracking
         if (onViewCountUpdate) {
-          console.log("Updating local view count by 1");
           onViewCountUpdate(id, 1);
         }
 
         // Mark that we've tracked this view
         hasTrackedView.current = true;
       } catch (error) {
-        console.error("Error tracking view:", error);
+        console.debug("View tracking failed:", error);
         // Don't throw error - view tracking failure shouldn't break the component
       }
     }
@@ -98,7 +97,7 @@ const StudentTutorMaterialCard: React.FC<
 
     try {
       // Increment download count
-      await incrementStudentTutorMaterialDownloadCount(id);
+      await incrementTutorNoteDownloadCount(id);
 
       // Force download by fetching the file and creating a blob
       const response = await fetch(fileUrl);

@@ -46,12 +46,66 @@ const ManageSessionsPage: React.FC = () => {
   );
   const [showDetails, setShowDetails] = useState(false);
   const [tutorRatings, setTutorRatings] = useState<Record<string, { avg: number; count: number }>>({});
+  const [sessionJoinability, setSessionJoinability] = useState<Record<string, boolean>>({});
+  const [sessionCountdowns, setSessionCountdowns] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (user) {
       loadBookings();
     }
   }, [user]);
+
+  // Real-time timer to update session joinability and countdowns
+  useEffect(() => {
+    const updateSessionStatus = () => {
+      const newJoinability: Record<string, boolean> = {};
+      const newCountdowns: Record<string, number> = {};
+      
+      upcomingBookings.forEach((booking) => {
+        if (
+          booking.booking_status === "confirmed" &&
+          booking.class?.jitsi_meeting_url
+        ) {
+          const now = new Date();
+          const sessionDate = new Date(
+            `${booking.class.date}T${booking.class.start_time}`
+          );
+          const fiveMinutesBeforeSession = new Date(
+            sessionDate.getTime() - 5 * 60 * 1000
+          );
+          
+          const wasJoinable = sessionJoinability[booking.id] || false;
+          const isNowJoinable = now >= fiveMinutesBeforeSession;
+          
+          newJoinability[booking.id] = isNowJoinable;
+          
+          // Calculate countdown in minutes
+          if (now < fiveMinutesBeforeSession) {
+            const diffMs = fiveMinutesBeforeSession.getTime() - now.getTime();
+            newCountdowns[booking.id] = Math.ceil(diffMs / (1000 * 60));
+          } else {
+            newCountdowns[booking.id] = 0;
+          }
+          
+
+        } else {
+          newJoinability[booking.id] = false;
+          newCountdowns[booking.id] = 0;
+        }
+      });
+      
+      setSessionJoinability(newJoinability);
+      setSessionCountdowns(newCountdowns);
+    };
+
+    // Update immediately
+    updateSessionStatus();
+    
+    // Update every second to keep button state and countdowns current
+    const interval = setInterval(updateSessionStatus, 1000);
+
+    return () => clearInterval(interval);
+  }, [upcomingBookings]);
 
   const loadBookings = async () => {
     try {
@@ -143,14 +197,8 @@ const ManageSessionsPage: React.FC = () => {
     ) {
       return false;
     }
-    const now = new Date();
-    const sessionDate = new Date(
-      `${booking.class.date}T${booking.class.start_time}`
-    );
-    const fiveMinutesBeforeSession = new Date(
-      sessionDate.getTime() - 5 * 60 * 1000
-    );
-    return now >= fiveMinutesBeforeSession;
+    // Use the real-time joinability state instead of calculating on each call
+    return sessionJoinability[booking.id] || false;
   };
 
   const isSessionPast = (booking: ClassBooking) => {
@@ -190,6 +238,8 @@ const ManageSessionsPage: React.FC = () => {
       hour12: true,
     });
   };
+
+
 
   // Filter to show only upcoming sessions
   const filteredUpcomingBookings = upcomingBookings.filter(
@@ -336,19 +386,32 @@ const ManageSessionsPage: React.FC = () => {
                         <div className="flex flex-col gap-3 ml-6">
                           {/* Join Session Button */}
                           {booking.booking_status === "confirmed" && (
-                            <Button
-                              onClick={() => handleJoinSession(booking)}
-                              disabled={!isJoinable}
-                              className={
-                                isJoinable
-                                  ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                              }
-                              size="lg"
-                            >
-                              <Video className="w-5 h-5 mr-2" />
-                              {isJoinable ? "Join Now" : "Join Session"}
-                            </Button>
+                            <div className="space-y-2">
+                              <Button
+                                onClick={() => handleJoinSession(booking)}
+                                disabled={!isJoinable}
+                                className={
+                                  isJoinable
+                                    ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                }
+                                size="lg"
+                              >
+                                <Video className="w-5 h-5 mr-2" />
+                                {isJoinable ? "Join Now" : "Join Session"}
+                              </Button>
+                              
+                              {/* Countdown to session availability */}
+                              {!isJoinable && sessionCountdowns[booking.id] > 0 && (
+                                <div className="text-xs text-gray-500 text-center">
+                                  Available in {sessionCountdowns[booking.id]} minutes
+                                  <br />
+                                  <span className="text-xs text-gray-400">
+                                    ({formatTime(session.start_time)})
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           )}
 
                           {/* View Details Button */}
@@ -635,21 +698,34 @@ const ManageSessionsPage: React.FC = () => {
                           <h3 className="text-lg font-semibold text-green-900 mb-3">
                             Join Session
                           </h3>
-                          <Button
-                            onClick={() => handleJoinSession(selectedBooking)}
-                            disabled={!isSessionJoinable(selectedBooking)}
-                            className={
-                              isSessionJoinable(selectedBooking)
-                                ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            }
-                            size="lg"
-                          >
-                            <Video className="w-5 h-5 mr-2" />
-                            {isSessionJoinable(selectedBooking)
-                              ? "Join Session Now"
-                              : "Available 5 Min Before Start"}
-                          </Button>
+                          <div className="space-y-3">
+                            <Button
+                              onClick={() => handleJoinSession(selectedBooking)}
+                              disabled={!isSessionJoinable(selectedBooking)}
+                              className={
+                                isSessionJoinable(selectedBooking)
+                                  ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              }
+                              size="lg"
+                            >
+                              <Video className="w-5 h-5 mr-2" />
+                              {isSessionJoinable(selectedBooking)
+                                ? "Join Session Now"
+                                : "Available 5 Min Before Start"}
+                            </Button>
+                            
+                            {/* Countdown to session availability */}
+                            {!isSessionJoinable(selectedBooking) && sessionCountdowns[selectedBooking.id] > 0 && (
+                              <div className="text-sm text-gray-500 text-center">
+                                Session will be available in {sessionCountdowns[selectedBooking.id]} minutes
+                                <br />
+                                <span className="text-sm text-gray-400">
+                                  (Session starts at {selectedBooking.class && formatTime(selectedBooking.class.start_time)})
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </CardContent>
                       </Card>
                     )}

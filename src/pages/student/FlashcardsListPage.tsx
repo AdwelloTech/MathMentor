@@ -19,15 +19,15 @@ import { BookOpen, User, GraduationCap } from "lucide-react";
 import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 import { flashcards } from "@/lib/flashcards";
 import type { FlashcardSet } from "@/types/flashcards";
-import { getNoteSubjects } from "@/lib/notes";
+
 import { useNavigate } from "react-router-dom";
+import { subjectsService } from "@/lib/subjects";
+import type { Subject } from "@/types/subject";
 
 const FlashcardsListPage: React.FC = () => {
   const [sets, setSets] = useState<FlashcardSet[]>([]);
   const [subject, setSubject] = useState("");
-  const [subjects, setSubjects] = useState<
-    { id: string; name: string; display_name: string }[]
-  >([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -37,10 +37,9 @@ const FlashcardsListPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const data = await flashcards.student.listAvailable(subject || undefined);
-      console.log("Loaded flashcard sets:", data); // Debug log
       setSets(data || []);
-    } catch (error) {
-      console.error("Error loading flashcard sets:", error);
+    } catch (err) {
+      console.error("Error loading flashcard sets:", err);
       setError("Failed to load flashcard sets. Please try again.");
       setSets([]);
     } finally {
@@ -50,30 +49,27 @@ const FlashcardsListPage: React.FC = () => {
 
   useEffect(() => {
     load();
-  }, [subject]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject]);
 
   useEffect(() => {
     (async () => {
       try {
-        const s = await getNoteSubjects();
-        console.log("Loaded subjects:", s); // Debug log
-        setSubjects(s || []);
-      } catch (error) {
-        console.error("Error loading subjects:", error);
+        const subjectsList = await subjectsService.listActive();
+        setSubjects(subjectsList || []);
+      } catch (err) {
+        console.error("Error loading subjects:", err);
         setSubjects([]);
       }
     })();
   }, []);
-
-  // Debug log for current state
-  console.log("Current state:", { sets, subject, subjects, loading });
 
   if (loading) {
     return (
       <StudentPageWrapper backgroundClass="bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-900 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-900 mx-auto mb-4" />
             <p className="text-gray-600 text-lg">Loading flashcard sets...</p>
           </div>
         </div>
@@ -83,13 +79,13 @@ const FlashcardsListPage: React.FC = () => {
 
   return (
     <StudentPageWrapper backgroundClass="bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="p-6">
+      <div className="min-h-screen p-6">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Error Display */}
           {error && (
             <Card className="border-2 border-red-200 bg-red-50">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-red-800">
+                <div className="flex items-center gap-3 text-red-800">
                   <span className="text-sm font-medium">{error}</span>
                   <Button
                     onClick={load}
@@ -109,7 +105,7 @@ const FlashcardsListPage: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-900 rounded-2xl shadow-lg">
-                  <GraduationCap className="h-6 w-6 text-yellow-400" />
+                  <GraduationCap className="h-6 w-6 text-white" />
                 </div>
                 <h1 className="text-3xl font-bold text-green-900">
                   Flash Cards
@@ -121,38 +117,26 @@ const FlashcardsListPage: React.FC = () => {
             </div>
 
             {/* Subject Filter and Refresh */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="h-4 w-4 text-green-900" />
-                    <Select
-                      value={subject || "all"}
-                      onValueChange={(val) =>
-                        setSubject(val === "all" ? "" : val)
-                      }
-                    >
-                      <SelectTrigger className="w-[200px] rounded-2xl border shadow-sm">
-                        <SelectValue placeholder="All Subjects" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Subjects</SelectItem>
-                        {subjects.map((s) => (
-                          <SelectItem key={s.id} value={s.name}>
-                            {s.display_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Button
-                onClick={load}
-                variant="outline"
-                className="border-2 border-green-900 hover:bg-green-50"
+            <div className="flex flex-col sm:flex-row items-stretch gap-3">
+              <Select
+                value={subject || "all"}
+                onValueChange={(value) =>
+                  setSubject(value === "all" ? "" : value)
+                }
               >
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Filter by subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All subjects</SelectItem>
+                  {subjects.map((subj) => (
+                    <SelectItem key={subj.id} value={subj.name}>
+                      {subj.display_name || subj.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={load} variant="secondary" className="border">
                 Refresh
               </Button>
             </div>
@@ -160,30 +144,30 @@ const FlashcardsListPage: React.FC = () => {
 
           {/* Flashcard Sets Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {sets.map((s) => (
+            {sets.map((set) => (
               <Card
-                key={s.id}
-                className="group hover:shadow-2xl transition-all duration-300 border-0 bg-green-900 backdrop-blur-sm hover:-translate-y-1 rounded-2xl overflow-hidden"
+                key={set.id}
+                className="group hover:shadow-2xl transition-all duration-300 border-2 border-green-900/60 backdrop-blur-sm hover:-translate-y-1 rounded-2xl overflow-hidden"
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-2 flex-1">
-                      <CardTitle className="text-xl font-bold text-white leading-tight">
-                        {s.title}
+                      <CardTitle className="text-xl font-bold text-green-900 leading-tight">
+                        {set.title}
                       </CardTitle>
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge
                           variant="secondary"
-                          className="bg-green-900/10 text-white hover:bg-green-900/20 rounded-xl px-3 py-1"
+                          className="bg-yellow-300 text-black border-2 border-black/40 hover:bg-yellow-400 rounded-md px-3 py-1"
                         >
-                          {s.subject}
+                          {set.subject}
                         </Badge>
-                        {s.topic && (
+                        {set.topic && (
                           <Badge
                             variant="outline"
-                            className="border-yellow-400 text-white rounded-xl px-3 py-1"
+                            className="border-yellow-400 text-black rounded-xl px-3 py-1"
                           >
-                            {s.topic}
+                            {set.topic}
                           </Badge>
                         )}
                       </div>
@@ -196,14 +180,14 @@ const FlashcardsListPage: React.FC = () => {
 
                 <CardContent className="pt-0 space-y-4">
                   <CardDescription className="flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-white" />
-                    <span className="text-white">
-                      By {s.tutor?.full_name || "Unknown Tutor"}
+                    <User className="h-4 w-4 text-slate-600" />
+                    <span className="text-slate-700">
+                      By {set.tutor?.full_name || "Unknown Tutor"}
                     </span>
                   </CardDescription>
 
                   <Button
-                    onClick={() => navigate(`/student/flashcards/${s.id}`)}
+                    onClick={() => navigate(`/student/flashcards/${set.id}`)}
                     className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
                   >
                     Start Studying
@@ -228,7 +212,7 @@ const FlashcardsListPage: React.FC = () => {
                   <p className="text-base text-slate-500">
                     {subject
                       ? `No flashcards available for ${
-                          subjects.find((s) => s.name === subject)
+                          subjects.find((sj) => sj.name === subject)
                             ?.display_name || subject
                         }`
                       : "No flashcard sets are currently available"}

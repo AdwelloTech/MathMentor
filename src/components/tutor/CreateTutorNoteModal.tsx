@@ -7,18 +7,18 @@ import {
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   createTutorNote,
   uploadTutorNoteFile,
   type CreateTutorNoteData,
 } from "@/lib/tutorNotes";
-import { getNoteSubjects } from "@/lib/notes";
+import { subjectsService } from "@/lib/subjects";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -27,9 +27,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import {
+  DESCRIPTION_MAX_LENGTH,
+  NOTE_TITLE_MAX_LENGTH,
+} from "@/constants/form";
 
 interface CreateTutorNoteModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ interface CreateTutorNoteModalProps {
     id: string;
     name: string;
     display_name: string;
-    color: string;
+    color?: string;
   }>;
 }
 
@@ -111,7 +112,25 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
       onNoteCreated();
     } catch (error) {
       console.error("Error creating material:", error);
-      toast.error("Failed to create material. Please try again.");
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to create material. Please try again.";
+
+      if (error instanceof Error) {
+        if (error.message.includes("Title is required")) {
+          errorMessage = "Please enter a title for the material.";
+        } else if (error.message.includes("User ID is required")) {
+          errorMessage = "You must be logged in to create materials.";
+        } else if (error.message.includes("foreign key")) {
+          errorMessage = "Invalid subject selected. Please try again.";
+        } else if (error.message.includes("duplicate key")) {
+          errorMessage = "A material with this title already exists.";
+        } else if (error.message.includes("permission")) {
+          errorMessage = "You don't have permission to create materials.";
+        }
+      }
+
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
       setUploadingFile(false);
@@ -194,6 +213,14 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -251,6 +278,8 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                     className="w-full"
                     placeholder="Enter the title of your study material"
                     required
+                    maxLength={NOTE_TITLE_MAX_LENGTH}
+                    showCharCount
                   />
                 </div>
 
@@ -264,13 +293,13 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                   </Label>
                   <Textarea
                     id="description"
+                    name="description"
+                    placeholder="Enter a detailed description of the study material..."
                     value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={3}
+                    onChange={handleInputChange}
+                    maxLength={DESCRIPTION_MAX_LENGTH}
                     className="w-full"
-                    placeholder="Brief description of the material"
+                    rows={4}
                   />
                 </div>
 

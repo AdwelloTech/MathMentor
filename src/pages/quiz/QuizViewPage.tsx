@@ -7,12 +7,15 @@ import {
   ArrowLeftIcon,
   PencilIcon,
   TrashIcon,
-  PlayIcon,
-  PauseIcon,
-  EyeIcon,
+  DocumentTextIcon,
+  AcademicCapIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import toast from "react-hot-toast";
+import { getGradeLevelDisplayName } from "@/lib/gradeLevels";
 
 const QuizViewPage: React.FC = () => {
   const { quizId } = useParams<{ quizId: string }>();
@@ -148,7 +151,9 @@ const QuizViewPage: React.FC = () => {
             <h3 className="text-sm font-medium text-gray-700 mb-2">
               Grade Level
             </h3>
-            <p className="text-gray-900">{quiz.grade_level || "All grades"}</p>
+            <p className="text-gray-900">
+              {getGradeLevelDisplayName(quiz.grade_level)}
+            </p>
           </div>
 
           <div>

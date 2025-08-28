@@ -2,15 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { flashcards } from "@/lib/flashcards";
-import type { CreateFlashcardSetData, FlashcardSet } from "@/types/flashcards";
+import type { CreateFlashcardSetData } from "@/types/flashcards";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { getNoteSubjects } from "@/lib/notes";
-import { generateAIFlashcards, uploadPdfForAI } from "@/lib/ai";
+import { generateAIFlashcards, uploadPdfForAI, extractTextFromPdf } from "@/lib/ai";
+import { subjectsService } from "@/lib/subjects";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { GradeSelect } from "@/components/ui/GradeSelect";
 import {
   Select,
   SelectContent,
@@ -18,9 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 
 // Local type to track AI workflow in UI
 type DraftCard = {
@@ -50,7 +51,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
     "medium"
   );
   const [pdfs, setPdfs] = useState<
-    Array<{ pdfBase64: string; fileName: string; fileSize: number }>
+    Array<{ pdfText: string; fileName: string; fileSize: number }>
   >([]);
 
   useEffect(() => {
@@ -81,8 +82,8 @@ const CreateEditFlashcardSetPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const list = await getNoteSubjects();
-        setSubjects(list);
+        const list = await subjectsService.listActive();
+        setSubjects(list as any);
       } catch (e) {
         // ignore
       }
@@ -149,6 +150,16 @@ const CreateEditFlashcardSetPage: React.FC = () => {
       );
 
       if (!isEdit) {
+        if (!title.trim()) {
+          toast.error("Title is required");
+          setLoading(false);
+          return;
+        }
+        if (!subject.trim()) {
+          toast.error("Subject is required");
+          setLoading(false);
+          return;
+        }
         if (!gradeLevel.trim()) {
           toast.error("Grade is required");
           setLoading(false);
@@ -167,6 +178,16 @@ const CreateEditFlashcardSetPage: React.FC = () => {
         await flashcards.sets.create(profile.id, payload);
         toast.success("Flash card set created");
       } else if (setId) {
+        if (!title.trim()) {
+          toast.error("Title is required");
+          setLoading(false);
+          return;
+        }
+        if (!subject.trim()) {
+          toast.error("Subject is required");
+          setLoading(false);
+          return;
+        }
         if (!gradeLevel.trim()) {
           toast.error("Grade is required");
           setLoading(false);
@@ -178,10 +199,14 @@ const CreateEditFlashcardSetPage: React.FC = () => {
           grade_level: gradeLevel,
         });
         // Remove existing cards
-        const { error } = await (await import("@/lib/supabase")).supabase
+        await (await import("@/lib/supabase")).supabase
+
           .from("flashcards")
           .delete()
           .eq("set_id", setId);
+        if (deleteError) {
+          throw deleteError;
+        }
         // Reinsert with validation (only approved/manual)
         const validCardsForUpdate = includedCards.map((c, i) => ({
           set_id: setId,
@@ -225,6 +250,22 @@ const CreateEditFlashcardSetPage: React.FC = () => {
     }
     setAiLoading(true);
     try {
+      // Combine all PDF texts for context
+      const combinedPdfText = pdfs.length > 0
+        ? pdfs.map(pdf => pdf.pdfText).join('\n\n')
+        : undefined;
+
+      // Debug: Log PDF information
+      console.log('🧠 Client: PDF Debug Info:', {
+        pdfsCount: pdfs.length,
+        hasCombinedText: !!combinedPdfText,
+        combinedTextLength: combinedPdfText?.length || 0,
+        combinedTextPreview: combinedPdfText?.substring(0, 200) + '...',
+        subject,
+        gradeLevel,
+        numCards: aiNumCards
+      });
+
       // Use dedicated flashcards AI generator
       const aiCards = await generateAIFlashcards({
         subject,
@@ -232,7 +273,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
         numCards: aiNumCards,
         title,
         difficulty: aiDifficulty,
-        pdfs: pdfs.length > 0 ? pdfs : undefined,
+        pdfText: combinedPdfText,
       });
 
       // Map AI cards directly to flashcard format with pending status
@@ -280,39 +321,33 @@ const CreateEditFlashcardSetPage: React.FC = () => {
 
       <Card className="p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Set Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Set Title"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
-            <Select value={subject} onValueChange={setSubject}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjects.map((s) => (
-                  <SelectItem key={s.id} value={s.name}>
-                    {s.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="gradeLevel">Grade Level</Label>
-            <Input
-              id="gradeLevel"
-              value={gradeLevel}
-              onChange={(e) => setGradeLevel(e.target.value)}
-              placeholder="Grade (e.g., Grade 7)"
-            />
-          </div>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Set Title"
+            className="border rounded-md p-2"
+            maxLength={100}
+            showCharCount
+            charCountClassName="py-1"
+          />
+          <Select value={subject} onValueChange={(value) => setSubject(value)}>
+            <SelectTrigger className="border rounded-md p-2 bg-white">
+              <SelectValue placeholder="Select Subject" />
+            </SelectTrigger>
+            <SelectContent>
+              {subjects.map((s) => (
+                <SelectItem key={s.id} value={s.name}>
+                  {s.display_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <GradeSelect
+            value={gradeLevel}
+            onChange={(value) => setGradeLevel(value)}
+            placeholder="Select grade level"
+            className="border rounded-md p-2 bg-white"
+          />
         </div>
 
         <div className="flex items-center justify-between mt-4">
@@ -351,12 +386,15 @@ const CreateEditFlashcardSetPage: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Label className="text-sm text-gray-600">Difficulty:</Label>
+            <span className="text-sm text-gray-600">Difficulty:</span>
             <Select
               value={aiDifficulty}
               onValueChange={(value) => setAiDifficulty(value as any)}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger
+                className="border rounded-md p-2"
+                aria-label="Difficulty"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -409,22 +447,22 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                       return;
                     }
 
-                    const { pdfs: uploadedPdfs } = await uploadPdfForAI(files);
-                    setPdfs((prev) => [...prev, ...uploadedPdfs]);
+                    const { pdfs: extractedPdfs } = await extractTextFromPdf(files);
+                    setPdfs((prev) => [...prev, ...extractedPdfs]);
 
-                    const newTotal = currentCount + uploadedPdfs.length;
+                    const newTotal = currentCount + extractedPdfs.length;
                     if (newTotal === 1) {
-                      toast.success("1 PDF uploaded for AI context");
+                      toast.success("1 PDF processed for AI context");
                     } else {
                       toast.success(
-                        `${uploadedPdfs.length} PDF${
-                          uploadedPdfs.length > 1 ? "s" : ""
-                        } added to AI context (Total: ${newTotal}/10)`
+                        `${extractedPdfs.length} PDF${
+                          extractedPdfs.length > 1 ? "s" : ""
+                        } processed for AI context (Total: ${newTotal}/10)`
                       );
                     }
                   } catch (err: any) {
                     console.error(err);
-                    toast.error(err?.message || "Failed to upload PDFs");
+                    toast.error(err?.message || "Failed to extract text from PDFs");
                   }
                 }}
                 className="hidden"
@@ -442,7 +480,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                       key={index}
                       className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1 flex items-center gap-1"
                     >
-                      {pdf.fileName} (${Math.round(pdf.fileSize / 1024)} KB)
+                      {pdf.fileName} ({Math.round(pdf.fileSize / 1024)} KB, {pdf.pdfText.length} chars)
                       <button
                         onClick={() =>
                           setPdfs((prev) => prev.filter((_, i) => i !== index))
@@ -532,6 +570,9 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                 }
                 className="min-h-[90px] w-full"
                 placeholder={`Front (term/question) #${idx + 1}`}
+                maxLength={200}
+                showCharCount
+                charCountClassName="py-1"
               />
               <div className="relative w-full">
                 <Textarea
@@ -545,6 +586,9 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                   }
                   className="min-h-[90px] w-full"
                   placeholder={`Back (definition/answer) #${idx + 1}`}
+                  maxLength={300}
+                  showCharCount
+                  charCountClassName="py-1"
                 />
                 <Button
                   onClick={() => removeCard(idx)}

@@ -10,8 +10,19 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { GradeSelect } from "@/components/ui/GradeSelect";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { quizService } from "@/lib/quizService";
 import { generateAIQuestions, uploadPdfForAI } from "@/lib/ai";
+import { getGradeLevelDisplayName } from "@/lib/gradeLevels";
 import type {
   Quiz,
   Question,
@@ -427,7 +438,7 @@ const EditQuizPage: React.FC = () => {
           </p>
           <p>
             <strong>Grade Level:</strong>{" "}
-            {quizData.grade_level || "Not specified"}
+            {getGradeLevelDisplayName(quizData.grade_level)}
           </p>
           <p>
             <strong>Time Limit:</strong> {quizData.time_limit_minutes} minutes
@@ -449,15 +460,19 @@ const EditQuizPage: React.FC = () => {
           </h3>
           <div className="flex items-center space-x-2 text-sm">
             <label>Show:</label>
-            <select
+            <Select
               value={questionFilter}
-              onChange={(e) => setQuestionFilter(e.target.value as any)}
-              className="px-2 py-1 border border-gray-300 rounded-md"
+              onValueChange={(value) => setQuestionFilter(value as any)}
             >
-              <option value="all">All</option>
-              <option value="manual">Manual</option>
-              <option value="ai">AI</option>
-            </select>
+              <SelectTrigger className="px-2 py-1 border border-gray-300 rounded-md">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="manual">Manual</SelectItem>
+                <SelectItem value="ai">AI</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -465,28 +480,36 @@ const EditQuizPage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Difficulty
             </label>
-            <select
+            <Select
               value={aiDifficulty}
-              onChange={(e) => setAiDifficulty(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              onValueChange={(value) => setAiDifficulty(value as any)}
             >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
+              <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Question Type
             </label>
-            <select
+            <Select
               value={aiQuestionType}
-              onChange={(e) => setAiQuestionType(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              onValueChange={(value) => setAiQuestionType(value as any)}
             >
-              <option value="multiple_choice">Multiple Choice</option>
-              <option value="true_false">True/False</option>
-            </select>
+              <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                <SelectItem value="true_false">True/False</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -626,12 +649,14 @@ const EditQuizPage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Quiz Title *
             </label>
-            <input
+            <Input
               type="text"
               value={quizData.title}
               onChange={(e) => updateQuizData("title", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter quiz title"
+              maxLength={100}
+              showCharCount
             />
           </div>
 
@@ -639,12 +664,14 @@ const EditQuizPage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Subject *
             </label>
-            <input
+            <Input
               type="text"
               value={quizData.subject}
               onChange={(e) => updateQuizData("subject", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., Mathematics, Science"
+              maxLength={100}
+              showCharCount
             />
           </div>
 
@@ -652,12 +679,11 @@ const EditQuizPage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Grade Level
             </label>
-            <input
-              type="text"
+            <GradeSelect
               value={quizData.grade_level}
-              onChange={(e) => updateQuizData("grade_level", e.target.value)}
+              onChange={(value) => updateQuizData("grade_level", value)}
+              placeholder="Select grade level"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., Grade 10, High School"
             />
           </div>
 
@@ -668,9 +694,13 @@ const EditQuizPage: React.FC = () => {
             <input
               type="number"
               value={quizData.time_limit_minutes}
-              onChange={(e) =>
-                updateQuizData("time_limit_minutes", parseInt(e.target.value))
-              }
+              onChange={(e) => {
+                const parsed = Number.parseInt(e.target.value, 10);
+                const next = Number.isNaN(parsed)
+                  ? 1
+                  : Math.min(180, Math.max(1, parsed));
+                updateQuizData("time_limit_minutes", next);
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="1"
               max="180"
@@ -681,12 +711,14 @@ const EditQuizPage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
             </label>
-            <textarea
+            <Textarea
               value={quizData.description}
               onChange={(e) => updateQuizData("description", e.target.value)}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter quiz description (optional)"
+              maxLength={500}
+              showCharCount
             />
           </div>
         </div>
@@ -701,15 +733,19 @@ const EditQuizPage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <div className="text-sm">
               <label className="mr-2">Show:</label>
-              <select
+              <Select
                 value={questionFilter}
-                onChange={(e) => setQuestionFilter(e.target.value as any)}
-                className="px-2 py-1 border border-gray-300 rounded-md"
+                onValueChange={(value) => setQuestionFilter(value as any)}
               >
-                <option value="all">All</option>
-                <option value="manual">Manual</option>
-                <option value="ai">AI</option>
-              </select>
+                <SelectTrigger className="px-2 py-1 border border-gray-300 rounded-md">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="ai">AI</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <button
               onClick={addQuestion}
@@ -757,32 +793,34 @@ const EditQuizPage: React.FC = () => {
                   )}
                 </h4>
                 <div className="flex items-center space-x-4">
-                  <select
+                  <Select
                     value={question.question_type}
-                    onChange={(e) =>
-                      updateQuestion(
-                        questionIndex,
-                        "question_type",
-                        e.target.value
-                      )
+                    onValueChange={(value) =>
+                      updateQuestion(questionIndex, "question_type", value)
                     }
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm"
                   >
-                    <option value="multiple_choice">Multiple Choice</option>
-                    <option value="true_false">True/False</option>
-                  </select>
+                    <SelectTrigger className="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="multiple_choice">
+                        Multiple Choice
+                      </SelectItem>
+                      <SelectItem value="true_false">True/False</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600">Points:</span>
                     <input
                       type="number"
                       value={question.points}
-                      onChange={(e) =>
-                        updateQuestion(
-                          questionIndex,
-                          "points",
-                          parseInt(e.target.value)
-                        )
-                      }
+                      onChange={(e) => {
+                        const parsed = Number.parseInt(e.target.value, 10);
+                        const next = Number.isNaN(parsed)
+                          ? 1
+                          : Math.min(100, Math.max(1, parsed));
+                        updateQuestion(questionIndex, "points", next);
+                      }}
                       className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"
                       min="1"
                       max="100"
@@ -823,7 +861,7 @@ const EditQuizPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Question Text *
                 </label>
-                <textarea
+                <Textarea
                   value={question.question_text}
                   onChange={(e) =>
                     updateQuestion(
@@ -835,6 +873,8 @@ const EditQuizPage: React.FC = () => {
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter your question here"
+                  maxLength={300}
+                  showCharCount
                 />
               </div>
 
@@ -853,7 +893,7 @@ const EditQuizPage: React.FC = () => {
                         onClick={() =>
                           setCorrectAnswer(questionIndex, answerIndex)
                         }
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                           answer.is_correct
                             ? "border-green-500 bg-green-500 text-white"
                             : "border-gray-300 hover:border-gray-400"
@@ -861,22 +901,25 @@ const EditQuizPage: React.FC = () => {
                       >
                         {answer.is_correct && <CheckIcon className="h-4 w-4" />}
                       </button>
-                      <input
-                        type="text"
-                        value={answer.answer_text}
-                        onChange={(e) =>
-                          updateAnswer(
-                            questionIndex,
-                            answerIndex,
-                            "answer_text",
-                            e.target.value
-                          )
-                        }
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={`Answer ${answerIndex + 1}`}
-                      />
+                      <div className="flex-1 min-w-0">
+                        <Input
+                          type="text"
+                          value={answer.answer_text}
+                          onChange={(e) =>
+                            updateAnswer(
+                              questionIndex,
+                              answerIndex,
+                              "answer_text",
+                              e.target.value
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={`Answer ${answerIndex + 1}`}
+                          maxLength={150}
+                        />
+                      </div>
                       {answer.is_correct && (
-                        <span className="text-sm text-green-600 font-medium">
+                        <span className="text-sm text-green-600 font-medium flex-shrink-0">
                           Correct
                         </span>
                       )}

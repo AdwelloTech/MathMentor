@@ -81,21 +81,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           // Only handle auth state change if user is confirmed
           if (session.user.email_confirmed_at) {
-            // Never show loading for existing sessions - manual handling
+            // Keep loading true until auth state is fully set
             console.log("Manually handling existing session");
             await handleAuthStateChange(session.user, false);
+            // Don't set loading to false here - handleAuthStateChange will do it
           } else {
             console.log("User not confirmed, clearing session");
             await auth.signOut();
+            safeSetLoading(false);
           }
         } else {
           console.log("No existing session found");
+          safeSetLoading(false);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
+        safeSetLoading(false);
       } finally {
         isInitialized.current = true;
-        safeSetLoading(false);
+        // Don't set loading to false here - it will be set by handleAuthStateChange
       }
     };
 
@@ -439,7 +443,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.warn("Sign out API call failed (this is often normal):", error);
       // Continue with local cleanup regardless of API call result
     }
-    
+
     // Always clear local state - this is the most important part
     clearAuthState();
     toast.success("Signed out successfully");

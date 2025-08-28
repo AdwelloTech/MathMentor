@@ -11,13 +11,17 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
+
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
-import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
+import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
 import ManageQuizzesPage from "./pages/admin/ManageQuizzesPage";
 import AdminManageFlashcardsPage from "./pages/admin/ManageFlashcardsPage";
+import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
+
+import AdminLayout from "./components/layout/AdminLayout";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import TutorDashboard from "./pages/dashboards/TutorDashboard";
@@ -37,9 +41,9 @@ import QuizResultsPage from "./pages/student/QuizResultsPage";
 import ManageMaterialsPage from "./pages/tutor/ManageMaterialsPage";
 import ManageFlashcardsPage from "./pages/tutor/ManageFlashcardsPage";
 import CreateEditFlashcardSetPage from "./pages/tutor/CreateEditFlashcardSetPage";
+import TutorRatingsPage from "./pages/tutor/TutorRatingsPage";
 import FlashcardsListPage from "./pages/student/FlashcardsListPage";
 import FlashcardStudyPage from "./pages/student/FlashcardStudyPage";
-import AdminLayout from "./components/layout/AdminLayout";
 
 import StudentLayout from "./components/layout/StudentLayout";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
@@ -117,7 +121,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Routes>
         {/* Public routes - always accessible */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -438,15 +442,29 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
 
   // For admin routes, check admin session
   if (requiredRole === "admin") {
+    if (adminLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <LoadingSpinner size="lg" />
+        </div>
+      );
+    }
     if (!isAdminLoggedIn) {
-      return <Navigate to="/admin/login" replace />;
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
     return <>{children}</>;
   }
 
   // For other routes, check regular user session
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Use profile.role as primary source, fallback to user.role

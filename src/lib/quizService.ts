@@ -55,18 +55,28 @@ export const quizService = {
 
         if (questionError) throw questionError;
 
-        // Create answers for this question
-        for (const answerData of questionData.answers) {
-          const { error: answerError } = await supabase
+        // Create answers for this question (only if answers are provided)
+        const requiresAnswers = ["multiple_choice", "true_false"].includes(
+          questionData.question_type as string
+        );
+        if (questionData.answers?.length) {
+          const answersToInsert = questionData.answers.map((a) => ({
+            question_id: question.id,
+            answer_text: a.answer_text,
+            is_correct: a.is_correct,
+            // let DB default apply if not provided
+            ...(a.answer_order !== undefined
+              ? { answer_order: a.answer_order }
+              : {}),
+          }));
+          const { error: answersError } = await supabase
             .from("quiz_answers")
-            .insert({
-              question_id: question.id,
-              answer_text: answerData.answer_text,
-              is_correct: answerData.is_correct,
-              answer_order: answerData.answer_order,
-            });
-
-          if (answerError) throw answerError;
+            .insert(answersToInsert);
+          if (answersError) throw answersError;
+        } else if (requiresAnswers) {
+          throw new Error(
+            `Question of type ${questionData.question_type} must include at least one answer`
+          );
         }
       }
 
@@ -172,18 +182,28 @@ export const quizService = {
 
       if (questionError) throw questionError;
 
-      // Create answers for this question
-      for (const answerData of questionData.answers) {
-        const { error: answerError } = await supabase
+      // Create answers for this question (only if answers are provided)
+      const requiresAnswers = ["multiple_choice", "true_false"].includes(
+        questionData.question_type as string
+      );
+      if (questionData.answers?.length) {
+        const answersToInsert = questionData.answers.map((a) => ({
+          question_id: question.id,
+          answer_text: a.answer_text,
+          is_correct: a.is_correct,
+          // let DB default apply if not provided
+          ...(a.answer_order !== undefined
+            ? { answer_order: a.answer_order }
+            : {}),
+        }));
+        const { error: answersError } = await supabase
           .from("quiz_answers")
-          .insert({
-            question_id: question.id,
-            answer_text: answerData.answer_text,
-            is_correct: answerData.is_correct,
-            answer_order: answerData.answer_order,
-          });
-
-        if (answerError) throw answerError;
+          .insert(answersToInsert);
+        if (answersError) throw answersError;
+      } else if (requiresAnswers) {
+        throw new Error(
+          `Question of type ${questionData.question_type} must include at least one answer`
+        );
       }
 
       return question;
@@ -497,8 +517,6 @@ export const quizService = {
       studentId: string,
       subjectFilter?: string
     ): Promise<Quiz[]> => {
-      console.log("Fetching quizzes for student:", studentId);
-
       // First get the tutor IDs from class bookings
       const { data: bookings, error: bookingsError } = await supabase
         .from("class_bookings")
@@ -515,16 +533,6 @@ export const quizService = {
         throw bookingsError;
       }
 
-      console.log("Bookings found:", bookings);
-
-      // Let's see the actual structure of the first booking
-      if (bookings && bookings.length > 0) {
-        console.log(
-          "First booking structure:",
-          JSON.stringify(bookings[0], null, 2)
-        );
-      }
-
       const tutorUserIds =
         bookings
           ?.flatMap((booking) =>
@@ -534,10 +542,7 @@ export const quizService = {
           )
           .filter(Boolean) || [];
 
-      console.log("Tutor user IDs:", tutorUserIds);
-
       if (tutorUserIds.length === 0) {
-        console.log("No tutor user IDs found, returning empty array");
         return [];
       }
 
@@ -552,14 +557,9 @@ export const quizService = {
         throw profileError;
       }
 
-      console.log("Tutor profiles found:", tutorProfiles);
-
       const tutorProfileIds = tutorProfiles?.map((profile) => profile.id) || [];
 
-      console.log("Tutor profile IDs:", tutorProfileIds);
-
       if (tutorProfileIds.length === 0) {
-        console.log("No tutor profile IDs found, returning empty array");
         return [];
       }
 
@@ -580,8 +580,6 @@ export const quizService = {
         console.error("Error fetching quizzes:", error);
         throw error;
       }
-
-      console.log("Quizzes found:", quizzesData);
 
       // Get student's profile ID for attempt lookup
       const { data: studentProfile, error: studentProfileError } =
@@ -627,6 +625,71 @@ export const quizService = {
       return quizzesWithAttempts;
     },
 
+    // Get recent quizzes that the student has attempted or completed
+    getRecentQuizzes: async (studentId: string): Promise<Quiz[]> => {
+      try {
+        // Get student's profile ID
+        const { data: studentProfile, error: studentProfileError } =
+          await supabase
+            .from("profiles")
+            .select("id")
+            .eq("user_id", studentId)
+            .single();
+
+        if (studentProfileError) throw studentProfileError;
+
+        // Get recent quiz attempts
+        const { data: attempts, error: attemptsError } = await supabase
+          .from("quiz_attempts")
+          .select(
+            `
+            id,
+            quiz_id,
+            status,
+            score,
+            max_score,
+            correct_answers,
+            total_questions,
+            created_at,
+            quiz:quizzes(
+              id,
+              title,
+              description,
+              subject,
+              grade_level,
+              time_limit_minutes,
+              total_questions,
+              total_points,
+              created_at,
+              tutor:profiles(id, full_name, email)
+            )
+          `
+          )
+          .eq("student_id", studentProfile.id)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (attemptsError) throw attemptsError;
+
+        // Transform the data to match the expected Quiz format
+        const recentQuizzes =
+          attempts?.map((attempt) => ({
+            ...attempt.quiz,
+            attempt_status: attempt.status,
+            attempt_score: attempt.score,
+            attempt_max_score: attempt.max_score,
+            attempt_correct_answers: attempt.correct_answers,
+            attempt_total_questions: attempt.total_questions,
+            attempt_id: attempt.id,
+          })) || [];
+
+        return recentQuizzes;
+      } catch (error) {
+        console.error("Error fetching recent quizzes:", error);
+        throw error;
+      }
+    },
+
     // Get quiz with questions and answers for taking
     getQuizForTaking: async (quizId: string): Promise<Quiz> => {
       const { data, error } = await supabase
@@ -643,7 +706,7 @@ export const quizService = {
             points,
             question_order,
             created_at,
-            answers:quiz_answers(*)
+            answers:quiz_answers(id, answer_text, answer_order)
           )
         `
         )
@@ -847,6 +910,8 @@ export const quizService = {
       studentAnswers: StudentAnswer[];
       questions: Question[];
     }> => {
+      console.log("Fetching attempt details for ID:", attemptId);
+
       const { data: attempt, error: attemptError } = await supabase
         .from("quiz_attempts")
         .select(
@@ -861,7 +926,18 @@ export const quizService = {
         .eq("id", attemptId)
         .single();
 
-      if (attemptError) throw attemptError;
+      if (attemptError) {
+        console.error("Error fetching attempt:", attemptError);
+        throw attemptError;
+      }
+
+      if (!attempt) {
+        throw new Error(`Attempt with ID ${attemptId} not found`);
+      }
+
+      console.log("Attempt found:", attempt);
+
+      console.log("Fetching student answers for attempt:", attemptId);
 
       const { data: studentAnswers, error: answersError } = await supabase
         .from("student_answers")
@@ -882,7 +958,14 @@ export const quizService = {
         )
         .eq("attempt_id", attemptId);
 
-      if (answersError) throw answersError;
+      if (answersError) {
+        console.error("Error fetching student answers:", answersError);
+        throw answersError;
+      }
+
+      console.log("Student answers found:", studentAnswers);
+
+      console.log("Fetching questions for quiz:", attempt.quiz_id);
 
       const { data: questions, error: questionsError } = await supabase
         .from("quiz_questions")
@@ -901,13 +984,21 @@ export const quizService = {
         .eq("quiz_id", attempt.quiz_id)
         .order("question_order", { ascending: true });
 
-      if (questionsError) throw questionsError;
+      if (questionsError) {
+        console.error("Error fetching questions:", questionsError);
+        throw questionsError;
+      }
 
-      return {
+      console.log("Questions found:", questions);
+
+      const result = {
         attempt,
         studentAnswers: studentAnswers || [],
         questions: questions || [],
       };
+
+      console.log("Returning attempt details:", result);
+      return result;
     },
   },
 };

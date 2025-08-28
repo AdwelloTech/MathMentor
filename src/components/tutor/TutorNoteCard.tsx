@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   StarIcon,
@@ -7,16 +7,14 @@ import {
   EyeIcon,
   ArrowDownTrayIcon,
   DocumentTextIcon,
-  DocumentArrowUpIcon,
-  EyeSlashIcon,
 } from "@heroicons/react/24/outline";
 import {
   formatTutorNoteDate,
-  formatFileSize,
   getTutorNoteSubjectColor,
   truncateTutorNoteText,
-  incrementTutorNoteDownloadCount,
   incrementTutorNoteViewCountUnique,
+  getTutorNoteSecureFile,
+  incrementTutorNoteDownloadCount,
   type TutorNoteCardProps,
 } from "@/lib/tutorNotes";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,62 +45,138 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
   isDeleting = false,
 }) => {
   const { user } = useAuth();
-  const hasFile = fileUrl && fileName;
-  const hasContent = !hasFile; // If no file, assume it has text content
+  const hasFile = fileName && fileSize;
+  const [loadingFile, setLoadingFile] = useState(false);
+  const [secureFileUrl, setSecureFileUrl] = useState<string | null>(null);
 
-  // Track unique view when component mounts (student views the material)
+  // Track unique view when component mounts (only for student views, not tutor views)
   useEffect(() => {
     const trackUniqueView = async () => {
-      if (user) {
+      if (user && user.role === 'student') {
         try {
           await incrementTutorNoteViewCountUnique(id, user.id);
         } catch (error) {
-          console.error("Error tracking unique view:", error);
-          // Don't throw error - view tracking failure shouldn't break the component
+          // View tracking failure shouldn't break the component - log at debug level
+          console.debug("View tracking failed:", error);
         }
       }
     };
 
-    // Only track view if user is authenticated (student viewing)
-    if (user) {
+    // Only track view if user is authenticated AND is a student
+    if (user && user.role === 'student') {
       trackUniqueView();
     }
   }, [id, user]);
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't trigger card click if clicking on buttons or file links
+    // Don't trigger card click if clicking on buttons
     if (
       (e.target as HTMLElement).closest("button") ||
-      (e.target as HTMLElement).closest("a") ||
-      (e.target as HTMLElement).tagName === "BUTTON" ||
-      (e.target as HTMLElement).tagName === "A"
+      (e.target as HTMLElement).tagName === "BUTTON"
     ) {
       return;
     }
     onEdit();
   };
 
+  const handleViewFile = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!hasFile) return;
+
+    if (secureFileUrl) {
+      window.open(secureFileUrl, "_blank");
+      return;
+    }
+
+    // Load secure file URL if not available
+    setLoadingFile(true);
+    try {
+      const secureFile = await getTutorNoteSecureFile(id);
+      if (secureFile.fileUrl) {
+        setSecureFileUrl(secureFile.fileUrl);
+        window.open(secureFile.fileUrl, "_blank");
+      }
+    } catch (error) {
+      console.error("Error loading secure file URL:", error);
+    } finally {
+      setLoadingFile(false);
+    }
+  };
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!hasFile) return;
+
+    let fileUrl = secureFileUrl;
+
+    // Load secure file URL if not available
+    if (!fileUrl) {
+      setLoadingFile(true);
+      try {
+        const secureFile = await getTutorNoteSecureFile(id);
+        if (secureFile.fileUrl) {
+          fileUrl = secureFile.fileUrl;
+          setSecureFileUrl(fileUrl);
+        } else {
+          setLoadingFile(false);
+          return;
+        }
+      } catch (error) {
+        console.error("Error loading secure file URL:", error);
+        setLoadingFile(false);
+        return;
+      }
+      setLoadingFile(false);
+    }
+
+    try {
+      // Increment download count
+      await incrementTutorNoteDownloadCount(id);
+
+      // Force download by fetching the file and creating a blob
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName || "download";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      // Fallback: try direct download
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      link.download = fileName || "download";
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <motion.div
       whileHover={{ y: -4 }}
       onClick={handleCardClick}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group"
+      className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 overflow-hidden hover:shadow-xl transition-all duration-200 cursor-pointer group"
     >
       {/* Header */}
       <div className="p-6 border-b border-gray-100 group-hover:bg-gray-50 transition-colors duration-200">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-2">
-            {hasFile ? (
-              <DocumentArrowUpIcon className="h-5 w-5 text-blue-600" />
-            ) : (
-              <DocumentTextIcon className="h-5 w-5 text-green-600" />
-            )}
+            <DocumentTextIcon className="h-5 w-5 text-green-600" />
             <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
               {title || "Untitled Material"}
             </h3>
           </div>
           {isPremium && (
-            <div className="flex items-center space-x-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+            <div className="flex items-center space-x-1 bg-gradient-to-r from-green-600 to-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
               <StarIcon className="h-3 w-3" />
               <span>PREMIUM</span>
             </div>
@@ -137,96 +211,16 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
           )}
         </div>
 
-        {/* File Info */}
-        {hasFile && (
-          <div className="flex items-center space-x-2 text-sm text-gray-500 mb-3">
-            <DocumentArrowUpIcon className="h-4 w-4" />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (fileUrl) {
-                  // Open PDF in new tab
-                  window.open(fileUrl, "_blank");
-                }
-              }}
-              className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
-              title="Click to view file"
-            >
-              {fileName}
-            </button>
-            <span>•</span>
-            <span>{formatFileSize(fileSize)}</span>
-            <span>•</span>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (fileUrl) {
-                    // Open PDF in new tab
-                    window.open(fileUrl, "_blank");
-                  }
-                }}
-                className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors duration-200"
-                title="View file"
-              >
-                <EyeIcon className="h-3 w-3" />
-                <span className="text-xs font-medium">View</span>
-              </button>
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (fileUrl) {
-                    try {
-                      // Increment download count
-                      await incrementTutorNoteDownloadCount(id);
-
-                      // Force download by fetching the file and creating a blob
-                      const response = await fetch(fileUrl);
-                      const blob = await response.blob();
-                      const url = window.URL.createObjectURL(blob);
-                      const link = document.createElement("a");
-                      link.href = url;
-                      link.download = fileName || "download";
-                      link.style.display = "none";
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      window.URL.revokeObjectURL(url);
-                    } catch (error) {
-                      console.error("Error tracking download:", error);
-                      // Fallback: try direct download
-                      const link = document.createElement("a");
-                      link.href = fileUrl;
-                      link.download = fileName || "download";
-                      link.target = "_blank";
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }
-                  }
-                }}
-                className="flex items-center space-x-1 text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded-md transition-colors duration-200"
-                title="Download file"
-              >
-                <ArrowDownTrayIcon className="h-3 w-3" />
-                <span className="text-xs font-medium">Download</span>
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Stats */}
         <div className="flex items-center space-x-4 text-sm text-gray-500">
           <div className="flex items-center space-x-1">
             <EyeIcon className="h-4 w-4" />
             <span>{viewCount} views</span>
           </div>
-          {hasFile && (
-            <div className="flex items-center space-x-1">
-              <ArrowDownTrayIcon className="h-4 w-4" />
-              <span>{downloadCount} downloads</span>
-            </div>
-          )}
+          <div className="flex items-center space-x-1">
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            <span>{downloadCount} downloads</span>
+          </div>
         </div>
       </div>
 
@@ -238,6 +232,32 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
           </span>
 
           <div className="flex items-center space-x-2">
+            {hasFile && (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleViewFile}
+                  disabled={loadingFile}
+                  className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                  title="View file"
+                >
+                  <EyeIcon className="h-4 w-4" />
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleDownload}
+                  disabled={loadingFile}
+                  className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                  title="Download file"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                </motion.button>
+              </>
+            )}
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

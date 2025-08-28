@@ -18,13 +18,13 @@ import {
   User,
 } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Textarea } from "@/components/ui/textarea";
 import { quizService } from "@/lib/quizService";
 import type { Quiz, Question, Answer, QuizAttempt } from "@/types/quiz";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 
 interface StudentAnswer {
   questionId: string;

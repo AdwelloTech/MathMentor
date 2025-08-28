@@ -8,6 +8,7 @@ import type { Database } from "../types/database";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 
 import {
   CheckCircle,
@@ -203,7 +204,7 @@ const PackagesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-yellow-50 relative overflow-hidden">
+    <StudentPageWrapper backgroundClass="bg-gradient-to-br from-green-50 via-white to-yellow-50">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-green-900/5 rounded-full blur-3xl animate-pulse"></div>
@@ -584,7 +585,7 @@ const PackagesPage: React.FC = () => {
           </motion.div>
         </motion.div>
       )}
-    </div>
+    </StudentPageWrapper>
   );
 };
 

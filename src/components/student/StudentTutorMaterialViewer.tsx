@@ -11,13 +11,14 @@ import {
   GraduationCap,
   Sparkles,
 } from "lucide-react";
+import DOMPurify from "dompurify";
 import {
   formatStudentTutorMaterialDate,
   formatFileSize,
   getStudentTutorMaterialSubjectColor,
-  incrementStudentTutorMaterialDownloadCount,
   type StudentTutorMaterial,
 } from "@/lib/studentTutorMaterials";
+import { incrementTutorNoteDownloadCount } from "@/lib/tutorNotes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -51,7 +52,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
     try {
       setLoading(true);
       // Increment download count
-      await incrementStudentTutorMaterialDownloadCount(material.id);
+      await incrementTutorNoteDownloadCount(material.id);
 
       // Force download by fetching the file and creating a blob
       const response = await fetch(material.file_url!);
@@ -117,7 +118,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                       </h2>
                       <div className="flex flex-col items-start space-x-3">
                         {material.is_premium && (
-                          <Badge className="bg-yellow-400 text-black border-0 text-xs font-bold hover:bg-yellow-400">
+                          <Badge className="bg-gradient-to-r from-green-600 to-green-500 text-white border-0 text-xs font-bold hover:from-green-500 hover:to-green-600">
                             PREMIUM
                           </Badge>
                         )}
@@ -291,7 +292,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                         <div
                           className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
                           dangerouslySetInnerHTML={{
-                            __html: material.content || "",
+                            __html: DOMPurify.sanitize(material.content || ""),
                           }}
                         />
                       </CardContent>

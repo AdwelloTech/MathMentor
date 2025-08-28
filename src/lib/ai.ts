@@ -131,7 +131,56 @@ export async function generateAIFlashcards(
   }
 }
 
-// Upload PDFs and get base64 for AI processing
+// Extract text from PDFs for AI processing
+export async function extractTextFromPdf(files: File | File[]): Promise<{
+  pdfs: Array<{ pdfText: string; fileName: string; fileSize: number }>;
+  totalFiles: number;
+}> {
+  const form = new FormData();
+
+  if (Array.isArray(files)) {
+    // Handle multiple files
+    if (files.length > 10) {
+      throw new Error("Maximum 10 PDF files allowed");
+    }
+    files.forEach((file) => {
+      console.log(
+        "📄 Appending file to form:",
+        file.name,
+        file.type,
+        file.size
+      );
+      form.append("files", file);
+    });
+  } else {
+    // Handle single file (backward compatibility)
+    console.log(
+      "📄 Appending single file to form:",
+      files.name,
+      files.type,
+      files.size
+    );
+    form.append("files", files);
+  }
+
+  console.log("📄 FormData entries:");
+  for (let [key, value] of form.entries()) {
+    console.log("📄 Form key:", key, "value type:", typeof value);
+  }
+
+  const res = await fetch("/api/ai/pdf/extract-text", {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({} as any));
+    console.error("📄 Text extraction failed:", err);
+    throw new Error(err?.error || "Failed to extract text from PDFs");
+  }
+  return res.json();
+}
+
+// Upload PDFs and get base64 for AI processing (legacy function)
 export async function uploadPdfForAI(files: File | File[]): Promise<{
   pdfs: Array<{ pdfBase64: string; fileName: string; fileSize: number }>;
   totalFiles: number;
@@ -143,7 +192,7 @@ export async function uploadPdfForAI(files: File | File[]): Promise<{
     if (files.length > 10) {
       throw new Error("Maximum 10 PDF files allowed");
     }
-    files.forEach((file, index) => {
+    files.forEach((file) => {
       console.log(
         "📄 Appending file to form:",
         file.name,

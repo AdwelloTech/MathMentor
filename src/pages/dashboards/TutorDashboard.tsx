@@ -25,6 +25,7 @@ import {
   LightBulbIcon,
   BookOpenIcon,
 } from "@heroicons/react/24/outline";
+import { Star } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
 import { db } from "@/lib/db";
@@ -979,11 +980,11 @@ const TutorDashboard: React.FC = () => {
                         disabled: !isActiveTutor,
                       },
                       {
-                        title: "Manage Materials",
-                        description: "Upload study resources",
-                        icon: BookOpenIcon,
+                        title: "Ratings",
+                        description: "View student feedback",
+                        icon: Star,
                         color: "from-yellow-500 to-yellow-600",
-                        action: () => navigate("/tutor/manage-materials"),
+                        action: () => navigate("/tutor/ratings"),
                         disabled: !isActiveTutor,
                       },
                     ].map((action, index) => (

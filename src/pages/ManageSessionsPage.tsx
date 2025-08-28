@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   CheckCircle,
   AlertCircle,
+  Star,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -31,6 +32,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { sessionRatingService } from "@/lib/sessionRatingService";
+import SessionTimer from "@/components/sessions/SessionTimer";
 
 const ManageSessionsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,6 +45,7 @@ const ManageSessionsPage: React.FC = () => {
     null
   );
   const [showDetails, setShowDetails] = useState(false);
+  const [tutorRatings, setTutorRatings] = useState<Record<string, { avg: number; count: number }>>({});
 
   useEffect(() => {
     if (user) {
@@ -56,6 +60,39 @@ const ManageSessionsPage: React.FC = () => {
         user!.id
       );
       setUpcomingBookings(data || []);
+
+      // Fetch rating stats for unique tutors in these bookings
+      const uniqueTutorIds = Array.from(
+        new Set(
+          (data || [])
+            .map((b) => b.class?.tutor?.id)
+            .filter((id): id is string => Boolean(id))
+        )
+      );
+
+      if (uniqueTutorIds.length) {
+        const statsArray = await Promise.all(
+          uniqueTutorIds.map(async (tutorId) => {
+            try {
+              const stats = await sessionRatingService.getTutorStats(tutorId);
+              return [
+                tutorId,
+                {
+                  avg: stats.average_rating ?? 0,
+                  count: stats.total_reviews ?? 0,
+                },
+              ] as const;
+            } catch (e) {
+              console.error("Failed loading tutor stats", tutorId, e);
+              return [tutorId, { avg: 0, count: 0 }] as const;
+            }
+          })
+        );
+
+        setTutorRatings(Object.fromEntries(statsArray));
+      } else {
+        setTutorRatings({});
+      }
     } catch (err) {
       setError("Failed to load your sessions");
       console.error("Error loading bookings:", err);
@@ -238,7 +275,17 @@ const ManageSessionsPage: React.FC = () => {
                               <p className="font-semibold text-green-900 text-lg">
                                 {session.tutor?.full_name || "Tutor"}
                               </p>
-                              <p className="text-sm text-gray-600">Tutor</p>
+                              <div className="flex items-center gap-1 text-sm text-gray-600">
+                                <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                <span>
+                                  {(
+                                    tutorRatings[session.tutor?.id || ""]?.avg ?? 0
+                                  ).toFixed(1)}
+                                </span>
+                                <span className="text-gray-500">(
+                                  {tutorRatings[session.tutor?.id || ""]?.count ?? 0} reviews
+                                )</span>
+                              </div>
                             </div>
                             <Badge
                               className={getStatusColor(booking.booking_status)}
@@ -317,6 +364,38 @@ const ManageSessionsPage: React.FC = () => {
                             <Eye className="w-5 h-5 mr-2" />
                             Details
                           </Button>
+
+                          {/* Session Timer - Below the action buttons */}
+                          {booking.booking_status === "confirmed" && session && (
+                            <div className="mt-1">
+                              <SessionTimer
+                                session={{
+                                  id: session.id,
+                                  title: session.title,
+                                  description: session.description || "",
+                                  date: session.date,
+                                  start_time: session.start_time,
+                                  end_time: session.end_time,
+                                  duration_minutes: session.duration_minutes,
+                                  jitsi_meeting_url: session.jitsi_meeting_url,
+                                  jitsi_room_name: session.jitsi_room_name,
+                                  jitsi_password: session.jitsi_password,
+                                  class_status: session.status,
+                                  booking_status: booking.booking_status,
+                                  payment_status: booking.payment_status,
+                                  class_type: session.class_type?.name || "",
+                                  tutor: {
+                                    id: session.tutor?.id || session.tutor_id,
+                                    full_name: session.tutor?.full_name || "",
+                                    email: session.tutor?.email || "",
+                                  },
+                                }}
+                                bookingId={booking.id}
+                                onSessionEnd={loadBookings}
+                                className="w-full"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -474,6 +553,17 @@ const ManageSessionsPage: React.FC = () => {
                             <p className="text-gray-600">
                               {selectedBooking.class.tutor.email}
                             </p>
+                            <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
+                              <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                              <span>
+                                {(
+                                  tutorRatings[selectedBooking.class.tutor.id]?.avg ?? 0
+                                ).toFixed(1)}
+                              </span>
+                              <span className="text-gray-500">(
+                                {tutorRatings[selectedBooking.class.tutor.id]?.count ?? 0} reviews
+                              )</span>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -495,6 +585,47 @@ const ManageSessionsPage: React.FC = () => {
                       </CardContent>
                     </Card>
                   )}
+
+                  {/* Session Timer */}
+                  {selectedBooking.class?.jitsi_meeting_url &&
+                    selectedBooking.booking_status === "confirmed" && (
+                      <Card>
+                        <CardContent className="p-6">
+                          <h3 className="text-lg font-semibold text-green-900 mb-3">
+                            Session Timer
+                          </h3>
+                          <SessionTimer
+                            session={{
+                              id: selectedBooking.class!.id,
+                              title: selectedBooking.class!.title,
+                              description: selectedBooking.class!.description || "",
+                              date: selectedBooking.class!.date,
+                              start_time: selectedBooking.class!.start_time,
+                              end_time: selectedBooking.class!.end_time,
+                              duration_minutes: selectedBooking.class!.duration_minutes,
+                              jitsi_meeting_url: selectedBooking.class!.jitsi_meeting_url,
+                              jitsi_room_name: selectedBooking.class!.jitsi_room_name,
+                              jitsi_password: selectedBooking.class!.jitsi_password,
+                              class_status: selectedBooking.class!.status,
+                              booking_status: selectedBooking.booking_status,
+                              payment_status: selectedBooking.payment_status,
+                              class_type: selectedBooking.class!.class_type?.name || "",
+                              tutor: {
+                                id: selectedBooking.class!.tutor_id,
+                                full_name: selectedBooking.class!.tutor?.full_name || "",
+                                email: selectedBooking.class!.tutor?.email || "",
+                              },
+                            }}
+                            bookingId={selectedBooking.id}
+                            onSessionEnd={() => {
+                              loadBookings();
+                              setShowDetails(false);
+                            }}
+                            className="max-w-md"
+                          />
+                        </CardContent>
+                      </Card>
+                    )}
 
                   {/* Join Session */}
                   {selectedBooking.class?.jitsi_meeting_url &&

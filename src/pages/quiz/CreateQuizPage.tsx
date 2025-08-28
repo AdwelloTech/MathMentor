@@ -383,22 +383,25 @@ const CreateQuizPage: React.FC = () => {
   const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+    <div className="min-h-screen bg-[#D5FFC5] relative overflow-auto">
+      {/* Full page background */}
+      <div className="fixed inset-0 bg-[#D5FFC5] -z-10" />
+      
       {/* Animated background elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_70%)]" />
 
       {/* Floating decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse" />
+      <div className="fixed top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse" />
       <div
-        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+        className="fixed top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
         style={{ animationDelay: "1s" }}
       />
       <div
-        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+        className="fixed bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
         style={{ animationDelay: "2s" }}
       />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 py-12 space-y-8">
+      <div className="relative z-10 max-w-4xl mx-auto px-6 py-12 space-y-8 min-h-screen flex flex-col">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -441,7 +444,7 @@ const CreateQuizPage: React.FC = () => {
                 type="text"
                 value={quizData.title}
                 onChange={(e) => updateQuizData("title", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter quiz title"
                 maxLength={100}
                 showCharCount
@@ -456,7 +459,7 @@ const CreateQuizPage: React.FC = () => {
                 value={quizData.subject}
                 onValueChange={(value) => updateQuizData("subject", value)}
               >
-                <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="Select a subject" />
                 </SelectTrigger>
                 <SelectContent>
@@ -477,7 +480,7 @@ const CreateQuizPage: React.FC = () => {
                 value={quizData.grade_level}
                 onChange={(value) => updateQuizData("grade_level", value)}
                 placeholder="Select grade level"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -495,7 +498,7 @@ const CreateQuizPage: React.FC = () => {
                     : Math.min(180, Math.max(1, parsed));
                   updateQuizData("time_limit_minutes", next);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min={1}
                 max={180}
               />
@@ -509,7 +512,7 @@ const CreateQuizPage: React.FC = () => {
                 value={quizData.description}
                 onChange={(e) => updateQuizData("description", e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter quiz description (optional)"
                 maxLength={500}
                 showCharCount
@@ -517,33 +520,51 @@ const CreateQuizPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-8 flex items-center space-x-3">
-            <button
-              onClick={() => setCurrentStep(2)}
-              disabled={!validateStep1()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              1
-            </button>
-            <span className="text-sm font-medium">Quiz Details</span>
-            <div className="flex-1 h-px bg-gray-300 max-w-32" />
-            <div
-              className={`flex items-center ${
-                currentStep >= 2 ? "text-[#16803D]" : "text-gray-400"
-              }`}
-            >
+          <div className="mt-8 flex flex-col space-y-6">
+            {/* Progress Steps */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setCurrentStep(2)}
+                  disabled={!validateStep1()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  1
+                </button>
+                <span className="text-sm font-medium">Quiz Details</span>
+              </div>
+              
+              <div className="flex-1 max-w-md mx-4 h-px bg-gray-300" />
+              
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                  currentStep >= 2
-                    ? "border-[#16803D] bg-[#16803D] text-white"
-                    : "border-gray-300"
+                className={`flex items-center ${
+                  currentStep >= 2 ? "text-[#16803D]" : "text-gray-400"
                 }`}
               >
-                2
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                    currentStep >= 2
+                      ? "border-[#16803D] bg-[#16803D] text-white"
+                      : "border-gray-300"
+                  }`}
+                >
+                  2
+                </div>
+                <span className="ml-3 text-sm font-medium">
+                  Questions &amp; Answers
+                </span>
               </div>
-              <span className="ml-3 text-sm font-medium">
-                Questions &amp; Answers
-              </span>
+            </div>
+            
+            {/* Next Button */}
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={() => setCurrentStep(2)}
+                disabled={!validateStep1()}
+                className="bg-[#16803D] hover:bg-[#126A32] text-white py-2 px-6 rounded-lg font-medium transition-colors"
+              >
+                Next: Add Questions
+              </Button>
             </div>
           </div>
         </motion.div>

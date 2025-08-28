@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { classSchedulingService } from "../lib/classSchedulingService";
+import { sessionRatingService } from "../lib/sessionRatingService";
 import { ClassSearchResult, ClassType } from "../types/classScheduling";
 import SessionPaymentForm from "../components/payment/SessionPaymentForm";
 import {
@@ -49,6 +50,7 @@ const BookSessionPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookingLoading, setBookingLoading] = useState<string | null>(null);
+  const [tutorRatings, setTutorRatings] = useState<Record<string, { avg: number; count: number }>>({});
 
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -65,6 +67,45 @@ const BookSessionPage: React.FC = () => {
     loadSessions();
     loadClassTypes();
   }, []);
+
+  // Load tutor ratings whenever sessions change
+  useEffect(() => {
+    const loadTutorRatings = async () => {
+      const uniqueTutorIds = Array.from(
+        new Set(
+          (sessions || [])
+            .map((s) => s.tutor?.id)
+            .filter((id): id is string => Boolean(id))
+        )
+      );
+
+      if (!uniqueTutorIds.length) {
+        setTutorRatings({});
+        return;
+      }
+
+      const statsEntries = await Promise.all(
+        uniqueTutorIds.map(async (tutorId) => {
+          try {
+            const stats = await sessionRatingService.getTutorStats(tutorId);
+            return [
+              tutorId,
+              {
+                avg: stats.average_rating ?? 0,
+                count: stats.total_reviews ?? 0,
+              },
+            ] as const;
+          } catch (e) {
+            console.error("Failed to load rating stats for tutor", tutorId, e);
+            return [tutorId, { avg: 0, count: 0 }] as const;
+          }
+        })
+      );
+      setTutorRatings(Object.fromEntries(statsEntries));
+    };
+
+    loadTutorRatings();
+  }, [sessions]);
 
   const loadSessions = async () => {
     try {
@@ -439,10 +480,13 @@ const BookSessionPage: React.FC = () => {
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
                           <span className="text-sm text-gray-700 font-medium">
-                            {tutor.rating.toFixed(1)}
+                            {(
+                              tutorRatings[session.tutor?.id || tutor.id]?.avg ?? tutor.rating ?? 0
+                            ).toFixed(1)}
                           </span>
                           <span className="text-sm text-gray-600">
-                            ({tutor.total_reviews} reviews)
+                            (
+                            {tutorRatings[session.tutor?.id || tutor.id]?.count ?? tutor.total_reviews ?? 0} reviews)
                           </span>
                         </div>
                       </div>

@@ -106,6 +106,23 @@ export const classSchedulingService = {
     create: async (
       classData: CreateClassFormData & { tutor_id: string }
     ): Promise<TutorClass> => {
+      // Validate subject_id if provided to prevent foreign key constraint errors
+      // This ensures the subject exists and is active before creating the class
+      if (classData.subject_id) {
+        const { data: subjectData, error: subjectError } = await supabase
+          .from("subjects")
+          .select("id")
+          .eq("id", classData.subject_id)
+          .eq("is_active", true)
+          .single();
+
+        if (subjectError || !subjectData) {
+          throw new Error(
+            `Invalid subject selected. Please select a valid subject.`
+          );
+        }
+      }
+
       // Get class type details
       const classType = await classSchedulingService.classTypes.getById(
         classData.class_type_id
@@ -337,9 +354,9 @@ export const classSchedulingService = {
       // Transform to search results with additional info
       const results: ClassSearchResult[] = await Promise.all(
         data.map(async (classRecord) => {
-          // Get tutor rating and reviews
+          // Get tutor rating and reviews from session_ratings table
           const { data: reviews } = await supabase
-            .from("class_reviews")
+            .from("session_ratings")
             .select("rating")
             .eq("tutor_id", classRecord.tutor_id);
 
@@ -562,31 +579,65 @@ export const classSchedulingService = {
     cancel: async (id: string): Promise<ClassBooking> => {
       try {
         // Get the booking first to get class_id
-        const existingBooking = await classSchedulingService.bookings.getById(
-          id
-        );
+        const existingBooking = await classSchedulingService.bookings.getById(id);
 
         if (!existingBooking) {
           throw new Error("Booking not found");
         }
 
-        // Use atomic RPC function to prevent race conditions
-        const { data, error } = await supabase.rpc("cancel_booking_atomic", {
+        // Try atomic RPC first
+        const { error: rpcError } = await supabase.rpc("cancel_booking_atomic", {
           p_booking_id: id,
           p_class_id: existingBooking.class_id,
         });
 
-        if (error) {
-          if (
-            error.message?.includes("Booking not found") ||
-            error.code === "PGRST116"
-          ) {
-            throw new Error("Booking not found or already cancelled");
+        if (rpcError) {
+          // Graceful fallback if RPC does not exist or is not exposed
+          const rpcMissing =
+            rpcError.code === "42883" ||
+            rpcError.message?.includes("Could not find the function") ||
+            rpcError.message?.includes("function public.cancel_booking_atomic") ||
+            rpcError.message?.includes("cancel_booking_atomic");
+
+          if (!rpcMissing) {
+            // Other errors (e.g., permission), rethrow
+            if (
+              rpcError.message?.includes("Booking not found") ||
+              rpcError.code === "PGRST116"
+            ) {
+              throw new Error("Booking not found or already cancelled");
+            }
+            throw rpcError;
           }
-          throw error;
+
+          // Fallback path: update booking then decrement class count
+          // 1) Update booking status to cancelled (idempotent-ish)
+          const updated = await classSchedulingService.bookings.update(id, {
+            booking_status: "cancelled",
+          });
+
+          // 2) Decrement class current_students safely
+          if (updated.class_id) {
+            const { data: classRow, error: classFetchErr } = await supabase
+              .from("tutor_classes")
+              .select("current_students")
+              .eq("id", updated.class_id)
+              .single();
+            if (classFetchErr) throw classFetchErr;
+
+            const newCount = Math.max((classRow?.current_students || 1) - 1, 0);
+            const { error: classUpdateErr } = await supabase
+              .from("tutor_classes")
+              .update({ current_students: newCount, updated_at: new Date().toISOString() })
+              .eq("id", updated.class_id);
+            if (classUpdateErr) throw classUpdateErr;
+          }
+
+          // Return the full, updated booking
+          return await classSchedulingService.bookings.getById(id);
         }
 
-        // Fetch the updated booking data with relations
+        // If RPC succeeded, fetch and return the updated record
         const { data: updatedBooking, error: fetchError } = await supabase
           .from("class_bookings")
           .select(
@@ -679,14 +730,14 @@ export const classSchedulingService = {
       is_anonymous?: boolean;
     }): Promise<ClassReview> => {
       const { data, error } = await supabase
-        .from("class_reviews")
+        .from("session_ratings")
         .insert([review])
         .select(
           `
-          *,
-          student:profiles!class_reviews_student_id_fkey(id, full_name),
-          tutor:profiles!class_reviews_tutor_id_fkey(id, full_name)
-        `
+           *,
+           student:profiles!session_ratings_student_id_fkey(id, full_name),
+           tutor:profiles!session_ratings_tutor_id_fkey(id, full_name)
+         `
         )
         .single();
 
@@ -696,13 +747,13 @@ export const classSchedulingService = {
 
     getByTutorId: async (tutorId: string): Promise<ClassReview[]> => {
       const { data, error } = await supabase
-        .from("class_reviews")
+        .from("session_ratings")
         .select(
           `
-          *,
-          student:profiles!class_reviews_student_id_fkey(id, full_name),
-          tutor:profiles!class_reviews_tutor_id_fkey(id, full_name)
-        `
+           *,
+           student:profiles!session_ratings_student_id_fkey(id, full_name),
+           tutor:profiles!session_ratings_tutor_id_fkey(id, full_name)
+         `
         )
         .eq("tutor_id", tutorId)
         .order("created_at", { ascending: false });
@@ -713,15 +764,15 @@ export const classSchedulingService = {
 
     getByClassId: async (classId: string): Promise<ClassReview[]> => {
       const { data, error } = await supabase
-        .from("class_reviews")
+        .from("session_ratings")
         .select(
           `
-          *,
-          student:profiles!class_reviews_student_id_fkey(id, full_name),
-          tutor:profiles!class_reviews_tutor_id_fkey(id, full_name)
-        `
+           *,
+           student:profiles!session_ratings_student_id_fkey(id, full_name),
+           tutor:profiles!session_ratings_tutor_id_fkey(id, full_name)
+         `
         )
-        .eq("class_id", classId)
+        .eq("session_id", classId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -738,9 +789,9 @@ export const classSchedulingService = {
         .select("id, status, price_per_session, current_students")
         .eq("tutor_id", tutorId);
 
-      // Get review statistics
+      // Get review statistics from session_ratings table
       const { data: reviews } = await supabase
-        .from("class_reviews")
+        .from("session_ratings")
         .select("rating")
         .eq("tutor_id", tutorId);
 

@@ -11,6 +11,7 @@ import {
 import type { StudentUpcomingSession } from "@/types/classScheduling";
 import { sessionUtils } from "@/utils/sessionUtils";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import SessionTimer from "./SessionTimer";
 
 interface JitsiMeetingRoomProps {
   session: StudentUpcomingSession;
@@ -24,10 +25,10 @@ declare global {
   }
 }
 
-const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({ 
-  session, 
-  onClose, 
-  userDisplayName = "Student" 
+const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
+  session,
+  onClose,
+  userDisplayName = "Student",
 }) => {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -38,11 +39,11 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
 
   // Extract room name from Jitsi URL
   const getRoomName = (url: string): string => {
-    const urlParts = url.split('/');
-    return urlParts[urlParts.length - 1] || 'default-room';
+    const urlParts = url.split("/");
+    return urlParts[urlParts.length - 1] || "default-room";
   };
 
-  const roomName = session.jitsi_meeting_url 
+  const roomName = session.jitsi_meeting_url
     ? getRoomName(session.jitsi_meeting_url)
     : `room-${session.id}`;
 
@@ -84,14 +85,14 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
         return;
       }
 
-      const script = document.createElement('script');
-      script.src = 'https://meet.jit.si/external_api.js';
+      const script = document.createElement("script");
+      script.src = "https://meet.jit.si/external_api.js";
       script.async = true;
       script.onload = () => {
         setIsJitsiLoaded(true);
       };
       script.onerror = () => {
-        console.error('Failed to load Jitsi Meet External API');
+        console.error("Failed to load Jitsi Meet External API");
       };
       document.head.appendChild(script);
     };
@@ -101,7 +102,7 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
 
   const initializeJitsiMeeting = () => {
     if (!isJitsiLoaded || !jitsiContainerRef.current) {
-      console.error('Jitsi not loaded or container not available');
+      console.error("Jitsi not loaded or container not available");
       return;
     }
 
@@ -109,7 +110,7 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
 
     const options = {
       roomName: roomName,
-      width: '100%',
+      width: "100%",
       height: 400,
       parentNode: jitsiContainerRef.current,
       configOverwrite: {
@@ -129,47 +130,67 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
         SHOW_JITSI_WATERMARK: false,
         SHOW_WATERMARK_FOR_GUESTS: false,
         TOOLBAR_BUTTONS: [
-          'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-          'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
-          'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
-          'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
-          'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
+          "microphone",
+          "camera",
+          "closedcaptions",
+          "desktop",
+          "fullscreen",
+          "fodeviceselection",
+          "hangup",
+          "profile",
+          "chat",
+          "recording",
+          "livestreaming",
+          "etherpad",
+          "sharedvideo",
+          "settings",
+          "raisehand",
+          "videoquality",
+          "filmstrip",
+          "invite",
+          "feedback",
+          "stats",
+          "shortcuts",
+          "tileview",
+          "videobackgroundblur",
+          "download",
+          "help",
+          "mute-everyone",
         ],
       },
       userInfo: {
         displayName: userDisplayName,
-      }
+      },
     };
 
     try {
-      const api = new window.JitsiMeetExternalAPI('meet.jit.si', options);
-      
-      api.addEventListener('ready', () => {
-        console.log('Jitsi Meet API is ready');
+      const api = new window.JitsiMeetExternalAPI("meet.jit.si", options);
+
+      api.addEventListener("ready", () => {
+        console.log("Jitsi Meet API is ready");
         setLoading(false);
         setJitsiApi(api);
       });
 
-      api.addEventListener('participantLeft', (participant: any) => {
-        console.log('Participant left:', participant);
+      api.addEventListener("participantLeft", (participant: any) => {
+        console.log("Participant left:", participant);
       });
 
-      api.addEventListener('videoConferenceLeft', () => {
-        console.log('User left the conference');
+      api.addEventListener("videoConferenceLeft", () => {
+        console.log("User left the conference");
         api.dispose();
         setJitsiApi(null);
         setShowEmbedded(false);
       });
 
-      api.addEventListener('readyToClose', () => {
-        console.log('Ready to close');
+      api.addEventListener("readyToClose", () => {
+        console.log("Ready to close");
         api.dispose();
         setJitsiApi(null);
         setShowEmbedded(false);
       });
-
     } catch (error) {
-      console.error('Error initializing Jitsi Meet:', error);
+      console.error("Error initializing Jitsi Meet:", error);
       setLoading(false);
     }
   };
@@ -212,7 +233,7 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         className={`bg-white rounded-2xl shadow-2xl w-full max-h-[95vh] overflow-hidden ${
-          showEmbedded ? 'max-w-4xl' : 'max-w-md'
+          showEmbedded ? "max-w-4xl" : "max-w-md"
         }`}
       >
         {/* Header */}
@@ -221,7 +242,7 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
             <div className="flex items-center space-x-3">
               <VideoCameraIcon className="w-6 h-6" />
               <h2 className="text-xl font-bold">
-                {showEmbedded ? 'Live Session' : 'Session Room'}
+                {showEmbedded ? "Live Session" : "Session Room"}
               </h2>
             </div>
             <div className="flex items-center space-x-2">
@@ -279,11 +300,20 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
                   <div className="flex items-center space-x-3">
                     <ClockIcon className="w-5 h-5 text-gray-500" />
                     <span className="text-gray-700">
-                      <strong>Duration:</strong> {session.duration_minutes} minutes
+                      <strong>Duration:</strong> {session.duration_minutes}{" "}
+                      minutes
                     </span>
                   </div>
                 </div>
               </div>
+
+              {/* Session Timer */}
+              <SessionTimer
+                session={session}
+                onSessionEnd={() => {
+                  // Handle session end if needed
+                }}
+              />
 
               {/* Status and Timer */}
               <div className="text-center space-y-2">
@@ -335,7 +365,8 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
                         Session not ready
                       </div>
                       <div className="text-xs">
-                        Join button will be available 5 minutes before the session starts
+                        Join button will be available 5 minutes before the
+                        session starts
                       </div>
                     </div>
                   </div>
@@ -344,7 +375,9 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
 
               {/* Instructions */}
               <div className="bg-blue-50 rounded-xl p-4">
-                <h4 className="font-semibold text-blue-900 mb-2">Instructions:</h4>
+                <h4 className="font-semibold text-blue-900 mb-2">
+                  Instructions:
+                </h4>
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• Click "Join Meeting Here" for embedded experience</li>
                   <li>• Or "Open in New Tab" for full-screen meeting</li>
@@ -362,16 +395,18 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
                     {session.title} - Live Session
                   </h3>
                 </div>
-                
-                <div 
+
+                <div
                   ref={jitsiContainerRef}
                   className="w-full bg-gray-100 rounded-lg overflow-hidden"
-                  style={{ minHeight: '400px' }}
+                  style={{ minHeight: "400px" }}
                 >
                   {loading && (
                     <div className="flex items-center justify-center h-96">
                       <LoadingSpinner size="lg" />
-                      <span className="ml-3 text-gray-600">Loading meeting...</span>
+                      <span className="ml-3 text-gray-600">
+                        Loading meeting...
+                      </span>
                     </div>
                   )}
                 </div>

@@ -40,6 +40,7 @@ import QuizResultsPage from "./pages/student/QuizResultsPage";
 import ManageMaterialsPage from "./pages/tutor/ManageMaterialsPage";
 import ManageFlashcardsPage from "./pages/tutor/ManageFlashcardsPage";
 import CreateEditFlashcardSetPage from "./pages/tutor/CreateEditFlashcardSetPage";
+import TutorRatingsPage from "./pages/tutor/TutorRatingsPage";
 import FlashcardsListPage from "./pages/student/FlashcardsListPage";
 import FlashcardStudyPage from "./pages/student/FlashcardStudyPage";
 
@@ -90,8 +91,14 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             {/* Ensure admin routes redirect to admin login when unauthenticated */}
-            <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-            <Route path="/admin/*" element={<Navigate to="/admin/login" replace />} />
+            <Route
+              path="/admin"
+              element={<Navigate to="/admin/login" replace />}
+            />
+            <Route
+              path="/admin/*"
+              element={<Navigate to="/admin/login" replace />}
+            />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         ) : (
@@ -172,6 +179,7 @@ function App() {
                   path="manage-materials"
                   element={<ManageMaterialsPage />}
                 />
+                <Route path="ratings" element={<TutorRatingsPage />} />
                 <Route path="flashcards" element={<ManageFlashcardsPage />} />
                 <Route
                   path="flashcards/create"

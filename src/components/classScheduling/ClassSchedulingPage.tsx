@@ -296,6 +296,16 @@ const ClassSchedulingPage: React.FC = () => {
 
     const tutorId = user.id;
 
+    if (!formData.title.trim()) {
+      toast.error("Please enter a class title");
+      return;
+    }
+
+    if (!formData.subject_id) {
+      toast.error("Please select a subject");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -328,6 +338,7 @@ const ClassSchedulingPage: React.FC = () => {
       // Reset form data
       setFormData({
         class_type_id: "",
+        subject_id: undefined,
         title: "",
         description: "",
         date: "",
@@ -732,13 +743,22 @@ const ClassSchedulingPage: React.FC = () => {
                   Subject
                 </label>
                 <select
-                  value={formData.subject_id || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, subject_id: e.target.value || undefined }))}
+                  value={formData.subject_id || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      subject_id: e.target.value || undefined,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
-                  <option value="">Select subject (optional)</option>
-                  {subjects.map(s => (
-                    <option key={s.id} value={s.id}>{s.display_name}</option>
+                  <option value="" disabled>
+                    Select subject
+                  </option>
+                  {subjects.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.display_name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -749,7 +769,9 @@ const ClassSchedulingPage: React.FC = () => {
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, title: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter class title"
                 />
@@ -760,8 +782,13 @@ const ClassSchedulingPage: React.FC = () => {
                   Description (Optional)
                 </label>
                 <textarea
-                  value={formData.description || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  value={formData.description || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
                   placeholder="Enter class description"
@@ -778,7 +805,12 @@ const ClassSchedulingPage: React.FC = () => {
                     min="1"
                     max={selectedClassType.max_students}
                     value={formData.max_students}
-                    onChange={(e) => setFormData(prev => ({ ...prev, max_students: parseInt(e.target.value) }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        max_students: parseInt(e.target.value),
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -793,7 +825,12 @@ const ClassSchedulingPage: React.FC = () => {
                   min="0"
                   step="0.01"
                   value={formData.price_per_session}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price_per_session: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      price_per_session: parseFloat(e.target.value),
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -801,10 +838,10 @@ const ClassSchedulingPage: React.FC = () => {
               <div className="flex items-center space-x-4 pt-4">
                 <button
                   onClick={handleCreateClass}
-                  disabled={loading || !formData.title}
+                  disabled={loading || !formData.title || !formData.subject_id}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Creating...' : 'Create Class'}
+                  {loading ? "Creating..." : "Create Class"}
                 </button>
                 <button
                   onClick={() => setShowClassForm(false)}

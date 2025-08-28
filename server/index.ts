@@ -165,7 +165,7 @@ async function extractPdfTextFromBase64(
     console.log("🔍 Trying alternative PDF extraction with pdfjs-dist...");
     try {
       const pdfjs = await import("pdfjs-dist");
-      const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+      const pdf = await pdfjs.getDocument({ data: Buffer.from(pdfBase64, "base64") }).promise;
       console.log("🔍 Alternative PDF loaded, pages:", pdf.numPages);
       
       let alternativeText = "";
@@ -515,7 +515,7 @@ ${contextLine} Create ${numQuestions} ${difficulty} multiple choice questions fo
     }
 
     const data = await resp.json();
-    const rawContent = data?.choices?.[0]?.message?.content || "";
+    const rawContent = (data as any)?.choices?.[0]?.message?.content || "";
     const content = String(rawContent)
       .replace(/<think>[\s\S]*?<\/think>/g, "")
       .trim();
@@ -825,7 +825,7 @@ ${contextLine}${pdfContext}
       }
 
       const data = await resp.json();
-      const rawContent = data?.choices?.[0]?.message?.content || "";
+      const rawContent = (data as any)?.choices?.[0]?.message?.content || "";
       content = String(rawContent)
         .replace(/<think>[\s\S]*?<\/think>/g, "")
         .trim();
@@ -1065,7 +1065,7 @@ ${contextLine}${pdfContext}
         if (followResp.ok) {
           const followData = await followResp.json();
           let followContent = String(
-            followData?.choices?.[0]?.message?.content || ""
+            (followData as any)?.choices?.[0]?.message?.content || ""
           )
             .replace(/<think>[\s\S]*?<\/think>/g, "")
             .trim();
@@ -1155,6 +1155,198 @@ ${contextLine}${pdfContext}
       note: "Server error occurred, showing fallback cards",
     });
   }
+});
+
+// Stripe payment processing for student sessions and packages
+import Stripe from 'stripe';
+
+// Initialize Stripe with secret key from environment
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51S141WF560wXRzgjBpEWdEY3AF0b0K72b7UxWdTXJ6usZpST9wkiQoZkHcN5tFCkDdE8kParbQvK80VhGYfaX71o00yjXQ21Hf', {
+  apiVersion: '2023-10-16',
+});
+
+// Validate Stripe configuration
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.log('ℹ️ Using Stripe test key from fallback configuration.');
+}
+
+// Create payment intent for student session booking
+app.post('/api/payments/create-session-payment-intent', async (req: Request, res: Response) => {
+  try {
+    const { amount, customerEmail, sessionTitle, tutorName } = req.body;
+
+    if (!amount || !customerEmail) {
+      return res.status(400).json({ error: 'Amount and customer email are required' });
+    }
+
+          // Create payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: 'usd',
+        receipt_email: customerEmail,
+        metadata: {
+          sessionTitle: sessionTitle || 'Math Session',
+          tutorName: tutorName || 'Tutor',
+          type: 'student_session'
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+    });
+  } catch (error) {
+    console.error('Payment intent creation error:', error);
+    res.status(500).json({ error: 'Failed to create payment intent' });
+  }
+});
+
+// Confirm payment for student session
+app.post('/api/payments/confirm-session-payment', async (req: Request, res: Response) => {
+  try {
+    const { paymentIntentId } = req.body;
+
+    if (!paymentIntentId) {
+      return res.status(400).json({ error: 'Payment intent ID is required' });
+    }
+
+    // Retrieve payment intent to confirm status
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status === 'succeeded') {
+      res.json({ 
+        success: true, 
+        status: paymentIntent.status,
+        amount: paymentIntent.amount / 100 // Convert back to dollars
+      });
+    } else {
+      res.json({ 
+        success: false, 
+        status: paymentIntent.status,
+        error: 'Payment not completed'
+      });
+    }
+  } catch (error) {
+    console.error('Payment confirmation error:', error);
+    res.status(500).json({ error: 'Failed to confirm payment' });
+  }
+});
+
+// Create payment intent for package subscriptions
+app.post('/api/payments/create-package-payment-intent', async (req: Request, res: Response) => {
+  try {
+    const { packageType, customerEmail } = req.body;
+
+    if (!packageType || !customerEmail) {
+      return res.status(400).json({ error: 'Package type and customer email are required' });
+    }
+
+    // Get package price from frontend constants
+    const packagePrices = {
+      silver: 2999, // $29.99 in cents
+      gold: 4999,   // $49.99 in cents
+    };
+
+    const amount = packagePrices[packageType as keyof typeof packagePrices];
+    if (!amount) {
+      return res.status(400).json({ error: 'Invalid package type' });
+    }
+
+    // Create payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'usd',
+      receipt_email: customerEmail,
+      metadata: {
+        packageType,
+        type: 'package_subscription'
+      },
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+    });
+  } catch (error) {
+    console.error('Package payment intent creation error:', error);
+    res.status(500).json({ error: 'Failed to create payment intent' });
+  }
+});
+
+// Confirm package payment
+app.post('/api/payments/confirm-package-payment', async (req: Request, res: Response) => {
+  try {
+    const { paymentIntentId } = req.body;
+
+    if (!paymentIntentId) {
+      return res.status(400).json({ error: 'Payment intent ID is required' });
+    }
+
+    // Retrieve payment intent to confirm status
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status === 'succeeded') {
+      res.json({ 
+        success: true, 
+        status: paymentIntent.status,
+        amount: paymentIntent.amount / 100, // Convert back to dollars
+        packageType: paymentIntent.metadata.packageType
+      });
+    } else {
+      res.json({ 
+        success: false, 
+        status: paymentIntent.status,
+        error: 'Payment not completed'
+      });
+    }
+  } catch (error) {
+    console.error('Package payment confirmation error:', error);
+    res.status(500).json({ error: 'Failed to confirm payment' });
+  }
+});
+
+// Webhook endpoint for Stripe events (for production)
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    if (endpointSecret) {
+      event = stripe.webhooks.constructEvent(req.body, sig as string, endpointSecret);
+    } else {
+      // For development, parse without signature verification
+      event = JSON.parse(req.body);
+    }
+  } catch (err: any) {
+    console.error('Webhook signature verification failed:', err);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event
+  switch (event.type) {
+    case 'payment_intent.succeeded':
+      const paymentIntent = event.data.object;
+      console.log('Payment succeeded:', paymentIntent.id);
+      // Here you would update your database to mark the session as paid
+      break;
+    case 'payment_intent.payment_failed':
+      const failedPayment = event.data.object;
+      console.log('Payment failed:', failedPayment.id);
+      // Here you would handle failed payments
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  res.json({ received: true });
 });
 
 app.listen(PORT, () => {

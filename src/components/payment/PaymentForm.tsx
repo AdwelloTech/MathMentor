@@ -53,36 +53,66 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
         throw new Error('Card element not found');
       }
 
-      // Validate card element first
-      const { error: cardError } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardNumberElement,
-        billing_details: {
-          email: customerEmail,
+      // Create payment intent on backend
+      const paymentIntentResponse = await fetch('/api/payments/create-package-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          packageType,
+          customerEmail,
+        }),
+      });
+
+      if (!paymentIntentResponse.ok) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      const { clientSecret, paymentIntentId } = await paymentIntentResponse.json();
+
+      // Confirm card payment with Stripe
+      const { error: paymentError } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardNumberElement,
+          billing_details: {
+            email: customerEmail,
+          },
         },
       });
 
-      if (cardError) {
+      if (paymentError) {
         setPaymentStatus('error');
-        setErrorMessage(cardError.message || 'Invalid card information');
-        onPaymentError(cardError.message || 'Invalid card information');
+        setErrorMessage(paymentError.message || 'Payment failed');
+        onPaymentError(paymentError.message || 'Payment failed');
         return;
       }
 
-      // Simulate payment processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Confirm payment on backend
+      const confirmResponse = await fetch('/api/payments/confirm-package-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentIntentId,
+        }),
+      });
 
-      // For demo mode: simulate successful payment
-      // In production, you would create a real payment intent on your backend
-      // and then use stripe.confirmCardPayment with the real client_secret
-      const mockPaymentIntentId = `pi_${Math.random().toString(36).substr(2, 24)}`;
-      
-      setPaymentStatus('success');
-      onPaymentSuccess(mockPaymentIntentId);
-      
-      console.log('🎉 Demo Payment Successful!');
-      console.log('💡 To process real payments, implement backend API to create payment intents');
-      console.log('🔑 Use your secret key on backend:', 'sk_test_51OYCbPFUqDTwzZQx...');
+      if (!confirmResponse.ok) {
+        throw new Error('Failed to confirm payment');
+      }
+
+      const confirmResult = await confirmResponse.json();
+
+      if (confirmResult.success) {
+        setPaymentStatus('success');
+        onPaymentSuccess(paymentIntentId);
+        console.log('Package payment successful:', paymentIntentId);
+      } else {
+        throw new Error(confirmResult.error || 'Payment confirmation failed');
+      }
+
     } catch (error: any) {
       setPaymentStatus('error');
       setErrorMessage(error.message || 'An unexpected error occurred');
@@ -226,19 +256,19 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
           </div>
         </form>
 
-        {/* Test Card Info */}
-        <div className="mt-6 p-3 bg-blue-50 rounded-lg">
-          <p className="text-xs font-medium text-blue-900 mb-1">Demo Mode - Use Test Cards:</p>
-          <p className="text-xs text-blue-700">
-            ✅ Success: 4242 4242 4242 4242 | ❌ Decline: 4000 0000 0000 0002
-          </p>
-          <p className="text-xs text-blue-600 mt-1">
-            Any future date | Any 3-digit CVC | Card validation active
-          </p>
-          <p className="text-xs text-blue-500 mt-1">
-            💡 Real payments require backend API implementation
-          </p>
-        </div>
+                 {/* Test Card Info */}
+         <div className="mt-6 p-3 bg-green-50 rounded-lg">
+           <p className="text-xs font-medium text-green-900 mb-1">✅ Live Payment Gateway - Use Test Cards:</p>
+           <p className="text-xs text-green-700">
+             ✅ Success: 4242 4242 4242 4242 | ❌ Decline: 4000 0000 0000 0002
+           </p>
+           <p className="text-xs text-green-600 mt-1">
+             Any future date | Any 3-digit CVC | Real Stripe processing
+           </p>
+           <p className="text-xs text-green-500 mt-1">
+             💡 Payments are processed through Stripe test environment
+           </p>
+         </div>
       </div>
     </div>
   );

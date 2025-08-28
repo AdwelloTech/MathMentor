@@ -315,7 +315,13 @@ const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div className={getRoleContainerClass(profile?.role)}>
+    <div
+      className={
+        isAdminLoggedIn
+          ? "min-h-screen bg-[#D5FFC5]"
+          : getRoleContainerClass(profile?.role)
+      }
+    >
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}

@@ -2,8 +2,8 @@ import { loadStripe } from '@stripe/stripe-js';
 
 // Stripe Test Keys for Sandbox Mode
 // Using your actual Stripe test keys
-// Secret key (for backend): sk_test_51OYCbPFUqDTwzZQxRI5JMdxefgbU8sM7MKWmorDAI6HZRjZtzsHNcRDTkAZSL0kK49HkkPP1oWr4QCJrc7ffqKGW00sFLxKg2O
-const STRIPE_PUBLISHABLE_KEY = 'pk_test_51OYCbPFUqDTwzZQxQzMq1uWZhf9KNtzPnTqlYdHiGF60MU6wGf7TxSsIF1uyNWkUskk1HIbqsJjMZeAJCoqwsHIw00q9ALP8ER';
+// Secret key (for backend): sk_test_51S141WF560wXRzgjBpEWdEY3AF0b0K72b7UxWdTXJ6usZpST9wkiQoZkHcN5tFCkDdE8kParbQvK80VhGYfaX71o00yjXQ21Hf
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51S141WF560wXRzgjZpZ0LjSIDxAB44sORJdeYrimlZOU0ttuSugMND7GDmIlF2gUdkBYBzpOrrVLaXCFE1lROW7U008xmvz6lQ';
 
 // Initialize Stripe
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
@@ -37,7 +37,7 @@ export interface PaymentIntent {
 // Function to create payment intent (this would typically be done on the backend)
 export const createPaymentIntent = async (packageType: 'silver' | 'gold', customerEmail: string) => {
   // In a real application, this would be a call to your backend API using the secret key
-  // Backend would use: sk_test_51OYCbPFUqDTwzZQxRI5JMdxefgbU8sM7MKWmorDAI6HZRjZtzsHNcRDTkAZSL0kK49HkkPP1oWr4QCJrc7ffqKGW00sFLxKg2O
+  // Backend would use: sk_test_51S141WF560wXRzgjBpEWdEY3AF0b0K72b7UxWdTXJ6usZpST9wkiQoZkHcN5tFCkDdE8kParbQvK80VhGYfaX71o00yjXQ21Hf
   // For demo purposes, we'll simulate the response
   const amount = PACKAGE_PRICES[packageType];
   

@@ -4,6 +4,282 @@ import dotenv from "dotenv";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import multer from "multer";
+import katex from "katex";
+import * as math from "mathjs";
+
+// Ultra-aggressive LaTeX to plain text conversion function
+function convertLatexToText(latexString: string): string {
+  try {
+    console.log("🔄 Converting LaTeX:", latexString);
+    
+    // First, try to render with KaTeX and extract text
+    try {
+      const rendered = katex.renderToString(latexString, {
+        throwOnError: false,
+        output: 'html'
+      });
+      
+      // Convert HTML to plain text
+      const textContent = rendered
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+        .replace(/&amp;/g, '&') // Replace HTML entities
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      
+      if (textContent.trim()) {
+        console.log("✅ KaTeX conversion successful:", textContent.trim());
+        return textContent.trim();
+      }
+    } catch (katexError) {
+      console.log("⚠️ KaTeX rendering failed, trying manual conversion:", katexError.message);
+    }
+
+    // Ultra-aggressive manual LaTeX to text conversion
+    let converted = latexString
+      // Replace common LaTeX commands with plain text equivalents
+      .replace(/\\\(/g, '(') // Inline math delimiters
+      .replace(/\\\)/g, ')')
+      .replace(/\\\[/g, '[') // Display math delimiters
+      .replace(/\\\]/g, ']')
+      
+      // Replace matrix environments with better handling
+      .replace(/\\begin\{matrix\}([\s\S]*?)\\end\{matrix\}/g, (match, content) => {
+        return content.replace(/&/g, ' ').replace(/\\\\/g, '; ').trim();
+      })
+      .replace(/\\begin\{pmatrix\}([\s\S]*?)\\end\{pmatrix\}/g, (match, content) => {
+        return '(' + content.replace(/&/g, ' ').replace(/\\\\/g, '; ').trim() + ')';
+      })
+      .replace(/\\begin\{bmatrix\}([\s\S]*?)\\end\{bmatrix\}/g, (match, content) => {
+        return '[' + content.replace(/&/g, ' ').replace(/\\\\/g, '; ').trim() + ']';
+      })
+      .replace(/\\begin\{vmatrix\}([\s\S]*?)\\end\{vmatrix\}/g, (match, content) => {
+        return '|' + content.replace(/&/g, ' ').replace(/\\\\/g, '; ').trim() + '|';
+      })
+      .replace(/\\begin\{array\}([\s\S]*?)\\end\{array\}/g, (match, content) => {
+        return content.replace(/&/g, ' ').replace(/\\\\/g, '; ').trim();
+      })
+      
+      // Replace fractions with better handling
+      .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '($1)/($2)')
+      .replace(/\\dfrac\{([^}]*)\}\{([^}]*)\}/g, '($1)/($2)')
+      .replace(/\\tfrac\{([^}]*)\}\{([^}]*)\}/g, '($1)/($2)')
+      
+      // Replace square roots with better handling
+      .replace(/\\sqrt\{([^}]*)\}/g, 'square root of $1')
+      .replace(/\\sqrt\[([^\]]*)\]\{([^}]*)\}/g, 'root[$1] of $2')
+      
+      // Replace Greek letters (case insensitive)
+      .replace(/\\alpha/gi, 'alpha')
+      .replace(/\\beta/gi, 'beta')
+      .replace(/\\gamma/gi, 'gamma')
+      .replace(/\\delta/gi, 'delta')
+      .replace(/\\epsilon/gi, 'epsilon')
+      .replace(/\\varepsilon/gi, 'epsilon')
+      .replace(/\\zeta/gi, 'zeta')
+      .replace(/\\eta/gi, 'eta')
+      .replace(/\\theta/gi, 'theta')
+      .replace(/\\vartheta/gi, 'theta')
+      .replace(/\\iota/gi, 'iota')
+      .replace(/\\kappa/gi, 'kappa')
+      .replace(/\\lambda/gi, 'lambda')
+      .replace(/\\mu/gi, 'mu')
+      .replace(/\\nu/gi, 'nu')
+      .replace(/\\xi/gi, 'xi')
+      .replace(/\\pi/gi, 'pi')
+      .replace(/\\rho/gi, 'rho')
+      .replace(/\\sigma/gi, 'sigma')
+      .replace(/\\tau/gi, 'tau')
+      .replace(/\\upsilon/gi, 'upsilon')
+      .replace(/\\phi/gi, 'phi')
+      .replace(/\\varphi/gi, 'phi')
+      .replace(/\\chi/gi, 'chi')
+      .replace(/\\psi/gi, 'psi')
+      .replace(/\\omega/gi, 'omega')
+      
+      // Replace other common symbols
+      .replace(/\\infty/gi, 'infinity')
+      .replace(/\\partial/gi, 'partial')
+      .replace(/\\nabla/gi, 'nabla')
+      .replace(/\\sum/gi, 'sum')
+      .replace(/\\prod/gi, 'product')
+      .replace(/\\int/gi, 'integral')
+      .replace(/\\oint/gi, 'contour integral')
+      .replace(/\\pm/gi, 'plus or minus')
+      .replace(/\\mp/gi, 'minus or plus')
+      .replace(/\\times/gi, 'times')
+      .replace(/\\div/gi, 'divided by')
+      .replace(/\\leq/gi, 'less than or equal to')
+      .replace(/\\geq/gi, 'greater than or equal to')
+      .replace(/\\neq/gi, 'not equal to')
+      .replace(/\\approx/gi, 'approximately equal to')
+      .replace(/\\equiv/gi, 'equivalent to')
+      .replace(/\\propto/gi, 'proportional to')
+      .replace(/\\perp/gi, 'perpendicular to')
+      .replace(/\\parallel/gi, 'parallel to')
+      .replace(/\\angle/gi, 'angle')
+      .replace(/\\degree/gi, 'degrees')
+      .replace(/\\circ/gi, 'degrees')
+      .replace(/\\prime/gi, 'prime')
+      .replace(/\\doubleprime/gi, 'double prime')
+      .replace(/\\tripleprime/gi, 'triple prime')
+      
+      // Replace subscripts and superscripts with better handling
+      .replace(/\^\{([^}]*)\}/g, '^($1)')
+      .replace(/\^([a-zA-Z0-9])/g, '^$1')
+      .replace(/_\{([^}]*)\}/g, '_($1)')
+      .replace(/_([a-zA-Z0-9])/g, '_$1')
+      
+      // Replace common functions with better handling
+      .replace(/\\sin/gi, 'sin')
+      .replace(/\\cos/gi, 'cos')
+      .replace(/\\tan/gi, 'tan')
+      .replace(/\\sec/gi, 'sec')
+      .replace(/\\csc/gi, 'csc')
+      .replace(/\\cot/gi, 'cot')
+      .replace(/\\arcsin/gi, 'arcsin')
+      .replace(/\\arccos/gi, 'arccos')
+      .replace(/\\arctan/gi, 'arctan')
+      .replace(/\\sinh/gi, 'sinh')
+      .replace(/\\cosh/gi, 'cosh')
+      .replace(/\\tanh/gi, 'tanh')
+      .replace(/\\log/gi, 'log')
+      .replace(/\\ln/gi, 'ln')
+      .replace(/\\exp/gi, 'exp')
+      .replace(/\\abs/gi, 'absolute value of')
+      .replace(/\\mod/gi, 'modulo')
+      .replace(/\\gcd/gi, 'greatest common divisor of')
+      .replace(/\\lcm/gi, 'least common multiple of')
+      
+      // Replace spacing commands
+      .replace(/\\,/g, ' ')
+      .replace(/\\;/g, '  ')
+      .replace(/\\!/g, '')
+      .replace(/\\:/g, ' ')
+      .replace(/\\quad/g, '    ')
+      .replace(/\\qquad/g, '        ')
+      .replace(/\\hspace\{([^}]*)\}/g, ' ')
+      .replace(/\\vspace\{([^}]*)\}/g, ' ')
+      
+      // Replace text commands
+      .replace(/\\text\{([^}]*)\}/g, '$1')
+      .replace(/\\mathrm\{([^}]*)\}/g, '$1')
+      .replace(/\\mathbf\{([^}]*)\}/g, '$1')
+      .replace(/\\mathit\{([^}]*)\}/g, '$1')
+      .replace(/\\mathcal\{([^}]*)\}/g, '$1')
+      .replace(/\\mathbb\{([^}]*)\}/g, '$1')
+      .replace(/\\mathfrak\{([^}]*)\}/g, '$1')
+      .replace(/\\mathscr\{([^}]*)\}/g, '$1')
+      
+      // Replace brackets and parentheses
+      .replace(/\\left\(/g, '(')
+      .replace(/\\right\)/g, ')')
+      .replace(/\\left\[/g, '[')
+      .replace(/\\right\]/g, ']')
+      .replace(/\\left\\{/g, '{')
+      .replace(/\\right\\}/g, '}')
+      .replace(/\\left\\|/g, '|')
+      .replace(/\\right\\|/g, '|')
+      .replace(/\\left\\langle/g, '<')
+      .replace(/\\right\\rangle/g, '>')
+      
+      // Replace arrows
+      .replace(/\\rightarrow/gi, 'arrow right')
+      .replace(/\\leftarrow/gi, 'arrow left')
+      .replace(/\\leftrightarrow/gi, 'arrow left and right')
+      .replace(/\\Rightarrow/gi, 'double arrow right')
+      .replace(/\\Leftarrow/gi, 'double arrow left')
+      .replace(/\\Leftrightarrow/gi, 'double arrow left and right')
+      .replace(/\\mapsto/gi, 'maps to')
+      .replace(/\\to/gi, 'to')
+      
+      // Replace set notation
+      .replace(/\\in/gi, 'is an element of')
+      .replace(/\\notin/gi, 'is not an element of')
+      .replace(/\\subset/gi, 'is a subset of')
+      .replace(/\\supset/gi, 'is a superset of')
+      .replace(/\\subseteq/gi, 'is a subset of or equal to')
+      .replace(/\\supseteq/gi, 'is a superset of or equal to')
+      .replace(/\\cup/gi, 'union')
+      .replace(/\\cap/gi, 'intersection')
+      .replace(/\\emptyset/gi, 'empty set')
+      .replace(/\\varnothing/gi, 'empty set')
+      .replace(/\\mathbb\{R\}/gi, 'real numbers')
+      .replace(/\\mathbb\{Z\}/gi, 'integers')
+      .replace(/\\mathbb\{N\}/gi, 'natural numbers')
+      .replace(/\\mathbb\{Q\}/gi, 'rational numbers')
+      .replace(/\\mathbb\{C\}/gi, 'complex numbers')
+      
+      // Replace logic symbols
+      .replace(/\\forall/gi, 'for all')
+      .replace(/\\exists/gi, 'there exists')
+      .replace(/\\nexists/gi, 'there does not exist')
+      .replace(/\\land/gi, 'and')
+      .replace(/\\lor/gi, 'or')
+      .replace(/\\lnot/gi, 'not')
+      .replace(/\\implies/gi, 'implies')
+      .replace(/\\iff/gi, 'if and only if')
+      
+      // Replace calculus symbols
+      .replace(/\\lim/gi, 'limit')
+      .replace(/\\limsup/gi, 'limit superior')
+      .replace(/\\liminf/gi, 'limit inferior')
+      .replace(/\\sup/gi, 'supremum')
+      .replace(/\\inf/gi, 'infimum')
+      .replace(/\\max/gi, 'maximum')
+      .replace(/\\min/gi, 'minimum')
+      .replace(/\\arg/gi, 'argument of')
+      
+      // Replace remaining LaTeX commands with their content
+      .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1')
+      .replace(/\\[a-zA-Z]+/g, '')
+      
+      // Handle any remaining sqrt expressions that might have been converted
+      .replace(/sqrt\(([^)]*)\)/g, 'square root of $1')
+      .replace(/(\d+)sqrt\(([^)]*)\)/g, '$1 times square root of $2')
+      
+      // Handle specific problematic patterns from the user's example
+      .replace(/\[\[([^\]]+)\],\s*\[([^\]]+)\]\]/g, 'matrix [$1; $2]')
+      .replace(/sqrt\(3\)/g, 'square root of 3')
+      .replace(/sqrt\(3\)\/2/g, 'square root of 3 divided by 2')
+      .replace(/2sqrt\(3\)/g, '2 times square root of 3')
+      
+      // Clean up any remaining backslashes
+      .replace(/\\/g, '')
+      
+      // Clean up extra spaces and normalize
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Try to use mathjs to further normalize and validate the mathematical expression
+    try {
+      console.log("🔄 Attempting mathjs parsing for:", converted);
+      
+      // Parse the converted string with mathjs
+      const mathExpression = math.parse(converted);
+      
+      // Convert back to string for final output
+      const mathjsResult = mathExpression.toString();
+      
+      if (mathjsResult && mathjsResult !== converted) {
+        console.log("✅ mathjs normalization successful:", mathjsResult);
+        return mathjsResult;
+      } else {
+        console.log("✅ mathjs parsing successful, no changes needed");
+        return converted;
+      }
+    } catch (mathjsError) {
+      console.log("⚠️ mathjs parsing failed, using regex result:", mathjsError.message);
+      return converted;
+    }
+  } catch (error) {
+    console.error("❌ LaTeX conversion error:", error);
+    // Return original string if conversion fails
+    return latexString;
+  }
+}
 
 // PDF text extraction using pdf.js-extract (Node.js optimized)
 async function extractPdfTextFromBase64(
@@ -283,6 +559,8 @@ app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
+
+
 // Extract text from uploaded PDFs (used as AI context)
 console.log("📄 Registering PDF upload route with multer middleware");
 
@@ -454,29 +732,134 @@ app.post("/api/ai/generate", async (req: Request, res: Response) => {
       );
     }
 
-    let userPrompt: string;
-    if (questionType === "multiple_choice") {
-      userPrompt = `You are an assistant that generates clear, unambiguous ${questionType} quiz questions with exactly 4 options and one correct answer. Return ONLY valid JSON that matches the schema: {"questions":[{"question_text":string,"question_type":"multiple_choice","points":number,"answers":[{"answer_text":string,"is_correct":boolean},{...4 total}]}]}. Do not include any prose before or after the JSON.
+         let userPrompt: string;
+     if (questionType === "multiple_choice") {
+       userPrompt = `You are an assistant that generates clear, unambiguous ${questionType} quiz questions with exactly 4 options and one correct answer.
 
-IMPORTANT: All answer options must be meaningful and complete. Do NOT use placeholder values like "undefined", "empty", "option 1", "answer 1", or similar generic text. Each answer should be a proper, substantive response to the question.
+Return ONLY valid JSON matching exactly this format:
+{"questions":[{"question_text":"question text","question_type":"multiple_choice","points":10,"answers":[{"answer_text":"answer text","is_correct":true},{"answer_text":"answer text","is_correct":false},{"answer_text":"answer text","is_correct":false},{"answer_text":"answer text","is_correct":false}]}]}
 
-${contextLine} Create ${numQuestions} ${difficulty} ${questionType} questions for subject: ${subject}${
-        gradeLevel ? `, grade: ${gradeLevel}` : ""
-      }. Ensure exactly one correct answer per question, and set points to 10 by default.${pdfContext}`;
-    } else if (questionType === "true_false") {
-      userPrompt = `You are an assistant that generates clear, unambiguous ${questionType} quiz questions with exactly 2 options (True and False) and one correct answer. Return ONLY valid JSON that matches the schema: {"questions":[{"question_text":string,"question_type":"true_false","points":number,"answers":[{"answer_text":"True","is_correct":boolean},{"answer_text":"False","is_correct":boolean}]}]}. Do not include any prose before or after the JSON.
+CRITICAL REQUIREMENTS: 
+- Return ONLY the JSON object, no other text before or after
+- Use double quotes for all strings
+- Ensure proper JSON syntax with no trailing commas
+- Each question must have exactly "question_text", "question_type", "points", and "answers" fields
+- Each answer must have exactly "answer_text" and "is_correct" fields
+- All answer options must be meaningful and complete
+- Do NOT use placeholder values like "undefined", "empty", "option 1", "answer 1", or similar generic text
+- Each answer should be a proper, substantive response to the question
 
-${contextLine} Create ${numQuestions} ${difficulty} ${questionType} questions for subject: ${subject}${
-        gradeLevel ? `, grade: ${gradeLevel}` : ""
-      }. Ensure exactly one correct answer per question, and set points to 10 by default.${pdfContext}`;
-    } else {
-      userPrompt = `You are an assistant that generates clear, unambiguous multiple choice quiz questions with exactly 4 options and one correct answer. Return ONLY valid JSON that matches the schema: {"questions":[{"question_text":string,"question_type":"multiple_choice","points":number,"answers":[{"answer_text":string,"is_correct":boolean},{...4 total}]}]}. Do not include any prose before or after the JSON.
+MATHEMATICAL NOTATION RULES (STRICTLY ENFORCED):
+- NEVER use LaTeX commands like \\frac{}, \\sqrt{}, \\begin{}, \\end{}, \\alpha, \\beta, etc.
+- NEVER use backslashes (\\\) in your text
+- NEVER use mathematical functions like sqrt(), sin(), cos(), etc.
+- Use simple text notation for all mathematical expressions:
+  * Fractions: "1/2" or "one half" (NOT "\\frac{1}{2}")
+  * Square roots: "square root of 4" or "root of 4" (NOT "\\sqrt{4}" or "sqrt(4)")
+  * Greek letters: "alpha", "beta", "pi" (NOT "\\alpha", "\\beta", "\\pi")
+  * Matrices: "matrix [1,2;3,4]" (NOT "\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}")
+  * Subscripts: "x1" or "x_1" (NOT "x_1")
+  * Superscripts: "x2" or "x^2" (NOT "x^2")
+  * Functions: "sine of x", "cosine of x", "logarithm of x" (NOT "\\sin(x)", "\\cos(x)", "\\log(x)" or "sin(x)", "cos(x)", "log(x)")
+  * Combined expressions: "2 times square root of 3" (NOT "2sqrt(3)" or "2*sqrt(3)")
 
-IMPORTANT: All answer options must be meaningful and complete. Do NOT use placeholder values like "undefined", "empty", "option 1", "answer 1", or similar generic text. Each answer should be a proper, substantive response to the question.
+Context:
+- Subject: ${subject}
+- Grade: ${gradeLevel}
+- Difficulty: ${difficulty}
+${contextLine}${pdfContext}
 
-${contextLine} Create ${numQuestions} ${difficulty} multiple choice questions for subject: ${subject}${
-        gradeLevel ? `, grade: ${gradeLevel}` : ""
-      }. Ensure exactly one correct answer per question, and set points to 10 by default.${pdfContext}`;
+Requirements:
+- Generate exactly ${numQuestions} ${difficulty} ${questionType} questions for ${subject}
+- Ensure exactly one correct answer per question
+- Set points to 10 by default
+- Focus on mathematical concepts, formulas, definitions, problem-solving steps, and key mathematical facts
+- Use age-appropriate language for ${gradeLevel} students
+- Use ONLY plain text mathematical notation - NO LaTeX whatsoever`;
+         } else if (questionType === "true_false") {
+       userPrompt = `You are an assistant that generates clear, unambiguous ${questionType} quiz questions with exactly 2 options (True and False) and one correct answer.
+
+Return ONLY valid JSON matching exactly this format:
+{"questions":[{"question_text":"question text","question_type":"true_false","points":10,"answers":[{"answer_text":"True","is_correct":true},{"answer_text":"False","is_correct":false}]}]}
+
+CRITICAL REQUIREMENTS: 
+- Return ONLY the JSON object, no other text before or after
+- Use double quotes for all strings
+- Ensure proper JSON syntax with no trailing commas
+- Each question must have exactly "question_text", "question_type", "points", and "answers" fields
+- Each answer must have exactly "answer_text" and "is_correct" fields
+- First answer must be "True", second must be "False"
+
+MATHEMATICAL NOTATION RULES (STRICTLY ENFORCED):
+- NEVER use LaTeX commands like \\frac{}, \\sqrt{}, \\begin{}, \\end{}, \\alpha, \\beta, etc.
+- NEVER use backslashes (\\\) in your text
+- NEVER use mathematical functions like sqrt(), sin(), cos(), etc.
+- Use simple text notation for all mathematical expressions:
+  * Fractions: "1/2" or "one half" (NOT "\\frac{1}{2}")
+  * Square roots: "square root of 4" or "root of 4" (NOT "\\sqrt{4}" or "sqrt(4)")
+  * Greek letters: "alpha", "beta", "pi" (NOT "\\alpha", "\\beta", "\\pi")
+  * Matrices: "matrix [1,2;3,4]" (NOT "\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}")
+  * Subscripts: "x1" or "x_1" (NOT "x_1")
+  * Superscripts: "x2" or "x^2" (NOT "x^2")
+  * Functions: "sine of x", "cosine of x", "logarithm of x" (NOT "\\sin(x)", "\\cos(x)", "\\log(x)" or "sin(x)", "cos(x)", "log(x)")
+  * Combined expressions: "2 times square root of 3" (NOT "2sqrt(3)" or "2*sqrt(3)")
+
+Context:
+- Subject: ${subject}
+- Grade: ${gradeLevel}
+- Difficulty: ${difficulty}
+${contextLine}${pdfContext}
+
+Requirements:
+- Generate exactly ${numQuestions} ${difficulty} ${questionType} questions for ${subject}
+- Ensure exactly one correct answer per question
+- Set points to 10 by default
+- Focus on mathematical concepts, formulas, definitions, problem-solving steps, and key mathematical facts
+- Use age-appropriate language for ${gradeLevel} students
+- Use ONLY plain text mathematical notation - NO LaTeX whatsoever`;
+         } else {
+       userPrompt = `You are an assistant that generates clear, unambiguous multiple choice quiz questions with exactly 4 options and one correct answer.
+
+Return ONLY valid JSON matching exactly this format:
+{"questions":[{"question_text":"question text","question_type":"multiple_choice","points":10,"answers":[{"answer_text":"answer text","is_correct":true},{"answer_text":"answer text","is_correct":false},{"answer_text":"answer text","is_correct":false},{"answer_text":"answer text","is_correct":false}]}]}
+
+CRITICAL REQUIREMENTS: 
+- Return ONLY the JSON object, no other text before or after
+- Use double quotes for all strings
+- Ensure proper JSON syntax with no trailing commas
+- Each question must have exactly "question_text", "question_type", "points", and "answers" fields
+- Each answer must have exactly "answer_text" and "is_correct" fields
+- All answer options must be meaningful and complete
+- Do NOT use placeholder values like "undefined", "empty", "option 1", "answer 1", or similar generic text
+- Each answer should be a proper, substantive response to the question
+
+MATHEMATICAL NOTATION RULES (STRICTLY ENFORCED):
+- NEVER use LaTeX commands like \\frac{}, \\sqrt{}, \\begin{}, \\end{}, \\alpha, \\beta, etc.
+- NEVER use backslashes (\\\) in your text
+- NEVER use mathematical functions like sqrt(), sin(), cos(), etc.
+- Use simple text notation for all mathematical expressions:
+  * Fractions: "1/2" or "one half" (NOT "\\frac{1}{2}")
+  * Square roots: "square root of 4" or "root of 4" (NOT "\\sqrt{4}" or "sqrt(4)")
+  * Greek letters: "alpha", "beta", "pi" (NOT "\\alpha", "\\beta", "\\pi")
+  * Matrices: "matrix [1,2;3,4]" (NOT "\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}")
+  * Subscripts: "x1" or "x_1" (NOT "x_1")
+  * Superscripts: "x2" or "x^2" (NOT "x^2")
+  * Functions: "sine of x", "cosine of x", "logarithm of x" (NOT "\\sin(x)", "\\cos(x)", "\\log(x)" or "sin(x)", "cos(x)", "log(x)")
+  * Combined expressions: "2 times square root of 3" (NOT "2sqrt(3)" or "2*sqrt(3)")
+
+Context:
+- Subject: ${subject}
+- Grade: ${gradeLevel}
+- Difficulty: ${difficulty}
+${contextLine}${pdfContext}
+
+Requirements:
+- Generate exactly ${numQuestions} ${difficulty} multiple choice questions for ${subject}
+- Ensure exactly one correct answer per question
+- Set points to 10 by default
+- Focus on mathematical concepts, formulas, definitions, problem-solving steps, and key mathematical facts
+- Use age-appropriate language for ${gradeLevel} students
+- Use ONLY plain text mathematical notation - NO LaTeX whatsoever`;
     }
 
     const hostValue = String(
@@ -521,23 +904,287 @@ ${contextLine} Create ${numQuestions} ${difficulty} multiple choice questions fo
       .trim();
 
     // Attempt to parse JSON from the model output
-    let parsed: AIResponse;
+    let parsed: AIResponse | undefined;
+
+    // Clean up common wrappers (markdown code fences)
+    let contentForParse = (content || "").trim();
+    if (contentForParse.startsWith("```")) {
+      // Remove opening fence like ```json or ```
+      const openFence = contentForParse.match(/^```[a-zA-Z]*\s*\n?/);
+      if (openFence) {
+        contentForParse = contentForParse.slice(openFence[0].length);
+      }
+      // Remove trailing closing fence ``` (last occurrence)
+      const lastFenceIdx = contentForParse.lastIndexOf("```");
+      if (lastFenceIdx !== -1) {
+        contentForParse = contentForParse.slice(0, lastFenceIdx);
+      }
+      contentForParse = contentForParse.trim();
+    }
+
     try {
-      parsed = JSON.parse(content);
-    } catch {
-      // Try to extract JSON block if wrapped in code fences
-      const match = content.match(/\{[\s\S]*\}/);
-      if (match) {
-        parsed = JSON.parse(match[0]);
-      } else {
-        throw new Error("Could not parse JSON from AI response");
+      parsed = JSON.parse(contentForParse);
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      console.error("Raw AI response:", content);
+
+      // Try to extract JSON object if not parsed yet
+      if (!parsed) {
+        const jsonMatch = contentForParse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            parsed = JSON.parse(jsonMatch[0]);
+          } catch (jsonMatchError) {
+            console.error("JSON match parse error:", jsonMatchError);
+          }
+        }
+      }
+
+      // If still no valid JSON, try to fix common issues
+      if (!parsed) {
+        try {
+          // Try to fix common JSON issues including LaTeX expressions
+          let fixedContent = contentForParse
+            // Fix LaTeX expressions by escaping backslashes properly
+            .replace(/\\\(/g, "\\\\(") // Escape opening LaTeX delimiters
+            .replace(/\\\)/g, "\\\\)") // Escape closing LaTeX delimiters
+            .replace(/\\begin\{/g, "\\\\begin{") // Escape begin commands
+            .replace(/\\end\{/g, "\\\\end{") // Escape end commands
+            .replace(/\\frac\{/g, "\\\\frac{") // Escape fraction commands
+            .replace(/\\sqrt\{/g, "\\\\sqrt{") // Escape sqrt commands
+            .replace(/\\alpha/g, "\\\\alpha") // Escape Greek letters
+            .replace(/\\beta/g, "\\\\beta")
+            .replace(/\\gamma/g, "\\\\gamma")
+            .replace(/\\delta/g, "\\\\delta")
+            .replace(/\\theta/g, "\\\\theta")
+            .replace(/\\pi/g, "\\\\pi")
+            .replace(/\\infty/g, "\\\\infty")
+            // Fix other common JSON issues
+            .replace(/,\s*]/g, "]") // Remove trailing commas in arrays
+            .replace(/,\s*}/g, "}") // Remove trailing commas in objects
+            .replace(/}\s*,\s*]/g, "}]") // Fix array ending
+            .replace(/}\s*,\s*}/g, "}}") // Fix object ending
+            .replace(/]\s*,\s*}/g, "]}") // Fix object ending after array
+            .replace(/]\s*,\s*]/g, "]]") // Fix array ending after array
+            .replace(/}\s*,\s*{/g, "},{") // Fix object separation
+            .replace(/]\s*,\s*{/g, "},{") // Fix object after array
+            .replace(/}\s*,\s*\[/g, "},["); // Fix array after object
+
+          parsed = JSON.parse(fixedContent);
+        } catch (fixError) {
+          console.error("JSON fix attempt failed:", fixError);
+          
+                     // Try LaTeX conversion approach
+           try {
+             console.log("🔄 Attempting LaTeX conversion...");
+             
+             // Ultra-aggressive LaTeX conversion and cleaning
+             let latexConvertedContent = contentForParse;
+             
+             // Step 1: Convert LaTeX content within quoted strings
+             latexConvertedContent = latexConvertedContent
+               .replace(/"([^"]*\\[^"]*)"/g, (match, content) => {
+                 const converted = convertLatexToText(content);
+                 console.log(`🔄 Converted quoted content: "${content}" → "${converted}"`);
+                 return `"${converted}"`;
+               });
+             
+             // Step 2: Convert any remaining LaTeX commands in the entire string
+             latexConvertedContent = latexConvertedContent
+               .replace(/\\[a-zA-Z]+(\{[^}]*\})?/g, (match) => {
+                 const converted = convertLatexToText(match);
+                 console.log(`🔄 Converted remaining LaTeX: "${match}" → "${converted}"`);
+                 return converted;
+               });
+             
+             // Step 3: Aggressive cleanup of any remaining problematic characters
+             latexConvertedContent = latexConvertedContent
+               // Remove any remaining backslashes that might break JSON
+               .replace(/\\/g, '')
+               // Clean up any malformed quotes
+               .replace(/"+/g, '"')
+               // Fix common JSON syntax issues
+               .replace(/,\s*]/g, "]")
+               .replace(/,\s*}/g, "}")
+               .replace(/}\s*,\s*]/g, "}]")
+               .replace(/}\s*,\s*}/g, "}}")
+               .replace(/]\s*,\s*}/g, "]}")
+               .replace(/]\s*,\s*]/g, "]]")
+               .replace(/}\s*,\s*{/g, "},{")
+               .replace(/]\s*,\s*{/g, "},{")
+               .replace(/}\s*,\s*\[/g, "},[");
+             
+             console.log("🔄 Final cleaned content for JSON parsing:", latexConvertedContent);
+
+             parsed = JSON.parse(latexConvertedContent);
+             console.log("✅ JSON parsing succeeded after LaTeX conversion");
+           } catch (latexError) {
+            console.error("LaTeX conversion attempt failed:", latexError);
+            
+            // Final fallback - return predefined questions
+            console.log("🔄 Returning fallback questions due to parsing failure");
+            const fallbackQuestions: GeneratedQuestion[] = [
+              {
+                question_text: "What is a variable in mathematics?",
+                question_type: questionType,
+                points: 10,
+                answers: questionType === "multiple_choice" ? [
+                  { answer_text: "A symbol that represents an unknown value", is_correct: true },
+                  { answer_text: "A fixed number", is_correct: false },
+                  { answer_text: "A mathematical operation", is_correct: false },
+                  { answer_text: "A geometric shape", is_correct: false }
+                ] : [
+                  { answer_text: "True", is_correct: true },
+                  { answer_text: "False", is_correct: false }
+                ],
+                is_ai_generated: true,
+                ai_status: "pending",
+                ai_metadata: {
+                  subject,
+                  gradeLevel,
+                  difficulty,
+                  provider: "openrouter",
+                  model: modelId,
+                },
+              },
+              {
+                question_text: "What is an equation?",
+                question_type: questionType,
+                points: 10,
+                answers: questionType === "multiple_choice" ? [
+                  { answer_text: "A mathematical statement showing two expressions are equal", is_correct: true },
+                  { answer_text: "A geometric figure", is_correct: false },
+                  { answer_text: "A type of fraction", is_correct: false },
+                  { answer_text: "A measurement unit", is_correct: false }
+                ] : [
+                  { answer_text: "True", is_correct: true },
+                  { answer_text: "False", is_correct: false }
+                ],
+                is_ai_generated: true,
+                ai_status: "pending",
+                ai_metadata: {
+                  subject,
+                  gradeLevel,
+                  difficulty,
+                  provider: "openrouter",
+                  model: modelId,
+                },
+              },
+              {
+                question_text: "What is the order of operations?",
+                question_type: questionType,
+                points: 10,
+                answers: questionType === "multiple_choice" ? [
+                  { answer_text: "PEMDAS (Parentheses, Exponents, Multiplication/Division, Addition/Subtraction)", is_correct: true },
+                  { answer_text: "Addition first, then multiplication", is_correct: false },
+                  { answer_text: "Left to right order", is_correct: false },
+                  { answer_text: "Random order", is_correct: false }
+                ] : [
+                  { answer_text: "True", is_correct: true },
+                  { answer_text: "False", is_correct: false }
+                ],
+                is_ai_generated: true,
+                ai_status: "pending",
+                ai_metadata: {
+                  subject,
+                  gradeLevel,
+                  difficulty,
+                  provider: "openrouter",
+                  model: modelId,
+                },
+              }
+            ];
+
+            return res.json({
+              questions: fallbackQuestions.slice(0, Math.min(numQuestions, fallbackQuestions.length)),
+              note: "AI response was malformed, showing fallback questions",
+            });
+          }
+        }
       }
     }
 
     if (!parsed || !Array.isArray(parsed.questions)) {
-      return res
-        .status(500)
-        .json({ error: "Malformed AI response", raw: content });
+      console.error("Malformed AI response - missing questions array:", parsed);
+      console.error("Raw content:", content);
+
+      // Return a fallback response instead of error
+      const fallbackQuestions: GeneratedQuestion[] = [
+        {
+          question_text: "What is a variable in mathematics?",
+          question_type: questionType,
+          points: 10,
+          answers: questionType === "multiple_choice" ? [
+            { answer_text: "A symbol that represents an unknown value", is_correct: true },
+            { answer_text: "A fixed number", is_correct: false },
+            { answer_text: "A mathematical operation", is_correct: false },
+            { answer_text: "A geometric shape", is_correct: false }
+          ] : [
+            { answer_text: "True", is_correct: true },
+            { answer_text: "False", is_correct: false }
+          ],
+          is_ai_generated: true,
+          ai_status: "pending",
+          ai_metadata: {
+            subject,
+            gradeLevel,
+            difficulty,
+            provider: "openrouter",
+            model: modelId,
+          },
+        },
+        {
+          question_text: "What is an equation?",
+          question_type: questionType,
+          points: 10,
+          answers: questionType === "multiple_choice" ? [
+            { answer_text: "A mathematical statement showing two expressions are equal", is_correct: true },
+            { answer_text: "A geometric figure", is_correct: false },
+            { answer_text: "A type of fraction", is_correct: false },
+            { answer_text: "A measurement unit", is_correct: false }
+          ] : [
+            { answer_text: "True", is_correct: true },
+            { answer_text: "False", is_correct: false }
+          ],
+          is_ai_generated: true,
+          ai_status: "pending",
+          ai_metadata: {
+            subject,
+            gradeLevel,
+            difficulty,
+            provider: "openrouter",
+            model: modelId,
+          },
+        },
+        {
+          question_text: "What is the order of operations?",
+          question_type: questionType,
+          points: 10,
+          answers: questionType === "multiple_choice" ? [
+            { answer_text: "PEMDAS (Parentheses, Exponents, Multiplication/Division, Addition/Subtraction)", is_correct: true },
+            { answer_text: "Addition first, then multiplication", is_correct: false },
+            { answer_text: "Left to right order", is_correct: false },
+            { answer_text: "Random order", is_correct: false }
+          ] : [
+            { answer_text: "True", is_correct: true },
+            { answer_text: "False", is_correct: false }
+          ],
+          is_ai_generated: true,
+          ai_status: "pending",
+          ai_metadata: {
+            subject,
+            gradeLevel,
+            difficulty,
+            provider: "openrouter",
+            model: modelId,
+          },
+        }
+      ];
+
+      return res.json({
+        questions: fallbackQuestions.slice(0, Math.min(numQuestions, fallbackQuestions.length)),
+        note: "AI response was malformed, showing fallback questions",
+      });
     }
 
     // Sanitize shape and enforce correct answer structure based on question type
@@ -878,14 +1525,12 @@ ${contextLine}${pdfContext}
     if (contentForParse.startsWith("```")) {
       // Remove opening fence like ```json or ```
       const openFence = contentForParse.match(/^```[a-zA-Z]*\s*\n?/);
-      if (openFence) {
+      if (openFence)
         contentForParse = contentForParse.slice(openFence[0].length);
-      }
       // Remove trailing closing fence ``` (last occurrence)
       const lastFenceIdx = contentForParse.lastIndexOf("```");
-      if (lastFenceIdx !== -1) {
+      if (lastFenceIdx !== -1)
         contentForParse = contentForParse.slice(0, lastFenceIdx);
-      }
       contentForParse = contentForParse.trim();
     }
 

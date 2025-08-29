@@ -70,15 +70,6 @@ function App() {
   const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
   const location = useLocation();
 
-  // Show loading spinner while checking authentication
-  if (loading || adminLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
   // Check if user is fully authenticated (both user and profile exist)
   const isUserAuthenticated = user && profile;
   
@@ -95,6 +86,15 @@ function App() {
   ];
   const isOnPublicRoute = publicRoutes.includes(location.pathname);
 
+  // Show loading spinner while checking authentication
+  if (loading || adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
   // If on admin login, always show it (it's a public route)
   if (location.pathname === "/admin/login") {
     return (
@@ -104,20 +104,6 @@ function App() {
         </Routes>
       </div>
     );
-  }
-
-  // Special handling for admin routes
-  if (isOnAdminRoute && location.pathname !== "/admin/login") {
-    // For admin routes (except login), check admin authentication
-    if (!isAdminLoggedIn) {
-      return (
-        <div className="min-h-screen bg-gray-50">
-          <Routes>
-            <Route path="*" element={<Navigate to="/admin/login" replace />} />
-          </Routes>
-        </div>
-      );
-    }
   }
 
   return (
@@ -430,6 +416,7 @@ interface ProtectedRouteProps {
 function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
   const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
+  const location = useLocation();
 
   // Wait for both auth contexts to finish loading
   if (loading || adminLoading) {
@@ -442,13 +429,6 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
 
   // For admin routes, check admin session
   if (requiredRole === "admin") {
-    if (adminLoading) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <LoadingSpinner size="lg" />
-        </div>
-      );
-    }
     if (!isAdminLoggedIn) {
       return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }

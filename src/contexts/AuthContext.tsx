@@ -474,7 +474,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setPermissions(newPermissions);
       }
 
-      toast.success("Profile updated successfully");
+      // Profile updated silently - no toast needed
       return updatedProfile;
     } catch (error: any) {
       console.error("Update profile error:", error);

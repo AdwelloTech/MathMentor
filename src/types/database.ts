@@ -161,6 +161,7 @@ export interface Database {
           salary: number | null;
           position: string | null;
           is_active: boolean;
+          is_online: boolean | null;
           last_login: string | null;
           created_at: string;
           updated_at: string;
@@ -212,6 +213,7 @@ export interface Database {
           salary?: number | null;
           position?: string | null;
           is_active?: boolean;
+          is_online?: boolean | null;
           last_login?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -263,6 +265,7 @@ export interface Database {
           salary?: number | null;
           position?: string | null;
           is_active?: boolean;
+          is_online?: boolean | null;
           last_login?: string | null;
           created_at?: string;
           updated_at?: string;

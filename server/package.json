@@ -4,9 +4,9 @@
   "description": "Backend server for MathMentor application with payment processing",
   "main": "index.ts",
   "scripts": {
-    "start": "ts-node index.ts",
-    "dev": "ts-node --respawn index.ts",
-    "build": "tsc",
+    "start": "node init && ts-node index.ts",
+    "dev": "node init && ts-node --respawn index.ts",
+    "build": "node init && tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

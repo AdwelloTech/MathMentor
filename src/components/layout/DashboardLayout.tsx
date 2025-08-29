@@ -287,21 +287,19 @@ const DashboardLayout: React.FC = () => {
       navigate("/login");
     }
   };
-
 const DEFAULT_JITSI_URL = "https://meet.jit.si/jitsi_room_test_123456789";
-
 const MEETING_TAB_NAME = "instant_meeting_tab";
 
 const handleAcceptInstant = async (requestId: string) => {
-  // Open a same tab synchronously
-  const meetingWindow = window.open("about:blank", MEETING_TAB_NAME); // ← no 'noreferrer'/'noopener' here
+  // Open a blank tab synchronously to avoid popup blockers
+  const meetingWindow = window.open("about:blank", MEETING_TAB_NAME);
 
   if (!meetingWindow) {
     window.open(DEFAULT_JITSI_URL, "_blank");
     return;
   }
 
-
+  // Show a loading message while waiting for the meeting URL
   try {
     meetingWindow.document.open();
     meetingWindow.document.write(`
@@ -318,7 +316,7 @@ const handleAcceptInstant = async (requestId: string) => {
     `);
     meetingWindow.document.close();
   } catch {
-    
+    // ignore
   }
 
   try {
@@ -331,22 +329,25 @@ const handleAcceptInstant = async (requestId: string) => {
     setDismissedIds((prev) => new Set(prev).add(requestId));
     setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
 
+    // Accept the request and get the meeting URL from the backend
     const accepted = await instantSessionService.acceptRequest(requestId, profile.id);
 
-    
+    // Use the meeting URL from the backend, fallback to default if missing
     const url = (() => {
-      try { return new URL(accepted?.jitsi_meeting_url || DEFAULT_JITSI_URL).toString(); }
-      catch { return DEFAULT_JITSI_URL; }
+      try {
+        return new URL(accepted?.jitsi_meeting_url || DEFAULT_JITSI_URL).toString();
+      } catch {
+        return DEFAULT_JITSI_URL;
+      }
     })();
 
-    
+    // Redirect the opened tab to the meeting URL
     try {
       meetingWindow.location.replace(url);
     } catch {
       try {
         meetingWindow.location.href = url;
       } catch {
-        
         window.open(url, MEETING_TAB_NAME);
       }
     }

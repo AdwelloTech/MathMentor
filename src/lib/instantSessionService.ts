@@ -42,6 +42,8 @@ export const instantSessionService = {
     const id =
       (globalThis.crypto?.randomUUID && globalThis.crypto.randomUUID()) ||
       Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+    // Deterministic canonical room, derived from request id
     const jitsiUrl = `https://meet.jit.si/instant-${id}`;
 
     const { data, error } = await (supabase as any)
@@ -77,16 +79,18 @@ export const instantSessionService = {
     const channel = (supabase as any).channel(channelId);
     console.log("[Instant] subscribeToPending start", channelId);
 
-    // Listen for acceptance broadcasts to avoid RLS-related UPDATE filtering
+    // Listen for acceptance broadcasts; include the canonical meeting URL
     channel.on("broadcast", { event: "accepted" } as any, (payload: any) => {
       try {
         const requestId = payload?.payload?.id;
+        const url = payload?.payload?.jitsi_meeting_url || null;
         if (!requestId) return;
-        console.log("[Instant] BROADCAST accepted", requestId);
+        console.log("[Instant] BROADCAST accepted", { requestId, url });
         // Synthesize a minimal payload to unify handling upstream
         const minimal = {
           id: requestId,
           status: "accepted",
+          jitsi_meeting_url: url,
         } as unknown as InstantRequest;
         callback({
           new: minimal,
@@ -149,6 +153,7 @@ export const instantSessionService = {
         console.error("[Instant] Channel subscription timed out");
       }
     });
+
     return () => {
       console.log("[Instant] unsubscribe channel", channelId);
       try {
@@ -185,6 +190,7 @@ export const instantSessionService = {
   // Atomic accept: only succeeds if still pending. Use existing meeting URL (single source of truth)
   acceptRequest: async (requestId: string, tutorProfileId: string) => {
     console.log("[Instant] acceptRequest", { requestId, tutorProfileId });
+
     const { data: accepted, error: acceptError } = await (supabase as any)
       .from("instant_requests")
       .update({ status: "accepted", accepted_by_tutor_id: tutorProfileId })
@@ -196,21 +202,7 @@ export const instantSessionService = {
     if (acceptError) throw acceptError;
     if (!accepted) throw new Error("Request was already accepted or cancelled");
 
-    // Proactively broadcast acceptance so other tutors immediately remove the card
-    try {
-      const { channel, ready } = getInstantSharedChannel();
-      // Ensure channel is ready (SUBSCRIBED) before sending; this is a one-time await after first use
-      await ready;
-      await channel.send({
-        type: "broadcast",
-        event: "accepted",
-        payload: { id: requestId },
-      });
-    } catch (e) {
-      console.warn("[Instant] acceptance broadcast failed (non-fatal)", e);
-    }
-
-    // Ensure a meeting URL exists (fallback to deterministic)
+    // Ensure a meeting URL exists (deterministic canonical)
     const jitsiMeetingUrl =
       accepted.jitsi_meeting_url ||
       `https://meet.jit.si/instant-${accepted.id}`;
@@ -223,6 +215,19 @@ export const instantSessionService = {
         .eq("id", accepted.id);
       if (setUrlError)
         console.warn("[Instant] failed to set meeting url", setUrlError);
+    }
+
+    // Broadcast acceptance INCLUDING the canonical URL so students open the same room
+    try {
+      const { channel, ready } = getInstantSharedChannel();
+      await ready; // ensure SUBSCRIBED at least once
+      await channel.send({
+        type: "broadcast",
+        event: "accepted",
+        payload: { id: requestId, jitsi_meeting_url: jitsiMeetingUrl },
+      });
+    } catch (e) {
+      console.warn("[Instant] acceptance broadcast failed (non-fatal)", e);
     }
 
     // Create audit booking (best-effort)

@@ -66,15 +66,21 @@ export const instantSessionService = {
     return data as InstantRequest;
   },
 
-  // Tutors listen for new pending requests (optionally filter by subject)
+  // Tutors listen for new pending requests (only if online)
   subscribeToPending: (
     callback: (payload: {
       new: InstantRequest;
       old: InstantRequest | null;
       eventType: string;
     }) => void,
-    _subjectId?: string
+    _subjectId?: string,
+    isOnline: boolean = false
   ) => {
+    // Don't subscribe if tutor is offline
+    if (!isOnline) {
+      console.log("[Instant] Tutor is offline, not subscribing to requests");
+      return () => {}; // Return empty cleanup function
+    }
     const channelId = `instant_requests:pending:shared`;
     const channel = (supabase as any).channel(channelId);
     console.log("[Instant] subscribeToPending start", channelId);

@@ -130,6 +130,7 @@ export interface UserProfile {
 
   // System fields
   is_active: boolean;
+  is_online?: boolean;
   last_login?: string;
   created_at: string;
   updated_at: string;

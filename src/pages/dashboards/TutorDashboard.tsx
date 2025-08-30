@@ -42,6 +42,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { validateDocumentFile } from "@/constants/form";
 import toast from "react-hot-toast";
+import OnlineStatusToggle from "@/components/tutor/OnlineStatusToggle";
 
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -220,7 +221,7 @@ const TutorDashboard: React.FC = () => {
             eventType,
             (req as any).id,
             "status:",
-            (req as any).status
+            (req as any).id
           );
           if (eventType === "INSERT") {
             const isFresh =
@@ -253,7 +254,9 @@ const TutorDashboard: React.FC = () => {
               return newList;
             });
           }
-        }
+        },
+        undefined,
+        profile?.is_online || false
       );
     } catch (error) {
       console.error("[TutorDashboard] Error setting up subscription:", error);
@@ -279,6 +282,7 @@ const TutorDashboard: React.FC = () => {
     application?.application_status,
     idVerification?.verification_status,
     profile?.id,
+    profile?.is_online,
   ]);
 
   const checkApplication = async () => {
@@ -813,6 +817,9 @@ const TutorDashboard: React.FC = () => {
                   <span>Approved</span>
                 </div>
               </motion.div>
+
+              {/* Online Status Toggle */}
+              <OnlineStatusToggle className="ml-4" />
             </div>
           </div>
 
@@ -855,6 +862,28 @@ const TutorDashboard: React.FC = () => {
                     <p className="text-sm text-green-700 mt-1">
                       Your tutor application and ID verification have been
                       approved. You can now schedule classes and start teaching!
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Online Status Message */}
+            {isActiveTutor && profile?.is_online === false && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm"
+              >
+                <div className="flex items-start">
+                  <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-blue-800">
+                      You are currently offline
+                    </h3>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Toggle the online switch above to start receiving instant
+                      session requests from students.
                     </p>
                   </div>
                 </div>

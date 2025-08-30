@@ -224,7 +224,9 @@ const DashboardLayout: React.FC = () => {
               : prev
           );
         }
-      }
+      },
+      undefined,
+      profile?.is_online || false
     );
 
     return () => {
@@ -232,7 +234,7 @@ const DashboardLayout: React.FC = () => {
       clearInterval(poll);
       unsubscribe?.();
     };
-  }, [profile?.role]);
+  }, [profile?.role, profile?.is_online]);
 
   const checkTutorApplication = async () => {
     if (!user) return;
@@ -287,22 +289,22 @@ const DashboardLayout: React.FC = () => {
       navigate("/login");
     }
   };
-const DEFAULT_JITSI_URL = "https://meet.jit.si/jitsi_room_test_123456789";
-const MEETING_TAB_NAME = "instant_meeting_tab";
+  const DEFAULT_JITSI_URL = "https://meet.jit.si/jitsi_room_test_123456789";
+  const MEETING_TAB_NAME = "instant_meeting_tab";
 
-const handleAcceptInstant = async (requestId: string) => {
-  // Open a blank tab synchronously to avoid popup blockers
-  const meetingWindow = window.open("about:blank", MEETING_TAB_NAME);
+  const handleAcceptInstant = async (requestId: string) => {
+    // Open a blank tab synchronously to avoid popup blockers
+    const meetingWindow = window.open("about:blank", MEETING_TAB_NAME);
 
-  if (!meetingWindow) {
-    window.open(DEFAULT_JITSI_URL, "_blank");
-    return;
-  }
+    if (!meetingWindow) {
+      window.open(DEFAULT_JITSI_URL, "_blank");
+      return;
+    }
 
-  // Show a loading message while waiting for the meeting URL
-  try {
-    meetingWindow.document.open();
-    meetingWindow.document.write(`
+    // Show a loading message while waiting for the meeting URL
+    try {
+      meetingWindow.document.open();
+      meetingWindow.document.write(`
       <!doctype html>
       <meta charset="utf-8">
       <title>Joining your meeting…</title>
@@ -314,53 +316,55 @@ const handleAcceptInstant = async (requestId: string) => {
       <p>This tab will navigate automatically when the session is ready.</p>
       <p>If it doesn't, you can <a class="btn" href="${DEFAULT_JITSI_URL}" target="_self" rel="noopener">open the Meeting link</a>.</p>
     `);
-    meetingWindow.document.close();
-  } catch {
-    // ignore
-  }
-
-  try {
-    if (!profile?.id) {
-      meetingWindow.close();
-      return;
-    }
-
-    setAcceptingId(requestId);
-    setDismissedIds((prev) => new Set(prev).add(requestId));
-    setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
-
-    // Accept the request and get the meeting URL from the backend
-    const accepted = await instantSessionService.acceptRequest(requestId, profile.id);
-
-    // Use the meeting URL from the backend, fallback to default if missing
-    const url = (() => {
-      try {
-        return new URL(accepted?.jitsi_meeting_url || DEFAULT_JITSI_URL).toString();
-      } catch {
-        return DEFAULT_JITSI_URL;
-      }
-    })();
-
-    // Redirect the opened tab to the meeting URL
-    try {
-      meetingWindow.location.replace(url);
+      meetingWindow.document.close();
     } catch {
-      try {
-        meetingWindow.location.href = url;
-      } catch {
-        window.open(url, MEETING_TAB_NAME);
-      }
+      // ignore
     }
-  } catch (e) {
-    console.error(e);
-    if (!meetingWindow.closed) meetingWindow.close();
-  } finally {
-    setAcceptingId(null);
-  }
-};
 
+    try {
+      if (!profile?.id) {
+        meetingWindow.close();
+        return;
+      }
 
+      setAcceptingId(requestId);
+      setDismissedIds((prev) => new Set(prev).add(requestId));
+      setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
 
+      // Accept the request and get the meeting URL from the backend
+      const accepted = await instantSessionService.acceptRequest(
+        requestId,
+        profile.id
+      );
+
+      // Use the meeting URL from the backend, fallback to default if missing
+      const url = (() => {
+        try {
+          return new URL(
+            accepted?.jitsi_meeting_url || DEFAULT_JITSI_URL
+          ).toString();
+        } catch {
+          return DEFAULT_JITSI_URL;
+        }
+      })();
+
+      // Redirect the opened tab to the meeting URL
+      try {
+        meetingWindow.location.replace(url);
+      } catch {
+        try {
+          meetingWindow.location.href = url;
+        } catch {
+          window.open(url, MEETING_TAB_NAME);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      if (!meetingWindow.closed) meetingWindow.close();
+    } finally {
+      setAcceptingId(null);
+    }
+  };
 
   const handleRejectInstant = (requestId: string) => {
     setDismissedIds((prev) => new Set(prev).add(requestId));
@@ -416,125 +420,127 @@ const handleAcceptInstant = async (requestId: string) => {
         </main>
       </div>
 
-      {/* Floating Instant Requests Notification */}
-      {instantRequests.filter((req) => !dismissedIds.has(req.id)).length >
-        0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          className="fixed bottom-6 right-6 z-50 max-w-md w-full"
-        >
-          <Card className="shadow-2xl border-0 bg-gradient-to-br from-white via-blue-50/50 to-purple-50/50 backdrop-blur-xl">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="relative">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full shadow-lg">
-                    <SparklesIcon className="w-5 h-5 text-white" />
+      {/* Floating Instant Requests Notification - Only show when tutor is online */}
+      {profile?.role === "tutor" &&
+        profile?.is_online &&
+        instantRequests.filter((req) => !dismissedIds.has(req.id)).length >
+          0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-6 right-6 z-50 max-w-md w-full"
+          >
+            <Card className="shadow-2xl border-0 bg-gradient-to-br from-white via-blue-50/50 to-purple-50/50 backdrop-blur-xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-lg">
+                  <div className="relative">
+                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full shadow-lg">
+                      <SparklesIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-xs text-white font-bold">
+                        {
+                          instantRequests.filter(
+                            (req) => !dismissedIds.has(req.id)
+                          ).length
+                        }
+                      </span>
+                    </div>
                   </div>
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-white font-bold">
-                      {
-                        instantRequests.filter(
-                          (req) => !dismissedIds.has(req.id)
-                        ).length
-                      }
+                  <div>
+                    <span className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      Instant Requests
                     </span>
+                    <p className="text-xs text-gray-500 font-normal">
+                      Students need your help
+                    </p>
                   </div>
-                </div>
-                <div>
-                  <span className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Instant Requests
-                  </span>
-                  <p className="text-xs text-gray-500 font-normal">
-                    Students need your help
-                  </p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {instantRequests
-                  .filter((req, index) => !dismissedIds.has(req.id))
-                  .map((req, index) => (
-                    <motion.div
-                      key={req.id}
-                      initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
-                      exit={{ opacity: 0, x: -20, scale: 0.95 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="group relative bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
-                    >
-                      {/* Animated background gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {instantRequests
+                    .filter((req, index) => !dismissedIds.has(req.id))
+                    .map((req, index) => (
+                      <motion.div
+                        key={req.id}
+                        initial={{ opacity: 0, x: 20, scale: 0.95 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: -20, scale: 0.95 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="group relative bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
+                      >
+                        {/* Animated background gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                      <div className="relative flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-sm">
-                              <UserGroupIcon className="w-4 h-4 text-white" />
-                            </div>
-                            <div>
-                              <span className="font-semibold text-gray-900">
-                                New Request
-                              </span>
-                              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                                <ClockIcon className="w-3 h-3" />
-                                <span>15 minutes</span>
-                                <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                                <span className="text-purple-600 font-medium">
-                                  {getSubjectName(req.subject_id)}
+                        <div className="relative flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-sm">
+                                <UserGroupIcon className="w-4 h-4 text-white" />
+                              </div>
+                              <div>
+                                <span className="font-semibold text-gray-900">
+                                  New Request
                                 </span>
+                                <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                  <ClockIcon className="w-3 h-3" />
+                                  <span>15 minutes</span>
+                                  <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                                  <span className="text-purple-600 font-medium">
+                                    {getSubjectName(req.subject_id)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRejectInstant(req.id)}
+                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
+                            >
+                              <XMarkIcon className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAcceptInstant(req.id)}
+                              disabled={acceptingId === req.id}
+                              className="h-8 px-4 text-xs bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 shadow-sm hover:shadow-md transition-all duration-200"
+                            >
+                              {acceptingId === req.id ? (
+                                <>
+                                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                  Accepting...
+                                </>
+                              ) : (
+                                <>
+                                  <CheckIcon className="w-3 h-3 mr-1" />
+                                  Accept
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRejectInstant(req.id)}
-                            className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
-                          >
-                            <XMarkIcon className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleAcceptInstant(req.id)}
-                            disabled={acceptingId === req.id}
-                            className="h-8 px-4 text-xs bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 shadow-sm hover:shadow-md transition-all duration-200"
-                          >
-                            {acceptingId === req.id ? (
-                              <>
-                                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                Accepting...
-                              </>
-                            ) : (
-                              <>
-                                <CheckIcon className="w-3 h-3 mr-1" />
-                                Accept
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
 
-                      {/* Subtle pulse animation for urgency */}
-                      <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    </motion.div>
-                  ))}
-              </div>
+                        {/* Subtle pulse animation for urgency */}
+                        <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                      </motion.div>
+                    ))}
+                </div>
 
-              {/* Footer with action hint */}
-              <div className="mt-4 pt-3 border-t border-gray-100">
-                <p className="text-xs text-gray-500 text-center">
-                  💡 Click Accept to start helping immediately
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+                {/* Footer with action hint */}
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <p className="text-xs text-gray-500 text-center">
+                    💡 Click Accept to start helping immediately
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
     </div>
   );
 };

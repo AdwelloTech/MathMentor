@@ -72,17 +72,17 @@ function App() {
 
   // Check if user is fully authenticated (both user and profile exist)
   const isUserAuthenticated = user && profile;
-  
+
   // Check if we're on admin routes
   const isOnAdminRoute = location.pathname.startsWith("/admin");
-  
+
   // List of public routes that don't require authentication
   const publicRoutes = [
     "/login",
-    "/admin/login", 
-    "/register", 
-    "/forgot-password", 
-    "/reset-password"
+    "/admin/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
   ];
   const isOnPublicRoute = publicRoutes.includes(location.pathname);
 
@@ -112,7 +112,7 @@ function App() {
         {/* Public routes - always accessible */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
-        
+
         {/* Handle authentication-based routing */}
         {!isUserAuthenticated && !isAdminLoggedIn ? (
           // Show auth pages when no user is logged in
@@ -170,11 +170,21 @@ function App() {
               >
                 <Route index element={<AdminDashboard />} />
                 <Route path="students" element={<ManageStudentsPage />} />
-                <Route path="tutor-applications" element={<ManageTutorApplicationsPage />} />
+                <Route
+                  path="tutor-applications"
+                  element={<ManageTutorApplicationsPage />}
+                />
                 <Route path="tutors" element={<ManageTutorsPage />} />
-                <Route path="id-verifications" element={<ManageIDVerificationsPage />} />
+                <Route
+                  path="id-verifications"
+                  element={<ManageIDVerificationsPage />}
+                />
                 <Route path="quizzes" element={<ManageQuizzesPage />} />
-                <Route path="flashcards" element={<AdminManageFlashcardsPage />} />
+                <Route
+                  path="flashcards"
+                  element={<AdminManageFlashcardsPage />}
+                />
+                <Route path="subjects" element={<ManageSubjectsPage />} />
               </Route>
 
               {/* Principal routes */}

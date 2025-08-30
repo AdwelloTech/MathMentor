@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTutorial } from "@/contexts/TutorialContext";
+import { TutorialOverlay, TutorialPrompt } from "@/components/tutorial";
 import {
   DocumentArrowUpIcon,
   CheckCircleIcon,
@@ -47,6 +49,7 @@ import OnlineStatusToggle from "@/components/tutor/OnlineStatusToggle";
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, updateProfile } = useAuth();
+  const { shouldShowTutorial } = useTutorial();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<TutorApplication | null>(null);
   const [idVerification, setIdVerification] = useState<any>(null);
@@ -784,7 +787,7 @@ const TutorDashboard: React.FC = () => {
           className="px-6 pb-16 relative z-10"
         >
           {/* Status Indicator - Top Right */}
-          <div className="flex justify-between items-start mb-6">
+          <div id="tutor-welcome" className="flex justify-between items-start mb-6">
             {/* Dashboard Title and Welcome Message - Left Side */}
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -819,12 +822,15 @@ const TutorDashboard: React.FC = () => {
               </motion.div>
 
               {/* Online Status Toggle */}
-              <OnlineStatusToggle className="ml-4" />
+              <div id="online-status-toggle">
+                <OnlineStatusToggle className="ml-4" />
+              </div>
             </div>
           </div>
 
           <div className="space-y-8">
             {/* Status Alerts */}
+            <div id="tutor-status-overview">
             {!isActiveTutor && (
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -889,9 +895,11 @@ const TutorDashboard: React.FC = () => {
                 </div>
               </motion.div>
             )}
+            </div>
 
             {/* Stats Grid */}
             <motion.div
+              id="tutor-stats"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -967,6 +975,7 @@ const TutorDashboard: React.FC = () => {
 
             {/* Quick Actions */}
             <motion.div
+              id="tutor-quick-actions"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
@@ -1055,6 +1064,10 @@ const TutorDashboard: React.FC = () => {
             </motion.div>
           </div>
         </motion.div>
+        
+                    {/* Tutorial Components */}
+            <TutorialPrompt />
+            <TutorialOverlay />
       </div>
     );
   }
@@ -1122,6 +1135,7 @@ const TutorDashboard: React.FC = () => {
             </motion.div>
 
             {/* Profile Completion Alert */}
+            <div id="tutor-profile-completion">
             {!isProfileComplete && (
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -1153,6 +1167,7 @@ const TutorDashboard: React.FC = () => {
                 </div>
               </motion.div>
             )}
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left Column - Profile Information */}

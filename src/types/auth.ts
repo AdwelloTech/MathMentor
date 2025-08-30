@@ -132,6 +132,9 @@ export interface UserProfile {
   is_active: boolean;
   is_online?: boolean;
   last_login?: string;
+  tutorial_completed?: boolean;
+  tutorial_dismissed_count?: number;
+  tutorial_last_shown?: string;
   created_at: string;
   updated_at: string;
 }

@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import App from "./App";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AdminProvider } from "./contexts/AdminContext";
+import { TutorialProvider } from "./contexts/TutorialContext";
 import "./index.css";
 
 // Create root element
@@ -18,8 +19,9 @@ root.render(
     <BrowserRouter>
       <AuthProvider>
         <AdminProvider>
-          <App />
-          <Toaster
+          <TutorialProvider>
+            <App />
+            <Toaster
             position="top-right"
             toastOptions={{
               duration: 4000,
@@ -45,6 +47,7 @@ root.render(
               },
             }}
           />
+            </TutorialProvider>
         </AdminProvider>
       </AuthProvider>
     </BrowserRouter>

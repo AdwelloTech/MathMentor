@@ -7,6 +7,8 @@ import { searchStudyNotes } from "../../lib/notes";
 import { getStudentTutorMaterials } from "../../lib/studentTutorMaterials";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useTutorial } from "@/contexts/TutorialContext";
+import { TutorialOverlay, TutorialPrompt } from "@/components/tutorial";
 import {
   BookOpenIcon,
   CalendarDaysIcon,
@@ -64,6 +66,7 @@ interface DashboardData {
 const StudentDashboard: React.FC = () => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { shouldShowTutorial } = useTutorial();
 
   const handleLogout = async () => {
     try {
@@ -371,7 +374,7 @@ const StudentDashboard: React.FC = () => {
 
             {/* Welcome */}
             <motion.div variants={itemVariants}>
-              <Card className="bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white border-0 shadow-[0_2px_2px_0_rgba(0,0,0,0.5)]">
+              <Card id="dashboard-welcome" className="bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white border-0 shadow-[0_2px_2px_0_rgba(0,0,0,0.5)]">
                 <CardHeader className="pb-4">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-2">
@@ -460,6 +463,7 @@ const StudentDashboard: React.FC = () => {
 
             {/* Stats Grid */}
             <motion.div
+              id="dashboard-stats"
               variants={itemVariants}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             >
@@ -525,7 +529,7 @@ const StudentDashboard: React.FC = () => {
             {/* Main Content Grid (tall cards) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Upcoming Sessions (tall) */}
-              <motion.div variants={itemVariants} className="h-full">
+              <motion.div id="upcoming-sessions" variants={itemVariants} className="h-full">
                 <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-full min-h-[500px]">
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -690,7 +694,7 @@ const StudentDashboard: React.FC = () => {
                     </div>
 
                     {/* Study Materials */}
-                    <div className="space-y-3">
+                    <div id="study-materials" className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium text-gray-900">
                           Study Materials
@@ -733,7 +737,7 @@ const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Quick Actions */}
-            <motion.div variants={itemVariants} className="mb-16">
+            <motion.div id="quick-actions" variants={itemVariants} className="mb-16">
               <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -804,6 +808,10 @@ const StudentDashboard: React.FC = () => {
           </div>
         </motion.div>
       </div>
+      
+      {/* Tutorial Components */}
+      <TutorialPrompt />
+      <TutorialOverlay />
     </StudentPageWrapper>
   );
 };

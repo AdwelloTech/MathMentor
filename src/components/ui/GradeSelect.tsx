@@ -11,7 +11,8 @@ import {
 
 interface GradeSelectProps {
   value?: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
+  onValueChange?: (value: string) => void;
   placeholder?: string;
   className?: string;
   required?: boolean;
@@ -22,12 +23,21 @@ interface GradeSelectProps {
 const GradeSelect: React.FC<GradeSelectProps> = ({
   value,
   onChange,
+  onValueChange,
   placeholder = "Select grade level",
   className,
   required = false,
   disabled = false,
   error = false,
 }) => {
+  const handleValueChange = (newValue: string) => {
+    if (onChange) {
+      onChange(newValue);
+    }
+    if (onValueChange) {
+      onValueChange(newValue);
+    }
+  };
   const { gradeLevels, loading, error: fetchError } = useGradeLevels();
 
   if (loading) {
@@ -66,7 +76,11 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
   }
 
   return (
-    <Select value={value || ""} onValueChange={onChange} disabled={disabled}>
+    <Select 
+      value={value || ""} 
+      onValueChange={handleValueChange} 
+      disabled={disabled}
+    >
       <SelectTrigger
         className={cn(
           error && "border-red-300 focus-visible:ring-red-500",

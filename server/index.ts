@@ -539,7 +539,7 @@ try {
 } catch {}
 
 const app = express();
-const PORT = process.env.PORT || 4003;
+const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json({ limit: "4mb" }));

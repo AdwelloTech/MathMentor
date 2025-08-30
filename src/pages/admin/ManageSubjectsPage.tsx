@@ -73,7 +73,7 @@ const ManageSubjectsPage: React.FC = () => {
     const nameKey = newName.trim() || newDisplayName.trim().toLowerCase();
 
     // Check for duplicate names using the same normalization as backend
-    if (subjects.some(s => s.name === nameKey)) {
+    if (subjects.some((s) => s.name === nameKey)) {
       toast.error(`A subject with the key "${nameKey}" already exists`);
       return;
     }
@@ -114,7 +114,9 @@ const ManageSubjectsPage: React.FC = () => {
         color: editColor || null,
         is_active: editActive,
       });
-      setSubjects((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+      setSubjects((prev) =>
+        prev.map((s) => (s.id === updated.id ? updated : s))
+      );
       toast.success("Subject updated");
       setEditingId(null);
     } catch (e: any) {
@@ -166,10 +168,16 @@ const ManageSubjectsPage: React.FC = () => {
               onChange={(e) => setNewColor(e.target.value)}
               className="border rounded-md p-2 w-40"
             />
-            <button onClick={submitCreate} className="px-3 py-2 bg-green-600 text-white rounded-md">
+            <button
+              onClick={submitCreate}
+              className="px-3 py-2 bg-green-600 text-white rounded-md"
+            >
               <CheckIcon className="h-5 w-5" />
             </button>
-            <button onClick={cancelCreate} className="px-3 py-2 bg-gray-200 rounded-md">
+            <button
+              onClick={cancelCreate}
+              className="px-3 py-2 bg-gray-200 rounded-md"
+            >
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
@@ -201,7 +209,7 @@ const ManageSubjectsPage: React.FC = () => {
                     Retrying...
                   </>
                 ) : (
-                  'Retry Loading'
+                  "Retry Loading"
                 )}
               </button>
             </div>
@@ -211,7 +219,10 @@ const ManageSubjectsPage: React.FC = () => {
             <div className="p-6 text-center text-gray-600">No subjects</div>
           ) : (
             filtered.map((s) => (
-              <div key={s.id} className="py-3 flex items-center justify-between">
+              <div
+                key={s.id}
+                className="py-3 flex items-center justify-between"
+              >
                 {editingId === s.id ? (
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3 pr-4">
                     <input
@@ -245,9 +256,7 @@ const ManageSubjectsPage: React.FC = () => {
                       <div className="font-medium">{s.display_name}</div>
                       <div className="text-xs text-gray-500">{s.name}</div>
                     </div>
-                    <div className="text-sm">
-                      {s.color || "-"}
-                    </div>
+                    <div className="text-sm">{s.color || "-"}</div>
                     <div className="text-sm">
                       {s.is_active ? (
                         <span className="text-green-700">Active</span>
@@ -307,5 +316,3 @@ const ManageSubjectsPage: React.FC = () => {
 };
 
 export default ManageSubjectsPage;
-
-

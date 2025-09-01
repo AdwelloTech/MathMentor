@@ -487,12 +487,14 @@ const ManageQuizPdfsPage: React.FC = () => {
                   }))
                 }
                 className="mt-1"
+                required
               />
             </div>
             <div>
-              <Label htmlFor="pdf-name">Display Name (Optional)</Label>
+              <Label htmlFor="file-name">Display Name <span className="text-red-500">*</span></Label>
               <Input
-                id="pdf-name"
+                type="text"
+                id="file-name"
                 value={uploadForm.file_name}
                 onChange={(e) =>
                   setUploadForm((prev) => ({
@@ -502,24 +504,26 @@ const ManageQuizPdfsPage: React.FC = () => {
                 }
                 placeholder="Enter display name"
                 className="mt-1"
+                required
               />
             </div>
             <div className="w-full">
-              <Label htmlFor="grade-level">Grade Level (Optional)</Label>
+              <Label htmlFor="grade-level">Grade Level <span className="text-red-500">*</span></Label>
               <GradeSelect
                 value={uploadForm.grade_level_id ? String(uploadForm.grade_level_id) : ""}
                 onValueChange={(value) => {
                   setUploadForm((prev) => ({
                     ...prev,
-                    grade_level_id: value ? value : null,
+                    grade_level_id: value,
                   }));
                 }}
                 placeholder="Select grade level"
                 className="mt-1 w-full"
+                required={true}
               />
             </div>
             <div>
-              <Label htmlFor="subject">Subject</Label>
+              <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
               <Select
                 value={uploadForm.subject_id}
                 onValueChange={(value) =>
@@ -528,6 +532,7 @@ const ManageQuizPdfsPage: React.FC = () => {
                     subject_id: value,
                   }))
                 }
+                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select subject" />

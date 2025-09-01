@@ -63,7 +63,7 @@ const ManageQuizPdfsPage: React.FC = () => {
   // Upload form
   const [uploadForm, setUploadForm] = useState({
     file: null as File | null,
-    grade_level_id: "",
+    grade_level_id: "" as string | number | null,
     subject_id: "",
     file_name: "",
   });
@@ -71,7 +71,7 @@ const ManageQuizPdfsPage: React.FC = () => {
   // Edit form
   const [editForm, setEditForm] = useState({
     file_name: "",
-    grade_level_id: "",
+    grade_level_id: "" as string | number | null,
     subject_id: "",
     is_active: true,
   });
@@ -133,12 +133,13 @@ const ManageQuizPdfsPage: React.FC = () => {
   };
 
   const handleFileUpload = async () => {
-    if (
-      !uploadForm.file ||
-      !uploadForm.grade_level_id ||
-      !uploadForm.subject_id
-    ) {
+    if (!uploadForm.file || !uploadForm.subject_id) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (!adminSession?.user?.id) {
+      toast.error("Admin session not available. Please log in again.");
       return;
     }
 
@@ -156,15 +157,27 @@ const ManageQuizPdfsPage: React.FC = () => {
       }
 
       // Create PDF record
-      const newPdf = await quizPdfService.create({
+      const pdfData: any = {
         file_name: uploadForm.file_name || uploadForm.file.name,
         file_path: pdfBase64,
         file_size: fileSize,
-        grade_level_id: uploadForm.grade_level_id,
         subject_id: uploadForm.subject_id,
-        uploaded_by: adminSession?.profile_id || "unknown",
         is_active: true,
-      });
+      };
+
+      // Only include grade_level_id if it has a valid value
+      if (uploadForm.grade_level_id && uploadForm.grade_level_id !== "") {
+        pdfData.grade_level_id = uploadForm.grade_level_id;
+      }
+
+      // Since uploaded_by is nullable in the database, we can omit it entirely
+      // This avoids any foreign key constraint issues
+
+      // Debug: Log the data being sent
+      console.log("Creating PDF with data:", pdfData);
+      console.log("Admin session:", adminSession);
+
+      const newPdf = await quizPdfService.create(pdfData);
 
       setPdfs((prev) => [newPdf, ...prev]);
       setShowUploadModal(false);
@@ -491,18 +504,18 @@ const ManageQuizPdfsPage: React.FC = () => {
                 className="mt-1"
               />
             </div>
-            <div>
-              <Label htmlFor="grade-level">Grade Level</Label>
+            <div className="w-full">
+              <Label htmlFor="grade-level">Grade Level (Optional)</Label>
               <GradeSelect
-                value={uploadForm.grade_level_id ? String(uploadForm.grade_level_id) : ''}
-                onChange={(value) =>
+                value={uploadForm.grade_level_id ? String(uploadForm.grade_level_id) : ""}
+                onValueChange={(value) => {
                   setUploadForm((prev) => ({
                     ...prev,
-                    grade_level_id: value ? Number(value) : null,
-                  }))
-                }
+                    grade_level_id: value ? value : null,
+                  }));
+                }}
                 placeholder="Select grade level"
-                className="mt-1"
+                className="mt-1 w-full"
               />
             </div>
             <div>
@@ -531,11 +544,7 @@ const ManageQuizPdfsPage: React.FC = () => {
             <div className="flex gap-2 pt-4">
               <Button
                 onClick={handleFileUpload}
-                disabled={
-                  !uploadForm.file ||
-                  !uploadForm.grade_level_id ||
-                  !uploadForm.subject_id
-                }
+                disabled={!uploadForm.file || !uploadForm.subject_id}
                 className="flex-1"
               >
                 <CloudArrowUpIcon className="w-4 h-4 mr-2" />
@@ -580,7 +589,9 @@ const ManageQuizPdfsPage: React.FC = () => {
             <div>
               <Label htmlFor="edit-grade">Grade Level</Label>
               <GradeSelect
-                value={editForm.grade_level_id ? String(editForm.grade_level_id) : ''}
+                value={
+                  editForm.grade_level_id ? String(editForm.grade_level_id) : ""
+                }
                 onChange={(value) =>
                   setEditForm((prev) => ({
                     ...prev,

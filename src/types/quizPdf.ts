@@ -30,9 +30,9 @@ export interface CreateQuizPdfData {
   file_name: string;
   file_path: string;
   file_size: number;
-  grade_level_id: string;
+  grade_level_id?: string;
   subject_id: string;
-  uploaded_by: string;
+  uploaded_by?: string;
   is_active?: boolean;
 }
 

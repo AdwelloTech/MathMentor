@@ -43,7 +43,9 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
   if (loading) {
     return (
       <Select disabled>
-        <SelectTrigger className={cn("text-gray-400", className)}>
+        <SelectTrigger className={cn("text-gray-400", className, {
+          'border-red-500': error,
+        })}>
           <SelectValue>Loading grades...</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -57,46 +59,75 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
 
   if (fetchError) {
     return (
-      <Select disabled>
-        <SelectTrigger
-          className={cn(
-            "border-red-300 focus-visible:ring-red-500 text-red-500",
-            className
-          )}
-        >
-          <SelectValue>Error loading grades</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="error" disabled>
-            Error loading grades
-          </SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="w-full">
+        <Select disabled>
+          <SelectTrigger
+            className={cn(
+              "w-full border-red-300 focus-visible:ring-red-500 text-red-500",
+              className
+            )}
+          >
+            <SelectValue>Error loading grades</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="error" disabled>
+              Error loading grades
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="mt-1 text-sm text-yellow-600">
+          Couldn't load grade levels. Please try again later.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Select 
-      value={value || ""} 
-      onValueChange={handleValueChange} 
-      disabled={disabled}
-    >
-      <SelectTrigger
-        className={cn(
-          error && "border-red-300 focus-visible:ring-red-500",
-          className
-        )}
+    <div className="w-full">
+      <Select
+        value={value || undefined}
+        onValueChange={handleValueChange}
+        disabled={disabled || loading}
       >
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {gradeLevels.map((grade) => (
-          <SelectItem key={grade.id} value={grade.id}>
-            {grade.display_name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <SelectTrigger
+          className={cn("w-full", className, {
+            'border-red-500': error,
+            'opacity-70': loading,
+          })}
+        >
+          <SelectValue placeholder={loading ? 'Loading grades...' : placeholder}>
+            {value ? (gradeLevels.find(g => String(g.id) === value)?.display_name || '') : ''}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {!required && (
+            <SelectItem value="none" className="hidden">
+              {placeholder}
+            </SelectItem>
+          )}
+          {gradeLevels.length > 0 ? (
+            gradeLevels.map((grade) => (
+              <SelectItem 
+                key={grade.id} 
+                value={String(grade.id)}
+                className="cursor-pointer hover:bg-gray-100"
+              >
+                {grade.display_name || `Grade ${grade.id}`}
+              </SelectItem>
+            ))
+          ) : (
+            <div className="p-2 text-sm text-gray-500">
+              No grade levels available
+            </div>
+          )}
+        </SelectContent>
+      </Select>
+      {error && (
+        <p className="mt-1 text-sm text-red-500">
+          {typeof error === 'string' ? error : 'Please select a valid grade level'}
+        </p>
+      )}
+    </div>
   );
 };
 

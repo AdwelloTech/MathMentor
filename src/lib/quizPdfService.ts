@@ -74,7 +74,7 @@ export const quizPdfService = {
         created_at
       `
       )
-      .eq("grade_level_id", gradeLevelId)
+      .or(`grade_level_id.eq.${gradeLevelId},grade_level_id.is.null`)
       .eq("subject_id", subjectId)
       .eq("is_active", true)
       .order("created_at", { ascending: false });

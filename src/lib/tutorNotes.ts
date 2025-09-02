@@ -539,11 +539,17 @@ export async function incrementTutorNoteViewCountUnique(
 
     if (error) {
       // If the unique RPC doesn't exist, fall back to regular view count
-      console.debug("Unique view count RPC not available, using regular view count:", error.message);
+      console.debug(
+        "Unique view count RPC not available, using regular view count:",
+        error.message
+      );
       await incrementTutorNoteViewCount(noteId);
     }
   } catch (error) {
-    console.warn("Error with unique view count, falling back to regular view count:", error);
+    console.warn(
+      "Error with unique view count, falling back to regular view count:",
+      error
+    );
     // Fall back to regular view count increment
     try {
       await incrementTutorNoteViewCount(noteId);
@@ -696,4 +702,56 @@ export function truncateTutorNoteText(
 ): string {
   if (!text || text.length <= maxLength) return text || "";
   return text.substring(0, maxLength).trim() + "...";
+}
+
+export async function resolveNoteSubjectIdFromSubject(subject: {
+  id: string;
+  name: string;
+  display_name: string;
+}): Promise<string | null> {
+  try {
+    // Try to find an existing note_subjects row by display_name first, then by name
+    let { data, error } = await supabase
+      .from("note_subjects")
+      .select("id")
+      .eq("display_name", subject.display_name)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (error && error.code !== "PGRST116") throw error;
+
+    if (!data) {
+      const byName = await supabase
+        .from("note_subjects")
+        .select("id")
+        .eq("name", subject.name)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (byName.error && byName.error.code !== "PGRST116") throw byName.error;
+      data = byName.data as any;
+    }
+
+    if (data?.id) return data.id as string;
+
+    // If not found, create a new mapping row (safe default values)
+    const insert = await supabase
+      .from("note_subjects")
+      .insert({
+        name:
+          subject.name ||
+          subject.display_name.toLowerCase().replace(/\s+/g, "-"),
+        display_name: subject.display_name || subject.name,
+        color: "#999999",
+        is_active: true,
+        sort_order: 999,
+      })
+      .select("id")
+      .single();
+
+    if (insert.error) throw insert.error;
+    return insert.data?.id || null;
+  } catch (e) {
+    console.error("Error resolving note_subjects id from subject:", e);
+    return null;
+  }
 }

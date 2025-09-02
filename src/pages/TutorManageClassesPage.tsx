@@ -392,9 +392,9 @@ const TutorManageClassesPage: React.FC = () => {
                 whileHover={{ scale: 1.02, y: -5 }}
                 className="group cursor-pointer transition-all duration-300"
               >
-                <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 overflow-hidden hover:shadow-xl">
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
+                <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 overflow-hidden hover:shadow-xl h-full min-h-[280px]">
+                  <div className="p-6 h-full flex flex-col">
+                    <div className="flex justify-between items-start mb-4 flex-grow">
                       <div>
                         <h3 className="text-lg font-bold text-gray-900 mb-2">
                           {classItem.title}
@@ -454,7 +454,7 @@ const TutorManageClassesPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-2 mt-auto">
                       <Button
                         onClick={() => {
                           setSelectedClass(classItem);

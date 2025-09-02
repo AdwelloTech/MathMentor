@@ -1,7 +1,7 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Cog6ToothIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '@/contexts/AuthContext';
+import React from "react";
+import { motion } from "framer-motion";
+import { Cog6ToothIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SettingsPage: React.FC = () => {
   const { profile } = useAuth();
@@ -18,9 +18,7 @@ const SettingsPage: React.FC = () => {
         <div className="flex items-center">
           <Cog6ToothIcon className="h-8 w-8 text-primary-600 mr-3" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Settings
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
             <p className="mt-2 text-sm text-gray-600">
               Manage your account preferences and system settings.
             </p>
@@ -40,7 +38,8 @@ const SettingsPage: React.FC = () => {
               Account Settings
             </h2>
             <p className="text-gray-600">
-              Settings page for {profile?.role} users is coming soon. Here you'll be able to manage:
+              Settings page for {profile?.role} users is coming soon. Here
+              you'll be able to manage:
             </p>
             <ul className="mt-4 space-y-2 text-gray-600">
               <li>• Account preferences</li>
@@ -56,4 +55,4 @@ const SettingsPage: React.FC = () => {
   );
 };
 
-export default SettingsPage; 
+export default SettingsPage;

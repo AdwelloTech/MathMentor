@@ -579,24 +579,31 @@ export const classSchedulingService = {
     cancel: async (id: string): Promise<ClassBooking> => {
       try {
         // Get the booking first to get class_id
-        const existingBooking = await classSchedulingService.bookings.getById(id);
+        const existingBooking = await classSchedulingService.bookings.getById(
+          id
+        );
 
         if (!existingBooking) {
           throw new Error("Booking not found");
         }
 
         // Try atomic RPC first
-        const { error: rpcError } = await supabase.rpc("cancel_booking_atomic", {
-          p_booking_id: id,
-          p_class_id: existingBooking.class_id,
-        });
+        const { error: rpcError } = await supabase.rpc(
+          "cancel_booking_atomic",
+          {
+            p_booking_id: id,
+            p_class_id: existingBooking.class_id,
+          }
+        );
 
         if (rpcError) {
           // Graceful fallback if RPC does not exist or is not exposed
           const rpcMissing =
             rpcError.code === "42883" ||
             rpcError.message?.includes("Could not find the function") ||
-            rpcError.message?.includes("function public.cancel_booking_atomic") ||
+            rpcError.message?.includes(
+              "function public.cancel_booking_atomic"
+            ) ||
             rpcError.message?.includes("cancel_booking_atomic");
 
           if (!rpcMissing) {
@@ -628,7 +635,10 @@ export const classSchedulingService = {
             const newCount = Math.max((classRow?.current_students || 1) - 1, 0);
             const { error: classUpdateErr } = await supabase
               .from("tutor_classes")
-              .update({ current_students: newCount, updated_at: new Date().toISOString() })
+              .update({
+                current_students: newCount,
+                updated_at: new Date().toISOString(),
+              })
               .eq("id", updated.class_id);
             if (classUpdateErr) throw classUpdateErr;
           }
@@ -883,7 +893,14 @@ export const classSchedulingService = {
       // Get booking statistics
       const { data: bookings } = await supabase
         .from("class_bookings")
-        .select("booking_status, payment_amount, payment_status")
+        .select(
+          `
+          booking_status,
+          payment_amount,
+          payment_status,
+          class:tutor_classes(start_time, end_time)
+        `
+        )
         .eq("student_id", studentId);
 
       // Calculate stats
@@ -896,6 +913,21 @@ export const classSchedulingService = {
         bookings
           ?.filter((b) => b.payment_status === "paid")
           .reduce((sum, b) => sum + b.payment_amount, 0) || 0;
+
+      // Calculate total hours learned from completed bookings using class duration
+      const totalMinutesLearned =
+        bookings
+          ?.filter((b: any) => b.booking_status === "completed")
+          .reduce((sum: number, b: any) => {
+            const start = b.class?.start_time as string | undefined;
+            const end = b.class?.end_time as string | undefined;
+            if (!start || !end) return sum;
+            const [sh, sm] = start.split(":").map(Number);
+            const [eh, em] = end.split(":").map(Number);
+            const minutes = eh * 60 + em - (sh * 60 + sm);
+            return sum + Math.max(minutes, 0);
+          }, 0) || 0;
+      const hoursLearned = totalMinutesLearned / 60;
 
       // Get unique tutors count
       const { data: uniqueTutors } = await supabase
@@ -916,16 +948,25 @@ export const classSchedulingService = {
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
+      // Count sessions based on the class date falling within this month
       const { data: thisMonthBookings } = await supabase
         .from("class_bookings")
-        .select("payment_amount")
+        .select(
+          `
+          payment_amount,
+          class:tutor_classes(date)
+        `
+        )
         .eq("student_id", studentId)
-        .gte("created_at", firstDayOfMonth.toISOString())
-        .lte("created_at", lastDayOfMonth.toISOString());
+        .gte("class.date", firstDayOfMonth.toISOString())
+        .lte("class.date", lastDayOfMonth.toISOString());
 
       const bookingsThisMonth = thisMonthBookings?.length || 0;
       const spentThisMonth =
-        thisMonthBookings?.reduce((sum, b) => sum + b.payment_amount, 0) || 0;
+        thisMonthBookings?.reduce(
+          (sum: number, b: any) => sum + (b.payment_amount || 0),
+          0
+        ) || 0;
 
       return {
         total_bookings: totalBookings,
@@ -936,6 +977,7 @@ export const classSchedulingService = {
         total_tutors: totalTutors,
         bookings_this_month: bookingsThisMonth,
         spent_this_month: spentThisMonth,
+        hours_learned: hoursLearned,
       };
     },
   },

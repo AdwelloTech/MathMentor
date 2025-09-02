@@ -81,12 +81,20 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
           order: 4
         },
         {
+          id: 'schedule-class',
+          title: 'Schedule Class',
+          content: 'Click here to schedule a new class for your students.',
+          target: '#schedule-class-button',
+          position: 'left',
+          order: 5
+        },
+        {
           id: 'online-status',
           title: 'Online Status Toggle',
           content: 'Toggle your online status to start receiving instant session requests from students.',
           target: '#online-status-toggle',
           position: 'right',
-          order: 5
+          order: 6
         },
         {
           id: 'profile-completion',
@@ -94,7 +102,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
           content: 'Complete your profile to unlock all tutor features and start receiving students.',
           target: '#tutor-profile-completion',
           position: 'top',
-          order: 6
+          order: 7
         }
       ];
     } else {
@@ -125,12 +133,20 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
           order: 3
         },
         {
+          id: 'recent-quizzes',
+          title: 'Recent Quizzes',
+          content: 'Review your most recent quizzes and quickly jump back in.',
+          target: '#recent-quizzes',
+          position: 'right',
+          order: 4
+        },
+        {
           id: 'navigation',
           title: 'Navigation',
           content: 'Use the sidebar to navigate between different sections of your learning portal.',
           target: '#sidebar-navigation',
           position: 'left',
-          order: 4
+          order: 5
         },
         {
           id: 'study-materials',
@@ -138,7 +154,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
           content: 'Access flashcards, notes, and other learning resources created by your tutors.',
           target: '#study-materials',
           position: 'right',
-          order: 5
+          order: 6
         },
         {
           id: 'upcoming-sessions',
@@ -146,7 +162,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
           content: 'View and manage your scheduled tutoring sessions here.',
           target: '#upcoming-sessions',
           position: 'right',
-          order: 6
+          order: 7
         }
       ];
     }

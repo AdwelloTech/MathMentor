@@ -45,9 +45,15 @@ const ManageSessionsPage: React.FC = () => {
     null
   );
   const [showDetails, setShowDetails] = useState(false);
-  const [tutorRatings, setTutorRatings] = useState<Record<string, { avg: number; count: number }>>({});
-  const [sessionJoinability, setSessionJoinability] = useState<Record<string, boolean>>({});
-  const [sessionCountdowns, setSessionCountdowns] = useState<Record<string, number>>({});
+  const [tutorRatings, setTutorRatings] = useState<
+    Record<string, { avg: number; count: number }>
+  >({});
+  const [sessionJoinability, setSessionJoinability] = useState<
+    Record<string, boolean>
+  >({});
+  const [sessionCountdowns, setSessionCountdowns] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     if (user) {
@@ -60,7 +66,7 @@ const ManageSessionsPage: React.FC = () => {
     const updateSessionStatus = () => {
       const newJoinability: Record<string, boolean> = {};
       const newCountdowns: Record<string, number> = {};
-      
+
       upcomingBookings.forEach((booking) => {
         if (
           booking.booking_status === "confirmed" &&
@@ -73,12 +79,12 @@ const ManageSessionsPage: React.FC = () => {
           const fiveMinutesBeforeSession = new Date(
             sessionDate.getTime() - 5 * 60 * 1000
           );
-          
+
           const wasJoinable = sessionJoinability[booking.id] || false;
           const isNowJoinable = now >= fiveMinutesBeforeSession;
-          
+
           newJoinability[booking.id] = isNowJoinable;
-          
+
           // Calculate countdown in minutes
           if (now < fiveMinutesBeforeSession) {
             const diffMs = fiveMinutesBeforeSession.getTime() - now.getTime();
@@ -86,21 +92,19 @@ const ManageSessionsPage: React.FC = () => {
           } else {
             newCountdowns[booking.id] = 0;
           }
-          
-
         } else {
           newJoinability[booking.id] = false;
           newCountdowns[booking.id] = 0;
         }
       });
-      
+
       setSessionJoinability(newJoinability);
       setSessionCountdowns(newCountdowns);
     };
 
     // Update immediately
     updateSessionStatus();
-    
+
     // Update every second to keep button state and countdowns current
     const interval = setInterval(updateSessionStatus, 1000);
 
@@ -239,8 +243,6 @@ const ManageSessionsPage: React.FC = () => {
     });
   };
 
-
-
   // Filter to show only upcoming sessions
   const filteredUpcomingBookings = upcomingBookings.filter(
     (booking) =>
@@ -329,12 +331,16 @@ const ManageSessionsPage: React.FC = () => {
                                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
                                 <span>
                                   {(
-                                    tutorRatings[session.tutor?.id || ""]?.avg ?? 0
+                                    tutorRatings[session.tutor?.id || ""]
+                                      ?.avg ?? 0
                                   ).toFixed(1)}
                                 </span>
-                                <span className="text-gray-500">(
-                                  {tutorRatings[session.tutor?.id || ""]?.count ?? 0} reviews
-                                )</span>
+                                <span className="text-gray-500">
+                                  (
+                                  {tutorRatings[session.tutor?.id || ""]
+                                    ?.count ?? 0}{" "}
+                                  reviews )
+                                </span>
                               </div>
                             </div>
                             <Badge
@@ -392,25 +398,27 @@ const ManageSessionsPage: React.FC = () => {
                                 disabled={!isJoinable}
                                 className={
                                   isJoinable
-                                    ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                    ? "bg-green-900 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-56"
+                                    : "bg-gray-300 text-gray-500 cursor-not-allowed w-56"
                                 }
                                 size="lg"
                               >
                                 <Video className="w-5 h-5 mr-2" />
                                 {isJoinable ? "Join Now" : "Join Session"}
                               </Button>
-                              
+
                               {/* Countdown to session availability */}
-                              {!isJoinable && sessionCountdowns[booking.id] > 0 && (
-                                <div className="text-xs text-gray-500 text-center">
-                                  Available in {sessionCountdowns[booking.id]} minutes
-                                  <br />
-                                  <span className="text-xs text-gray-400">
-                                    ({formatTime(session.start_time)})
-                                  </span>
-                                </div>
-                              )}
+                              {!isJoinable &&
+                                sessionCountdowns[booking.id] > 0 && (
+                                  <div className="text-xs text-gray-500 text-center">
+                                    Available in {sessionCountdowns[booking.id]}{" "}
+                                    minutes
+                                    <br />
+                                    <span className="text-xs text-gray-400">
+                                      ({formatTime(session.start_time)})
+                                    </span>
+                                  </div>
+                                )}
                             </div>
                           )}
 
@@ -422,43 +430,45 @@ const ManageSessionsPage: React.FC = () => {
                             }}
                             variant="outline"
                             size="lg"
-                            className="border-2 border-green-900 text-green-900 hover:bg-green-50 hover:border-green-800 transition-all duration-200"
+                            className="border-2 border-green-900 text-green-900 hover:bg-green-50 hover:border-green-800 transition-all duration-200 w-56"
                           >
                             <Eye className="w-5 h-5 mr-2" />
                             Details
                           </Button>
 
                           {/* Session Timer - Below the action buttons */}
-                          {booking.booking_status === "confirmed" && session && (
-                            <div className="mt-1">
-                              <SessionTimer
-                                session={{
-                                  id: session.id,
-                                  title: session.title,
-                                  description: session.description || "",
-                                  date: session.date,
-                                  start_time: session.start_time,
-                                  end_time: session.end_time,
-                                  duration_minutes: session.duration_minutes,
-                                  jitsi_meeting_url: session.jitsi_meeting_url,
-                                  jitsi_room_name: session.jitsi_room_name,
-                                  jitsi_password: session.jitsi_password,
-                                  class_status: session.status,
-                                  booking_status: booking.booking_status,
-                                  payment_status: booking.payment_status,
-                                  class_type: session.class_type?.name || "",
-                                  tutor: {
-                                    id: session.tutor?.id || session.tutor_id,
-                                    full_name: session.tutor?.full_name || "",
-                                    email: session.tutor?.email || "",
-                                  },
-                                }}
-                                bookingId={booking.id}
-                                onSessionEnd={loadBookings}
-                                className="w-full"
-                              />
-                            </div>
-                          )}
+                          {booking.booking_status === "confirmed" &&
+                            session && (
+                              <div className="mt-1">
+                                <SessionTimer
+                                  session={{
+                                    id: session.id,
+                                    title: session.title,
+                                    description: session.description || "",
+                                    date: session.date,
+                                    start_time: session.start_time,
+                                    end_time: session.end_time,
+                                    duration_minutes: session.duration_minutes,
+                                    jitsi_meeting_url:
+                                      session.jitsi_meeting_url,
+                                    jitsi_room_name: session.jitsi_room_name,
+                                    jitsi_password: session.jitsi_password,
+                                    class_status: session.status,
+                                    booking_status: booking.booking_status,
+                                    payment_status: booking.payment_status,
+                                    class_type: session.class_type?.name || "",
+                                    tutor: {
+                                      id: session.tutor?.id || session.tutor_id,
+                                      full_name: session.tutor?.full_name || "",
+                                      email: session.tutor?.email || "",
+                                    },
+                                  }}
+                                  bookingId={booking.id}
+                                  onSessionEnd={loadBookings}
+                                  className="w-full"
+                                />
+                              </div>
+                            )}
                         </div>
                       </div>
                     </CardContent>
@@ -620,12 +630,16 @@ const ManageSessionsPage: React.FC = () => {
                               <Star className="w-4 h-4 text-yellow-400 fill-current" />
                               <span>
                                 {(
-                                  tutorRatings[selectedBooking.class.tutor.id]?.avg ?? 0
+                                  tutorRatings[selectedBooking.class.tutor.id]
+                                    ?.avg ?? 0
                                 ).toFixed(1)}
                               </span>
-                              <span className="text-gray-500">(
-                                {tutorRatings[selectedBooking.class.tutor.id]?.count ?? 0} reviews
-                              )</span>
+                              <span className="text-gray-500">
+                                (
+                                {tutorRatings[selectedBooking.class.tutor.id]
+                                  ?.count ?? 0}{" "}
+                                reviews )
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -661,22 +675,30 @@ const ManageSessionsPage: React.FC = () => {
                             session={{
                               id: selectedBooking.class!.id,
                               title: selectedBooking.class!.title,
-                              description: selectedBooking.class!.description || "",
+                              description:
+                                selectedBooking.class!.description || "",
                               date: selectedBooking.class!.date,
                               start_time: selectedBooking.class!.start_time,
                               end_time: selectedBooking.class!.end_time,
-                              duration_minutes: selectedBooking.class!.duration_minutes,
-                              jitsi_meeting_url: selectedBooking.class!.jitsi_meeting_url,
-                              jitsi_room_name: selectedBooking.class!.jitsi_room_name,
-                              jitsi_password: selectedBooking.class!.jitsi_password,
+                              duration_minutes:
+                                selectedBooking.class!.duration_minutes,
+                              jitsi_meeting_url:
+                                selectedBooking.class!.jitsi_meeting_url,
+                              jitsi_room_name:
+                                selectedBooking.class!.jitsi_room_name,
+                              jitsi_password:
+                                selectedBooking.class!.jitsi_password,
                               class_status: selectedBooking.class!.status,
                               booking_status: selectedBooking.booking_status,
                               payment_status: selectedBooking.payment_status,
-                              class_type: selectedBooking.class!.class_type?.name || "",
+                              class_type:
+                                selectedBooking.class!.class_type?.name || "",
                               tutor: {
                                 id: selectedBooking.class!.tutor_id,
-                                full_name: selectedBooking.class!.tutor?.full_name || "",
-                                email: selectedBooking.class!.tutor?.email || "",
+                                full_name:
+                                  selectedBooking.class!.tutor?.full_name || "",
+                                email:
+                                  selectedBooking.class!.tutor?.email || "",
                               },
                             }}
                             bookingId={selectedBooking.id}
@@ -714,17 +736,25 @@ const ManageSessionsPage: React.FC = () => {
                                 ? "Join Session Now"
                                 : "Available 5 Min Before Start"}
                             </Button>
-                            
+
                             {/* Countdown to session availability */}
-                            {!isSessionJoinable(selectedBooking) && sessionCountdowns[selectedBooking.id] > 0 && (
-                              <div className="text-sm text-gray-500 text-center">
-                                Session will be available in {sessionCountdowns[selectedBooking.id]} minutes
-                                <br />
-                                <span className="text-sm text-gray-400">
-                                  (Session starts at {selectedBooking.class && formatTime(selectedBooking.class.start_time)})
-                                </span>
-                              </div>
-                            )}
+                            {!isSessionJoinable(selectedBooking) &&
+                              sessionCountdowns[selectedBooking.id] > 0 && (
+                                <div className="text-sm text-gray-500 text-center">
+                                  Session will be available in{" "}
+                                  {sessionCountdowns[selectedBooking.id]}{" "}
+                                  minutes
+                                  <br />
+                                  <span className="text-sm text-gray-400">
+                                    (Session starts at{" "}
+                                    {selectedBooking.class &&
+                                      formatTime(
+                                        selectedBooking.class.start_time
+                                      )}
+                                    )
+                                  </span>
+                                </div>
+                              )}
                           </div>
                         </CardContent>
                       </Card>

@@ -157,7 +157,6 @@ function App() {
               />
 
               <Route path="profile" element={<ProfilePage />} />
-              <Route path="settings" element={<SettingsPage />} />
               <Route path="id-verification" element={<IDVerificationPage />} />
 
               {/* Admin routes with nested structure */}

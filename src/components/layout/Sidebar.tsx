@@ -78,14 +78,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
     { name: "Manage Subjects", href: "/admin/subjects", icon: AcademicCapIcon },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
-    { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];
 
   // Base navigation for all users
   const baseNavigation = [
     { name: "Dashboard", href: "/dashboard", icon: AcademicCapIcon },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
-    { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
   ];
 
   // Tutor-specific navigation items
@@ -171,7 +169,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: CreditCardIcon,
         },
         { name: "Profile", href: "/profile", icon: UserCircleIcon },
-        { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
       ];
     }
     // Show admin nav only for validated admin sessions

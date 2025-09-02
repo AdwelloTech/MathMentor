@@ -261,21 +261,23 @@ const StudentDashboard: React.FC = () => {
 
   const calculateHoursLearned = () => {
     if (!data.stats) return 0;
-    // Estimate 1 hour per completed booking
-    return data.stats.completed_bookings;
+    return Math.max(Math.round((data.stats.hours_learned || 0) * 10) / 10, 0);
   };
 
   const getPackageProgress = () => {
-    if (!data.packageInfo) return { used: 0, total: 10, percentage: 0 };
+    if (!data.packageInfo)
+      return { used: 0, total: 10, percentage: 0, remaining: 10 };
     const total =
       data.packageInfo.package_type === "gold"
         ? 20
         : data.packageInfo.package_type === "silver"
         ? 15
         : 10;
-    const used = data.stats?.total_bookings || 0;
+    // Count only this month's bookings towards the current package usage
+    const used = data.stats?.bookings_this_month || 0;
     const percentage = Math.min((used / total) * 100, 100);
-    return { used, total, percentage };
+    const remaining = Math.max(total - used, 0);
+    return { used, total, percentage, remaining };
   };
 
   const containerVariants = {
@@ -436,14 +438,16 @@ const StudentDashboard: React.FC = () => {
                         </Badge>
                         <span className="text-green-100">
                           {data.packageInfo?.price_monthly
-                            ? `${formatCurrency(data.packageInfo.price_monthly)}/month`
+                            ? `${formatCurrency(
+                                data.packageInfo.price_monthly
+                              )}/month`
                             : "Free"}
                         </span>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-3xl font-bold">
-                        {getPackageProgress().total - getPackageProgress().used}
+                        {Math.max(data.upcomingSessions.length, 0)}
                       </div>
                       <div className="text-green-100 text-sm">
                         sessions remaining

@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
+import { subjectsService } from "@/lib/subjects";
+import type { Subject } from "@/types/subject";
 
 interface InstantRequest {
   id: string;
@@ -34,17 +36,7 @@ interface InstantRequest {
   updated_at: string;
 }
 
-interface NoteSubject {
-  id: string;
-  name: string;
-  display_name: string;
-  description: string | null;
-  color: string;
-  is_active: boolean;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-}
+type NoteSubject = Subject;
 
 export default function InstantSessionPage() {
   const { user } = useAuth();
@@ -63,17 +55,7 @@ export default function InstantSessionPage() {
   useEffect(() => {
     const loadSubjects = async () => {
       try {
-        const { data, error } = await (supabase as any)
-          .from("note_subjects")
-          .select("*")
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true });
-
-        if (error) {
-          console.error("Error loading subjects:", error);
-          return;
-        }
-
+        const data = await subjectsService.listActive();
         setSubjects(data || []);
       } catch (error) {
         console.error("Error loading subjects:", error);

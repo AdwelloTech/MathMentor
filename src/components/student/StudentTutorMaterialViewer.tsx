@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -18,7 +18,10 @@ import {
   getStudentTutorMaterialSubjectColor,
   type StudentTutorMaterial,
 } from "@/lib/studentTutorMaterials";
-import { incrementTutorNoteDownloadCount } from "@/lib/tutorNotes";
+import {
+  incrementTutorNoteDownloadCount,
+  getTutorNoteSecureFile,
+} from "@/lib/tutorNotes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -35,10 +38,32 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
   material,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [secureFileUrl, setSecureFileUrl] = useState<string | null>(null);
   const hasFile = material.file_url && material.file_name;
   const hasContent = material.content && material.content.trim().length > 0;
   const isPdfFile =
     hasFile && material.file_name?.toLowerCase().endsWith(".pdf");
+
+  // Load a signed URL whenever the modal opens or the material changes
+  useEffect(() => {
+    const loadSignedUrl = async () => {
+      if (!hasFile) {
+        setSecureFileUrl(null);
+        return;
+      }
+      try {
+        const { fileUrl } = await getTutorNoteSecureFile(material.id);
+        setSecureFileUrl(fileUrl);
+      } catch (e) {
+        // Fall back to raw path if signed URL fails
+        setSecureFileUrl(material.file_url || null);
+      }
+    };
+    if (isOpen) {
+      loadSignedUrl();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, material.id]);
 
   const handleClose = () => {
     if (!loading) {
@@ -55,7 +80,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
       await incrementTutorNoteDownloadCount(material.id);
 
       // Force download by fetching the file and creating a blob
-      const response = await fetch(material.file_url!);
+      const response = await fetch(secureFileUrl || material.file_url!);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -82,8 +107,8 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
   };
 
   const handleViewFile = () => {
-    if (material.file_url) {
-      window.open(material.file_url, "_blank");
+    if (secureFileUrl || material.file_url) {
+      window.open(secureFileUrl || material.file_url!, "_blank");
     }
   };
 
@@ -267,7 +292,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                       <CardContent>
                         <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
                           <iframe
-                            src={material.file_url || ""}
+                            src={secureFileUrl || material.file_url || ""}
                             title={`PDF: ${material.file_name || "document"}`}
                             className="w-full h-[700px] border border-slate-300 rounded-lg shadow-inner"
                             style={{ minHeight: "700px" }}

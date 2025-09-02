@@ -23,8 +23,8 @@ import {
   deleteTutorNote,
   transformTutorNoteForCard,
   type TutorNoteWithDetails,
+  getNoteSubjects,
 } from "@/lib/tutorNotes";
-import { subjectsService } from "@/lib/subjects";
 import toast from "react-hot-toast";
 
 const ManageMaterialsPage: React.FC = () => {
@@ -62,7 +62,7 @@ const ManageMaterialsPage: React.FC = () => {
       setLoading(true);
       const [notesData, subjectsData] = await Promise.all([
         getTutorNotesByTutorId(user!.id),
-        subjectsService.listActive(),
+        getNoteSubjects(),
       ]);
 
       setNotes(notesData);

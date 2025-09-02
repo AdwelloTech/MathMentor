@@ -144,7 +144,7 @@ const CreateQuizPage: React.FC = () => {
         qIndex === questionIndex
           ? {
               ...q,
-              answers: q.answers.map((a, aIndex) =>
+              answers: (q.answers ?? []).map((a, aIndex) =>
                 aIndex === answerIndex ? { ...a, [field]: value } : a
               ),
             }
@@ -159,7 +159,7 @@ const CreateQuizPage: React.FC = () => {
         qIndex === questionIndex
           ? {
               ...q,
-              answers: q.answers.map((a, aIndex) => ({
+              answers: (q.answers ?? []).map((a, aIndex) => ({
                 ...a,
                 is_correct: aIndex === answerIndex,
               })),
@@ -232,7 +232,7 @@ const CreateQuizPage: React.FC = () => {
           | "discarded"
           | undefined,
         ai_metadata: q.ai_metadata,
-        answers: q.answers.map((a: any, i: number) => ({
+        answers: (q.answers ?? []).map((a: any, i: number) => ({
           answer_text: a.answer_text,
           is_correct: a.is_correct,
           answer_order: i + 1,
@@ -292,8 +292,8 @@ const CreateQuizPage: React.FC = () => {
     const incompleteQuestions = included.filter(
       (q) =>
         q.question_text.trim() === "" ||
-        !q.answers.some((a) => a.is_correct) ||
-        q.answers.some((a) => a.answer_text.trim() === "")
+        !(q.answers ?? []).some((a) => a.is_correct) ||
+        (q.answers ?? []).some((a) => a.answer_text.trim() === "")
     );
 
     if (incompleteQuestions.length > 0) {
@@ -327,8 +327,8 @@ const CreateQuizPage: React.FC = () => {
     return included.every(
       (q) =>
         q.question_text.trim() !== "" &&
-        q.answers.some((a) => a.is_correct) &&
-        q.answers.every((a) => a.answer_text.trim() !== "")
+        (q.answers ?? []).some((a) => a.is_correct) &&
+        (q.answers ?? []).every((a) => a.answer_text.trim() !== "")
     );
   };
 
@@ -386,7 +386,7 @@ const CreateQuizPage: React.FC = () => {
     <div className="min-h-screen bg-[#D5FFC5] relative overflow-auto">
       {/* Full page background */}
       <div className="fixed inset-0 bg-[#D5FFC5] -z-10" />
-      
+
       {/* Animated background elements */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_70%)]" />
 
@@ -533,9 +533,9 @@ const CreateQuizPage: React.FC = () => {
                 </button>
                 <span className="text-sm font-medium">Quiz Details</span>
               </div>
-              
+
               <div className="flex-1 max-w-md mx-4 h-px bg-gray-300" />
-              
+
               <div
                 className={`flex items-center ${
                   currentStep >= 2 ? "text-[#16803D]" : "text-gray-400"
@@ -555,7 +555,7 @@ const CreateQuizPage: React.FC = () => {
                 </span>
               </div>
             </div>
-            
+
             {/* Next Button */}
             <div className="flex justify-end pt-4">
               <Button
@@ -684,34 +684,54 @@ const CreateQuizPage: React.FC = () => {
                       id="quiz-create-pdf"
                       type="file"
                       accept="application/pdf"
+                      multiple
                       onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          const result = await uploadPdfForAI(file);
-                          let pdfBase64: string,
-                            fileName: string,
-                            fileSize: number;
+                        const files = e.target.files
+                          ? Array.from(e.target.files)
+                          : [];
+                        if (files.length === 0) return;
 
-                          // Handle the actual return structure
-                          if ("pdfs" in result && result.pdfs.length > 0) {
-                            ({ pdfBase64, fileName, fileSize } =
-                              result.pdfs[0]);
-                          } else {
-                            // Fallback for direct return
-                            ({ pdfBase64, fileName, fileSize } = result as any);
+                        if (files.length > 10) {
+                          toast.error(
+                            "Maximum 10 PDF files allowed per selection"
+                          );
+                          return;
+                        }
+
+                        try {
+                          const currentCount = pdfs.length;
+                          if (currentCount + files.length > 10) {
+                            toast.error(
+                              "You can upload up to 10 PDFs in total"
+                            );
+                            return;
                           }
 
-                          setPdfBase64(pdfBase64);
-                          setPdfName(fileName);
-                          setPdfSize(fileSize);
+                          const result = await uploadPdfForAI(files);
+                          const added = (result.pdfs || []).map((p: any) => ({
+                            pdfBase64: p.pdfBase64,
+                            fileName: p.fileName,
+                            fileSize: p.fileSize,
+                          }));
+                          if (added.length > 0) {
+                            const last = added[added.length - 1];
+                            setPdfBase64(last.pdfBase64);
+                            setPdfName(last.fileName);
+                            setPdfSize(last.fileSize);
 
-                          // also keep in the existing pdfs array used elsewhere
-                          setPdfs((prev) => [
-                            ...prev,
-                            { pdfBase64, fileName, fileSize },
-                          ]);
-                          toast.success("Syllabus loaded as AI context");
+                            setPdfs((prev) => [...prev, ...added]);
+
+                            const newTotal = currentCount + added.length;
+                            if (newTotal === 1) {
+                              toast.success("1 PDF loaded as AI context");
+                            } else {
+                              toast.success(
+                                `${added.length} PDF${
+                                  added.length > 1 ? "s" : ""
+                                } added to AI context (Total: ${newTotal}/10)`
+                              );
+                            }
+                          }
                         } catch (err: any) {
                           console.error(err);
                           toast.error(err?.message || "Failed to read PDF");
@@ -723,34 +743,54 @@ const CreateQuizPage: React.FC = () => {
                       htmlFor="quiz-create-pdf"
                       className="inline-flex items-center px-3 py-2 bg-white border rounded-md text-sm cursor-pointer hover:bg-gray-50"
                     >
-                      Choose PDF
+                      Choose PDFs (up to 10)
                     </label>
-                    {pdfName ? (
-                      <span className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1">
-                        {pdfName}
-                        {pdfSize && ` (${(pdfSize / 1024).toFixed(1)} KB)`}
-                      </span>
+                    {pdfs.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {pdfs.map((pdf, index) => (
+                          <span
+                            key={`${pdf.fileName}-${index}`}
+                            className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1 flex items-center gap-1"
+                          >
+                            {pdf.fileName} ({Math.round(pdf.fileSize / 1024)}{" "}
+                            KB)
+                            <button
+                              onClick={() =>
+                                setPdfs((prev) =>
+                                  prev.filter((_, i) => i !== index)
+                                )
+                              }
+                              className="ml-1 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center"
+                              title="Remove PDF"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
                     ) : (
                       <span className="text-xs text-gray-500">
-                        No file selected
+                        No files selected
                       </span>
                     )}
                   </div>
-                  {pdfName && (
+                  {pdfs.length > 0 && (
                     <button
                       onClick={() => {
                         setPdfBase64(null);
                         setPdfName(null);
                         setPdfSize(null);
+                        setPdfs([]);
                       }}
                       className="text-xs text-gray-600 hover:text-gray-900"
                     >
-                      Clear
+                      Clear All
                     </button>
                   )}
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  PDF up to 10MB. We'll use its text as AI context.
+                  PDFs up to 10MB each, maximum 10 files. We'll use their text
+                  as AI context.
                 </p>
               </div>
             </div>
@@ -986,55 +1026,61 @@ const CreateQuizPage: React.FC = () => {
                           <div className="space-y-3">
                             <Label>Answers *</Label>
                             <div className="space-y-3">
-                              {question.answers.map((answer, answerIndex) => (
-                                <div
-                                  key={answerIndex}
-                                  className="flex items-center space-x-3"
-                                >
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      setCorrectAnswer(
-                                        questionIndex,
-                                        answerIndex
-                                      )
-                                    }
-                                    className={`w-6 h-6 rounded-full p-0 ${
-                                      answer.is_correct
-                                        ? "border-green-500 bg-green-500 text-white hover:bg-green-600"
-                                        : "border-gray-300 hover:border-gray-400"
-                                    }`}
+                              {(question.answers ?? []).map(
+                                (answer, answerIndex) => (
+                                  <div
+                                    key={answerIndex}
+                                    className="flex items-center space-x-3 w-full"
                                   >
-                                    {answer.is_correct && (
-                                      <CheckIcon className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                  <Input
-                                    type="text"
-                                    value={answer.answer_text}
-                                    onChange={(e) =>
-                                      updateAnswer(
-                                        questionIndex,
-                                        answerIndex,
-                                        "answer_text",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder={`Answer ${answerIndex + 1}`}
-                                    className="flex-1"
-                                  />
-                                  {answer.is_correct && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="bg-green-100 text-green-800"
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        setCorrectAnswer(
+                                          questionIndex,
+                                          answerIndex
+                                        )
+                                      }
+                                      className={`w-6 h-6 rounded-full p-0 ${
+                                        answer.is_correct
+                                          ? "border-green-500 bg-green-500 text-white hover:bg-green-600"
+                                          : "border-gray-300 hover:border-gray-400"
+                                      }`}
                                     >
-                                      Correct
-                                    </Badge>
-                                  )}
-                                </div>
-                              ))}
+                                      {answer.is_correct && (
+                                        <CheckIcon className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                    <div className="flex-1">
+                                      <Input
+                                        type="text"
+                                        value={answer.answer_text}
+                                        onChange={(e) =>
+                                          updateAnswer(
+                                            questionIndex,
+                                            answerIndex,
+                                            "answer_text",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder={`Answer ${
+                                          answerIndex + 1
+                                        }`}
+                                        className="w-full"
+                                      />
+                                    </div>
+                                    {answer.is_correct && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="bg-green-100 text-green-800"
+                                      >
+                                        Correct
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
 

@@ -407,6 +407,9 @@ const TutorManageClassesPage: React.FC = () => {
                             {getClassTypeName(classItem.class_type_id)}
                           </p>
                         </div>
+                        <p className="mt-2 text-sm text-gray-700">
+                          <span className="font-medium">Subject:</span> {classItem.subject?.display_name || classItem.subject?.name || "No subject"}
+                        </p>
                       </div>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(
@@ -534,6 +537,14 @@ const TutorManageClassesPage: React.FC = () => {
                       </h3>
                       <p className="text-gray-900">
                         {getClassTypeName(selectedClass.class_type_id)}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Subject
+                      </h3>
+                      <p className="text-gray-900">
+                        {selectedClass.subject?.display_name || selectedClass.subject?.name || "No subject"}
                       </p>
                     </div>
                     <div>

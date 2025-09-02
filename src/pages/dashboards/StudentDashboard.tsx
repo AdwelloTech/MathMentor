@@ -528,84 +528,46 @@ const StudentDashboard: React.FC = () => {
 
             {/* Main Content Grid (tall cards) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Upcoming Sessions (tall) */}
-              <motion.div id="upcoming-sessions" variants={itemVariants} className="h-full">
+              {/* Study Materials (tall) */}
+              <motion.div id="study-materials" variants={itemVariants} className="h-full">
                 <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-full min-h-[500px]">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                          <CalendarDaysIcon className="w-4 h-4 text-white" />
+                          <BookOpenIcon className="w-4 h-4 text-white" />
                         </div>
-                        <CardTitle>Upcoming Sessions</CardTitle>
+                        <CardTitle>Study Materials</CardTitle>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50 font-medium"
-                        onClick={() => navigate("/student/manage-sessions")}
-                      >
-                        View all
-                        <ArrowRightIcon className="w-4 h-4 ml-1" />
-                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {data.upcomingSessions.length > 0 ? (
-                      data.upcomingSessions
-                        .slice(0, 3)
-                        .map((session, index) => (
-                          <motion.div
-                            key={session.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-yellow-50 rounded-xl border shadow-md shadow-gray-100/50"
-                          >
-                            <div className="bg-gradient-to-r from-green-600 to-green-700 w-10 h-10 rounded-full flex items-center justify-center">
-                              <VideoCameraIcon className="w-5 h-5 text-white" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div
+                        className="p-4 bg-[#D5FFC5] rounded-[10px] text-center shadow-sm cursor-pointer hover:bg-[#C5F0B5] transition-colors duration-200"
+                        onClick={() => navigate("/student/notes")}
+                      >
+                        <div className="bg-[#16803D] w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                          <DocumentTextIcon className="w-5 h-5 text-white" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 truncate">
-                                {session.subject}
-                              </h4>
-                              <p className="text-sm text-gray-600">
-                                with {session.tutor}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {session.type}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium text-gray-900 text-sm">
-                                {session.time}
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                {session.duration}
-                              </p>
-                            </div>
-                          </motion.div>
-                        ))
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full pt-20 pb-12 px-4">
-                        <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <CalendarDaysIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">
-                          No upcoming sessions
-                        </h4>
-                        <p className="text-gray-600 mb-4">
-                          Book your first session to get started!
+                        <p className="text-base font-medium text-black">
+                          {data.studyMaterials.filter((m) => (m as any).content).length}
                         </p>
-                        <Button
-                          className="bg-yellow-300 text-black hover:bg-yellow-200 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
-                          onClick={() => navigate("/student/book-session")}
-                        >
-                          <PlayIcon className="w-4 h-4 mr-2" />
-                          Book Session
-                        </Button>
+                        <p className="text-sm text-black">Notes</p>
                       </div>
-                    )}
+                      <div
+                        className="p-4 bg-[#D5FFC5] rounded-[10px] text-center shadow-sm cursor-pointer hover:bg-[#C5F0B5] transition-colors duration-200"
+                        onClick={() => navigate("/student/flashcards")}
+                      >
+                        <div className="bg-[#16803D] w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                          <BookOpenIcon className="w-5 h-5 text-white" />
+                            </div>
+                        <p className="text-base font-medium text-black">
+                          {data.availableFlashcards.length}
+                        </p>
+                        <p className="text-sm text-black">Flashcards</p>
+                        </div>
+                      </div>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -634,7 +596,7 @@ const StudentDashboard: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Quizzes */}
-                    <div className="space-y-3">
+                    <div id="recent-quizzes" className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium text-gray-900">
                           Recent Quizzes
@@ -693,43 +655,44 @@ const StudentDashboard: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Study Materials */}
-                    <div id="study-materials" className="space-y-3">
+                    {/* Upcoming Sessions (moved here) */}
+                    <div id="upcoming-sessions" className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium text-gray-900">
-                          Study Materials
+                          Upcoming Sessions
                         </h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50 font-medium"
+                          onClick={() => navigate("/student/manage-sessions")}
+                        >
+                          View all
+                          <ArrowRightIcon className="w-4 h-4 ml-1" />
+                        </Button>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      {data.upcomingSessions.length > 0 ? (
+                        data.upcomingSessions.slice(0, 3).map((session) => (
                         <div
-                          className="p-3 bg-[#D5FFC5] rounded-[10px] text-center shadow-sm cursor-pointer hover:bg-[#C5F0B5] transition-colors duration-200"
-                          onClick={() => navigate("/student/notes")}
+                            key={session.id}
+                            className="flex items-center space-x-3 p-3 bg-[#D5FFC5] rounded-[10px] shadow-sm"
                         >
-                          <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-1">
-                            <DocumentTextIcon className="w-4 h-4 text-white" />
+                            <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                              <VideoCameraIcon className="w-4 h-4 text-white" />
                           </div>
-                          <p className="text-sm font-medium text-black">
-                            {
-                              data.studyMaterials.filter(
-                                (m) => (m as any).content
-                              ).length
-                            }
-                          </p>
-                          <p className="text-xs text-black">Notes</p>
-                        </div>
-                        <div
-                          className="p-3 bg-[#D5FFC5] rounded-[10px] text-center shadow-sm cursor-pointer hover:bg-[#C5F0B5] transition-colors duration-200"
-                          onClick={() => navigate("/student/flashcards")}
-                        >
-                          <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-1">
-                            <BookOpenIcon className="w-4 h-4 text-white" />
-                          </div>
-                          <p className="text-sm font-medium text-black">
-                            {data.availableFlashcards.length}
-                          </p>
-                          <p className="text-xs text-black">Flashcards</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-black truncate">
+                                {session.subject}
+                              </p>
+                              <p className="text-sm text-black truncate">
+                                {session.tutor} • {session.time}
+                              </p>
                         </div>
                       </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">No upcoming sessions</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

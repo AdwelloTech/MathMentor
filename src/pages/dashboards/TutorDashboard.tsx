@@ -802,6 +802,7 @@ const TutorDashboard: React.FC = () => {
             {/* Action Buttons - Right Side */}
             <div className="flex items-center space-x-4">
               <Button
+                id="schedule-class-button"
                 onClick={() => navigate("/schedule-class")}
                 disabled={!isActiveTutor}
                 className="bg-[#16803D] hover:bg-[#0F5A2A] text-white shadow-lg hover:shadow-xl transition-all duration-200"

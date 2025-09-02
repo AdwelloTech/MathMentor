@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Button } from '@/components/ui/button';
@@ -19,19 +19,48 @@ const TutorialOverlay: React.FC = () => {
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const targetElementRef = useRef<HTMLElement | null>(null);
+  const [position, setPosition] = useState<{ top: string; left: string } | null>(null);
 
   // Get tutorial steps from context instead of hardcoded values
   const { tutorialSteps } = useTutorial();
 
   useEffect(() => {
-    if (isTutorialActive && currentStep < tutorialSteps.length) {
-      const targetElement = document.querySelector(tutorialSteps[currentStep].target);
-      if (targetElement) {
-        targetElementRef.current = targetElement as HTMLElement;
-        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+    if (!isTutorialActive || currentStep >= tutorialSteps.length) {
+      targetElementRef.current = null;
+      setPosition(null);
+      return;
     }
-  }, [isTutorialActive, currentStep]);
+
+    const targetElement = document.querySelector(
+      tutorialSteps[currentStep].target
+    ) as HTMLElement | null;
+
+    if (targetElement) {
+      targetElementRef.current = targetElement;
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Wait a frame for layout to settle before measuring
+      requestAnimationFrame(() => {
+        setPosition(getTooltipPosition());
+      });
+    } else {
+      targetElementRef.current = null;
+      setPosition(null);
+    }
+
+    const handleReposition = () => {
+      if (targetElementRef.current) {
+        setPosition(getTooltipPosition());
+      }
+    };
+
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition, true);
+
+    return () => {
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition, true);
+    };
+  }, [isTutorialActive, currentStep, tutorialSteps]);
 
   if (!isTutorialActive || !shouldShowTutorial) {
     return null;
@@ -99,13 +128,13 @@ const TutorialOverlay: React.FC = () => {
     return { top: `${top}px`, left: `${left}px` };
   };
 
-  const position = getTooltipPosition();
+  const computedPosition = position ?? getTooltipPosition();
 
   return (
     <AnimatePresence>
       <motion.div
         ref={overlayRef}
-        className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/30"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -116,9 +145,9 @@ const TutorialOverlay: React.FC = () => {
         {/* Tooltip */}
         <motion.div
           className="absolute w-80 bg-white rounded-lg shadow-xl border border-gray-200"
-          style={position}
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
+          style={computedPosition}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.9 }}
           transition={{ duration: 0.3 }}
           onClick={(e) => e.stopPropagation()}

@@ -216,6 +216,7 @@ function App() {
                   </ProtectedRoute>
                 }
               >
+                <Route path="ratings" element={<TutorRatingsPage />} />
                 <Route
                   path="manage-materials"
                   element={<ManageMaterialsPage />}

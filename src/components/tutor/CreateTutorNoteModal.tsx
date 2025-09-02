@@ -13,6 +13,7 @@ import {
   createTutorNote,
   uploadTutorNoteFile,
   type CreateTutorNoteData,
+  resolveNoteSubjectIdFromSubject,
 } from "@/lib/tutorNotes";
 import { subjectsService } from "@/lib/subjects";
 import RichTextEditor from "@/components/notes/RichTextEditor";
@@ -90,12 +91,24 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
     setLoading(true);
 
     try {
+      // Resolve selected subject (from subjects table) to note_subjects.id
+      const selected = subjects.find((s) => s.id === formData.subjectId);
+      let subjectIdForNote = formData.subjectId;
+      if (selected) {
+        const resolved = await resolveNoteSubjectIdFromSubject({
+          id: selected.id,
+          name: selected.name,
+          display_name: selected.display_name,
+        });
+        if (resolved) subjectIdForNote = resolved;
+      }
+
       // Create the note first
       const noteData: CreateTutorNoteData = {
         title: formData.title.trim(),
         description: formData.description.trim() || undefined,
         content: formData.content.trim() || undefined,
-        subjectId: formData.subjectId || undefined,
+        subjectId: subjectIdForNote || undefined,
         isPremium: formData.isPremium,
       };
 

@@ -35,6 +35,7 @@ import EditQuizPage from "./pages/quiz/EditQuizPage";
 import QuizResponsesPage from "./pages/quiz/QuizResponsesPage";
 import QuizAttemptReviewPage from "./pages/quiz/QuizAttemptReviewPage";
 import StudentQuizDashboard from "./pages/student/StudentQuizDashboard";
+import StudentAIGenerateQuizPage from "./pages/student/StudentAIGenerateQuizPage";
 import TakeQuizPage from "./pages/student/TakeQuizPage";
 import QuizResultsPage from "./pages/student/QuizResultsPage";
 
@@ -263,6 +264,10 @@ function App() {
                 <Route path="notes/create" element={<CreateNotePage />} />
                 <Route path="notes/edit/:noteId" element={<CreateNotePage />} />
                 <Route path="quizzes" element={<StudentQuizDashboard />} />
+                <Route
+                  path="ai-generate-quiz"
+                  element={<StudentAIGenerateQuizPage />}
+                />
                 <Route path="flashcards" element={<FlashcardsListPage />} />
                 <Route
                   path="flashcards/:setId"

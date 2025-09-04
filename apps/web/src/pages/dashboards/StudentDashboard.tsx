@@ -352,14 +352,14 @@ const StudentDashboard: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="px-6 pb-16 relative z-10"
+          className="px-4 sm:px-6 pb-16 relative z-10"
         >
-          <div className="space-y-8">
+          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Header */}
             <motion.div variants={itemVariants}>
               <div className="pt-6 relative">
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                     Student Dashboard
                   </h1>
                   <div className="flex items-center space-x-4">
@@ -469,7 +469,7 @@ const StudentDashboard: React.FC = () => {
             <motion.div
               id="dashboard-stats"
               variants={itemVariants}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
             >
               {[
                 {
@@ -531,7 +531,7 @@ const StudentDashboard: React.FC = () => {
             </motion.div>
 
             {/* Main Content Grid (tall cards) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               {/* Study Materials (tall) */}
               <motion.div id="study-materials" variants={itemVariants} className="h-full">
                 <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-full min-h-[500px]">

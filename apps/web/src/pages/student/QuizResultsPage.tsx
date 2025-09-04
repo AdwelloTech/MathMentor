@@ -195,7 +195,7 @@ const QuizResultsPage: React.FC = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:p-6">
                 {attempts.map((attempt, index) => {
                   const percentage =
                     attempt.max_score && attempt.score
@@ -344,7 +344,7 @@ const QuizResultsPage: React.FC = () => {
 
             {/* Quiz Summary */}
             <Card className="border-green-200 bg-white">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start justify-between mb-6">
                   <div>
                     <h2 className="text-2xl font-bold text-green-900 mb-2">
@@ -442,7 +442,7 @@ const QuizResultsPage: React.FC = () => {
                     transition={{ delay: index * 0.1 }}
                   >
                     <Card className="border-green-900/60 border-2 bg-white">
-                      <CardContent className="p-6">
+                      <CardContent className="p-4 sm:p-6">
                         <div className="flex items-start justify-between mb-4">
                           <h4 className="text-lg font-medium text-black">
                             Question {index + 1}

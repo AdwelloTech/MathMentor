@@ -263,14 +263,14 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
               type="button"
               onClick={onCancel}
               disabled={isProcessing}
-              className="flex-1 btn btn-secondary"
+              className="flex-1 px-4 py-2 bg-gray-100 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!stripe || isProcessing}
-              className="flex-1 btn btn-primary"
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isProcessing ? (
                 <>

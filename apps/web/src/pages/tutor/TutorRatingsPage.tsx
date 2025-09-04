@@ -180,10 +180,10 @@ const TutorRatingsPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:p-6 mb-8"
         >
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <div className="text-3xl font-bold text-yellow-600 mb-2">
                 {stats.average_rating.toFixed(1)}
               </div>
@@ -195,7 +195,7 @@ const TutorRatingsPage: React.FC = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">
                 {stats.total_reviews}
               </div>
@@ -204,7 +204,7 @@ const TutorRatingsPage: React.FC = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <div className="text-3xl font-bold text-green-600 mb-2">
                 {namedCount}
               </div>
@@ -213,7 +213,7 @@ const TutorRatingsPage: React.FC = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <div className="text-3xl font-bold text-purple-600 mb-2">
                 {anonymousCount}
               </div>

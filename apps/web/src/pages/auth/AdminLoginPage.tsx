@@ -77,97 +77,99 @@ const AdminLoginPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="card border-2 border-red-100"
+          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
         >
-          <div className="card-body">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Email Field */}
-              <div className="form-group">
-                <label htmlFor="email" className="form-label">
-                  Admin Email
-                </label>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Admin Email
+              </label>
+              <input
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: 'Please enter a valid email address',
+                  },
+                })}
+                type="email"
+                id="email"
+                placeholder="admin@mathmentor.com"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
+                  errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                }`}
+              />
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Admin Password
+              </label>
+              <div className="relative">
                 <input
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                      message: 'Please enter a valid email address',
+                  {...register('password', {
+                    required: 'Password is required',
+                    minLength: {
+                      value: 6,
+                      message: 'Password must be at least 6 characters',
                     },
                   })}
-                  type="email"
-                  id="email"
-                  placeholder="admin@mathmentor.com"
-                  className={`input ${errors.email ? 'input-error' : ''}`}
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  placeholder="Enter admin password"
+                  className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
+                    errors.password ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                 />
-                {errors.email && (
-                  <p className="form-error">{errors.email.message}</p>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div className="form-group">
-                <label htmlFor="password" className="form-label">
-                  Admin Password
-                </label>
-                <div className="relative">
-                  <input
-                    {...register('password', {
-                      required: 'Password is required',
-                      minLength: {
-                        value: 6,
-                        message: 'Password must be at least 6 characters',
-                      },
-                    })}
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    placeholder="Enter admin password"
-                    className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="form-error">{errors.password.message}</p>
-                )}
-              </div>
-
-              {/* Error Message */}
-              {errors.root && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="p-3 bg-red-50 border border-red-200 rounded-lg"
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  <p className="text-sm text-red-600">{errors.root.message}</p>
-                </motion.div>
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-sm text-red-600">{errors.password.message}</p>
               )}
+            </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn btn-primary w-full btn-lg hover-lift bg-red-600 hover:bg-red-700"
+            {/* Error Message */}
+            {errors.root && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
               >
-                {isLoading ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <>
-                    <ShieldCheckIcon className="h-5 w-5 mr-2" />
-                    Admin Login
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
+                <p className="text-sm text-red-600">{errors.root.message}</p>
+              </motion.div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <>
+                  <ShieldCheckIcon className="h-5 w-5 mr-2" />
+                  Admin Login
+                </>
+              )}
+            </button>
+          </form>
         </motion.div>
 
         {/* Admin Credentials */}

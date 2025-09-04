@@ -319,7 +319,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
         </Button>
       </div>
 
-      <Card className="p-6 space-y-4">
+      <Card className="p-4 sm:p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             value={title}

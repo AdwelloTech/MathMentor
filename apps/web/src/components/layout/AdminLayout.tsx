@@ -15,8 +15,10 @@ const AdminLayout: React.FC = () => {
   // For nested routes, show the specific page
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Page content */}
-      <Outlet />
+      {/* Page content - responsive container */}
+      <div className="w-full">
+        <Outlet />
+      </div>
     </div>
   );
 };

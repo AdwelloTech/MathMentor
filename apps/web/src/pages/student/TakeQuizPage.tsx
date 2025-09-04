@@ -274,7 +274,7 @@ const TakeQuizPage: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
               >
                 <Card className="border-green-200 bg-white">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="mb-6">
                       <h3 className="text-lg font-medium text-green-900 mb-6">
                         {currentQuestion.question_text}
@@ -409,10 +409,10 @@ const TakeQuizPage: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex justify-center space-x-4">
+                <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                   <Button
                     onClick={() => navigate("/student/quizzes")}
-                    className="bg-green-900 hover:bg-green-800 text-white"
+                    className="bg-green-900 hover:bg-green-800 text-white w-full sm:w-auto"
                   >
                     <BookOpen className="h-4 w-4 mr-2" />
                     Back to Quizzes
@@ -422,7 +422,7 @@ const TakeQuizPage: React.FC = () => {
                       navigate(`/student/quiz-results/${attemptId}`)
                     }
                     variant="outline"
-                    className="border-green-900 text-gray-700 hover:bg-gray-300"
+                    className="border-green-900 text-gray-700 hover:bg-gray-300 w-full sm:w-auto"
                   >
                     <Target className="h-4 w-4 mr-2" />
                     View Results

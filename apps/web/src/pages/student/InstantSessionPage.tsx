@@ -511,7 +511,7 @@ export default function InstantSessionPage() {
 
           {/* Info Cards */}
           <div className="grid md:grid-cols-3 gap-4 mt-8 mb-16">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                   <ClockIcon className="w-4 h-4 text-green-600" />
@@ -523,7 +523,7 @@ export default function InstantSessionPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
                   <UserGroupIcon className="w-4 h-4 text-emerald-600" />
@@ -535,7 +535,7 @@ export default function InstantSessionPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                   <SparklesIcon className="w-4 h-4 text-green-600" />

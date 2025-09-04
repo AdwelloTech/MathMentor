@@ -98,10 +98,10 @@ const ManageFlashcardsPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:p-6"
         >
           <Card className="shadow-[0_2px_2px_0_#16803D] border-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-4">
                 <div className="bg-blue-100 w-12 h-12 rounded-xl flex items-center justify-center">
                   <AcademicCapIcon className="w-6 h-6 text-blue-600" />
@@ -119,7 +119,7 @@ const ManageFlashcardsPage: React.FC = () => {
           </Card>
 
           <Card className="shadow-[0_2px_2px_0_#16803D] border-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-4">
                 <div className="bg-green-100 w-12 h-12 rounded-xl flex items-center justify-center">
                   <PlusIcon className="w-6 h-6 text-green-600" />
@@ -137,7 +137,7 @@ const ManageFlashcardsPage: React.FC = () => {
           </Card>
 
           <Card className="shadow-[0_2px_2px_0_#16803D] border-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-4">
                 <div className="bg-purple-100 w-12 h-12 rounded-xl flex items-center justify-center">
                   <EyeIcon className="w-6 h-6 text-purple-600" />

@@ -174,7 +174,7 @@ const ManageMaterialsPage: React.FC = () => {
 
   return (
     <TutorPageWrapper backgroundClass="bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
           <motion.div
@@ -182,7 +182,7 @@ const ManageMaterialsPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:p-6">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-green-900 rounded-3xl shadow-lg">
@@ -215,7 +215,7 @@ const ManageMaterialsPage: React.FC = () => {
             transition={{ delay: 0.1 }}
             className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-8"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:p-6">
               {/* Search */}
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -253,9 +253,9 @@ const ManageMaterialsPage: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-4 gap-6"
+            className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:p-6"
           >
-            <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-6 hover:shadow-xl transition-all duration-200">
+            <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-4 sm:p-6 hover:shadow-xl transition-all duration-200">
               <div className="flex items-center">
                 <div className="p-3 bg-blue-100 rounded-2xl shadow-lg">
                   <DocumentTextIcon className="h-8 w-8 text-blue-600" />
@@ -271,7 +271,7 @@ const ManageMaterialsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-6 hover:shadow-xl transition-all duration-200">
+            <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-4 sm:p-6 hover:shadow-xl transition-all duration-200">
               <div className="flex items-center">
                 <div className="p-3 bg-yellow-100 rounded-2xl shadow-lg">
                   <StarIcon className="h-8 w-8 text-yellow-600" />
@@ -287,7 +287,7 @@ const ManageMaterialsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-6 hover:shadow-xl transition-all duration-200">
+            <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-4 sm:p-6 hover:shadow-xl transition-all duration-200">
               <div className="flex items-center">
                 <div className="p-3 bg-green-100 rounded-2xl shadow-lg">
                   <EyeIcon className="h-8 w-8 text-green-600" />
@@ -303,7 +303,7 @@ const ManageMaterialsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-6 hover:shadow-xl transition-all duration-200">
+            <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-4 sm:p-6 hover:shadow-xl transition-all duration-200">
               <div className="flex items-center">
                 <div className="p-3 bg-purple-100 rounded-2xl shadow-lg">
                   <ArrowDownTrayIcon className="h-8 w-8 text-purple-600" />

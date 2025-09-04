@@ -64,11 +64,9 @@ const TutorDashboard: React.FC = () => {
   const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
   const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
 
-  // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
 
-  // Load subjects for display
   useEffect(() => {
     const loadSubjects = async () => {
       try {
@@ -99,7 +97,6 @@ const TutorDashboard: React.FC = () => {
     return subjects[subjectId] || "Unknown Subject";
   };
 
-  // Audio notification setup
   useEffect(() => {
     const unlock = () => {
       try {
@@ -148,13 +145,11 @@ const TutorDashboard: React.FC = () => {
     } catch (_) {}
   };
 
-  // Check for existing application and ID verification on mount
   useEffect(() => {
     checkApplication();
     checkIDVerification();
   }, [user]);
 
-  // Load dashboard data when both application and ID verification are approved
   useEffect(() => {
     if (
       application?.application_status === "approved" &&
@@ -164,7 +159,6 @@ const TutorDashboard: React.FC = () => {
     }
   }, [application, idVerification]);
 
-  // Subscribe to instant requests when tutor features enabled
   useEffect(() => {
     const isEnabled =
       application?.application_status === "approved" &&
@@ -176,10 +170,9 @@ const TutorDashboard: React.FC = () => {
       return;
     }
 
-    // Polling mechanism to fetch pending requests every 10 seconds
     const poll = setInterval(async () => {
       try {
-        const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // Last 5 minutes
+        const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString(); 
         const { data, error } = await (supabase as any)
           .from("instant_requests")
           .select("*")
@@ -205,16 +198,6 @@ const TutorDashboard: React.FC = () => {
       } catch (_) {}
     }, 10000);
 
-    console.log(
-      "[TutorDashboard] Setting up subscription for tutor:",
-      profile?.id,
-      "enabled:",
-      isEnabled,
-      "application status:",
-      application?.application_status,
-      "id verification status:",
-      idVerification?.verification_status
-    );
     let unsubscribe: (() => void) | undefined;
     try {
       unsubscribe = instantSessionService.subscribeToPending(
@@ -230,7 +213,7 @@ const TutorDashboard: React.FC = () => {
             const isFresh =
               Date.now() - new Date((req as any).created_at).getTime() <=
               FRESH_WINDOW_MS;
-            if (!isFresh) return; // ignore stale backlog
+            if (!isFresh) return; 
             playNotificationSound();
             setInstantRequests((prev) => {
               const exists = prev.some((r) => r.id === (req as any).id);
@@ -249,11 +232,6 @@ const TutorDashboard: React.FC = () => {
                 (req as any).status !== "pending"
                   ? prev.filter((r) => r.id !== (req as any).id)
                   : prev;
-              console.log("[TutorDashboard] After UPDATE filter:", {
-                beforeCount: prev.length,
-                afterCount: newList.length,
-                removed: prev.length - newList.length,
-              });
               return newList;
             });
           }
@@ -298,11 +276,9 @@ const TutorDashboard: React.FC = () => {
       const existingApplications = await db.tutorApplications.getByUserId(
         user.id
       );
-      // Get the most recent application (first in the array since it's ordered by submitted_at desc)
       const mostRecentApplication = existingApplications?.[0] || null;
       setApplication(mostRecentApplication);
     } catch (error: any) {
-      // If no application found, that's fine
       if (error.code !== "PGRST116") {
         console.error("Error checking application:", error);
       }
@@ -318,7 +294,7 @@ const TutorDashboard: React.FC = () => {
       const { data, error } = await supabase
         .from("id_verifications")
         .select("*")
-        .eq("user_id", profile.id) // Use profile.id instead of user.id
+        .eq("user_id", profile.id)
         .order("submitted_at", { ascending: false })
         .limit(1);
 
@@ -326,7 +302,6 @@ const TutorDashboard: React.FC = () => {
         console.error("Error checking ID verification:", error);
         setIdVerification(null);
       } else {
-        // Set the first record or null if no records found
         setIdVerification(data?.[0] || null);
       }
     } catch (error) {
@@ -340,8 +315,8 @@ const TutorDashboard: React.FC = () => {
 
     try {
       const [stats, classes] = await Promise.all([
-        classSchedulingService.stats.getTutorStats(profile.id), // Use profile.id instead of user.id
-        classSchedulingService.classes.getUpcomingByTutorId(profile.id), // Use profile.id instead of user.id
+        classSchedulingService.stats.getTutorStats(profile.id),
+        classSchedulingService.classes.getUpcomingByTutorId(profile.id),
       ]);
 
       setDashboardStats(stats);
@@ -353,19 +328,17 @@ const TutorDashboard: React.FC = () => {
 
   const profileCompletion = calculateProfileCompletion(profile);
   const isProfileComplete = profile?.profile_completed || false;
-  const isActiveTutor = profile?.is_active !== false; // Default to true if not set
+  const isActiveTutor = profile?.is_active !== false; 
 
   const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!validateDocumentFile(file)) {
       toast.error("Please upload a PDF (.pdf) or Word (.doc, .docx) file");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setUploadError("File size must be less than 5MB");
       return;
@@ -375,14 +348,10 @@ const TutorDashboard: React.FC = () => {
     setUploadError(null);
 
     try {
-      // For now, we'll simulate the upload
-      // In a real implementation, you'd upload to storage and get a URL
       await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Update profile with CV info
       await updateProfile({
         cv_file_name: file.name,
-        cv_url: `uploads/cv/${profile?.id}/${file.name}`, // Simulated URL
+        cv_url: `uploads/cv/${profile?.id}/${file.name}`,
         profile_completed: true,
       });
     } catch (error) {
@@ -401,7 +370,6 @@ const TutorDashboard: React.FC = () => {
         requestId,
         profile.id
       );
-      // Optimistically remove the card immediately after accept
       setDismissedIds((prev) => new Set(prev).add(requestId));
       setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
       if (accepted.jitsi_meeting_url) {
@@ -415,20 +383,17 @@ const TutorDashboard: React.FC = () => {
   };
 
   const handleRejectInstant = (requestId: string) => {
-    // Just remove from local state - no need to call service for local dismissal
     setDismissedIds((prev) => new Set(prev).add(requestId));
     setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
   };
 
   const handleApplicationSuccess = () => {
-    checkApplication(); // Refresh application status
+    checkApplication();
   };
 
   const isApprovedTutor = application?.application_status === "approved";
   const isPendingTutor = application?.application_status === "pending";
-  // const isRejectedTutor = application?.application_status === 'rejected';
 
-  // Check ID verification status
   const isIDVerificationApproved =
     idVerification?.verification_status === "approved";
   const isIDVerificationPending =
@@ -437,10 +402,8 @@ const TutorDashboard: React.FC = () => {
     idVerification?.verification_status === "rejected";
   const hasIDVerification = !!idVerification;
 
-  // Tutor features are only enabled when both application is approved AND ID verification is approved
   const areTutorFeaturesEnabled = isApprovedTutor && isIDVerificationApproved;
 
-  // Show loading while checking application
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -449,14 +412,10 @@ const TutorDashboard: React.FC = () => {
     );
   }
 
-  // Show application form for new tutors
   if (!application) {
     return (
       <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
-        {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
-
-        {/* Floating decorative elements */}
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
         <div
           className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
@@ -466,7 +425,6 @@ const TutorDashboard: React.FC = () => {
           className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "2s" }}
         ></div>
-
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -495,16 +453,12 @@ const TutorDashboard: React.FC = () => {
     );
   }
 
-  // Show application status for submitted applications
   if (
     application.application_status === ("pending" as TutorApplicationStatus)
   ) {
     return (
       <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
-        {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
-
-        {/* Floating decorative elements */}
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
         <div
           className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
@@ -514,7 +468,6 @@ const TutorDashboard: React.FC = () => {
           className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "2s" }}
         ></div>
-
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -651,7 +604,6 @@ const TutorDashboard: React.FC = () => {
     );
   }
 
-  // If application is approved but ID verification is not completed
   if (isApprovedTutor && !areTutorFeaturesEnabled) {
     return (
       <div className="space-y-8">
@@ -664,7 +616,6 @@ const TutorDashboard: React.FC = () => {
           </p>
         </div>
 
-        {/* Application Approved Notice */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -685,7 +636,6 @@ const TutorDashboard: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* ID Verification Status */}
         <div className="bg-white border border-green-200 rounded-lg p-6">
           <h3 className="font-medium text-gray-900 mb-4">Next Steps:</h3>
           <div className="space-y-3 text-sm text-gray-600">
@@ -743,7 +693,6 @@ const TutorDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Note: Dashboard data and upcoming classes are only available after ID verification is completed */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <div className="flex items-start">
             <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
@@ -763,14 +712,11 @@ const TutorDashboard: React.FC = () => {
     );
   }
 
-  // If approved, show the main tutor dashboard
   if (areTutorFeaturesEnabled) {
     return (
       <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
-        {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
 
-        {/* Floating decorative elements */}
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
         <div
           className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
@@ -784,303 +730,295 @@ const TutorDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="px-6 pb-16 relative z-10"
+          className="px-4 sm:px-6 pb-16 relative z-10"
         >
-          {/* Status Indicator - Top Right */}
-          <div id="tutor-welcome" className="flex justify-between items-start mb-6">
-            {/* Dashboard Title and Welcome Message - Left Side */}
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Tutor Dashboard
-              </h1>
-              <p className="text-lg text-gray-600">
-                Welcome back, {profile?.full_name}! Manage your tutoring
-                sessions and students.
-              </p>
-            </div>
+          <div className="max-w-7xl mx-auto">
+            <div
+              id="tutor-welcome"
+              className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6"
+            >
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  Tutor Dashboard
+                </h1>
+                <p className="text-lg text-gray-600">
+                  Welcome back, {profile?.full_name}! Manage your tutoring
+                  sessions and students.
+                </p>
+              </div>
 
-            {/* Action Buttons - Right Side */}
-            <div className="flex items-center space-x-4">
-              <Button
-                id="schedule-class-button"
-                onClick={() => navigate("/schedule-class")}
-                disabled={!isActiveTutor}
-                className="bg-[#16803D] hover:bg-[#0F5A2A] text-white shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                <PlusIcon className="w-5 h-5 mr-2" />
-                Schedule Class
-              </Button>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-                className="px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 shadow-sm"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span>Approved</span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:space-x-4">
+                <Button
+                  id="schedule-class-button"
+                  onClick={() => navigate("/schedule-class")}
+                  disabled={!isActiveTutor}
+                  className="bg-[#16803D] hover:bg-[#0F5A2A] text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Schedule Class
+                </Button>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 shadow-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span>Approved</span>
+                  </div>
+                </motion.div>
+
+                <div id="online-status-toggle">
+                  <OnlineStatusToggle className="ml-4" />
                 </div>
-              </motion.div>
-
-              {/* Online Status Toggle */}
-              <div id="online-status-toggle">
-                <OnlineStatusToggle className="ml-4" />
               </div>
             </div>
-          </div>
 
-          <div className="space-y-8">
-            {/* Status Alerts */}
-            <div id="tutor-status-overview">
-            {!isActiveTutor && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm"
-              >
-                <div className="flex items-start">
-                  <XCircleIcon className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-red-800">
-                      Account Temporarily Inactive
-                    </h3>
-                    <p className="text-sm text-red-700 mt-1">
-                      Your tutor account has been temporarily deactivated. You
-                      can still view your dashboard and profile, but you cannot
-                      schedule new classes or accept new students.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {isActiveTutor && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm"
-              >
-                <div className="flex items-start">
-                  <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-green-800">
-                      Setup Complete!
-                    </h3>
-                    <p className="text-sm text-green-700 mt-1">
-                      Your tutor application and ID verification have been
-                      approved. You can now schedule classes and start teaching!
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Online Status Message */}
-            {isActiveTutor && profile?.is_online === false && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm"
-              >
-                <div className="flex items-start">
-                  <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-blue-800">
-                      You are currently offline
-                    </h3>
-                    <p className="text-sm text-blue-700 mt-1">
-                      Toggle the online switch above to start receiving instant
-                      session requests from students.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            </div>
-
-            {/* Stats Grid */}
-            <motion.div
-              id="tutor-stats"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-center"
-            >
-              {[
-                {
-                  name: "Total Classes",
-                  value: dashboardStats?.total_classes || 0,
-                  icon: VideoCameraIcon,
-                  color: "from-green-600 to-green-700",
-                  description: "All time classes",
-                },
-                {
-                  name: "Students Taught",
-                  value: dashboardStats?.total_students || 0,
-                  icon: UserGroupIcon,
-                  color: "from-blue-500 to-blue-600",
-                  description: "Unique students",
-                },
-                {
-                  name: "This Month",
-                  value: dashboardStats?.classes_this_month || 0,
-                  icon: CalendarDaysIcon,
-                  color: "from-yellow-500 to-yellow-600",
-                  description: "Classes this month",
-                },
-                {
-                  name: "Earnings",
-                  value: `$${dashboardStats?.total_earnings || 0}`,
-                  icon: CurrencyDollarIcon,
-                  color: "from-green-700 to-green-800",
-                  description: "Total earnings",
-                },
-              ].map((stat, index) => (
-                <motion.div
-                  key={stat.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start space-x-3">
-                        <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                          <stat.icon className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
-                            {stat.name}
-                          </CardTitle>
-                        </div>
+            <div className="space-y-8">
+              <div id="tutor-status-overview" className="space-y-4">
+                {!isActiveTutor && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm"
+                  >
+                    <div className="flex items-start">
+                      <XCircleIcon className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-red-800">
+                          Account Temporarily Inactive
+                        </h3>
+                        <p className="text-sm text-red-700 mt-1">
+                          Your tutor account has been temporarily deactivated.
+                          You can still view your dashboard and profile, but you cannot
+                          schedule new classes or accept new students.
+                        </p>
                       </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="pl-0">
-                        <div className="flex items-start space-x-2">
-                          <div className="text-3xl font-bold text-gray-900 ml-3">
-                            {stat.value}
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-3 px-6">
-                            {stat.description}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* Main Content Grid - Removed Upcoming Classes and Instant Requests cards */}
-
-            {/* Quick Actions */}
-            <motion.div
-              id="tutor-quick-actions"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mb-16"
-            >
-              <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                      <LightBulbIcon className="w-4 h-4 text-white" />
                     </div>
-                    <span>Quick Actions</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                      {
-                        title: "Schedule Class",
-                        description: "Create a new tutoring session",
-                        icon: PlusIcon,
-                        color: "from-green-600 to-green-700",
-                        action: () => navigate("/schedule-class"),
-                        disabled: !isActiveTutor,
-                      },
-                      {
-                        title: "Manage Classes",
-                        description: "View and edit your classes",
-                        icon: CalendarDaysIcon,
-                        color: "from-blue-500 to-blue-600",
-                        action: () => navigate("/manage-classes"),
-                        disabled: !isActiveTutor,
-                      },
-                      {
-                        title: "Create Quiz",
-                        description: "Build assessments for students",
-                        icon: DocumentTextIcon,
-                        color: "from-purple-500 to-purple-600",
-                        action: () => navigate("/quizzes"),
-                        disabled: !isActiveTutor,
-                      },
-                      {
-                        title: "Ratings",
-                        description: "View student feedback",
-                        icon: Star,
-                        color: "from-yellow-500 to-yellow-600",
-                        action: () => navigate("/tutor/ratings"),
-                        disabled: !isActiveTutor,
-                      },
-                    ].map((action, index) => (
-                      <motion.div
-                        key={action.title}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Card
-                          className={`cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50 border-0 ${
-                            action.disabled
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
-                          onClick={action.disabled ? undefined : action.action}
-                        >
-                          <CardContent className="p-6 text-center">
-                            <div
-                              className={`bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg`}
-                            >
-                              <action.icon className="w-6 h-6 text-white" />
+                  </motion.div>
+                )}
+
+                {isActiveTutor && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm"
+                  >
+                    <div className="flex items-start">
+                      <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-green-800">
+                          Setup Complete!
+                        </h3>
+                        <p className="text-sm text-green-700 mt-1">
+                          Your tutor application and ID verification have been
+                          approved. You can now schedule classes and start teaching!
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {isActiveTutor && profile?.is_online === false && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm"
+                  >
+                    <div className="flex items-start">
+                      <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-blue-800">
+                          You are currently offline
+                        </h3>
+                        <p className="text-sm text-blue-700 mt-1">
+                          Toggle the online switch above to start receiving instant
+                          session requests from students.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              <motion.div
+                id="tutor-stats"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+              >
+                {[
+                  {
+                    name: "Total Classes",
+                    value: dashboardStats?.total_classes || 0,
+                    icon: VideoCameraIcon,
+                    color: "from-green-600 to-green-700",
+                    description: "All time classes",
+                  },
+                  {
+                    name: "Students Taught",
+                    value: dashboardStats?.total_students || 0,
+                    icon: UserGroupIcon,
+                    color: "from-blue-500 to-blue-600",
+                    description: "Unique students",
+                  },
+                  {
+                    name: "This Month",
+                    value: dashboardStats?.classes_this_month || 0,
+                    icon: CalendarDaysIcon,
+                    color: "from-yellow-500 to-yellow-600",
+                    description: "Classes this month",
+                  },
+                  {
+                    name: "Earnings",
+                    value: `$${dashboardStats?.total_earnings || 0}`,
+                    icon: CurrencyDollarIcon,
+                    color: "from-green-700 to-green-800",
+                    description: "Total earnings",
+                  },
+                ].map((stat, index) => (
+                  <motion.div
+                    key={stat.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] w-full">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-start space-x-3">
+                          <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                            <stat.icon className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                              {stat.name}
+                            </CardTitle>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="pl-0">
+                          <div className="flex items-start space-x-2">
+                            <div className="text-3xl font-bold text-gray-900 ml-3">
+                              {stat.value}
                             </div>
-                            <h3 className="font-semibold text-gray-900 mb-2">
-                              {action.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mb-4">
-                              {action.description}
+                            <p className="text-sm text-muted-foreground mt-3 px-6">
+                              {stat.description}
                             </p>
-                            <div className="bg-yellow-300 text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-all duration-200 shadow-md hover:shadow-lg">
-                              {action.disabled ? "Unavailable" : "Get Started"}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              {/* Quick Actions */}
+              <motion.div
+                id="tutor-quick-actions"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mb-16"
+              >
+                <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                        <LightBulbIcon className="w-4 h-4 text-white" />
+                      </div>
+                      <span>Quick Actions</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {[
+                        {
+                          title: "Schedule Class",
+                          description: "Create a new tutoring session",
+                          icon: PlusIcon,
+                          color: "from-green-600 to-green-700",
+                          action: () => navigate("/schedule-class"),
+                          disabled: !isActiveTutor,
+                        },
+                        {
+                          title: "Manage Classes",
+                          description: "View and edit your classes",
+                          icon: CalendarDaysIcon,
+                          color: "from-blue-500 to-blue-600",
+                          action: () => navigate("/manage-classes"),
+                          disabled: !isActiveTutor,
+                        },
+                        {
+                          title: "Create Quiz",
+                          description: "Build assessments for students",
+                          icon: DocumentTextIcon,
+                          color: "from-purple-500 to-purple-600",
+                          action: () => navigate("/quizzes"),
+                          disabled: !isActiveTutor,
+                        },
+                        {
+                          title: "Ratings",
+                          description: "View student feedback",
+                          icon: Star,
+                          color: "from-yellow-500 to-yellow-600",
+                          action: () => navigate("/tutor/ratings"),
+                          disabled: !isActiveTutor,
+                        },
+                      ].map((action, index) => (
+                        <motion.div
+                          key={action.title}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Card
+                            className={`cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50 border-0 ${
+                              action.disabled
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
+                            onClick={action.disabled ? undefined : action.action}
+                          >
+                            <CardContent className="p-6 text-center">
+                              <div
+                                className={`bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg`}
+                              >
+                                <action.icon className="w-6 h-6 text-white" />
+                              </div>
+                              <h3 className="font-semibold text-gray-900 mb-2">
+                                {action.title}
+                              </h3>
+                              <p className="text-sm text-gray-600 mb-4">
+                                {action.description}
+                              </p>
+                              <div className="bg-yellow-300 text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-all duration-200 shadow-md hover:shadow-lg">
+                                {action.disabled ? "Unavailable" : "Get Started"}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
           </div>
         </motion.div>
         
-                    {/* Tutorial Components */}
-            <TutorialPrompt />
-            <TutorialOverlay />
+        {/* Tutorial Components */}
+        <TutorialPrompt />
+        <TutorialOverlay />
       </div>
     );
   }
 
-  // If pending, show pending status
   if (isPendingTutor) {
     return (
       <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
-        {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
-
-        {/* Floating decorative elements */}
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
         <div
           className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
@@ -1097,7 +1035,6 @@ const TutorDashboard: React.FC = () => {
           className="px-6 pb-16 relative z-10"
         >
           <div className="space-y-8">
-            {/* Header Section */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1115,7 +1052,6 @@ const TutorDashboard: React.FC = () => {
               </div>
             </motion.div>
 
-            {/* Application Status Notice */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1135,45 +1071,42 @@ const TutorDashboard: React.FC = () => {
               </div>
             </motion.div>
 
-            {/* Profile Completion Alert */}
             <div id="tutor-profile-completion">
-            {!isProfileComplete && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm"
-              >
-                <div className="flex items-start">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-yellow-800">
-                      Complete Your Profile
-                    </h3>
-                    <p className="mt-1 text-sm text-yellow-700">
-                      You need to upload your CV and complete your profile to
-                      start accepting tutoring sessions.
-                    </p>
-                    <div className="mt-2">
-                      <div className="bg-yellow-200 rounded-full h-2">
-                        <div
-                          className="bg-yellow-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${profileCompletion}%` }}
-                        ></div>
+              {!isProfileComplete && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex items-start">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-yellow-800">
+                        Complete Your Profile
+                      </h3>
+                      <p className="mt-1 text-sm text-yellow-700">
+                        You need to upload your CV and complete your profile to
+                        start accepting tutoring sessions.
+                      </p>
+                      <div className="mt-2">
+                        <div className="bg-yellow-200 rounded-full h-2">
+                          <div
+                            className="bg-yellow-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${profileCompletion}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-yellow-600 mt-1 block">
+                          {profileCompletion}% complete
+                        </span>
                       </div>
-                      <span className="text-xs text-yellow-600 mt-1 block">
-                        {profileCompletion}% complete
-                      </span>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column - Profile Information */}
               <div className="lg:col-span-2 space-y-6">
-                {/* CV Upload Section */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1274,7 +1207,6 @@ const TutorDashboard: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Tutor Information */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1287,7 +1219,7 @@ const TutorDashboard: React.FC = () => {
                       Profile Information
                     </h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Subjects
@@ -1365,7 +1297,6 @@ const TutorDashboard: React.FC = () => {
                 </motion.div>
               </div>
 
-              {/* Right Column - Quick Stats */}
               <div className="space-y-6">
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
@@ -1412,7 +1343,6 @@ const TutorDashboard: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Action Items */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}

@@ -262,7 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   // Collapsible Navigation Item Component
-  const NavigationItem = ({ item, index }: { item: any; index: number }) => {
+  const NavigationItem = ({ item, index, isMobile = false }: { item: any; index: number; isMobile?: boolean }) => {
     const isDisabled = item.disabled;
     const active = isActive(item.href);
 
@@ -393,7 +393,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               active
                 ? "text-gray-400 bg-gray-100/50 border border-gray-200"
                 : "text-gray-400 bg-transparent hover:bg-gray-50/50 border border-transparent",
-              !isHovered && "justify-center"
+              !isHovered && !isMobile && "justify-center"
             )}
             title={getTooltipMessage(item)}
           >
@@ -401,7 +401,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <item.icon className="h-5 w-5 shrink-0" />
             </div>
             <AnimatePresence>
-              {isHovered && (
+              {(isHovered || isMobile) && (
                 <motion.span
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 0.5, width: "auto" }}
@@ -430,7 +430,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Status indicator text */}
             <AnimatePresence>
-              {isHovered && (
+              {(isHovered || isMobile) && (
                 <motion.div
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 0.6, width: "auto" }}
@@ -466,7 +466,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={cn(
             "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden",
             active ? getActiveClasses() : getHoverClasses(),
-            !isHovered && "justify-center"
+            !isHovered && !isMobile && "justify-center"
           )}
         >
           <div className="relative">
@@ -495,7 +495,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           <AnimatePresence>
-            {isHovered && (
+            {(isHovered || isMobile) && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
@@ -522,18 +522,18 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   // Simple Navigation Section
-  const NavigationSection = () => {
+  const NavigationSection = ({ isMobile = false }: { isMobile?: boolean }) => {
     return (
       <div className="flex flex-1 flex-col space-y-1">
         {navigation.map((item, index) => (
-          <NavigationItem key={item.name} item={item} index={index} />
+          <NavigationItem key={item.name} item={item} index={index} isMobile={isMobile} />
         ))}
       </div>
     );
   };
 
   // Collapsible Profile Section
-  const ProfileSection = () => {
+  const ProfileSection = ({ isMobile = false }: { isMobile?: boolean }) => {
     // Compute display values outside JSX to avoid inline useMemo calls
     const displayName = profile?.full_name || "User";
     const displayRole = profile?.role
@@ -545,7 +545,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div
           className={cn(
             "flex items-center",
-            isHovered ? "justify-between" : "justify-center"
+            (isHovered || isMobile) ? "justify-between" : "justify-center"
           )}
         >
           {/* Profile Info */}
@@ -561,7 +561,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </motion.div>
 
             {/* Profile Details */}
-            {isHovered && (
+            {(isHovered || isMobile) && (
               <div className="flex flex-col overflow-hidden">
                 <span className="text-sm font-semibold text-gray-900 truncate max-w-[8rem]">
                   {displayName}
@@ -575,7 +575,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Logout Button */}
           <AnimatePresence>
-            {isHovered && (
+            {(isHovered || isMobile) && (
               <motion.button
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -645,9 +645,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
                   <div className="relative z-10 flex flex-col h-full overflow-y-auto">
                     <LogoSection />
-                    <NavigationSection />
+                    <NavigationSection isMobile={true} />
                     <div className="flex-1" />
-                    <ProfileSection />
+                    <ProfileSection isMobile={true} />
                   </div>
                 </div>
               </div>

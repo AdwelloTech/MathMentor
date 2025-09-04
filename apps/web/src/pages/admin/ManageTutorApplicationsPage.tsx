@@ -383,12 +383,12 @@ const ManageTutorApplicationsPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="px-6 pb-16 relative z-10"
+        className="px-4 sm:px-6 pb-16 relative z-10"
       >
-        <div className="space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* Header */}
           <div className="pt-6">
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               Manage Tutor Applications
             </h1>
             <p className="mt-2 text-lg text-gray-600">
@@ -411,7 +411,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
               >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
+                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] w-full">
                   <CardHeader className="pb-2">
                     <div className="flex items-start space-x-3">
                       <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
@@ -635,9 +635,10 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
           {/* Application Details Modal */}
           {showApplicationModal && selectedApplication && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-                <div className="mt-3">
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4">
+                <div className="w-full max-w-4xl bg-white rounded-lg shadow-xl">
+                <div className="p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-900">
                       Application Details: {selectedApplication.full_name}
@@ -902,15 +903,17 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     )}
                   </div>
                 </div>
+                </div>
               </div>
             </div>
           )}
 
           {/* Action Modal */}
           {showActionModal && selectedApplication && actionType && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
-                <div className="mt-3">
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4">
+                <div className="w-full max-w-md bg-white rounded-lg shadow-xl">
+                <div className="p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-900">
                       {actionType === "approve" ? "Approve" : "Reject"}{" "}
@@ -1005,6 +1008,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                       </button>
                     </div>
                   </div>
+                </div>
                 </div>
               </div>
             </div>

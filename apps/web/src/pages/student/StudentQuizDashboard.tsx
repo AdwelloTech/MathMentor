@@ -202,7 +202,7 @@ const StudentQuizDashboard: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:p-6">
                 {/* Search */}
                 <div className="space-y-2">
                   <Label htmlFor="search" className="text-gray-700 font-medium">
@@ -274,10 +274,10 @@ const StudentQuizDashboard: React.FC = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:p-6 mb-8"
         >
           <Card className="border-green-900/60 border-2 bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-green-900 rounded-lg">
                   <BookOpen className="h-6 w-6 text-white" />
@@ -295,7 +295,7 @@ const StudentQuizDashboard: React.FC = () => {
           </Card>
 
           <Card className="border-green-900/60 border-2 bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-green-900 rounded-lg">
                   <GraduationCap className="h-6 w-6 text-white" />
@@ -311,7 +311,7 @@ const StudentQuizDashboard: React.FC = () => {
           </Card>
 
           <Card className="border-green-900/60 border-2 bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-green-900 rounded-lg">
                   <Clock className="h-6 w-6 text-white" />
@@ -367,7 +367,7 @@ const StudentQuizDashboard: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:p-6">
               {quizzes.map((quiz, index) => (
                 <motion.div
                   key={quiz.id}

@@ -163,12 +163,12 @@ const ManageFlashcardsPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="px-6 pb-16 relative z-10"
+        className="px-4 sm:px-6 pb-16 relative z-10"
       >
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="pt-6 mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
               Manage Flash Cards
             </h1>
             <p className="text-lg text-gray-600">

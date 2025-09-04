@@ -204,7 +204,7 @@ const TutorMaterialsPage: React.FC = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 sm:p-6">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-green-900 rounded-lg shadow-sm">
@@ -258,7 +258,7 @@ const TutorMaterialsPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:p-6">
               {/* Search */}
               <div className="space-y-2">
                 <Label htmlFor="search" className="text-sm font-medium">
@@ -325,9 +325,9 @@ const TutorMaterialsPage: React.FC = () => {
         </Card>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:p-6 mb-8">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
@@ -345,7 +345,7 @@ const TutorMaterialsPage: React.FC = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
@@ -363,7 +363,7 @@ const TutorMaterialsPage: React.FC = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
@@ -384,7 +384,7 @@ const TutorMaterialsPage: React.FC = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
@@ -442,7 +442,7 @@ const TutorMaterialsPage: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:p-6">
               {materials.map((material) => (
                 <div key={material.id} className="h-full">
                   <StudentTutorMaterialCard

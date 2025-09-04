@@ -171,7 +171,7 @@ const FlashcardStudyPage: React.FC = () => {
       <div className="relative max-w-6xl mx-auto px-6 py-8 space-y-8">
         {/* Header Section */}
         <motion.div
-          className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6"
+          className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:p-6"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -346,27 +346,27 @@ const FlashcardStudyPage: React.FC = () => {
 
         {/* Study Progress Stats */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:p-6 max-w-4xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
         >
           <Card className="bg-gradient-to-br from-green-900 to-green-800 border-0 shadow-xl rounded-2xl text-white">
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <div className="text-3xl font-bold text-yellow-400 mb-2">{setData.cards.length}</div>
               <div className="text-sm font-medium opacity-90">Total Cards</div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-yellow-400 to-yellow-500 border-0 shadow-xl rounded-2xl text-white">
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <div className="text-3xl font-bold text-green-900 mb-2">{index + 1}</div>
               <div className="text-sm font-medium text-green-900 opacity-90">Current Card</div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-slate-700 to-slate-800 border-0 shadow-xl rounded-2xl text-white">
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <div className="text-3xl font-bold text-yellow-400 mb-2">{progressPct}%</div>
               <div className="text-sm font-medium opacity-90">Progress</div>
             </CardContent>

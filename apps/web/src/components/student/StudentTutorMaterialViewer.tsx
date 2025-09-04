@@ -130,15 +130,15 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-10"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-10"
           >
             <div className="bg-gray-200 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden border border-green-900/10">
               {/* Header */}
-              <div className="relative bg-gradient-to-r from-green-900 to-green-800 text-white p-6">
+              <div className="relative bg-gradient-to-r from-green-900 to-green-800 text-white p-4 sm:p-6">
                 <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <h2 className="text-2xl font-bold text-white mb-1">
+                  <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 truncate">
                         {material.title || "Untitled Material"}
                       </h2>
                       <div className="flex flex-col items-start space-x-3">
@@ -155,9 +155,9 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                     disabled={loading}
                     variant="ghost"
                     size="sm"
-                    className="text-white hover:bg-white/20 hover:text-white h-10 w-10 p-0"
+                    className="text-white hover:bg-white/20 hover:text-white h-8 w-8 sm:h-10 sm:w-10 p-0 flex-shrink-0"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </div>
               </div>
@@ -165,7 +165,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
               {/* Content */}
               <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
                 {/* Material Info Cards */}
-                <div className="p-6 space-y-6">
+                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Description Card */}
                     {material.description && (
@@ -235,12 +235,12 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                         </h3>
                       </CardHeader>
                       <CardContent>
-                        <div className="flex items-center justify-between p-4  rounded-xl border border-green-900">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl border border-green-900">
                           <div className="flex items-center gap-3">
                             <div className="p-2 rounded-lg bg-green-900">
                               <FileText className="h-5 w-5 text-white" />
                             </div>
-                            <div>
+                            <div className="flex-1 min-w-0">
                               <p className="font-semibold text-black truncate">
                                 {material.file_name}
                               </p>
@@ -249,13 +249,13 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 w-full sm:w-auto">
                             {!isPdfFile && (
                               <Button
                                 onClick={handleViewFile}
                                 disabled={loading}
                                 size="sm"
-                                className="bg-green-900 hover:bg-green-900 text-white"
+                                className="bg-green-900 hover:bg-green-900 text-white w-full sm:w-auto"
                               >
                                 <Eye className="h-4 w-4 mr-1" />
                                 View File
@@ -266,7 +266,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                                 onClick={handleDownload}
                                 disabled={loading}
                                 size="sm"
-                                className="bg-green-900 hover:bg-green-900  text-white"
+                                className="bg-green-900 hover:bg-green-900 text-white w-full sm:w-auto"
                               >
                                 <Download className="h-4 w-4 mr-1" />
                                 Download
@@ -281,7 +281,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
                 {/* PDF Viewer */}
                 {isPdfFile && (
-                  <div className="px-6 pb-6">
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-6">
                     <Card className="border-green-900/60 border-2 shadow-sm">
                       <CardHeader className="pb-3">
                         <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
@@ -290,12 +290,12 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                         </h3>
                       </CardHeader>
                       <CardContent>
-                        <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
+                        <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-2 sm:p-4 border border-slate-200">
                           <iframe
                             src={secureFileUrl || material.file_url || ""}
                             title={`PDF: ${material.file_name || "document"}`}
-                            className="w-full h-[700px] border border-slate-300 rounded-lg shadow-inner"
-                            style={{ minHeight: "700px" }}
+                            className="w-full h-[400px] sm:h-[500px] lg:h-[700px] border border-slate-300 rounded-lg shadow-inner"
+                            style={{ minHeight: "400px" }}
                           />
                         </div>
                       </CardContent>
@@ -305,7 +305,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
                 {/* Content */}
                 {hasContent && (
-                  <div className="px-6 pb-6">
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-6">
                     <Card className="border-green-900/60 border-2 shadow-sm">
                       <CardHeader className="pb-3">
                         <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">

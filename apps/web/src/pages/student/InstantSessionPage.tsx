@@ -318,9 +318,9 @@ export default function InstantSessionPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Instant Session
             </h1>
-            <p className="text-lg text-gray-600 flex items-center justify-center gap-2">
-              <ClockIcon className="w-5 h-5" />
-              <span>15 minutes • Get tutoring help immediately</span>
+            <p className="text-base sm:text-lg text-gray-600 flex items-center justify-center gap-2 flex-wrap">
+              <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <span className="text-center">15 minutes • Get tutoring help immediately</span>
             </p>
           </div>
 

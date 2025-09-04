@@ -541,7 +541,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       : "User";
 
     return (
-      <div className="border-t border-gray-200/50 pt-4 mt-4 mb-8">
+      <div className="border-t border-gray-200/50 pt-4 mt-4 mb-4 sm:mb-8 flex-shrink-0">
         <div
           className={cn(
             "flex items-center",
@@ -582,7 +582,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.2 }}
                 onClick={onSignOut}
-                className="p-2 rounded-lg bg-green-50 border border-green-200 hover:bg-green-100 transition-colors duration-200"
+                className="p-2 rounded-lg bg-green-50 border border-green-200 hover:bg-green-100 transition-colors duration-200 flex-shrink-0"
               >
                 <ArrowRightOnRectangleIcon className="w-5 h-5 text-green-600" />
               </motion.button>
@@ -599,14 +599,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
-            className="relative z-50 lg:hidden"
+            className="fixed inset-0 z-50 lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
             <motion.div
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -614,7 +614,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             />
 
             <motion.div
-              className="fixed inset-0 flex"
+              className="absolute inset-0 flex h-screen"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -623,7 +623,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 ease: "easeOut",
               }}
             >
-              <div className="relative mr-16 flex w-full max-w-xs flex-1">
+              <div className="relative mr-16 flex w-full max-w-xs flex-1 h-full">
                 <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
                   <motion.button
                     type="button"
@@ -637,7 +637,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </motion.button>
                 </div>
 
-                <div className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 px-6 pb-4 shadow-2xl relative overflow-hidden">
+                <div className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 px-6 pb-4 shadow-2xl relative h-full">
                   {/* Subtle background pattern */}
                   <div className="absolute inset-0 opacity-20">
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-200/10 via-transparent to-yellow-200/10" />

@@ -126,7 +126,7 @@ const StudentTutorMaterialCard: React.FC<
 
   return (
     <Card
-      className={`group  transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg h-[245px] w-[400px] flex flex-col overflow-hidden ${
+      className={`group transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg w-full h-full min-h-[245px] flex flex-col overflow-hidden ${
         !hasAccess ? "opacity-75" : ""
       } ${isPremium ? "ring-2 ring-yellow-400/20" : ""}`}
       onClick={handleView}
@@ -138,17 +138,17 @@ const StudentTutorMaterialCard: React.FC<
         </div>
       )}
 
-      <CardHeader className="pb-3 relative">
+      <CardHeader className="pb-3 relative p-4 sm:p-6">
         <div className="flex items-start gap-3 mb-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-green-900 to-green-800 shadow-lg shrink-0">
+          <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-green-900 to-green-800 shadow-lg shrink-0">
             {hasFile ? (
-              <Upload className="h-5 w-5 text-white" />
+              <Upload className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             ) : (
-              <FileText className="h-5 w-5 text-white" />
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-green-900 line-clamp-2 leading-tight mb-1">
+            <h3 className="text-lg sm:text-xl font-bold text-green-900 line-clamp-2 leading-tight mb-1">
               {title || "Untitled Material"}
             </h3>
             {isPremium && (
@@ -168,16 +168,16 @@ const StudentTutorMaterialCard: React.FC<
         )} */}
       </CardHeader>
 
-      <CardContent className="flex-1 space-y-4">
+      <CardContent className="flex-1 space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
         {/* Tutor Name */}
         {tutorName && (
-          <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg">
-            <div className="p-2 rounded-lg bg-white shadow-sm">
-              <User className="h-4 w-4 text-green-900" />
+          <div className="flex items-center gap-2 p-2 sm:p-3 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-white shadow-sm">
+              <User className="h-3 w-3 sm:h-4 sm:w-4 text-green-900" />
             </div>
             <div>
               <p className="text-xs text-slate-500 font-medium">Instructor</p>
-              <p className="text-sm text-green-900 font-semibold">
+              <p className="text-xs sm:text-sm text-green-900 font-semibold">
                 {tutorName}
               </p>
             </div>

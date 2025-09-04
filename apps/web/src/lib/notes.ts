@@ -154,6 +154,26 @@ export async function incrementNoteViewCount(noteId: string): Promise<void> {
 }
 
 /**
+ * Delete a study note
+ */
+export async function deleteStudyNote(noteId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("study_notes")
+      .delete()
+      .eq("id", noteId);
+
+    if (error) {
+      console.error("Error deleting study note:", error);
+      throw error;
+    }
+  } catch (error) {
+    console.error("Error in deleteStudyNote:", error);
+    throw error;
+  }
+}
+
+/**
  * Transform study note data for card display
  */
 export function transformNoteForCard(

@@ -17,6 +17,7 @@ import {
   getNoteSubjects,
   getStudyNoteById,
   transformNoteForCard,
+  deleteStudyNote,
   type NotesSearchParams,
 } from "@/lib/notes";
 import type { Database } from "@/types/database";
@@ -141,141 +142,152 @@ const NotesPage: React.FC = () => {
 
   const hasActiveFilters = searchTerm.trim() || selectedSubject;
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <BookOpenIcon className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">My Notes</h1>
-                <p className="text-gray-600">
-                  Access your study materials and resources
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await deleteStudyNote(noteId);
+      // Refresh the notes list after deletion
+      await handleNoteCreated();
+    } catch (error) {
+      console.error("Error deleting note:", error);
+    }
+  };
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search and Filters */}
-        <div className="mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
-                {/* Search Input */}
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-full mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl md:text-4xl font-bold text-green-900 mb-3">
+            My Notes
+          </h1>
+          <p className="text-lg text-gray-700">
+            Access your study materials and resources
+          </p>
+        </motion.div>
+
+        {/* Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="border-green-200 bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <FunnelIcon className="w-5 h-5 text-green-900" />
+              <h2 className="text-green-900 font-semibold text-lg">Filters</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Search Input */}
+              <div className="space-y-2">
+                <label className="text-gray-900 font-medium">Search</label>
                 <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-900" />
                   <input
                     type="text"
                     placeholder="Search notes..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full pl-10 pr-4 py-3 border border-green-900/60 focus:border-green-900 focus:ring-green-900 rounded-md"
                   />
                 </div>
+              </div>
 
-                {/* Subject Filter */}
-                <div className="relative">
-                  <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white"
-                  >
-                    <option value="">All Subjects</option>
-                    {subjects.map((subject) => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.display_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Subject Filter */}
+              <div className="space-y-2">
+                <label className="text-gray-900 font-medium">Subject</label>
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className="w-full px-4 py-3 border border-green-900/60 focus:border-green-900 focus:ring-green-900 rounded-md appearance-none bg-white"
+                >
+                  <option value="">All Subjects</option>
+                  {subjects.map((subject) => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.display_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                {/* Clear Filters */}
-                {hasActiveFilters && (
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <div className="space-y-2">
+                  <label className="text-gray-900 font-medium">&nbsp;</label>
                   <button
                     onClick={clearFilters}
-                    className="flex items-center justify-center space-x-2 px-4 py-3 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-gray-700 border border-green-900/60 hover:bg-gray-50 hover:text-gray-800 rounded-md transition-colors"
                   >
                     <XMarkIcon className="h-4 w-4" />
                     <span>Clear Filters</span>
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Create Note Button */}
-              <button
-                onClick={() => {
-                  console.log("Create Note button clicked");
-                  navigate("create");
-                }}
-                className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md"
-              >
-                <PlusIcon className="h-5 w-5" />
-                <span>Create Note</span>
-              </button>
+              <div className="space-y-2">
+                <label className="text-gray-900 font-medium">&nbsp;</label>
+                <button
+                  onClick={() => {
+                    console.log("Create Note button clicked");
+                    navigate("create");
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 bg-green-900 hover:bg-green-800 text-white px-6 py-3 rounded-md font-medium transition-all duration-200"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  <span>Create Note</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Results */}
-        <div>
+        {/* Notes Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="col-span-full flex items-center justify-center py-12">
               <LoadingSpinner size="lg" />
             </div>
           ) : notes.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-12"
-            >
-              <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <BookOpenIcon className="h-12 w-12 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {hasActiveFilters ? "No notes found" : "No notes available"}
-              </h3>
-              <p className="text-gray-600 max-w-md mx-auto">
-                {hasActiveFilters
-                  ? "Try adjusting your search terms or filters to find what you're looking for."
-                  : "Study notes will appear here once they are added by your teachers."}
-              </p>
-            </motion.div>
+            <div className="col-span-full">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-16"
+              >
+                <div className="max-w-md mx-auto">
+                  <BookOpenIcon className="w-20 h-20 text-green-300 mx-auto mb-6" />
+                  <h3 className="text-2xl font-semibold text-green-900 mb-3">
+                    {hasActiveFilters ? "No notes found" : "No notes available"}
+                  </h3>
+                  <p className="text-green-700 text-lg">
+                    {hasActiveFilters
+                      ? "Try adjusting your filters or check back later for new notes."
+                      : "Study notes will appear here once they are added by your teachers."}
+                  </p>
+                </div>
+              </motion.div>
+            </div>
           ) : (
-            <>
-              {/* Results Count */}
-              <div className="flex items-center justify-between mb-6">
-                <p className="text-gray-600">
-                  Found {notes.length} note{notes.length !== 1 ? "s" : ""}
-                </p>
-                {hasActiveFilters && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
-                    <SparklesIcon className="h-4 w-4" />
-                    <span>Filtered results</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Notes Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                <AnimatePresence>
-                  {notes.map((note) => (
-                    <NoteCard
-                      key={note.id}
-                      {...transformNoteForCard(note)}
-                      onView={handleViewNote}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-            </>
+            <AnimatePresence>
+              {notes.map((note, index) => (
+                <motion.div
+                  key={note.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <NoteCard
+                    {...transformNoteForCard(note)}
+                    onView={handleViewNote}
+                    onDelete={handleDeleteNote}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           )}
         </div>
       </div>

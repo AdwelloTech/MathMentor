@@ -201,29 +201,29 @@ const TutorMaterialsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-7xl">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 sm:p-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-900 rounded-lg shadow-sm">
-                  <GraduationCap className="h-8 w-8 text-white" />
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-green-900 rounded-lg shadow-sm">
+                  <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-4xl font-bold text-green-900 tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-900 tracking-tight">
                     Study Materials
                   </h1>
                   <Badge
                     variant="outline"
-                    className="border-green-900/20 text-green-900 mt-2"
+                    className="border-green-900/20 text-green-900 mt-1 sm:mt-2 text-xs sm:text-sm"
                   >
                     <BookOpen className="w-3 h-3 mr-1" />
                     Learning Hub
                   </Badge>
                 </div>
               </div>
-              <p className="text-lg text-muted-foreground max-w-2xl">
+              <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl">
                 Access comprehensive study materials shared by your expert
                 tutors. Enhance your learning with curated resources tailored to
                 your academic journey.
@@ -231,15 +231,15 @@ const TutorMaterialsPage: React.FC = () => {
             </div>
 
             {!hasPremiumAccess && (
-              <div className="lg:shrink-0">
+              <div className="lg:shrink-0 w-full sm:w-auto">
                 <Button
                   onClick={() => navigate("/student/packages")}
                   size="lg"
-                  className="bg-yellow-400 hover:bg-yellow-500 text-green-900 font-semibold shadow-sm"
+                  className="bg-yellow-400 hover:bg-yellow-500 text-green-900 font-semibold shadow-sm w-full sm:w-auto"
                 >
-                  <Star className="h-5 w-5 mr-2" />
-                  Upgrade to Premium
-                  <Sparkles className="h-4 w-4 ml-2" />
+                  <Star className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span className="text-sm sm:text-base">Upgrade to Premium</span>
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
                 </Button>
               </div>
             )}
@@ -247,21 +247,21 @@ const TutorMaterialsPage: React.FC = () => {
         </div>
 
         {/* Search and Filter */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-green-900 flex items-center gap-2">
-              <Filter className="w-5 h-5" />
+        <Card className="mb-6 sm:mb-8">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-green-900 flex items-center gap-2 text-lg sm:text-xl">
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
               Search & Filter
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm sm:text-base">
               Find the perfect study materials for your learning needs
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:p-6">
+          <CardContent className="p-4 sm:p-6 pt-0 space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Search */}
               <div className="space-y-2">
-                <Label htmlFor="search" className="text-sm font-medium">
+                <Label htmlFor="search" className="text-sm sm:text-base font-medium text-green-900">
                   Search Materials
                 </Label>
                 <div className="relative">
@@ -272,21 +272,21 @@ const TutorMaterialsPage: React.FC = () => {
                     placeholder="Search by title, description, subject, or tutor..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 text-sm sm:text-base"
                   />
                 </div>
               </div>
 
               {/* Subject Filter */}
               <div className="space-y-2">
-                <Label htmlFor="subject" className="text-sm font-medium">
+                <Label htmlFor="subject" className="text-sm sm:text-base font-medium text-green-900">
                   Filter by Subject
                 </Label>
                 <Select
                   value={selectedSubject}
                   onValueChange={setSelectedSubject}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm sm:text-base">
                     <SelectValue placeholder="All Subjects" />
                   </SelectTrigger>
                   <SelectContent>
@@ -325,7 +325,7 @@ const TutorMaterialsPage: React.FC = () => {
         </Card>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:p-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card>
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
@@ -442,7 +442,7 @@ const TutorMaterialsPage: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {materials.map((material) => (
                 <div key={material.id} className="h-full">
                   <StudentTutorMaterialCard

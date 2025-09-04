@@ -413,26 +413,26 @@ const StudentDashboard: React.FC = () => {
             {/* Package Status Card (gradient) */}
             <motion.div variants={itemVariants}>
               <Card className="bg-gradient-to-r from-green-600 to-green-700 text-white border-0 shadow-2xl shadow-green-900/20">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-3">
-                      <CardTitle className="text-xl">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                    <div className="space-y-3 flex-1">
+                      <CardTitle className="text-lg sm:text-xl">
                         My Learning Package
                       </CardTitle>
                       <div className="space-y-2">
-                        <p className="text-green-100">
+                        <p className="text-green-100 text-sm sm:text-base">
                           {getPackageProgress().used} of{" "}
                           {getPackageProgress().total} sessions used
                         </p>
                         <Progress
                           value={getPackageProgress().percentage}
-                          className="w-64 h-2 bg-white [&>div]:bg-yellow-400"
+                          className="w-full sm:w-64 h-2 bg-white [&>div]:bg-yellow-400"
                         />
                       </div>
-                      <div className="flex items-center space-x-4 text-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 text-sm">
                         <Badge
                           variant="secondary"
-                          className="border-yellow-500/20"
+                          className="border-yellow-500/20 w-fit"
                         >
                           {data.packageInfo?.display_name || "Free Package"}
                         </Badge>
@@ -445,11 +445,11 @@ const StudentDashboard: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold">
-                        {Math.max(data.upcomingSessions.length, 0)}
+                    <div className="text-left sm:text-right">
+                      <div className="text-2xl sm:text-3xl font-bold">
+                        {getPackageProgress().remaining}
                       </div>
-                      <div className="text-green-100 text-sm">
+                      <div className="text-green-100 text-xs sm:text-sm">
                         sessions remaining
                       </div>
                     </div>

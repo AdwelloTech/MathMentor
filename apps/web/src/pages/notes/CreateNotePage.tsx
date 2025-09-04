@@ -10,15 +10,22 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
-import { getNoteSubjects, getStudyNoteById } from "@/lib/notes";
+import { getStudyNoteById, getNoteSubjects } from "@/lib/notes";
 import { NOTE_TITLE_MAX_LENGTH } from "@/constants/form";
 import toast from "react-hot-toast";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import type { Database } from "@/types/database";
 
-type NoteSubject = Database["public"]["Tables"]["note_subjects"]["Row"];
 type StudyNote = Database["public"]["Tables"]["study_notes"]["Row"];
+type NoteSubject = Database["public"]["Tables"]["note_subjects"]["Row"];
 
 const CreateNotePage: React.FC = () => {
   console.log("CreateNotePage component rendered");
@@ -55,6 +62,7 @@ const CreateNotePage: React.FC = () => {
           if (note) {
             console.log("Note loaded:", note);
             console.log("Note subject_id:", note.subject_id);
+            
             setFormData({
               title: note.title,
               description: note.description || "",
@@ -182,8 +190,8 @@ const CreateNotePage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-900 mx-auto"></div>
+          <p className="mt-4 text-green-800 font-medium">Loading...</p>
           <p className="mt-2 text-sm text-gray-500">
             Loading subjects and form...
           </p>
@@ -193,43 +201,44 @@ const CreateNotePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => navigate("/student/notes")}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
-                </button>
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <BookOpenIcon className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
-                      {isEditing ? "Edit Note" : "Create New Note"}
-                    </h1>
-                    <p className="text-gray-600">
-                      {isEditing
-                        ? "Update your study material"
-                        : "Add your own study material"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center space-x-3 mb-6">
+            <button
+              onClick={() => navigate("/student/notes")}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+            </button>
+            <div className="p-2 bg-green-900 rounded-lg">
+              <BookOpenIcon className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-green-900">
+                {isEditing ? "Edit Note" : "Create New Note"}
+              </h1>
+              <p className="text-lg text-gray-700">
+                {isEditing
+                  ? "Update your study material"
+                  : "Add your own study material"}
+              </p>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Form */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-sm border border-green-200 p-8"
+        >
+          <form onSubmit={handleSubmit} className="space-y-8">
           {/* Title */}
           <div>
             <label
@@ -243,7 +252,7 @@ const CreateNotePage: React.FC = () => {
               id="title"
               value={formData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
-              className="w-full"
+              className="w-full border-green-900/60 focus:border-green-900 focus:ring-green-900"
               placeholder="Enter note title..."
               required
               maxLength={NOTE_TITLE_MAX_LENGTH}
@@ -260,20 +269,22 @@ const CreateNotePage: React.FC = () => {
               Subject *
             </label>
             {subjects.length > 0 ? (
-              <select
-                id="subject"
+              <Select
                 value={formData.subjectId}
-                onChange={(e) => handleInputChange("subjectId", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                onValueChange={(value) => handleInputChange("subjectId", value)}
                 required
               >
-                <option value="">Select a subject</option>
-                {subjects.map((subject) => (
-                  <option key={subject.id} value={subject.id}>
-                    {subject.display_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full border-green-900/60 focus:border-green-900 focus:ring-green-900">
+                  <SelectValue placeholder="Select a subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>
+                      {subject.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : (
               <div className="w-full px-4 py-3 border border-red-300 rounded-lg bg-red-50">
                 <p className="text-red-600 text-sm">
@@ -297,7 +308,7 @@ const CreateNotePage: React.FC = () => {
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full px-4 py-3 border border-green-900/60 focus:ring-2 focus:ring-green-900 focus:border-green-900 rounded-md transition-colors"
               placeholder="Brief description of your note..."
               maxLength={300}
               showCharCount
@@ -323,35 +334,36 @@ const CreateNotePage: React.FC = () => {
             </p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => navigate("/student/notes")}
-              className="flex items-center space-x-2 px-6 py-3 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <XMarkIcon className="h-4 w-4" />
-              <span>Cancel</span>
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <CheckIcon className="h-4 w-4" />
-                  <span>{isEditing ? "Update Note" : "Create Note"}</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => navigate("/student/notes")}
+                className="flex items-center space-x-2 px-6 py-3 text-gray-700 border border-green-900/60 hover:bg-gray-50 rounded-md transition-colors"
+              >
+                <XMarkIcon className="h-4 w-4" />
+                <span>Cancel</span>
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex items-center space-x-2 bg-green-900 hover:bg-green-800 text-white px-6 py-3 rounded-md font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckIcon className="h-4 w-4" />
+                    <span>{isEditing ? "Update Note" : "Create Note"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </motion.div>
       </div>
     </div>
   );

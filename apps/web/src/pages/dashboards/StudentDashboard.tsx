@@ -63,6 +63,22 @@ interface DashboardData {
   loading: boolean;
 }
 
+/** Graceful fetch wrapper: logs which call 404'd and returns a fallback */
+async function safeCall<T>(label: string, p: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await p;
+  } catch (e: any) {
+    const method = e?.method ? String(e.method).toUpperCase() : "";
+    const url = e?.url || "";
+    if (e?.status === 404) {
+      console.warn(`[StudentDashboard] 404 from ${label}`, method, url);
+    } else {
+      console.error(`[StudentDashboard] ${label} failed:`, e);
+    }
+    return fallback;
+  }
+}
+
 const StudentDashboard: React.FC = () => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -99,50 +115,39 @@ const StudentDashboard: React.FC = () => {
 
     setData((prev) => ({ ...prev, loading: true }));
 
-    try {
-      const [
-        stats,
-        upcomingSessions,
-        recentQuizzes,
-        availableFlashcardsRes,
-        studyMaterials,
-        packageInfo,
-      ] = await Promise.allSettled([
+    const [
+      stats,
+      upcomingSessions,
+      recentQuizzes,
+      availableFlashcardsRes,
+      studyMaterials,
+      packageInfo,
+    ] = await Promise.all([
+      safeCall(
+        "stats.getStudentStats",
         classSchedulingService.stats.getStudentStats(profile.user_id),
-        loadUpcomingSessions(),
-        loadRecentQuizzes(),
-        flashcards.student.listAvailable(),
-        loadStudyMaterials(),
+        null
+      ),
+      safeCall("bookings.getByStudentId", loadUpcomingSessions(), []),
+      safeCall("quizzes.recentOrAvailable", loadRecentQuizzes(), []),
+      safeCall("flashcards.student.listAvailable", flashcards.student.listAvailable(), []),
+      safeCall("notes+materials", loadStudyMaterials(), []),
+      safeCall(
+        "packagePricing.getCurrentStudentPackage",
         packagePricingService.getCurrentStudentPackage(profile.user_id),
-      ]);
+        null
+      ),
+    ]);
 
-      const statsResult = stats.status === "fulfilled" ? stats.value : null;
-      const upcomingSessionsResult =
-        upcomingSessions.status === "fulfilled" ? upcomingSessions.value : [];
-      const recentQuizzesResult =
-        recentQuizzes.status === "fulfilled" ? recentQuizzes.value : [];
-      const availableFlashcardsResult =
-        availableFlashcardsRes.status === "fulfilled"
-          ? availableFlashcardsRes.value
-          : [];
-      const studyMaterialsResult =
-        studyMaterials.status === "fulfilled" ? studyMaterials.value : [];
-      const packageInfoResult =
-        packageInfo.status === "fulfilled" ? packageInfo.value : null;
-
-      setData({
-        stats: statsResult,
-        upcomingSessions: upcomingSessionsResult,
-        recentQuizzes: recentQuizzesResult.slice(0, 3),
-        availableFlashcards: availableFlashcardsResult.slice(0, 3),
-        studyMaterials: studyMaterialsResult.slice(0, 3),
-        packageInfo: packageInfoResult,
-        loading: false,
-      });
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
-      setData((prev) => ({ ...prev, loading: false }));
-    }
+    setData({
+      stats,
+      upcomingSessions,
+      recentQuizzes: recentQuizzes.slice(0, 3),
+      availableFlashcards: availableFlashcardsRes.slice(0, 3),
+      studyMaterials: studyMaterials.slice(0, 3),
+      packageInfo,
+      loading: false,
+    });
   };
 
   const loadUpcomingSessions = async () => {
@@ -534,7 +539,7 @@ const StudentDashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Study Materials (tall) */}
               <motion.div id="study-materials" variants={itemVariants} className="h-full">
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-full min-h-[500px]">
+                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-full min-h[500px]">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -553,7 +558,7 @@ const StudentDashboard: React.FC = () => {
                       >
                         <div className="bg-[#16803D] w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2">
                           <DocumentTextIcon className="w-5 h-5 text-white" />
-                            </div>
+                        </div>
                         <p className="text-base font-medium text-black">
                           {data.studyMaterials.filter((m) => (m as any).content).length}
                         </p>
@@ -565,13 +570,13 @@ const StudentDashboard: React.FC = () => {
                       >
                         <div className="bg-[#16803D] w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2">
                           <BookOpenIcon className="w-5 h-5 text-white" />
-                            </div>
+                        </div>
                         <p className="text-base font-medium text-black">
                           {data.availableFlashcards.length}
                         </p>
                         <p className="text-sm text-black">Flashcards</p>
-                        </div>
                       </div>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -677,13 +682,13 @@ const StudentDashboard: React.FC = () => {
                       </div>
                       {data.upcomingSessions.length > 0 ? (
                         data.upcomingSessions.slice(0, 3).map((session) => (
-                        <div
+                          <div
                             key={session.id}
                             className="flex items-center space-x-3 p-3 bg-[#D5FFC5] rounded-[10px] shadow-sm"
-                        >
+                          >
                             <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
                               <VideoCameraIcon className="w-4 h-4 text-white" />
-                          </div>
+                            </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-black truncate">
                                 {session.subject}
@@ -691,8 +696,8 @@ const StudentDashboard: React.FC = () => {
                               <p className="text-sm text-black truncate">
                                 {session.tutor} • {session.time}
                               </p>
-                        </div>
-                      </div>
+                            </div>
+                          </div>
                         ))
                       ) : (
                         <p className="text-sm text-gray-500">No upcoming sessions</p>
@@ -775,7 +780,7 @@ const StudentDashboard: React.FC = () => {
           </div>
         </motion.div>
       </div>
-      
+
       {/* Tutorial Components */}
       <TutorialPrompt />
       <TutorialOverlay />

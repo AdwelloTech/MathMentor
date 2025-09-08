@@ -31,9 +31,6 @@ import {
   Play,
   GraduationCap,
   X,
-  Calendar,
-  Plus,
-  Sparkles,
 } from "lucide-react";
 
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -42,12 +39,29 @@ import { quizService } from "@/lib/quizService";
 import { subjectsService } from "@/lib/subjects";
 import type { Quiz } from "@/types/quiz";
 import toast from "react-hot-toast";
+import { supabase } from "@/lib/supabase"; // ⬅️ fallback fetches use our axios-backed client
 
 type NoteSubject = {
   id: string;
   name: string;
   display_name: string;
   color: string;
+};
+
+// ---------- helpers ----------
+type RawSubject = any;
+const normalizeSubjects = (
+  arr: RawSubject[] | undefined | null
+): NoteSubject[] => {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((s) => ({
+      id: String(s.id ?? s._id ?? s.uuid ?? s.code ?? s.name ?? ""),
+      name: String(s.name ?? s.code ?? "").trim(),
+      display_name: String(s.display_name ?? s.name ?? s.code ?? "Subject"),
+      color: s.color ?? "#16a34a",
+    }))
+    .filter((s) => s.id && s.name);
 };
 
 const StudentQuizDashboard: React.FC = () => {
@@ -61,30 +75,67 @@ const StudentQuizDashboard: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
 
   useEffect(() => {
-    if (user) {
-      loadData();
-    }
+    if (user) void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      console.log("Loading quizzes for user:", user!.id);
+      if (!user) return;
 
-      const [quizzesData, subjectsData] = await Promise.all([
-        quizService.studentQuizzes.getAvailableQuizzes(user!.id),
-        subjectsService.listActive(),
+      console.log("Loading quizzes for user:", user.id);
+
+      const [quizzesData, subjectsDataRaw] = await Promise.all([
+        quizService.studentQuizzes.getAvailableQuizzes(user.id),
+        subjectsService.listActive(), // may be undefined in your current wiring
       ]);
 
       console.log("Quizzes loaded:", quizzesData);
-      console.log("Subjects loaded:", subjectsData);
+      console.log("Subjects loaded:", subjectsDataRaw);
 
-      setAllQuizzes(quizzesData);
-      setQuizzes(quizzesData);
-      setSubjects(subjectsData as any);
+      // normalize subjects from service
+      let normalizedSubjects = normalizeSubjects(subjectsDataRaw as any[]);
+
+      // ----- fallbacks if the service returns nothing -----
+      if (normalizedSubjects.length === 0) {
+        try {
+          const res1 = await (supabase as any)
+            .from("note_subjects")
+            .select("*")
+            .limit(200)
+            ._exec<any[]>();
+          if (!res1?.error) {
+            normalizedSubjects = normalizeSubjects(res1?.data as any[]);
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+      if (normalizedSubjects.length === 0) {
+        try {
+          const res2 = await (supabase as any)
+            .from("subjects")
+            .select("*")
+            .limit(200)
+            ._exec<any[]>();
+          if (!res2?.error) {
+            normalizedSubjects = normalizeSubjects(res2?.data as any[]);
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+
+      setAllQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
+      setQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
+      setSubjects(normalizedSubjects); // ✅ never undefined
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Failed to load quizzes");
+      setAllQuizzes([]);
+      setQuizzes([]);
+      setSubjects([]); // ✅ keep UI safe
     } finally {
       setLoading(false);
     }
@@ -100,10 +151,10 @@ const StudentQuizDashboard: React.FC = () => {
         const term = searchTerm.toLowerCase().trim();
         filtered = filtered.filter(
           (quiz) =>
-            quiz.title?.toLowerCase().includes(term) ||
-            quiz.description?.toLowerCase().includes(term) ||
-            quiz.subject?.toLowerCase().includes(term) ||
-            quiz.tutor?.full_name?.toLowerCase().includes(term)
+            (quiz.title || "").toLowerCase().includes(term) ||
+            (quiz.description || "").toLowerCase().includes(term) ||
+            (quiz.subject || "").toLowerCase().includes(term) ||
+            (quiz.tutor?.full_name || "").toLowerCase().includes(term)
         );
       }
 
@@ -120,20 +171,17 @@ const StudentQuizDashboard: React.FC = () => {
 
   const handleStartQuiz = async (quizId: string) => {
     try {
-      // Check if quiz is already completed
       const quiz = allQuizzes.find((q) => q.id === quizId);
       if (quiz?.attempt_status === "completed") {
         toast.error("You have already completed this quiz");
         return;
       }
 
-      // Start the quiz attempt
       const attempt = await quizService.studentQuizzes.startQuizAttempt(
         quizId,
         user!.id
       );
 
-      // Navigate to the quiz taking page
       navigate(`/student/take-quiz/${attempt.id}`);
     } catch (error) {
       console.error("Error starting quiz:", error);
@@ -147,7 +195,7 @@ const StudentQuizDashboard: React.FC = () => {
   };
 
   const hasActiveFilters =
-    searchTerm.trim() || (selectedSubject && selectedSubject !== "all");
+    !!searchTerm.trim() || (selectedSubject && selectedSubject !== "all");
 
   if (loading) {
     return (
@@ -223,10 +271,7 @@ const StudentQuizDashboard: React.FC = () => {
 
                 {/* Subject Filter */}
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="subject"
-                    className="text-gray-900 font-medium"
-                  >
+                  <Label htmlFor="subject" className="text-gray-900 font-medium">
                     Filter by Subject
                   </Label>
                   <Select
@@ -238,7 +283,7 @@ const StudentQuizDashboard: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Subjects</SelectItem>
-                      {subjects.map((subject) => (
+                      {(subjects ?? []).map((subject) => (
                         <SelectItem key={subject.id} value={subject.name}>
                           {subject.display_name}
                         </SelectItem>
@@ -324,7 +369,7 @@ const StudentQuizDashboard: React.FC = () => {
                     {quizzes.length > 0
                       ? Math.round(
                           quizzes.reduce(
-                            (sum, q) => sum + q.time_limit_minutes,
+                            (sum, q) => sum + (q.time_limit_minutes || 0),
                             0
                           ) / quizzes.length
                         )
@@ -400,13 +445,13 @@ const StudentQuizDashboard: React.FC = () => {
                         <div className="flex items-center gap-3 text-gray-700">
                           <Clock className="h-4 w-4 text-gray-700" />
                           <span className="text-sm font-medium">
-                            {quiz.time_limit_minutes} minutes
+                            {quiz.time_limit_minutes ?? 0} minutes
                           </span>
                         </div>
                         <div className="flex items-center gap-3 text-gray-700">
                           <CheckCircle className="h-4 w-4 text-gray-700" />
                           <span className="text-sm font-medium">
-                            {quiz.total_questions} questions
+                            {quiz.total_questions ?? 0} questions
                           </span>
                         </div>
                       </div>

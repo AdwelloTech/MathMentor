@@ -1,172 +1,81 @@
-import { supabase } from "@/lib/supabase";
-import type {
-  FlashcardSet,
-  Flashcard,
-  CreateFlashcardSetData,
-  UpdateFlashcardSetData,
-} from "@/types/flashcards";
+// apps/web/src/lib/flashcards.ts
+import axios from "axios";
+import type { FlashcardSet, Flashcard } from "@/types/flashcards";
+
+function getBaseUrl() {
+  const url =
+    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_API_URL) ||
+    (typeof process !== "undefined"
+      ? (process as any)?.env?.VITE_API_URL || (process as any)?.env?.NEXT_PUBLIC_API_URL
+      : "") ||
+    "http://localhost:8080";
+  return (url || "http://localhost:8080").replace(/\/$/, "");
+}
+
+const api = axios.create({
+  baseURL: getBaseUrl(),
+  headers: { "Content-Type": "application/json" },
+});
+
+const unwrap = (r: any) => r?.data?.data ?? r?.data ?? r;
+const asArr = <T>(x: any): T[] => (Array.isArray(x) ? x : []);
+
+function mapSet(r: any): FlashcardSet {
+  return {
+    id: (r._id ?? r.id ?? "").toString(),
+    tutor_id: r.tutor_profile_id ?? r.tutor_id ?? "",
+    title: r.title ?? "",
+    subject: r.subject ?? r.subject_name ?? "General",
+    topic: r.topic ?? null,
+    grade_level: r.grade_level_code ?? r.grade_level ?? "G11",
+    is_active: r.is_active ?? true,
+    created_at: r.createdAt ?? new Date().toISOString(),
+    updated_at: r.updatedAt ?? new Date().toISOString(),
+    tutor: r.tutor
+      ? { id: r.tutor?.id ?? r.tutor_profile_id ?? "", full_name: r.tutor?.full_name ?? "Tutor", email: r.tutor?.email ?? "" }
+      : undefined,
+  };
+}
+
+function mapCard(r: any): Flashcard {
+  return {
+    id: (r._id ?? r.id ?? "").toString(),
+    set_id: (r.set_id?._id ?? r.set_id ?? "").toString(),
+    front_text: r.front_text ?? "",
+    back_text: r.back_text ?? "",
+    card_order: Number(r.card_order ?? 0),
+    created_at: r.createdAt ?? new Date().toISOString(),
+    updated_at: r.updatedAt ?? new Date().toISOString(),
+  };
+}
 
 export const flashcards = {
-  // Tutor-side operations
-  sets: {
-    async create(
-      tutorProfileId: string,
-      input: CreateFlashcardSetData
-    ): Promise<FlashcardSet> {
-      const { data: set, error: setError } = await supabase
-        .from("flashcard_sets")
-        .insert({
-          tutor_id: tutorProfileId,
-          title: input.title,
-          subject: input.subject,
-          ...(input.topic !== undefined ? { topic: input.topic } : {}),
-          grade_level: input.grade_level,
-          is_active: input.is_active ?? true,
-        })
-        .select()
-        .single();
-
-      if (setError) throw setError;
-
-      if (input.cards?.length) {
-        // Filter out empty cards and validate that both front and back are provided
-        const validCards = input.cards
-          .filter((c) => {
-            const hasFront = c.front_text?.trim();
-            const hasBack = c.back_text?.trim();
-
-            // If one is filled, both must be filled
-            if (hasFront && !hasBack) {
-              throw new Error(
-                `Card ${
-                  c.card_order + 1
-                }: Answer is required when question is provided`
-              );
-            }
-            if (!hasFront && hasBack) {
-              throw new Error(
-                `Card ${
-                  c.card_order + 1
-                }: Question is required when answer is provided`
-              );
-            }
-
-            // Only include cards where both front and back are filled
-            return hasFront && hasBack;
-          })
-          .map((c, index) => ({
-            set_id: set.id,
-            front_text: c.front_text.trim(),
-            back_text: c.back_text.trim(),
-            card_order: index, // Reorder to remove gaps
-          }));
-
-        if (validCards.length > 0) {
-          const { error: cardsError } = await supabase
-            .from("flashcards")
-            .insert(validCards);
-          if (cardsError) throw cardsError;
-        }
+  // Student view used by dashboard
+  student: {
+    async listAvailable(): Promise<FlashcardSet[]> {
+      // Prefer an API if you added it; otherwise fall back to a generic collection read
+      try {
+        const res = await api.get("/api/flashcard_sets", {
+          params: { q: JSON.stringify({ is_active: true }), sort: JSON.stringify({ createdAt: -1 }), limit: 20 },
+        });
+        return asArr<any>(unwrap(res)).map(mapSet);
+      } catch {
+        // If you don’t have the route yet, return empty (dashboard handles empty safely)
+        return [];
       }
-
-      return set as FlashcardSet;
-    },
-
-    async update(
-      setId: string,
-      input: UpdateFlashcardSetData
-    ): Promise<FlashcardSet> {
-      const { data, error } = await supabase
-        .from("flashcard_sets")
-        .update({
-          ...(input.title !== undefined ? { title: input.title } : {}),
-          ...(input.subject !== undefined ? { subject: input.subject } : {}),
-          ...(input.topic !== undefined ? { topic: input.topic } : {}),
-          grade_level: input.grade_level,
-          ...(input.is_active !== undefined
-            ? { is_active: input.is_active }
-            : {}),
-        })
-        .eq("id", setId)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as FlashcardSet;
-    },
-
-    async byTutor(tutorProfileId: string): Promise<FlashcardSet[]> {
-      const { data, error } = await supabase
-        .from("flashcard_sets")
-        .select("*, tutor:profiles(id, full_name, email), cards:flashcards(id)")
-        .eq("tutor_id", tutorProfileId)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []) as FlashcardSet[];
-    },
-
-    async withCards(
-      setId: string
-    ): Promise<FlashcardSet & { cards: Flashcard[] }> {
-      const { data: set, error: setError } = await supabase
-        .from("flashcard_sets")
-        .select("*, tutor:profiles(id, full_name, email)")
-        .eq("id", setId)
-        .single();
-      if (setError) throw setError;
-
-      const { data: cards, error: cardsError } = await supabase
-        .from("flashcards")
-        .select("*")
-        .eq("set_id", setId)
-        .order("card_order", { ascending: true });
-      if (cardsError) throw cardsError;
-
-      // Filter out empty cards and reorder
-      const validCards = (cards || [])
-        .filter((card) => {
-          const hasFront = card.front_text?.trim();
-          const hasBack = card.back_text?.trim();
-          return hasFront && hasBack;
-        })
-        .map((card, index) => ({
-          ...card,
-          card_order: index, // Reorder to remove gaps
-        })) as Flashcard[];
-
-      return { ...(set as FlashcardSet), cards: validCards };
-    },
-
-    async remove(setId: string): Promise<void> {
-      const { error } = await supabase
-        .from("flashcard_sets")
-        .delete()
-        .eq("id", setId);
-      if (error) throw error;
     },
   },
 
-  // Student-side queries
-  student: {
-    async listAvailable(subject?: string): Promise<FlashcardSet[]> {
-      let query = supabase
-        .from("flashcard_sets")
-        .select("*, tutor:profiles(id, full_name, email)")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-
-      if (subject) {
-        query = query.eq("subject", subject);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data || []) as FlashcardSet[];
-    },
-
-    async getSet(
-      setId: string
-    ): Promise<FlashcardSet & { cards: Flashcard[] }> {
-      return flashcards.sets.withCards(setId);
+  // Optional helpers (used on set page if you have it)
+  sets: {
+    async withCards(setId: string): Promise<FlashcardSet & { cards: Flashcard[] }> {
+      const [setRes, cardsRes] = await Promise.all([
+        api.get(`/api/flashcard_sets/${encodeURIComponent(setId)}`),
+        api.get(`/api/flashcards`, { params: { q: JSON.stringify({ set_id: setId }), sort: JSON.stringify({ card_order: 1 }) } }),
+      ]);
+      const set = mapSet(unwrap(setRes));
+      const cards = asArr<any>(unwrap(cardsRes)).map(mapCard);
+      return { ...set, cards };
     },
   },
 };

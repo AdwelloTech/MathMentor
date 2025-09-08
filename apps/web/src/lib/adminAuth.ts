@@ -1,3 +1,4 @@
+// apps/web/src/lib/adminAuth.ts
 import { supabase } from "./supabase";
 
 export interface AdminLoginResponse {
@@ -13,17 +14,49 @@ export interface AdminSession {
   admin_email?: string;
 }
 
+type AnyObj = Record<string, any>;
+
 export class AdminAuthService {
   private static sessionTokenKey = "admin_session_token";
+  private static profileKey = "admin_profile";
 
-  // Login admin with database verification
-  static async loginAdmin(
-    email: string,
-    password: string
-  ): Promise<AdminLoginResponse> {
+  // ---------------------------- helpers ----------------------------
+  private static saveToken(token: string) {
+    localStorage.setItem(this.sessionTokenKey, token);
+  }
+  private static loadToken(): string | null {
+    return localStorage.getItem(this.sessionTokenKey);
+  }
+  private static clearToken() {
+    localStorage.removeItem(this.sessionTokenKey);
+  }
+  private static saveProfile(p: AnyObj | null) {
+    if (p) localStorage.setItem(this.profileKey, JSON.stringify(p));
+    else localStorage.removeItem(this.profileKey);
+  }
+  private static loadProfile(): AnyObj | null {
+    try {
+      const s = localStorage.getItem(this.profileKey);
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  }
+  private static genToken() {
+    // lightweight client-side token
+    const rand = Math.random().toString(36).slice(2);
+    return `${Date.now().toString(36)}.${rand}`;
+    // (If you prefer crypto-strength in modern browsers:)
+    // const a = new Uint8Array(16); crypto.getRandomValues(a);
+    // return Array.from(a, x => x.toString(16).padStart(2, "0")).join("");
+  }
+
+  // ----------------------------- LOGIN -----------------------------
+  static async loginAdmin(email: string, password: string): Promise<AdminLoginResponse> {
     try {
       console.log("Attempting admin login for:", email);
 
+      // Our supabase.ts maps this RPC to POST /api/admin/verify_credentials
       const { data, error } = await supabase.rpc("verify_admin_credentials", {
         p_email: email,
         p_password: password,
@@ -31,226 +64,111 @@ export class AdminAuthService {
 
       if (error) {
         console.error("Admin login RPC error:", error);
-        return {
-          success: false,
-          message: `Database error: ${error.message}`,
-        };
+        return { success: false, message: `Database error: ${error.message}` };
       }
 
-      console.log("Admin login RPC response:", data);
+      // API shape: { ok: true, data: { valid: boolean, profile?: {} } }
+      const raw = data as any;
+      console.log("Admin login RPC response:", raw);
 
-      if (!data || data.length === 0) {
-        console.log("No data returned from verify_admin_credentials");
-        return {
-          success: false,
-          message: "Invalid credentials",
-        };
+      const valid = Boolean(raw?.success ?? raw?.data?.valid ?? false);
+      const profile = (raw?.data?.profile ?? null) as AnyObj | null;
+
+      if (!valid) {
+        return { success: false, message: "Invalid email or password" };
       }
 
-      const result = data[0];
-      console.log("Admin verification result:", result);
+      // store profile + a client-side session token
+      const adminId =
+        profile?._id?.toString?.() ??
+        profile?.user_id ??
+        profile?.id ??
+        (email || "").toLowerCase();
 
-      if (!result.success) {
-        return {
-          success: false,
-          message: result.message || "Login failed",
-        };
-      }
+      const token = this.genToken();
+      this.saveToken(token);
+      this.saveProfile(profile);
 
-      // Create session
-      console.log("Creating admin session for admin_id:", result.admin_id);
-      const sessionResult = await this.createSession(result.admin_id);
-
-      if (!sessionResult.success) {
-        console.error("Session creation failed:", sessionResult);
-        return {
-          success: false,
-          message: "Failed to create session",
-        };
-      }
-
-      // Store session token
-      localStorage.setItem(this.sessionTokenKey, sessionResult.session_token!);
-      console.log("Admin session created and stored");
+      console.log("Admin logged in. Stored token and profile.", { adminId });
 
       return {
         success: true,
-        admin_id: result.admin_id,
-        session_token: sessionResult.session_token,
+        admin_id: adminId,
+        session_token: token,
         message: "Login successful",
       };
-    } catch (error) {
-      console.error("Admin login error:", error);
+    } catch (err) {
+      console.error("Admin login error:", err);
       return {
         success: false,
-        message: `Login failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
+        message:
+          "Login failed: " + (err instanceof Error ? err.message : "Unknown error"),
       };
     }
   }
 
-  // Create admin session
-  private static async createSession(
-    adminId: string
-  ): Promise<{ success: boolean; session_token?: string; message?: string }> {
-    try {
-      console.log("Creating session for admin_id:", adminId);
+  // ----------------------- (client-only) session --------------------
+  // These were RPCs before; we keep signatures but do everything locally.
 
-      // Call the function with only the required parameters to avoid overloading issues
-      const { data, error } = await supabase.rpc("create_admin_session", {
-        p_admin_id: adminId,
-        // Remove optional parameters to avoid function overloading
-      });
-
-      if (error) {
-        console.error("Session creation RPC error:", error);
-        return {
-          success: false,
-          message: `Session creation error: ${error.message}`,
-        };
-      }
-
-      console.log("Session creation RPC response:", data);
-
-      if (!data || data.length === 0) {
-        console.log("No data returned from create_admin_session");
-        return {
-          success: false,
-          message: "No session data returned",
-        };
-      }
-
-      const result = data[0];
-      console.log("Session creation result:", result);
-
-      if (!result.success) {
-        return {
-          success: false,
-          message: result.message || "Session creation failed",
-        };
-      }
-
-      return {
-        success: true,
-        session_token: result.session_token,
-      };
-    } catch (error) {
-      console.error("Session creation error:", error);
-      return {
-        success: false,
-        message: `Session creation failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-      };
-    }
+  private static async createSession(_adminId: string): Promise<{
+    success: boolean;
+    session_token?: string;
+    message?: string;
+  }> {
+    const token = this.genToken();
+    this.saveToken(token);
+    return { success: true, session_token: token };
   }
 
-  // Validate current session
   static async validateSession(): Promise<AdminSession> {
-    try {
-      const sessionToken = localStorage.getItem(this.sessionTokenKey);
-
-      if (!sessionToken) {
-        console.log("No session token found in localStorage");
-        return { valid: false };
-      }
-
-      console.log("Validating session token...");
-
-      const { data, error } = await supabase.rpc("validate_admin_session", {
-        p_session_token: sessionToken,
-      });
-
-      if (error) {
-        console.error("Session validation RPC error:", error);
-        return { valid: false };
-      }
-
-      console.log("Session validation RPC response:", data);
-
-      if (!data || data.length === 0) {
-        console.log("No data returned from validate_admin_session");
-        return { valid: false };
-      }
-
-      const result = data[0];
-      console.log("Session validation result:", result);
-
-      if (!result.valid) {
-        console.log("Session is invalid, clearing localStorage");
-        localStorage.removeItem(this.sessionTokenKey);
-      }
-
-      return {
-        valid: result.valid,
-        admin_id: result.admin_id,
-        admin_email: result.admin_email,
-      };
-    } catch (error) {
-      console.error("Session validation error:", error);
+    const token = this.loadToken();
+    if (!token) {
+      console.log("No session token found in localStorage");
       return { valid: false };
     }
+    const profile = this.loadProfile();
+    if (!profile) {
+      console.log("No admin profile found; clearing token");
+      this.clearToken();
+      return { valid: false };
+    }
+    return {
+      valid: true,
+      admin_id:
+        profile?._id?.toString?.() ??
+        profile?.user_id ??
+        profile?.id ??
+        undefined,
+      admin_email: profile?.email ?? undefined,
+    };
   }
 
-  // Logout admin
   static async logout(): Promise<boolean> {
     try {
-      const sessionToken = localStorage.getItem(this.sessionTokenKey);
-
-      if (sessionToken) {
-        console.log("Logging out admin session...");
-
-        const { error } = await supabase.rpc("logout_admin_session", {
-          p_session_token: sessionToken,
-        });
-
-        if (error) {
-          console.error("Logout RPC error:", error);
-        } else {
-          console.log("Admin session logged out successfully");
-        }
-      }
-
-      // Clear local storage
-      localStorage.removeItem(this.sessionTokenKey);
-      console.log("LocalStorage cleared");
-
+      // No server RPC — just clear local state
+      this.clearToken();
+      this.saveProfile(null);
+      console.log("Admin session cleared");
       return true;
-    } catch (error) {
-      console.error("Logout error:", error);
-      localStorage.removeItem(this.sessionTokenKey);
+    } catch (e) {
+      console.error("Logout error:", e);
+      this.clearToken();
+      this.saveProfile(null);
       return false;
     }
   }
 
-  // Get current session token
   static getSessionToken(): string | null {
-    return localStorage.getItem(this.sessionTokenKey);
+    return this.loadToken();
   }
 
-  // Check if admin is logged in
   static isLoggedIn(): boolean {
-    return !!localStorage.getItem(this.sessionTokenKey);
+    return !!this.loadToken();
   }
 
-  // Clean expired sessions (utility function)
   static async cleanExpiredSessions(): Promise<number> {
-    try {
-      console.log("Cleaning expired sessions...");
-
-      const { data, error } = await supabase.rpc("clean_expired_sessions");
-
-      if (error) {
-        console.error("Clean sessions RPC error:", error);
-        return 0;
-      }
-
-      console.log("Expired sessions cleaned:", data);
-      return data || 0;
-    } catch (error) {
-      console.error("Clean sessions error:", error);
-      return 0;
-    }
+    // No server-managed sessions; nothing to clean.
+    // Keep for API compatibility.
+    return 0;
   }
 }

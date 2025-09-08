@@ -13,8 +13,9 @@
     "preview": "vite preview --config apps/web/vite.config.ts",
     "type-check": "tsc --noEmit",
     "dev:web": "vite --config apps/web/vite.config.ts",
-    "dev:api": "tsx -r dotenv/config apps/api/src/index.ts"
-
+    "dev:api": "tsx -r dotenv/config apps/api/src/index.ts",
+    "api:dev": "tsx apps/api/src/index.ts",
+    "seed": "tsx apps/api/scripts/seed.ts"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -33,6 +34,9 @@
     "@tabler/icons-react": "^3.34.1",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
+    "axios": "^1.11.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
@@ -46,6 +50,8 @@
     "katex": "^0.16.22",
     "lucide-react": "^0.294.0",
     "mathjs": "^14.6.0",
+    "mongoose": "^8.18.0",
+    "morgan": "^1.10.1",
     "motion": "^12.23.12",
     "multer": "^1.4.5-lts.1",
     "pdf-poppler": "^0.2.1",

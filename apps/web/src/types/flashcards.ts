@@ -3,6 +3,7 @@ export interface FlashcardSet {
   tutor_id: string; // profiles.id of tutor
   title: string;
   subject: string;
+  subject_id?: string; // Added subject_id field
   topic?: string;
   grade_level: string;
   is_active: boolean;

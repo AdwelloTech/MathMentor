@@ -52,10 +52,15 @@ const FlashcardStudyPage: React.FC = () => {
   useEffect(() => {
     if (!setId) return;
     (async () => {
-      const s = await flashcards.student.getSet(setId);
-      setSetData(s);
-      setIndex(0);
-      setShowBack(false);
+      try {
+        const s = await flashcards.sets.withCards(setId);
+        setSetData(s);
+        setIndex(0);
+        setShowBack(false);
+      } catch (error) {
+        console.error('Error loading flashcard set:', error);
+        // You might want to add error handling here, e.g., show an error message to the user
+      }
     })();
   }, [setId]);
 

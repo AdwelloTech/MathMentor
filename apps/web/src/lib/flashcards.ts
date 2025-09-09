@@ -21,11 +21,16 @@ const unwrap = (r: any) => r?.data?.data ?? r?.data ?? r;
 const asArr = <T>(x: any): T[] => (Array.isArray(x) ? x : []);
 
 function mapSet(r: any): FlashcardSet {
+  // Handle subject which could be an object (from populate) or string
+  const subject = typeof r.subject_id === 'object' ? r.subject_id?.name : r.subject;
+  const subject_id = r.subject_id?._id || r.subject_id;
+  
   return {
     id: (r._id ?? r.id ?? "").toString(),
     tutor_id: r.tutor_profile_id ?? r.tutor_id ?? "",
     title: r.title ?? "",
-    subject: r.subject ?? r.subject_name ?? "General",
+    subject: subject ?? r.subject_name ?? "General",
+    subject_id: subject_id ? subject_id.toString() : undefined,
     topic: r.topic ?? null,
     grade_level: r.grade_level_code ?? r.grade_level ?? "G11",
     is_active: r.is_active ?? true,
@@ -69,13 +74,35 @@ export const flashcards = {
   // Optional helpers (used on set page if you have it)
   sets: {
     async withCards(setId: string): Promise<FlashcardSet & { cards: Flashcard[] }> {
-      const [setRes, cardsRes] = await Promise.all([
-        api.get(`/api/flashcard_sets/${encodeURIComponent(setId)}`),
-        api.get(`/api/flashcards`, { params: { q: JSON.stringify({ set_id: setId }), sort: JSON.stringify({ card_order: 1 }) } }),
-      ]);
-      const set = mapSet(unwrap(setRes));
-      const cards = asArr<any>(unwrap(cardsRes)).map(mapCard);
-      return { ...set, cards };
+      try {
+        const [setRes, cardsRes] = await Promise.all([
+          api.get(`/api/flashcard_sets/${encodeURIComponent(setId)}`),
+          api.get(`/api/flashcards`, { 
+            params: { 
+              q: JSON.stringify({ set_id: setId }), 
+              sort: JSON.stringify({ card_order: 1 }) 
+            } 
+          }),
+        ]);
+        
+        const setData = unwrap(setRes);
+        const cardsData = unwrap(cardsRes);
+        
+        if (!setData) {
+          throw new Error('Flashcard set not found');
+        }
+        
+        const set = mapSet(setData);
+        const cards = asArr<any>(cardsData?.data || cardsData).map(mapCard);
+        
+        return { 
+          ...set, 
+          cards: cards.sort((a, b) => (a.card_order || 0) - (b.card_order || 0)) 
+        };
+      } catch (error) {
+        console.error('Error in withCards:', error);
+        throw error;
+      }
     },
   },
 };

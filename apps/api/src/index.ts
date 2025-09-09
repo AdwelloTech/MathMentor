@@ -861,6 +861,84 @@ app.post("/api/tutor_materials/:id/downloads", async (_req, res) => {
   res.json({ ok: true }); // kept simple; you also have increment route below
 });
 
+// Flashcard Set Routes
+app.get("/api/flashcard_sets", async (req, res) => {
+  try {
+    const q = parseJSON<any>(req.query.q as string) || { is_active: true };
+    const sort = parseJSON<any>(req.query.sort as string) || { createdAt: -1 };
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+    const offset = req.query.offset ? Number(req.query.offset) : 0;
+
+    const [items, total] = await Promise.all([
+      FlashcardSet.find(q)
+        .sort(sort)
+        .skip(offset)
+        .limit(limit)
+        .populate('subject_id', 'name')
+        .lean(),
+      FlashcardSet.countDocuments(q),
+    ]);
+
+    res.json({ data: items, total, limit, offset });
+  } catch (err) {
+    console.error("Error fetching flashcard sets:", err);
+    res.status(500).json({ error: "Failed to fetch flashcard sets" });
+  }
+});
+
+app.get("/api/flashcard_sets/:id", async (req, res) => {
+  try {
+    const flashcardSet = await FlashcardSet.findById(req.params.id)
+      .populate('subject_id', 'name')
+      .populate('tutor_profile_id', 'full_name email')
+      .lean();
+    
+    if (!flashcardSet) {
+      return res.status(404).json({ error: "Flashcard set not found" });
+    }
+    
+    // Format the response to match frontend expectations
+    const response = {
+      ...flashcardSet,
+      subject: flashcardSet.subject_id?.name || 'General',
+      tutor: flashcardSet.tutor_profile_id ? {
+        id: flashcardSet.tutor_profile_id._id,
+        full_name: flashcardSet.tutor_profile_id.full_name,
+        email: flashcardSet.tutor_profile_id.email
+      } : undefined
+    };
+    
+    res.json(response);
+  } catch (err) {
+    console.error("Error fetching flashcard set:", err);
+    res.status(500).json({ error: "Failed to fetch flashcard set" });
+  }
+});
+
+// Flashcard Routes
+app.get("/api/flashcards", async (req, res) => {
+  try {
+    const q = parseJSON<any>(req.query.q as string) || {};
+    const sort = parseJSON<any>(req.query.sort as string) || { card_order: 1 };
+    const limit = req.query.limit ? Number(req.query.limit) : 100;
+    const offset = req.query.offset ? Number(req.query.offset) : 0;
+
+    const [items, total] = await Promise.all([
+      Flashcard.find(q)
+        .sort(sort)
+        .skip(offset)
+        .limit(limit)
+        .lean(),
+      Flashcard.countDocuments(q),
+    ]);
+
+    res.json({ data: items, total, limit, offset });
+  } catch (err) {
+    console.error("Error fetching flashcards:", err);
+    res.status(500).json({ error: "Failed to fetch flashcards" });
+  }
+});
+
 app.post("/api/increment_tutor_note_download_count", async (req, res) => {
   try {
     const { note_id } = req.body || {};

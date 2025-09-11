@@ -36,7 +36,10 @@ const FlashcardsListPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await flashcards.student.listAvailable(subject || undefined);
+      // ✅ Pass correct params object (was a raw string earlier)
+      const data = await flashcards.student.listAvailable({
+        subjectFilter: subject || undefined,
+      });
       setSets(data || []);
     } catch (err) {
       console.error("Error loading flashcard sets:", err);
@@ -130,7 +133,7 @@ const FlashcardsListPage: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="all">All subjects</SelectItem>
                   {subjects.map((subj) => (
-                    <SelectItem key={subj.id} value={subj.name}>
+                    <SelectItem key={subj.id || subj.name} value={subj.name}>
                       {subj.display_name || subj.name}
                     </SelectItem>
                   ))}
@@ -144,58 +147,68 @@ const FlashcardsListPage: React.FC = () => {
 
           {/* Flashcard Sets Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {sets.map((set) => (
-              <Card
-                key={set.id}
-                className="group hover:shadow-2xl transition-all duration-300 border-2 border-green-900/60 backdrop-blur-sm hover:-translate-y-1 rounded-2xl overflow-hidden"
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-2 flex-1">
-                      <CardTitle className="text-xl font-bold text-green-900 leading-tight">
-                        {set.title}
-                      </CardTitle>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge
-                          variant="secondary"
-                          className="bg-yellow-300 text-black border-2 border-black/40 hover:bg-yellow-400 rounded-md px-3 py-1"
-                        >
-                          {set.subject}
-                        </Badge>
-                        {set.topic && (
-                          <Badge
-                            variant="outline"
-                            className="border-yellow-400 text-black rounded-xl px-3 py-1"
-                          >
-                            {set.topic}
-                          </Badge>
-                        )}
+            {sets.map((set) => {
+              // ✅ Use stable unique key & navigation param
+              const setId = (set as any)._id || set.id;
+              return (
+                <Card
+                  key={setId}
+                  className="group hover:shadow-2xl transition-all duration-300 border-2 border-green-900/60 backdrop-blur-sm hover:-translate-y-1 rounded-2xl overflow-hidden"
+                >
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-2 flex-1">
+                        <CardTitle className="text-xl font-bold text-green-900 leading-tight">
+                          {set.title}
+                        </CardTitle>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {set.subject && (
+                            <Badge
+                              variant="secondary"
+                              className="bg-yellow-300 text-black border-2 border-black/40 hover:bg-yellow-400 rounded-md px-3 py-1"
+                            >
+                              {set.subject}
+                            </Badge>
+                          )}
+                          {(set as any).topic && (
+                            <Badge
+                              variant="outline"
+                              className="border-yellow-400 text-black rounded-xl px-3 py-1"
+                            >
+                              {(set as any).topic}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-2 bg-gradient-to-br from-green-900 to-green-800 rounded-xl shadow-lg text-white">
+                        <BookOpen className="h-5 w-5 text-yellow-400" />
                       </div>
                     </div>
-                    <div className="p-2 bg-gradient-to-br from-green-900 to-green-800 rounded-xl shadow-lg text-white">
-                      <BookOpen className="h-5 w-5 text-yellow-400" />
-                    </div>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
 
-                <CardContent className="pt-0 space-y-4">
-                  <CardDescription className="flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-slate-600" />
-                    <span className="text-slate-700">
-                      By {set.tutor?.full_name || "Unknown Tutor"}
-                    </span>
-                  </CardDescription>
+                  <CardContent className="pt-0 space-y-4">
+                    <CardDescription className="flex items-center gap-2 text-base">
+                      <User className="h-4 w-4 text-slate-600" />
+                      <span className="text-slate-700">
+                        By {(set as any).tutor?.full_name || "Unknown Tutor"}
+                      </span>
+                    </CardDescription>
 
-                  <Button
-                    onClick={() => navigate(`/student/flashcards/${set.id}`)}
-                    className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
-                  >
-                    Start Studying
-                    <GraduationCap className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    <Button
+                      onClick={() =>
+                        setId && navigate(`/student/flashcards/${setId}`)
+                      }
+                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                      disabled={!setId}
+                      title={!setId ? "Invalid set id" : "Start Studying"}
+                    >
+                      Start Studying
+                      <GraduationCap className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {/* Empty State */}

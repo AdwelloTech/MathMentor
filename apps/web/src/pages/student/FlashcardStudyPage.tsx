@@ -43,19 +43,44 @@ if (_vfs) (pdfMake as any).vfs = _vfs;
 
 const FlashcardStudyPage: React.FC = () => {
   const { setId } = useParams<{ setId: string }>();
-  const [setData, setSetData] = useState<
-    (FlashcardSet & { cards: Flashcard[] }) | null
-  >(null);
+  const [setData, setSetData] = useState<(FlashcardSet & { cards: Flashcard[] }) | null>(null);
   const [index, setIndex] = useState(0);
   const [showBack, setShowBack] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!setId) return;
     (async () => {
-      const s = await flashcards.student.getSet(setId);
-      setSetData(s);
-      setIndex(0);
-      setShowBack(false);
+      try {
+        setError(null);
+        setSetData(null);
+        setIndex(0);
+        setShowBack(false);
+
+        if (!setId) {
+          setError("No flashcard set selected.");
+          return;
+        }
+
+        // Load set meta
+        const s = await flashcards.student.getSet(setId);
+
+        // Load cards for this set (active by default)
+        const cards = await flashcards.student.getCards(setId);
+
+        setSetData({
+          id: (s as any).id ?? (s as any)._id ?? setId,
+          title: s.title,
+          subject: (s as any).subject ?? "",
+          topic: (s as any).topic,
+          cards: (cards || []).map((c: any) => ({
+            id: c.id ?? c._id ?? "",
+            front_text: c.front_text ?? c.question ?? "",
+            back_text: c.back_text ?? c.answer ?? "",
+          })),
+        });
+      } catch (e: any) {
+        setError(e?.message || "Failed to load flashcard set.");
+      }
     })();
   }, [setId]);
 
@@ -134,10 +159,26 @@ const FlashcardStudyPage: React.FC = () => {
 
     pdfMake
       .createPdf(dd)
-      .download(
-        `${(setData.title || "flashcards").replace(/[^a-z0-9\-\_]+/gi, "_")}_fast.pdf`
-      );
+      .download(`${(setData.title || "flashcards").replace(/[^a-z0-9\-\_]+/gi, "_")}_fast.pdf`);
   };
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-2xl rounded-2xl">
+          <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
+            <div className="p-4 bg-red-100 rounded-2xl">
+              <BookOpen className="h-8 w-8 text-red-600" />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-semibold text-red-700">Error</h3>
+              <p className="text-base text-slate-600">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!setData) {
     return (
@@ -324,7 +365,7 @@ const FlashcardStudyPage: React.FC = () => {
                   <motion.div
                     className="h-full bg-gradient-to-r from-green-900 to-yellow-400 rounded-full"
                     initial={{ width: 0 }}
-                    animate={{ width: `${((index + 1) / total) * 100}%` }}
+                    animate={{ width: `${((index + 1) / (setData.cards.length || 1)) * 100}%` }}
                     transition={{ duration: 0.3 }}
                   />
                 </div>
@@ -367,7 +408,9 @@ const FlashcardStudyPage: React.FC = () => {
 
           <Card className="bg-gradient-to-br from-slate-700 to-slate-800 border-0 shadow-xl rounded-2xl text-white">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-yellow-400 mb-2">{progressPct}%</div>
+              <div className="text-3xl font-bold text-yellow-400 mb-2">
+                {Math.round(((index + 1) / (setData.cards.length || 1)) * 100)}%
+              </div>
               <div className="text-sm font-medium opacity-90">Progress</div>
             </CardContent>
           </Card>

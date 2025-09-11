@@ -2,6 +2,7 @@ import express from 'express';
 import { crudRouter } from './crud.js';
 
 // Import all models
+import { adminAuthRouter } from './adminAuth.js';
 import AdminActivityLog from '../db/models/AdminActivityLog.js';
 import AdminCredentials from '../db/models/AdminCredentials.js';
 import AdminDashboardStats from '../db/models/AdminDashboardStats.js';
@@ -46,6 +47,7 @@ import TutorNotes from '../db/models/TutorNotes.js';
 const router = express.Router();
 
 // Register CRUD endpoints for each model
+router.use('/auth/admin', adminAuthRouter);
 router.use('/admin_activity_log', crudRouter(AdminActivityLog));
 router.use('/admin_credentials', crudRouter(AdminCredentials));
 router.use('/admin_dashboard_stats', crudRouter(AdminDashboardStats));

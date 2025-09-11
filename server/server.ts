@@ -201,18 +201,10 @@ const PackagePricing= model("PackagePricing",PackagePricingSchema,"package_prici
    App / Middleware
 ================================== */
 const app = express();
-
-// CORS and logging
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(cors());
 app.use(morgan("dev"));
-
-// ✅ JSON parser (pick ONE, here we use express built-in)
-app.use(express.json({ limit: "5mb", strict: true }));
-
-// ✅ URL-encoded form parser
-app.use(express.urlencoded({ extended: true, limit: "2mb" }));
-
-
+app.use(bodyParser.json({ limit: "5mb", strict: true }));
+app.use(bodyParser.text({ type: ["text/*", "application/x-www-form-urlencoded"], limit: "2mb" }));
 
 // avoid 304/stale bodies in dev
 app.set("etag", false);
@@ -222,100 +214,6 @@ app.use((_req, res, next) => {
   res.set("Expires", "0");
   next();
 });
-
-
-app.use((req, _res, next) => {
-  if (req.originalUrl.startsWith("/api/auth/admin/login")) {
-    console.log("[REQ] %s %s ct=%s", req.method, req.originalUrl, req.get("content-type"));
-  }
-  next();
-});
-
-app.post("/_echo", (req, res) => res.json({ body: req.body, url: req.originalUrl }));
-
-
-// Admin login route for frontend compatibility
-app.post('/api/auth/admin/login', async (req, res) => {
-  try {
-    const { email, password } = req.body || {};
-    if (!email || !password) {
-      return res.status(400).json({ ok: false, error: "email and password required" });
-    }
-    const emailLc = String(email).toLowerCase().trim();
-
-    // 1) ENV-based admin shortcut (dev)
-    const envEmail = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
-    const envPass = process.env.ADMIN_PASSWORD || "";
-    if (envEmail && emailLc === envEmail) {
-      let ok = false;
-      if (envPass.startsWith("$2")) ok = await bcrypt.compare(password, envPass);
-      else ok = password === envPass;
-
-      if (ok) {
-        const prof = await Profile.findOneAndUpdate(
-          { email: emailLc },
-          {
-            $setOnInsert: {
-              email: emailLc,
-              user_id: emailLc.replace(/[^a-z0-9]/gi, "") + "-id",
-              full_name: emailLc.split("@")[0],
-              role: "admin",
-              plan: "pro",
-              is_premium: true,
-            },
-          },
-          { new: true, upsert: true }
-        ).lean();
-        return res.json({
-          ok: true,
-          user: {
-            id: prof.user_id,
-            email: prof.email,
-            role: "admin",
-            profile: prof,
-          },
-        });
-      }
-      return res.status(401).json({ ok: false, error: "Invalid credentials" });
-    }
-
-    // 2) DB-based admin
-    const adm = await AdminUser.findOne({ email: emailLc, is_active: true }).lean();
-    if (!adm?.password_hash) {
-      return res.status(401).json({ ok: false, error: "Invalid credentials" });
-    }
-    const match = await bcrypt.compare(String(password), String(adm.password_hash));
-    if (!match) return res.status(401).json({ ok: false, error: "Invalid credentials" });
-
-    const prof = await Profile.findOneAndUpdate(
-      { email: emailLc },
-      {
-        $setOnInsert: {
-          email: emailLc,
-          user_id: emailLc.replace(/[^a-z0-9]/gi, "") + "-id",
-          full_name: emailLc.split("@")[0],
-          role: "admin",
-          plan: "pro",
-          is_premium: true,
-        },
-      },
-      { new: true, upsert: true }
-    ).lean();
-
-    res.json({
-      ok: true,
-      user: {
-        id: prof.user_id,
-        email: prof.email,
-        role: "admin",
-        profile: prof,
-      },
-    });
-  } catch (e: any) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
 
 /* ================================
    Helpers

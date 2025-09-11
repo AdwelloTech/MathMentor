@@ -1,174 +1,209 @@
-// apps/web/src/lib/adminAuth.ts
-import { supabase } from "./supabase";
+// src/lib/adminAuth.ts
+import axios, { AxiosError } from "axios";
 
-export interface AdminLoginResponse {
-  success: boolean;
-  admin_id?: string;
+/** Base URL: Vite env overrides; default to 8080 per your setup */
+const BASE_URL =
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_BASE_URL) ||
+  "http://localhost:8080";
+
+/** Optional explicit admin login path(s) (comma-separated allowed) */
+const ENV_PATHS: string[] = (() => {
+  const v = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_ADMIN_LOGIN_PATH) || "";
+  return v
+    .split(",")
+    .map((s: string) => s.trim())
+    .filter(Boolean);
+})();
+
+/** Shared axios instance */
+const api = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: false,
+});
+
+/** Types */
+export type AdminUser = {
+  id?: string;
+  _id?: string;
+  email: string;
+  role?: "admin" | string;
+  name?: string;
+};
+
+export type LoginResponse = {
+  token?: string;
+  access_token?: string;
   session_token?: string;
-  message: string;
+  user?: AdminUser;
+  // allow extra fields
+  [k: string]: any;
+};
+
+/** Storage / header helpers */
+const TOKEN_KEY = "admintoken";
+
+function setAuthHeader(token?: string) {
+  if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  else delete api.defaults.headers.common["Authorization"];
+}
+function getStoredToken(): string | undefined {
+  return localStorage.getItem(TOKEN_KEY) || undefined;
+}
+function saveToken(token: string) {
+  localStorage.setItem(TOKEN_KEY, token);
+  setAuthHeader(token);
 }
 
-export interface AdminSession {
-  valid: boolean;
-  admin_id?: string;
-  admin_email?: string;
+/** Normalize various token shapes into a single string */
+function pickToken(data: LoginResponse | any): string | undefined {
+  return data?.token || data?.access_token || data?.session_token || undefined;
 }
 
-type AnyObj = Record<string, any>;
+/** Build candidate endpoints */
+function getCandidatePaths(): string[] {
+  if (ENV_PATHS.length) return ENV_PATHS;
 
-export class AdminAuthService {
-  private static sessionTokenKey = "admin_session_token";
-  private static profileKey = "admin_profile";
+  // Expand this list if needed; most common placements first
+  return [
+    "/api/v1/auth/admin/login",
+    "/api/v1/admin/login",
+    "/api/auth/admin/login",
+    "/api/admin/login",
+    "/admin/login",
+    "/api/v1/auth/login",
+    "/api/auth/login",
+    "/auth/admin/login",
+    "/auth/login",
+    "/api/session/login",
+    "/api/login",
+    "/login",
+    // token/oidc-ish
+    "/api/auth/token",
+    "/auth/token",
+  ];
+}
 
-  // ---------------------------- helpers ----------------------------
-  private static saveToken(token: string) {
-    localStorage.setItem(this.sessionTokenKey, token);
-  }
-  private static loadToken(): string | null {
-    return localStorage.getItem(this.sessionTokenKey);
-  }
-  private static clearToken() {
-    localStorage.removeItem(this.sessionTokenKey);
-  }
-  private static saveProfile(p: AnyObj | null) {
-    if (p) localStorage.setItem(this.profileKey, JSON.stringify(p));
-    else localStorage.removeItem(this.profileKey);
-  }
-  private static loadProfile(): AnyObj | null {
-    try {
-      const s = localStorage.getItem(this.profileKey);
-      return s ? JSON.parse(s) : null;
-    } catch {
-      return null;
-    }
-  }
-  private static genToken() {
-    // lightweight client-side token
-    const rand = Math.random().toString(36).slice(2);
-    return `${Date.now().toString(36)}.${rand}`;
-    // (If you prefer crypto-strength in modern browsers:)
-    // const a = new Uint8Array(16); crypto.getRandomValues(a);
-    // return Array.from(a, x => x.toString(16).padStart(2, "0")).join("");
-  }
+/** Build candidate request bodies (field name permutations) */
+function getCandidateBodies(email: string, password: string) {
+  return [
+    { body: { email, password }, type: "json" as const },
+    { body: { username: email, password }, type: "json" as const },
+    { body: { identifier: email, password }, type: "json" as const },
+    // role hint (some backends require it)
+    { body: { email, password, role: "admin" }, type: "json" as const },
+    { body: { username: email, password, role: "admin" }, type: "json" as const },
 
-  // ----------------------------- LOGIN -----------------------------
-  static async loginAdmin(email: string, password: string): Promise<AdminLoginResponse> {
-    try {
-      console.log("Attempting admin login for:", email);
+    // OAuth2 password grant–style (urlencoded)
+    {
+      body: new URLSearchParams({
+        grant_type: "password",
+        username: email,
+        password,
+      }),
+      type: "urlencoded" as const,
+    },
+  ];
+}
 
-      // Our supabase.ts maps this RPC to POST /api/admin/verify_credentials
-      const { data, error } = await supabase.rpc("verify_admin_credentials", {
-        p_email: email,
-        p_password: password,
-      });
+/** Low-level attempt with one path + one body variant */
+async function tryOnce(path: string, variant: ReturnType<typeof getCandidateBodies>[number]) {
+  const isUrlEncoded = variant.type === "urlencoded";
+  const headers = isUrlEncoded
+    ? { "Content-Type": "application/x-www-form-urlencoded" }
+    : { "Content-Type": "application/json" };
 
-      if (error) {
-        console.error("Admin login RPC error:", error);
-        return { success: false, message: `Database error: ${error.message}` };
+  const payload = isUrlEncoded ? variant.body : JSON.stringify(variant.body);
+
+  const { data } = await api.post<LoginResponse>(path, payload, { headers });
+  return data;
+}
+
+/** Try multiple endpoints/payloads until one succeeds (or throw) */
+async function tryAdminLogin(email: string, password: string): Promise<LoginResponse> {
+  const endpoints = getCandidatePaths();
+  const bodies = getCandidateBodies(email, password);
+
+  const errors: { path: string; status?: number; msg?: string }[] = [];
+
+  for (const path of endpoints) {
+    for (const variant of bodies) {
+      try {
+        const data = await tryOnce(path, variant);
+        const token = pickToken(data);
+        if (token) saveToken(token);
+        // expose which path worked (handy for debugging)
+        (data as any).__login_path__ = path;
+        return data;
+      } catch (err) {
+        const ax = err as AxiosError;
+        const status = ax.response?.status;
+        const msg =
+          (ax.response?.data as any)?.error ??
+          (ax.response?.data as any)?.message ??
+          ax.message;
+        errors.push({ path, status, msg });
+
+        // Keep trying others; 404/405/501/400/401 are all acceptable to continue probing
+        continue;
       }
-
-      // API shape: { ok: true, data: { valid: boolean, profile?: {} } }
-      const raw = data as any;
-      console.log("Admin login RPC response:", raw);
-
-      const valid = Boolean(raw?.success ?? raw?.data?.valid ?? false);
-      const profile = (raw?.data?.profile ?? null) as AnyObj | null;
-
-      if (!valid) {
-        return { success: false, message: "Invalid email or password" };
-      }
-
-      // store profile + a client-side session token
-      const adminId =
-        profile?._id?.toString?.() ??
-        profile?.user_id ??
-        profile?.id ??
-        (email || "").toLowerCase();
-
-      const token = this.genToken();
-      this.saveToken(token);
-      this.saveProfile(profile);
-
-      console.log("Admin logged in. Stored token and profile.", { adminId });
-
-      return {
-        success: true,
-        admin_id: adminId,
-        session_token: token,
-        message: "Login successful",
-      };
-    } catch (err) {
-      console.error("Admin login error:", err);
-      return {
-        success: false,
-        message:
-          "Login failed: " + (err instanceof Error ? err.message : "Unknown error"),
-      };
     }
   }
 
-  // ----------------------- (client-only) session --------------------
-  // These were RPCs before; we keep signatures but do everything locally.
+  // Nothing worked
+  const last = errors[errors.length - 1];
+  const detail = last ? `(${last.status || "no-status"}) ${last.msg || "no message"}` : "";
+  throw new Error(`Admin login failed: no known endpoint accepted credentials. ${detail}`);
+}
 
-  private static async createSession(_adminId: string): Promise<{
-    success: boolean;
-    session_token?: string;
-    message?: string;
-  }> {
-    const token = this.genToken();
-    this.saveToken(token);
-    return { success: true, session_token: token };
-  }
+export const AdminAuthService = {
+  /** Primary login */
+  async login(email: string, password: string): Promise<LoginResponse> {
+    return tryAdminLogin(email, password);
+  },
 
-  static async validateSession(): Promise<AdminSession> {
-    const token = this.loadToken();
+  /** Alias used by your context */
+  async loginAdmin(email: string, password: string): Promise<LoginResponse> {
+    return this.login(email, password);
+  },
+
+  /** Init auth header from localStorage (call once on app start) */
+  bootstrap(): string | undefined {
+    const t = getStoredToken();
+    setAuthHeader(t);
+    return t;
+  },
+
+  /** Set/clear token manually */
+  setToken(token?: string) {
     if (!token) {
-      console.log("No session token found in localStorage");
-      return { valid: false };
+      localStorage.removeItem(TOKEN_KEY);
+      setAuthHeader(undefined);
+    } else {
+      saveToken(token);
     }
-    const profile = this.loadProfile();
-    if (!profile) {
-      console.log("No admin profile found; clearing token");
-      this.clearToken();
-      return { valid: false };
-    }
-    return {
-      valid: true,
-      admin_id:
-        profile?._id?.toString?.() ??
-        profile?.user_id ??
-        profile?.id ??
-        undefined,
-      admin_email: profile?.email ?? undefined,
-    };
-  }
+  },
 
-  static async logout(): Promise<boolean> {
-    try {
-      // No server RPC — just clear local state
-      this.clearToken();
-      this.saveProfile(null);
-      console.log("Admin session cleared");
-      return true;
-    } catch (e) {
-      console.error("Logout error:", e);
-      this.clearToken();
-      this.saveProfile(null);
-      return false;
-    }
-  }
+  /** Read token */
+  getToken(): string | undefined {
+    return getStoredToken();
+  },
 
-  static getSessionToken(): string | null {
-    return this.loadToken();
-  }
+  /** Logout */
+  logout() {
+    localStorage.removeItem(TOKEN_KEY);
+    setAuthHeader(undefined);
+  },
 
-  static isLoggedIn(): boolean {
-    return !!this.loadToken();
-  }
+  /** expose axios instance */
+  client: api,
+};
 
-  static async cleanExpiredSessions(): Promise<number> {
-    // No server-managed sessions; nothing to clean.
-    // Keep for API compatibility.
-    return 0;
-  }
+/** Standalone helpers (in case other modules import these) */
+export async function loginAdmin(email: string, password: string) {
+  return AdminAuthService.login(email, password);
 }
+export function setAdminAuthHeader(token?: string) {
+  AdminAuthService.setToken(token);
+}
+
+export default api;

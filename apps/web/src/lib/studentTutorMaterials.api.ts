@@ -1,11 +1,12 @@
-
 import axios from "axios";
 
 function getBaseUrl() {
   const url =
-    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_API_URL) ||
+    (typeof import.meta !== "undefined" &&
+      (import.meta as any)?.env?.VITE_API_URL) ||
     (typeof process !== "undefined"
-      ? (process as any)?.env?.VITE_API_URL || (process as any)?.env?.NEXT_PUBLIC_API_URL
+      ? (process as any)?.env?.VITE_API_URL ||
+        (process as any)?.env?.NEXT_PUBLIC_API_URL
       : "") ||
     "http://localhost:8000";
   return (url || "http://localhost:8000").replace(/\/$/, "");
@@ -28,5 +29,7 @@ export async function listTutorMaterials(filter: any = {}, limit = 100) {
 }
 
 export async function incrementMaterialDownload(materialId: string) {
-  await api.post(`/api/tutor_materials/${encodeURIComponent(materialId)}/downloads`);
+  await api.post(
+    `/api/tutor_materials/${encodeURIComponent(materialId)}/downloads`
+  );
 }

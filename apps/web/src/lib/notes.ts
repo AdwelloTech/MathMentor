@@ -30,9 +30,11 @@ export interface NoteCardProps {
 ---------------------------------------------------------------------------- */
 function getBaseUrl() {
   const url =
-    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_API_URL) ||
+    (typeof import.meta !== "undefined" &&
+      (import.meta as any)?.env?.VITE_API_URL) ||
     (typeof process !== "undefined"
-      ? (process as any)?.env?.VITE_API_URL || (process as any)?.env?.NEXT_PUBLIC_API_URL
+      ? (process as any)?.env?.VITE_API_URL ||
+        (process as any)?.env?.NEXT_PUBLIC_API_URL
       : "") ||
     "http://localhost:8000";
   return (url || "http://localhost:8000").replace(/\/$/, "");
@@ -131,9 +133,10 @@ export async function searchStudyNotes(
     const subMap = await getSubjectsMap();
     const out: StudyNoteWithDetails[] = notes.map((n) => {
       const id = (n?.id ?? n?._id ?? "").toString();
-      const sid = (n?.subject_id ?? n?.subject?.id ?? n?.subject?._id ?? null) as
-        | string
-        | null;
+      const sid = (n?.subject_id ??
+        n?.subject?.id ??
+        n?.subject?._id ??
+        null) as string | null;
       const s = sid ? subMap.get(sid) : undefined;
 
       return {
@@ -171,14 +174,15 @@ export async function getStudyNoteById(
 
     // Ensure we have subject details
     let subject: NoteSubject | null = null;
-    const sid =
-      (n?.subject_id ?? n?.subject?.id ?? n?.subject?._id ?? null) as
-        | string
-        | null;
+    const sid = (n?.subject_id ?? n?.subject?.id ?? n?.subject?._id ?? null) as
+      | string
+      | null;
 
     if (sid) {
       try {
-        const sr = await api.get(`/api/note_subjects/${encodeURIComponent(sid)}`);
+        const sr = await api.get(
+          `/api/note_subjects/${encodeURIComponent(sid)}`
+        );
         subject = unwrap(sr);
       } catch {
         // fallback: map from list
@@ -232,7 +236,9 @@ export async function incrementNoteViewCount(noteId: string): Promise<void> {
     } catch {
       // 3) Last resort: read-modify-write
       try {
-        const r = await api.get(`/api/study_notes/${encodeURIComponent(noteId)}`);
+        const r = await api.get(
+          `/api/study_notes/${encodeURIComponent(noteId)}`
+        );
         const note = unwrap(r);
         const next = Math.max(0, Number(note?.view_count ?? 0)) + 1;
         await api.patch(`/api/study_notes/${encodeURIComponent(noteId)}`, {
@@ -250,7 +256,9 @@ export async function incrementNoteViewCount(noteId: string): Promise<void> {
 /* ----------------------------------------------------------------------------
    UI helpers (unchanged)
 ---------------------------------------------------------------------------- */
-export function transformNoteForCard(note: StudyNoteWithDetails): NoteCardProps {
+export function transformNoteForCard(
+  note: StudyNoteWithDetails
+): NoteCardProps {
   return {
     id: note.id,
     title: note.title,

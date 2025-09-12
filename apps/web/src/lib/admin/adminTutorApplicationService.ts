@@ -9,7 +9,7 @@ export type TutorApplication = {
   created_at?: string | Date;
 };
 
-export class AdminTutorApplicationService {
+class AdminTutorApplicationService {
   private api: AxiosInstance;
   constructor(api?: AxiosInstance) { this.api = api ?? getApi(); }
 
@@ -23,13 +23,13 @@ export class AdminTutorApplicationService {
   }
 
   async approve(_id: string): Promise<void> {
-    throw new Error("approve() not supported by the current API. Please add a PATCH /api/tutor_applications/:id on the server.");
+    // Not supported by current server; provide a client-only guard.
+    throw new Error("approve() not supported by the current API. Please add a PATCH /api/tutor_applications/:id route on the server.");
   }
 
   async reject(_id: string, _reason?: string): Promise<void> {
-    throw new Error("reject() not supported by the current API. Please add a PATCH /api/tutor_applications/:id on the server.");
+    throw new Error("reject() not supported by the current API. Please add a PATCH /api/tutor_applications/:id route on the server.");
   }
 }
 
 export const adminTutorApplicationService = new AdminTutorApplicationService();
-export default adminTutorApplicationService;

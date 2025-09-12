@@ -6,7 +6,7 @@ export type Quiz = { id?: string; _id?: any; title?: string; subject?: string; i
 export type QuizQuestion = { id?: string; _id?: any; quiz_id?: string; text?: string; options?: any[]; correct_answer?: any };
 export type QuizAttempt = { id?: string; _id?: any; quiz_id?: string; user_id?: string; email?: string; score?: number; created_at?: string | Date };
 
-export class AdminQuizService {
+class AdminQuizService {
   private api: AxiosInstance;
   constructor(api?: AxiosInstance) { this.api = api ?? getApi(); }
 
@@ -43,4 +43,3 @@ export class AdminQuizService {
 }
 
 export const adminQuizService = new AdminQuizService();
-export default adminQuizService;

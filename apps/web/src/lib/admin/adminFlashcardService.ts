@@ -9,6 +9,7 @@ export type FlashcardSet = {
   grade?: string;
   is_active?: boolean;
   created_at?: string | Date; updated_at?: string | Date;
+  // optional embedded cards
   cards?: Array<{ q: string; a: string; order?: number; is_active?: boolean }>;
 };
 
@@ -21,7 +22,7 @@ export type Flashcard = {
   is_active?: boolean;
 };
 
-export class AdminFlashcardService {
+class AdminFlashcardService {
   private api: AxiosInstance;
   constructor(api?: AxiosInstance) { this.api = api ?? getApi(); }
 
@@ -45,6 +46,8 @@ export class AdminFlashcardService {
     return res.data as ListResp<Flashcard>;
   }
 
+  // The current server exposes read-only list endpoints.
+  // We still provide create/update/delete that attempt common REST paths and throw a helpful error if 404.
   private notSupported(name: string): never {
     throw new Error(`${name} is not supported by the current API (read-only). Add server routes for writes.`);
   }
@@ -59,4 +62,3 @@ export class AdminFlashcardService {
 }
 
 export const adminFlashcardService = new AdminFlashcardService();
-export default adminFlashcardService;

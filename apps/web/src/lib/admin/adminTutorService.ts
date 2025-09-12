@@ -21,18 +21,15 @@ export type TutorStats = {
   inactive?: number;
 };
 
-export class AdminTutorService {
+class AdminTutorService {
   private api: AxiosInstance;
   constructor(api?: AxiosInstance) { this.api = api ?? getApi(); }
 
   async listTutors(params?: { search?: string; limit?: number; offset?: number; onlyActive?: boolean }): Promise<ListResp<Profile>> {
     const { search, limit=100, offset=0, onlyActive=false } = params || {};
     const rx = search ? { $or: [{ email: search }, { name: search }, { user_id: search }] } : {};
-    const query: any = {
-      ...rx,
-      $or: [{ role: /tutor/i }, { role_name: /tutor/i }, { user_role: /tutor/i }, { user_type: /tutor/i }, { type: /tutor/i }],
-      ...(onlyActive ? { is_active: true } : {}),
-    };
+    const query: any = { ...rx, $or: [{ role: /tutor/i }, { role_name: /tutor/i }, { user_role: /tutor/i }, { user_type: /tutor/i }, { type: /tutor/i }] };
+    if (onlyActive) query.is_active = true;
     const res = await this.api.get("/api/profiles", {
       params: { q: q(query), limit, offset, sort: sort({ createdAt: -1 }) },
     });
@@ -40,6 +37,7 @@ export class AdminTutorService {
   }
 
   async getTutorStats(): Promise<TutorStats> {
+    // Prefer using the server aggregate if available
     const agg = await this.api.get("/api/admin/dashboard/summary");
     const totals = agg.data?.totals || {};
     const recent = agg.data?.last_7_days || {};
@@ -54,4 +52,3 @@ export class AdminTutorService {
 }
 
 export const adminTutorService = new AdminTutorService();
-export default adminTutorService;

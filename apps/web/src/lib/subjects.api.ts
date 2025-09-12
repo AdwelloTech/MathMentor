@@ -10,9 +10,11 @@ function getBaseUrl(): string {
       (import.meta as any)?.env?.VITE_API_URL);
 
   const fromNode =
-    (typeof process !== "undefined" && (process as any)?.env?.VITE_API_BASE_URL) ||
+    (typeof process !== "undefined" &&
+      (process as any)?.env?.VITE_API_BASE_URL) ||
     (typeof process !== "undefined" && (process as any)?.env?.VITE_API_URL) ||
-    (typeof process !== "undefined" && (process as any)?.env?.NEXT_PUBLIC_API_URL);
+    (typeof process !== "undefined" &&
+      (process as any)?.env?.NEXT_PUBLIC_API_URL);
 
   const fromWindow =
     typeof window !== "undefined" ? (window as any).__API_BASE_URL__ : "";

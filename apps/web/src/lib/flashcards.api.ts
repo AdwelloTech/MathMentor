@@ -1,14 +1,29 @@
-
 import axios from "axios";
 
-export type Flashcard = { _id?: string; set_id: string; front_text: string; back_text: string; card_order?: number };
-export type FlashcardSet = { _id?: string; tutor_profile_id?: string; title: string; subject_id?: string; grade_level_code?: string; description?: string; is_active?: boolean };
+export type Flashcard = {
+  _id?: string;
+  set_id: string;
+  front_text: string;
+  back_text: string;
+  card_order?: number;
+};
+export type FlashcardSet = {
+  _id?: string;
+  tutor_profile_id?: string;
+  title: string;
+  subject_id?: string;
+  grade_level_code?: string;
+  description?: string;
+  is_active?: boolean;
+};
 
 function getBaseUrl() {
   const url =
-    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_API_URL) ||
+    (typeof import.meta !== "undefined" &&
+      (import.meta as any)?.env?.VITE_API_URL) ||
     (typeof process !== "undefined"
-      ? (process as any)?.env?.VITE_API_URL || (process as any)?.env?.NEXT_PUBLIC_API_URL
+      ? (process as any)?.env?.VITE_API_URL ||
+        (process as any)?.env?.NEXT_PUBLIC_API_URL
       : "") ||
     "http://localhost:8000";
   return (url || "http://localhost:8000").replace(/\/$/, "");

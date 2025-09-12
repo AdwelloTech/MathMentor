@@ -44,9 +44,9 @@ export type Student = {
 };
 
 export type PackageInfo = {
-  package_type: string;      // e.g. "free" | "silver" | "gold"
-  display_name: string;      // e.g. "Free", "Silver", "Gold"
-  price_monthly: number;     // cents
+  package_type: string; // e.g. "free" | "silver" | "gold"
+  display_name: string; // e.g. "Free", "Silver", "Gold"
+  price_monthly: number; // cents
   features?: string[];
 };
 
@@ -65,7 +65,9 @@ function isAxios404(err: any) {
 /** === Core class === */
 export class AdminStudentServiceClass {
   private api: AxiosInstance;
-  constructor(api?: AxiosInstance) { this.api = api ?? getApi(); }
+  constructor(api?: AxiosInstance) {
+    this.api = api ?? getApi();
+  }
 
   /** Maps Mongo profile -> UI Student */
   private mapProfileToStudent(p: any): Student {
@@ -86,7 +88,8 @@ export class AdminStudentServiceClass {
       id,
       student_id: String(p?.student_id ?? p?.user_id ?? p?.email ?? id),
       email: p?.email ?? "",
-      full_name: name || [p?.first_name, p?.last_name].filter(Boolean).join(" "),
+      full_name:
+        name || [p?.first_name, p?.last_name].filter(Boolean).join(" "),
       first_name: p?.first_name ?? first,
       last_name: p?.last_name ?? last,
       package: pkg,
@@ -118,8 +121,12 @@ export class AdminStudentServiceClass {
       subscription_end_date: p?.subscription_end_date ?? null,
 
       last_login: lastLogin,
-      created_at: (p?.created_at ?? p?.createdAt ?? null) && new Date(p?.created_at ?? p?.createdAt).toISOString(),
-      updated_at: (p?.updated_at ?? p?.updatedAt ?? null) && new Date(p?.updated_at ?? p?.updatedAt).toISOString(),
+      created_at:
+        (p?.created_at ?? p?.createdAt ?? null) &&
+        new Date(p?.created_at ?? p?.createdAt).toISOString(),
+      updated_at:
+        (p?.updated_at ?? p?.updatedAt ?? null) &&
+        new Date(p?.updated_at ?? p?.updatedAt).toISOString(),
     };
   }
 
@@ -135,19 +142,43 @@ export class AdminStudentServiceClass {
     const offset = (page - 1) * pageSize;
 
     const rx = params?.search
-      ? { $or: [{ email: params.search }, { name: params.search }, { user_id: params.search }] }
+      ? {
+          $or: [
+            { email: params.search },
+            { name: params.search },
+            { user_id: params.search },
+          ],
+        }
       : {};
-    const query: any = { ...rx, ...(params?.onlyActive ? { is_active: true } : {}) };
+
+    const studentRoleOr = [
+      { role: "student" },
+      { role_name: "student" },
+      { user_role: "student" },
+      { user_type: "student" },
+      { type: "student" },
+    ];
+
+    const query: any = {
+      ...rx,
+      $or: studentRoleOr,
+      ...(params?.onlyActive ? { is_active: true } : {}),
+    };
 
     try {
       const res = await this.api.get("/api/profiles", {
-        params: { q: q(query), limit: pageSize, offset, sort: sort({ createdAt: -1 }) },
+        params: {
+          q: q(query),
+          limit: pageSize,
+          offset,
+          sort: sort({ createdAt: -1 }),
+        },
       });
-      const items: any[] = res.data?.items ?? [];
+      const items: any[] = res.data?.items ?? res.data?.data ?? [];
       return items.map((p) => this.mapProfileToStudent(p));
     } catch (err: any) {
-      if (isAxios404(err)) return []; // soft fallback if route isn’t exposed yet
-      throw err;
+      console.error("Error fetching students:", err);
+      return [];
     }
   }
 
@@ -160,15 +191,20 @@ export class AdminStudentServiceClass {
       const items: any[] = res.data?.items ?? [];
       const mapped = items.map((p) => {
         const pkg: PackageInfo = {
-          package_type: String(p?.code ?? p?.slug ?? p?.name ?? "custom").toLowerCase(),
-          display_name: String(p?.display_name ?? p?.title ?? p?.name ?? "Plan"),
-          price_monthly: Number(
-            p?.price_monthly ??
-            p?.monthly_price ??
-            p?.price ??
-            0
+          package_type: String(
+            p?.code ?? p?.slug ?? p?.name ?? "custom"
+          ).toLowerCase(),
+          display_name: String(
+            p?.display_name ?? p?.title ?? p?.name ?? "Plan"
           ),
-          features: Array.isArray(p?.features) ? p.features : (Array.isArray(p?.benefits) ? p.benefits : undefined),
+          price_monthly: Number(
+            p?.price_monthly ?? p?.monthly_price ?? p?.price ?? 0
+          ),
+          features: Array.isArray(p?.features)
+            ? p.features
+            : Array.isArray(p?.benefits)
+            ? p.benefits
+            : undefined,
         };
         return pkg;
       });
@@ -176,17 +212,47 @@ export class AdminStudentServiceClass {
       // If nothing in DB, provide defaults so UI keeps working
       if (!mapped.length) {
         return [
-          { package_type: "free",   display_name: "Free",   price_monthly: 0,    features: ["Basic access"] },
-          { package_type: "silver", display_name: "Silver", price_monthly: 1999, features: ["Notes", "Quizzes"] },
-          { package_type: "gold",   display_name: "Gold",   price_monthly: 3999, features: ["All features", "Priority support"] },
+          {
+            package_type: "free",
+            display_name: "Free",
+            price_monthly: 0,
+            features: ["Basic access"],
+          },
+          {
+            package_type: "silver",
+            display_name: "Silver",
+            price_monthly: 1999,
+            features: ["Notes", "Quizzes"],
+          },
+          {
+            package_type: "gold",
+            display_name: "Gold",
+            price_monthly: 3999,
+            features: ["All features", "Priority support"],
+          },
         ];
       }
       return mapped;
     } catch {
       return [
-        { package_type: "free",   display_name: "Free",   price_monthly: 0,    features: ["Basic access"] },
-        { package_type: "silver", display_name: "Silver", price_monthly: 1999, features: ["Notes", "Quizzes"] },
-        { package_type: "gold",   display_name: "Gold",   price_monthly: 3999, features: ["All features", "Priority support"] },
+        {
+          package_type: "free",
+          display_name: "Free",
+          price_monthly: 0,
+          features: ["Basic access"],
+        },
+        {
+          package_type: "silver",
+          display_name: "Silver",
+          price_monthly: 1999,
+          features: ["Notes", "Quizzes"],
+        },
+        {
+          package_type: "gold",
+          display_name: "Gold",
+          price_monthly: 3999,
+          features: ["All features", "Priority support"],
+        },
       ];
     }
   }
@@ -209,16 +275,34 @@ export class AdminStudentServiceClass {
       const dash = await this.api.get("/api/admin/dashboard/summary");
       total = Number(dash.data?.totals?.students ?? 0);
       recent = Number(dash.data?.last_7_days?.new_users ?? 0);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     // 2) Active/inactive via /api/profiles if available
     const studentRoleOr = [
-      { role: "student" }, { role_name: "student" }, { user_role: "student" }, { user_type: "student" }, { type: "student" },
+      { role: "student" },
+      { role_name: "student" },
+      { user_role: "student" },
+      { user_type: "student" },
+      { type: "student" },
     ];
     try {
       const [aRes, iRes] = await Promise.all([
-        this.api.get("/api/profiles", { params: { q: q({ $or: studentRoleOr, is_active: true }), limit: 1, offset: 0 } }),
-        this.api.get("/api/profiles", { params: { q: q({ $or: studentRoleOr, is_active: false }), limit: 1, offset: 0 } }),
+        this.api.get("/api/profiles", {
+          params: {
+            q: q({ $or: studentRoleOr, is_active: true }),
+            limit: 1,
+            offset: 0,
+          },
+        }),
+        this.api.get("/api/profiles", {
+          params: {
+            q: q({ $or: studentRoleOr, is_active: false }),
+            limit: 1,
+            offset: 0,
+          },
+        }),
       ]);
       active = Number(aRes.data?.total ?? 0);
       inactive = Number(iRes.data?.total ?? 0);
@@ -233,10 +317,14 @@ export class AdminStudentServiceClass {
       });
       const subs: any[] = subsRes.data?.items ?? [];
       for (const s of subs) {
-        const key = String(s?.plan_id ?? s?.package_id ?? s?.plan ?? s?.package ?? "free").toLowerCase();
+        const key = String(
+          s?.plan_id ?? s?.package_id ?? s?.plan ?? s?.package ?? "free"
+        ).toLowerCase();
         byPackage[key] = (byPackage[key] ?? 0) + 1;
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     return { total, active, inactive, recentRegistrations: recent, byPackage };
   }
@@ -246,8 +334,9 @@ export class AdminStudentServiceClass {
 export const adminStudentService = new AdminStudentServiceClass();
 export const AdminStudentService = {
   // keep your current calls working
-  getAllStudents: (p?: Parameters<AdminStudentServiceClass["getAllStudents"]>[0]) =>
-    adminStudentService.getAllStudents(p),
+  getAllStudents: (
+    p?: Parameters<AdminStudentServiceClass["getAllStudents"]>[0]
+  ) => adminStudentService.getAllStudents(p),
   getPackages: () => adminStudentService.getPackages(),
   getPackageInfo: () => adminStudentService.getPackageInfo(),
   getStudentStats: () => adminStudentService.getStudentStats(),

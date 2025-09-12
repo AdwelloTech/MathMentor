@@ -1,11 +1,12 @@
-
 import axios from "axios";
 
 function getBaseUrl() {
   const url =
-    (typeof import.meta !== "undefined" && (import.meta as any)?.env?.VITE_API_URL) ||
+    (typeof import.meta !== "undefined" &&
+      (import.meta as any)?.env?.VITE_API_URL) ||
     (typeof process !== "undefined"
-      ? (process as any)?.env?.VITE_API_URL || (process as any)?.env?.NEXT_PUBLIC_API_URL
+      ? (process as any)?.env?.VITE_API_URL ||
+        (process as any)?.env?.NEXT_PUBLIC_API_URL
       : "") ||
     "http://localhost:8000";
   return (url || "http://localhost:8000").replace(/\/$/, "");
@@ -28,13 +29,13 @@ export async function bookSession(payload: {
   return res.data?.data;
 }
 
-export async function listSessions(filter:any = {}, limit=100) {
+export async function listSessions(filter: any = {}, limit = 100) {
   const res = await api.get("/api/session_bookings", {
     params: {
       q: JSON.stringify(filter),
       sort: JSON.stringify({ createdAt: -1 }),
-      limit
-    }
+      limit,
+    },
   });
   return res.data?.data ?? [];
 }

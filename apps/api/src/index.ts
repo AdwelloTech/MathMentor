@@ -197,8 +197,7 @@ const QuizAttempt   = model("QuizAttempt",   QuizAttemptSchema,  "quiz_attempts"
 const AdminUser     = model("AdminUser",     AdminUserSchema,    "admin_users");
 const PackagePricing= model("PackagePricing",PackagePricingSchema,"package_pricing");
 
-// expose profiles list endpoint
-expose(Profile, "profile");
+// Models are now available for use in routes
 
 
 /* ================================

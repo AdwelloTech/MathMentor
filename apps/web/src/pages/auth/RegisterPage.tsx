@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { UserPlusIcon } from "@heroicons/react/24/solid";
-import { Facebook, Instagram, Youtube, Linkedin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import {
@@ -73,7 +72,7 @@ const RegisterPage: React.FC = () => {
   } = useForm<RegisterFormData>();
 
   const watchedRole = watch("role");
-  const watchedPackage = watch("package");
+  const watchedPackage = watch("package") || "free";
 
   const onSubmit = async (data: RegisterFormData) => {
     if (data.password !== data.confirmPassword) {
@@ -227,7 +226,7 @@ const RegisterPage: React.FC = () => {
         initial={{ x: -24, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative hidden lg:flex items-center justify-center overflow-hidden"
+        className="relative hidden lg:flex items-center justify-center overflow-hidden h-screen"
       >
         {/* Decorative rounded gradient card with content inside */}
         <div className="absolute inset-10 rounded-3xl bg-gradient-to-br from-[#1f6d37] via-[#1c5d30] to-[#144d23] overflow-visible">
@@ -431,7 +430,7 @@ const RegisterPage: React.FC = () => {
           </svg>
 
           {/* Content wrapper */}
-          <div className="relative z-10 h-full w-full flex flex-col items-center text-center text-white px-8 pt-12 md:pt-16">
+          <div className="relative z-10 h-full w-full flex flex-col items-center text-center text-white px-8 pt-12 md:pt-16 pb-32">
             <motion.h1
               className="text-4xl font-bold leading-tight mb-3"
               initial={{ opacity: 0, y: 12 }}
@@ -441,7 +440,7 @@ const RegisterPage: React.FC = () => {
               Master Math. Unlock Your Potential.
             </motion.h1>
             <motion.p
-              className="text-white/90 max-w-[640px] mb-8"
+              className="text-white/90 max-w-[640px] mb-8 z-20 relative"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -450,17 +449,17 @@ const RegisterPage: React.FC = () => {
               achieve top results in your GCSE, A-Levels, and beyond — all in
               one place.
             </motion.p>
-
-            {/* Popped-out image at the bottom of the card */}
-            <motion.img
-              src={"src/assets/student-register.png"}
-              alt="Student"
-              className="pointer-events-none absolute -translate-x-1/2 bottom-[-42px] w-[88%] max-w-[680px] object-contain drop-shadow-2xl"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            />
           </div>
+
+          {/* Popped-out image at the bottom of the card */}
+          <motion.img
+            src={"src/assets/student-register.png"}
+            alt="Student"
+            className="pointer-events-none absolute right-8 bottom-[-32px] w-[75%] max-w-[580px] object-contain drop-shadow-2xl z-20"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
         </div>
       </motion.div>
 
@@ -469,7 +468,7 @@ const RegisterPage: React.FC = () => {
         initial={{ x: 24, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-white max-w-full flex flex-col justify-center items-center p-6 md:p-10 relative"
+        className="bg-white max-w-full flex flex-col justify-start items-center p-4 md:p-6 lg:p-10 relative overflow-y-auto h-screen"
       >
         {/* Brand header */}
 
@@ -483,7 +482,7 @@ const RegisterPage: React.FC = () => {
         {/* Registration Form */}
         <motion.form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6 w-full max-w-md"
+          className="space-y-6 w-full max-w-4xl pb-8"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -619,18 +618,20 @@ const RegisterPage: React.FC = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               transition={{ duration: 0.3 }}
-              className="space-y-4"
+              className="space-y-6"
             >
-              <Label>Select Package</Label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Label className="text-lg font-semibold text-gray-900">Select Package</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                 {availablePackages.map((pkg) => (
                   <label
                     key={pkg}
-                    className={`relative flex flex-col p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                    className={`relative flex flex-col p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 min-h-[280px] ${
                       watchedPackage === pkg
-                        ? "border-[#32a852] bg-green-50 shadow-lg"
+                        ? pkg === "gold" 
+                          ? "border-yellow-400 bg-yellow-50 shadow-lg scale-105"
+                          : "border-[#32a852] bg-green-50 shadow-lg scale-105"
                         : "border-gray-200 hover:border-gray-300 hover:shadow-md"
-                    } ${pkg === "gold" ? "ring-2 ring-yellow-400" : ""}`}
+                    }`}
                   >
                     <input
                       {...register("package", {
@@ -646,26 +647,22 @@ const RegisterPage: React.FC = () => {
 
                     {/* Popular badge for Gold */}
                     {pkg === "gold" && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <span className="bg-yellow-400 text-yellow-900 text-xs font-semibold px-3 py-1 rounded-full">
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                        <span className="bg-yellow-400 text-black text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-md">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                           Most Popular
                         </span>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <span className="font-bold text-gray-900 text-lg">
-                          {getPackageDisplayName(pkg)}
-                        </span>
-                        <div className="text-2xl font-bold text-[#32a852] mt-1">
-                          {PACKAGE_PRICING_DISPLAY[pkg]}
-                        </div>
-                      </div>
+                    {/* Radio button indicator */}
+                    <div className="flex justify-end mb-4">
                       <span
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                           watchedPackage === pkg
-                            ? "border-[#32a852] bg-[#32a852]"
+                            ? pkg === "gold"
+                              ? "border-yellow-400 bg-yellow-400"
+                              : "border-[#32a852] bg-[#32a852]"
                             : "border-gray-300"
                         }`}
                       >
@@ -675,22 +672,33 @@ const RegisterPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="text-sm text-gray-600 space-y-2 flex-grow">
+                    {/* Package header */}
+                    <div className="mb-4">
+                      <h3 className="font-bold text-gray-900 text-xl mb-2">
+                        {getPackageDisplayName(pkg)}
+                      </h3>
+                      <div className="text-2xl font-bold text-[#32a852]">
+                        {PACKAGE_PRICING_DISPLAY[pkg]}
+                      </div>
+                    </div>
+
+                    {/* Features list */}
+                    <div className="text-sm text-gray-600 space-y-3 flex-grow mb-6">
                       {getPackageFeatures(pkg).map((feature, index) => (
                         <div key={index} className="flex items-start">
-                          <span className="text-green-500 mr-2 mt-0.5 text-xs">
+                          <span className="text-green-500 mr-3 mt-0.5 text-sm font-bold">
                             ✓
                           </span>
-                          <span className="flex-1">{feature}</span>
+                          <span className="flex-1 leading-relaxed">{feature}</span>
                         </div>
                       ))}
                     </div>
 
                     {/* Payment indicator for paid packages */}
                     {pkg !== "free" && (
-                      <div className="mt-4 pt-3 border-t border-gray-200">
-                        <div className="flex items-center text-xs text-gray-500">
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      <div className="mt-auto pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-center">
+                          <span className="bg-green-100 text-green-800 text-xs font-medium px-3 py-2 rounded-full">
                             Secure Payment Required
                           </span>
                         </div>
@@ -953,21 +961,6 @@ const RegisterPage: React.FC = () => {
           </motion.div>
         </motion.form>
 
-        {/* Social icons footer */}
-        <div className="hidden lg:flex gap-3 items-center text-gray-500 absolute bottom-6 right-6">
-          <a href="#" aria-label="Facebook" className="hover:text-[#32a852]">
-            <Facebook className="h-5 w-5" />
-          </a>
-          <a href="#" aria-label="Instagram" className="hover:text-[#32a852]">
-            <Instagram className="h-5 w-5" />
-          </a>
-          <a href="#" aria-label="YouTube" className="hover:text-[#32a852]">
-            <Youtube className="h-5 w-5" />
-          </a>
-          <a href="#" aria-label="LinkedIn" className="hover:text-[#32a852]">
-            <Linkedin className="h-5 w-5" />
-          </a>
-        </div>
       </motion.div>
     </div>
   );

@@ -3,12 +3,16 @@ import axios, { AxiosError } from "axios";
 
 /** Base URL: Vite env overrides; default to 8080 per your setup */
 const BASE_URL =
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_BASE_URL) ||
-  "http://localhost:8080";
+  (typeof import.meta !== "undefined" &&
+    (import.meta as any).env?.VITE_API_BASE_URL) ||
+  "http://localhost:8000";
 
 /** Optional explicit admin login path(s) (comma-separated allowed) */
 const ENV_PATHS: string[] = (() => {
-  const v = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_ADMIN_LOGIN_PATH) || "";
+  const v =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as any).env?.VITE_ADMIN_LOGIN_PATH) ||
+    "";
   return v
     .split(",")
     .map((s: string) => s.trim())
@@ -91,7 +95,10 @@ function getCandidateBodies(email: string, password: string) {
     { body: { identifier: email, password }, type: "json" as const },
     // role hint (some backends require it)
     { body: { email, password, role: "admin" }, type: "json" as const },
-    { body: { username: email, password, role: "admin" }, type: "json" as const },
+    {
+      body: { username: email, password, role: "admin" },
+      type: "json" as const,
+    },
 
     // OAuth2 password grant–style (urlencoded)
     {
@@ -106,7 +113,10 @@ function getCandidateBodies(email: string, password: string) {
 }
 
 /** Low-level attempt with one path + one body variant */
-async function tryOnce(path: string, variant: ReturnType<typeof getCandidateBodies>[number]) {
+async function tryOnce(
+  path: string,
+  variant: ReturnType<typeof getCandidateBodies>[number]
+) {
   const isUrlEncoded = variant.type === "urlencoded";
   const headers = isUrlEncoded
     ? { "Content-Type": "application/x-www-form-urlencoded" }
@@ -119,7 +129,10 @@ async function tryOnce(path: string, variant: ReturnType<typeof getCandidateBodi
 }
 
 /** Try multiple endpoints/payloads until one succeeds (or throw) */
-async function tryAdminLogin(email: string, password: string): Promise<LoginResponse> {
+async function tryAdminLogin(
+  email: string,
+  password: string
+): Promise<LoginResponse> {
   const endpoints = getCandidatePaths();
   const bodies = getCandidateBodies(email, password);
 
@@ -151,8 +164,12 @@ async function tryAdminLogin(email: string, password: string): Promise<LoginResp
 
   // Nothing worked
   const last = errors[errors.length - 1];
-  const detail = last ? `(${last.status || "no-status"}) ${last.msg || "no message"}` : "";
-  throw new Error(`Admin login failed: no known endpoint accepted credentials. ${detail}`);
+  const detail = last
+    ? `(${last.status || "no-status"}) ${last.msg || "no message"}`
+    : "";
+  throw new Error(
+    `Admin login failed: no known endpoint accepted credentials. ${detail}`
+  );
 }
 
 export const AdminAuthService = {

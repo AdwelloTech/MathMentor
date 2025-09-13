@@ -8,7 +8,6 @@ import {
   ClockIcon,
   DocumentTextIcon,
   UserGroupIcon,
-  AcademicCapIcon,
   PhoneIcon,
   EnvelopeIcon,
   CalendarIcon,
@@ -17,12 +16,11 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import {
-  AdminTutorApplicationService,
-  TutorApplication,
+  adminTutorApplicationService,
   ApplicationStats,
 } from "@/lib/adminTutorApplicationService";
+import { TutorApplication } from "@/types/auth";
 import { useAdmin } from "@/contexts/AdminContext";
-import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -62,8 +60,8 @@ const ManageTutorApplicationsPage: React.FC = () => {
       setLoading(true);
       // Load applications and stats in parallel
       const [applicationsData, statsData] = await Promise.all([
-        AdminTutorApplicationService.getAllApplications(),
-        AdminTutorApplicationService.getApplicationStats(),
+        adminTutorApplicationService.getAllApplications(),
+        adminTutorApplicationService.getApplicationStats(),
       ]);
 
       setApplications(applicationsData);
@@ -133,84 +131,40 @@ const ManageTutorApplicationsPage: React.FC = () => {
         return;
       }
 
-      // Extract bucket and path from URL
-      const urlMatch = cvUrl.match(
-        /\/storage\/v1\/object\/public\/([^\/]+)\/(.+)/
-      );
-      if (!urlMatch) {
-        toast.error("Invalid CV URL format");
+      // Try direct URL fetch since we're using MongoDB backend
+      const response = await fetch(cvUrl);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          toast.error(
+            "CV file not found. The file may have been deleted or moved."
+          );
+        } else {
+          toast.error(`Failed to download CV. Error: ${response.status}`);
+        }
         return;
       }
 
-      const bucketName = urlMatch[1];
-      const filePath = urlMatch[2];
+      // Get the blob from the response
+      const blob = await response.blob();
 
-      // Try to download using Supabase storage client first
-      try {
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .download(filePath);
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
 
-        if (error) {
-          throw error;
-        }
+      // Create a temporary anchor element
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName || "cv.pdf";
 
-        if (data) {
-          // Create a blob URL
-          const blobUrl = window.URL.createObjectURL(data);
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-          // Create a temporary anchor element
-          const link = document.createElement("a");
-          link.href = blobUrl;
-          link.download = fileName || "cv.pdf";
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl);
 
-          // Append to body, click, and remove
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          // Clean up the blob URL
-          window.URL.revokeObjectURL(blobUrl);
-
-          toast.success("CV download started");
-          return;
-        }
-      } catch (storageError) {
-        // Fallback: Try direct URL fetch
-        const response = await fetch(cvUrl);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            toast.error(
-              "CV file not found. The file may have been deleted or moved."
-            );
-          } else {
-            toast.error(`Failed to download CV. Error: ${response.status}`);
-          }
-          return;
-        }
-
-        // Get the blob from the response
-        const blob = await response.blob();
-
-        // Create a blob URL
-        const blobUrl = window.URL.createObjectURL(blob);
-
-        // Create a temporary anchor element
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = fileName || "cv.pdf";
-
-        // Append to body, click, and remove
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Clean up the blob URL
-        window.URL.revokeObjectURL(blobUrl);
-
-        toast.success("CV download started");
-      }
+      toast.success("CV download started");
     } catch (error) {
       console.error("Error downloading CV:", error);
       toast.error("Failed to download CV. Please try again.");
@@ -229,7 +183,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
       let success = false;
 
       if (actionType === "approve") {
-        success = await AdminTutorApplicationService.approveApplication(
+        success = await adminTutorApplicationService.approveApplication(
           selectedApplication.id,
           adminSession.user.id,
           adminNotes || undefined
@@ -247,7 +201,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
           return;
         }
 
-        success = await AdminTutorApplicationService.rejectApplication(
+        success = await adminTutorApplicationService.rejectApplication(
           selectedApplication.id,
           adminSession.user.id,
           rejectionReason,
@@ -811,7 +765,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                             </div>
                             <div className="text-sm text-gray-500">
                               Size:{" "}
-                              {formatFileSize(selectedApplication.cv_file_size)}
+                              {formatFileSize(selectedApplication.cv_file_size || 0)}
                             </div>
                           </div>
                           <button

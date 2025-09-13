@@ -116,7 +116,7 @@ const ManageIDVerificationsPage: React.FC = () => {
     if (!selectedVerification) return;
 
     try {
-      setUpdatingStatus(selectedVerification.id);
+      setUpdatingStatus(selectedVerification._id);
 
       const statusMap = {
         approve: "approved" as const,
@@ -127,7 +127,7 @@ const ManageIDVerificationsPage: React.FC = () => {
       const newStatus = statusMap[actionType];
 
       await idVerificationService.updateVerificationStatus(
-        selectedVerification.id,
+        selectedVerification._id,
         newStatus,
         adminNotes,
         actionType === "reject" ? rejectionReason : undefined
@@ -135,7 +135,7 @@ const ManageIDVerificationsPage: React.FC = () => {
 
       setVerifications((prev) =>
         prev.map((v) =>
-          v.id === selectedVerification.id
+          v._id === selectedVerification._id
             ? {
                 ...v,
                 verification_status: newStatus,
@@ -173,7 +173,7 @@ const ManageIDVerificationsPage: React.FC = () => {
     try {
       setDeletingVerification(verificationId);
       await idVerificationService.deleteVerification(verificationId);
-      setVerifications((prev) => prev.filter((v) => v.id !== verificationId));
+      setVerifications((prev) => prev.filter((v) => v._id !== verificationId));
       toast.success("ID verification deleted successfully");
     } catch (error) {
       console.error("Error deleting verification:", error);
@@ -473,10 +473,10 @@ const ManageIDVerificationsPage: React.FC = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {filteredVerifications.map((verification) => {
-                        const profile = (verification as any).profiles;
+                        const profile = verification.profiles;
                         return (
                           <tr
-                            key={verification.id}
+                            key={verification._id}
                             className="hover:bg-gray-50"
                           >
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -486,7 +486,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                                 </div>
                                 <div className="ml-4">
                                   <div className="text-sm font-medium text-gray-900">
-                                    {profile?.full_name || "Unknown"}
+                                    {profile?.full_name || verification.full_name || "Unknown"}
                                   </div>
                                   <div className="text-sm text-gray-500">
                                     {profile?.email || "No email"}
@@ -554,19 +554,19 @@ const ManageIDVerificationsPage: React.FC = () => {
                                 {/* Delete Button */}
                                 <button
                                   onClick={() =>
-                                    handleDeleteVerification(verification.id)
+                                    handleDeleteVerification(verification._id)
                                   }
                                   disabled={
-                                    deletingVerification === verification.id
+                                    deletingVerification === verification._id
                                   }
                                   className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                                    deletingVerification === verification.id
+                                    deletingVerification === verification._id
                                       ? "opacity-50 cursor-not-allowed"
                                       : ""
                                   }`}
                                   title="Delete"
                                 >
-                                  {deletingVerification === verification.id ? (
+                                  {deletingVerification === verification._id ? (
                                     <LoadingSpinner size="sm" />
                                   ) : (
                                     <TrashIcon className="h-5 w-5" />
@@ -659,7 +659,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                           Email
                         </label>
                         <p className="mt-1 text-sm text-gray-900">
-                          {(selectedVerification as any).profiles?.email ||
+                          {selectedVerification.profiles?.email ||
                             "No email"}
                         </p>
                       </div>
@@ -679,7 +679,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                           Phone
                         </label>
                         <p className="mt-1 text-sm text-gray-900">
-                          {(selectedVerification as any).profiles?.phone ||
+                          {selectedVerification.profiles?.phone ||
                             "No phone"}
                         </p>
                       </div>
@@ -988,7 +988,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                   <button
                     onClick={handleUpdateStatus}
                     disabled={
-                      updatingStatus === selectedVerification.id ||
+                      updatingStatus === selectedVerification._id ||
                       (actionType === "reject" && !rejectionReason.trim())
                     }
                     className={`px-4 py-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -999,7 +999,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                         : "bg-gray-600 hover:bg-gray-700 focus:ring-gray-500"
                     }`}
                   >
-                    {updatingStatus === selectedVerification.id ? (
+                    {updatingStatus === selectedVerification._id ? (
                       <LoadingSpinner size="sm" />
                     ) : actionType === "approve" ? (
                       "Approve"

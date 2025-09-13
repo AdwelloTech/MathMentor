@@ -146,6 +146,7 @@ const TutorApplicationSchema = new Schema({}, loose);
 const TutorAvailabilitySchema = new Schema({}, loose);
 const TutorNoteSchema = new Schema({}, loose);
 const TutorNoteViewSchema = new Schema({}, loose);
+const IdVerificationSchema = new Schema({}, loose);
 
 const ClassSchema = new Schema({}, loose);
 const ClassEnrollmentSchema = new Schema({}, loose);
@@ -181,6 +182,7 @@ const TutorApplications = mongoose.model("tutor_applications", TutorApplicationS
 const TutorAvailability = mongoose.model("tutor_availability", TutorAvailabilitySchema, "tutor_availability");
 const TutorNotes = mongoose.model("tutor_notes", TutorNoteSchema, "tutor_notes");
 const TutorNoteViews = mongoose.model("tutor_note_views", TutorNoteViewSchema, "tutor_note_views");
+const IdVerifications = mongoose.model("id_verifications", IdVerificationSchema, "id_verifications");
 
 const Classes = mongoose.model("classes", ClassSchema, "classes");
 const ClassEnrollments = mongoose.model("class_enrollments", ClassEnrollmentSchema, "class_enrollments");
@@ -636,6 +638,7 @@ expose(TutorApplications, "tutor_applications");
 expose(TutorAvailability, "tutor_availability");
 expose(TutorNotes, "tutor_notes");
 expose(TutorNoteViews, "tutor_note_views");
+expose(IdVerifications, "id_verifications");
 expose(Subscriptions, "subscriptions");
 expose(PackagePricing, "package_pricing");
 expose(PaymentHistory, "payment_history");

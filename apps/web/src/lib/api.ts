@@ -12,7 +12,7 @@ export function getApi(): AxiosInstance {
         (process as any)?.env?.NEXT_PUBLIC_API_URL
       : "") ||
     "http://localhost:8000";
-  const baseURL = String(url || "http://localhost:8080").replace(/\/$/, "");
+  const baseURL = String(url || "http://localhost:8000").replace(/\/$/, "");
   return axios.create({
     baseURL,
     headers: { "Content-Type": "application/json" },

@@ -649,6 +649,8 @@ expose(JitsiMeetings, "jitsi_meetings");
 expose(InstantRequests, "instant_requests");
 // expose list endpoint for profiles (add this next to the other expose() calls)
 expose(Profiles, "profiles");
+expose(FlashcardSets, "flashcard_sets");
+expose(Flashcards, "flashcards");
 
 
 // ---------------- Start ----------------

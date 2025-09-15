@@ -54,13 +54,6 @@ const ManageQuizzesPage: React.FC = () => {
     );
   }, [showQuizModal, selectedQuiz]);
 
-  // Prevent modal from closing unexpectedly
-  useEffect(() => {
-    if (showQuizModal && !selectedQuiz) {
-      console.warn("Modal is open but no quiz selected, closing modal");
-      setShowQuizModal(false);
-    }
-  }, [showQuizModal, selectedQuiz]);
 
   const loadData = async () => {
     try {
@@ -332,8 +325,8 @@ const ManageQuizzesPage: React.FC = () => {
                           onChange={(e) => setFilterSubject(e.target.value)}
                         >
                           <option value="all">All Subjects</option>
-                          {uniqueSubjects.map((subject) => (
-                            <option key={subject} value={subject}>
+                          {uniqueSubjects.map((subject, index) => (
+                            <option key={`subject-${index}-${subject}`} value={subject}>
                               {subject}
                             </option>
                           ))}
@@ -407,7 +400,7 @@ const ManageQuizzesPage: React.FC = () => {
                                   )}
                                   <div className="text-xs text-gray-400 flex items-center mt-1">
                                     <ClockIcon className="h-3 w-3 mr-1" />
-                                    {quiz.time_limit_minutes} minutes
+                                    {typeof quiz.time_limit_minutes === 'string' ? parseInt(quiz.time_limit_minutes) : quiz.time_limit_minutes} minutes
                                   </div>
                                 </div>
                               </td>
@@ -435,9 +428,9 @@ const ManageQuizzesPage: React.FC = () => {
                                 )}
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-900">
-                                {quiz.total_questions} questions
+                                {typeof quiz.total_questions === 'string' ? parseInt(quiz.total_questions) : quiz.total_questions} questions
                                 <div className="text-xs text-gray-500">
-                                  {quiz.total_points} points
+                                  {typeof quiz.total_points === 'string' ? parseInt(quiz.total_points) : quiz.total_points} points
                                 </div>
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-900">
@@ -554,13 +547,13 @@ const ManageQuizzesPage: React.FC = () => {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600">Questions</p>
                   <p className="font-semibold">
-                    {selectedQuiz.total_questions}
+                    {typeof selectedQuiz.total_questions === 'string' ? parseInt(selectedQuiz.total_questions) : selectedQuiz.total_questions}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600">Time Limit</p>
                   <p className="font-semibold">
-                    {selectedQuiz.time_limit_minutes} min
+                    {typeof selectedQuiz.time_limit_minutes === 'string' ? parseInt(selectedQuiz.time_limit_minutes) : selectedQuiz.time_limit_minutes} min
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">

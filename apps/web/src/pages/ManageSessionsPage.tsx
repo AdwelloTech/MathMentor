@@ -80,7 +80,6 @@ const ManageSessionsPage: React.FC = () => {
             sessionDate.getTime() - 5 * 60 * 1000
           );
 
-          const wasJoinable = sessionJoinability[booking.id] || false;
           const isNowJoinable = now >= fiveMinutesBeforeSession;
 
           newJoinability[booking.id] = isNowJoinable;
@@ -251,11 +250,16 @@ const ManageSessionsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <StudentPageWrapper backgroundClass="bg-gradient-to-br from-green-50 to-yellow-50">
-        <div className="p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-900"></div>
+      <StudentPageWrapper backgroundClass="bg-[#0f172a]">
+        <div className="min-h-screen" style={{
+          background:
+            "radial-gradient(1000px 600px at 50% -100px, rgba(255,255,255,0.08), transparent)",
+        }}>
+          <div className="p-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-300"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -264,8 +268,12 @@ const ManageSessionsPage: React.FC = () => {
   }
 
   return (
-    <StudentPageWrapper backgroundClass="bg-gradient-to-br from-green-50 to-yellow-50">
-      <div className="p-6">
+    <StudentPageWrapper backgroundClass="bg-[#0f172a]">
+      <div className="min-h-screen" style={{
+        background:
+          "radial-gradient(1000px 600px at 50% -100px, rgba(255,255,255,0.08), transparent)",
+      }}>
+        <div className="p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <motion.div
@@ -273,12 +281,10 @@ const ManageSessionsPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-4xl font-bold text-green-900 mb-3">
+            <h1 className="text-4xl font-extrabold text-yellow-300 drop-shadow-md tracking-tight mb-3">
               My Sessions
             </h1>
-            <p className="text-gray-600 text-lg">
-              Manage your upcoming sessions and join classes
-            </p>
+            <p className="text-white/90 text-lg max-w-2xl drop-shadow">Manage your upcoming sessions and join classes</p>
           </motion.div>
 
           {/* Error Message */}
@@ -288,9 +294,9 @@ const ManageSessionsPage: React.FC = () => {
               animate={{ opacity: 1 }}
               className="mb-6"
             >
-              <Alert className="border-red-200 bg-red-50">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-800">
+              <Alert className="border-yellow-300/40 bg-yellow-200/20 text-white">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="">
                   {error}
                 </AlertDescription>
               </Alert>
@@ -312,7 +318,7 @@ const ManageSessionsPage: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-900">
+                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-200 bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         {/* Session Info */}
@@ -324,10 +330,10 @@ const ManageSessionsPage: React.FC = () => {
                               </span>
                             </div>
                             <div>
-                              <p className="font-semibold text-green-900 text-lg">
+                              <p className="font-semibold text-yellow-300 text-lg">
                                 {session.tutor?.full_name || "Tutor"}
                               </p>
-                              <div className="flex items-center gap-1 text-sm text-gray-600">
+                              <div className="flex items-center gap-1 text-sm text-white/80">
                                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
                                 <span>
                                   {(
@@ -335,7 +341,7 @@ const ManageSessionsPage: React.FC = () => {
                                       ?.avg ?? 0
                                   ).toFixed(1)}
                                 </span>
-                                <span className="text-gray-500">
+                                <span className="text-white/60">
                                   (
                                   {tutorRatings[session.tutor?.id || ""]
                                     ?.count ?? 0}{" "}
@@ -356,32 +362,32 @@ const ManageSessionsPage: React.FC = () => {
                           </div>
 
                           {/* Subject */}
-                          <h3 className="text-xl font-bold text-green-900 mb-2">
+                          <h3 className="text-xl font-bold text-white mb-2">
                             {session.title}
                           </h3>
                           {session.description && (
-                            <p className="text-gray-700 mb-4 leading-relaxed">
+                            <p className="text-white/80 mb-4 leading-relaxed">
                               {session.description}
                             </p>
                           )}
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div className="flex items-center gap-3 text-gray-700">
-                              <CalendarDays className="w-5 h-5 text-green-700" />
+                            <div className="flex items-center gap-3 text-white/80">
+                              <CalendarDays className="w-5 h-5 text-yellow-300" />
                               <span className="font-medium">
                                 {formatDate(session.date)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-gray-700">
-                              <Clock className="w-5 h-5 text-green-700" />
+                            <div className="flex items-center gap-3 text-white/80">
+                              <Clock className="w-5 h-5 text-yellow-300" />
                               <span className="font-medium">
                                 {formatTime(session.start_time)} -{" "}
                                 {formatTime(session.end_time)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-gray-700">
-                              <DollarSign className="w-5 h-5 text-yellow-500" />
-                              <span className="font-bold text-yellow-600">
+                            <div className="flex items-center gap-3 text-white/80">
+                              <DollarSign className="w-5 h-5 text-yellow-400" />
+                              <span className="font-bold text-yellow-300">
                                 ${booking.payment_amount}
                               </span>
                             </div>
@@ -410,11 +416,11 @@ const ManageSessionsPage: React.FC = () => {
                               {/* Countdown to session availability */}
                               {!isJoinable &&
                                 sessionCountdowns[booking.id] > 0 && (
-                                  <div className="text-xs text-gray-500 text-center">
+                                  <div className="text-xs text-white/70 text-center">
                                     Available in {sessionCountdowns[booking.id]}{" "}
                                     minutes
                                     <br />
-                                    <span className="text-xs text-gray-400">
+                                    <span className="text-xs text-white/60">
                                       ({formatTime(session.start_time)})
                                     </span>
                                   </div>
@@ -485,13 +491,13 @@ const ManageSessionsPage: React.FC = () => {
               animate={{ opacity: 1 }}
               className="text-center py-16"
             >
-              <Card className="max-w-md mx-auto">
+              <Card className="max-w-md mx-auto bg-green-950/30 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl shadow-xl">
                 <CardContent className="p-8">
-                  <Calendar className="w-20 h-20 text-green-300 mx-auto mb-6" />
-                  <h3 className="text-2xl font-bold text-green-900 mb-3">
+                  <Calendar className="w-20 h-20 text-yellow-300 mx-auto mb-6" />
+                  <h3 className="text-2xl font-bold text-yellow-300 mb-3">
                     No upcoming sessions
                   </h3>
-                  <p className="text-gray-600 mb-6 text-lg">
+                  <p className="text-white/80 mb-6 text-lg">
                     Ready to start learning? Book your first session!
                   </p>
                   <Button
@@ -510,7 +516,7 @@ const ManageSessionsPage: React.FC = () => {
           <Dialog open={showDetails} onOpenChange={setShowDetails}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-green-900">
+                <DialogTitle className="text-2xl font-bold text-yellow-300">
                   Session Details
                 </DialogTitle>
               </DialogHeader>
@@ -518,22 +524,22 @@ const ManageSessionsPage: React.FC = () => {
               {selectedBooking && (
                 <div className="space-y-6">
                   {/* Basic Info */}
-                  <Card>
+                  <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl">
                     <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold text-green-900 mb-4">
+                      <h3 className="text-lg font-semibold text-white mb-4">
                         Session Information
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-white/70 mb-1">
                             Title
                           </label>
-                          <p className="text-green-900 font-semibold text-lg">
+                          <p className="text-yellow-300 font-semibold text-lg">
                             {selectedBooking.class?.title}
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-white/70 mb-1">
                             Status
                           </label>
                           <Badge
@@ -550,19 +556,19 @@ const ManageSessionsPage: React.FC = () => {
                           </Badge>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-white/70 mb-1">
                             Date
                           </label>
-                          <p className="text-gray-900 font-medium">
+                          <p className="text-white/90 font-medium">
                             {selectedBooking.class?.date &&
                               formatDate(selectedBooking.class.date)}
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-white/70 mb-1">
                             Time
                           </label>
-                          <p className="text-gray-900 font-medium">
+                          <p className="text-white/90 font-medium">
                             {selectedBooking.class?.start_time &&
                               selectedBooking.class?.end_time &&
                               `${formatTime(
@@ -573,18 +579,18 @@ const ManageSessionsPage: React.FC = () => {
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-white/70 mb-1">
                             Duration
                           </label>
-                          <p className="text-gray-900 font-medium">
+                          <p className="text-white/90 font-medium">
                             {selectedBooking.class?.duration_minutes} minutes
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-white/70 mb-1">
                             Amount Paid
                           </label>
-                          <p className="text-yellow-600 font-bold text-lg">
+                          <p className="text-yellow-300 font-bold text-lg">
                             ${selectedBooking.payment_amount}
                           </p>
                         </div>
@@ -594,12 +600,12 @@ const ManageSessionsPage: React.FC = () => {
 
                   {/* Description */}
                   {selectedBooking.class?.description && (
-                    <Card>
+                    <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl">
                       <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold text-green-900 mb-3">
+                        <h3 className="text-lg font-semibold text-white mb-3">
                           Description
                         </h3>
-                        <p className="text-gray-700 leading-relaxed">
+                        <p className="text-white/80 leading-relaxed">
                           {selectedBooking.class.description}
                         </p>
                       </CardContent>
@@ -608,9 +614,9 @@ const ManageSessionsPage: React.FC = () => {
 
                   {/* Tutor Info */}
                   {selectedBooking.class?.tutor && (
-                    <Card>
+                    <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl">
                       <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold text-green-900 mb-3">
+                        <h3 className="text-lg font-semibold text-white mb-3">
                           Tutor
                         </h3>
                         <div className="flex items-center gap-4">
@@ -620,13 +626,13 @@ const ManageSessionsPage: React.FC = () => {
                             </span>
                           </div>
                           <div>
-                            <p className="font-semibold text-green-900 text-lg">
+                            <p className="font-semibold text-yellow-300 text-lg">
                               {selectedBooking.class.tutor.full_name}
                             </p>
-                            <p className="text-gray-600">
+                            <p className="text-white/80">
                               {selectedBooking.class.tutor.email}
                             </p>
-                            <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
+                            <div className="flex items-center gap-1 text-sm text-white/80 mt-1">
                               <Star className="w-4 h-4 text-yellow-400 fill-current" />
                               <span>
                                 {(
@@ -634,7 +640,7 @@ const ManageSessionsPage: React.FC = () => {
                                     ?.avg ?? 0
                                 ).toFixed(1)}
                               </span>
-                              <span className="text-gray-500">
+                              <span className="text-white/60">
                                 (
                                 {tutorRatings[selectedBooking.class.tutor.id]
                                   ?.count ?? 0}{" "}
@@ -649,13 +655,13 @@ const ManageSessionsPage: React.FC = () => {
 
                   {/* Session Notes */}
                   {selectedBooking.notes && (
-                    <Card>
+                    <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl">
                       <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold text-green-900 mb-3">
+                        <h3 className="text-lg font-semibold text-white mb-3">
                           Session Notes
                         </h3>
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
-                          <p className="text-gray-700 leading-relaxed">
+                        <div className="bg-yellow-200/10 border border-yellow-400/30 rounded-lg p-4">
+                          <p className="text-white/80 leading-relaxed">
                             {selectedBooking.notes}
                           </p>
                         </div>
@@ -666,9 +672,9 @@ const ManageSessionsPage: React.FC = () => {
                   {/* Session Timer */}
                   {selectedBooking.class?.jitsi_meeting_url &&
                     selectedBooking.booking_status === "confirmed" && (
-                      <Card>
+                      <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl">
                         <CardContent className="p-6">
-                          <h3 className="text-lg font-semibold text-green-900 mb-3">
+                          <h3 className="text-lg font-semibold text-white mb-3">
                             Session Timer
                           </h3>
                           <SessionTimer
@@ -715,9 +721,9 @@ const ManageSessionsPage: React.FC = () => {
                   {/* Join Session */}
                   {selectedBooking.class?.jitsi_meeting_url &&
                     selectedBooking.booking_status === "confirmed" && (
-                      <Card>
+                      <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl">
                         <CardContent className="p-6">
-                          <h3 className="text-lg font-semibold text-green-900 mb-3">
+                          <h3 className="text-lg font-semibold text-white mb-3">
                             Join Session
                           </h3>
                           <div className="space-y-3">
@@ -740,12 +746,12 @@ const ManageSessionsPage: React.FC = () => {
                             {/* Countdown to session availability */}
                             {!isSessionJoinable(selectedBooking) &&
                               sessionCountdowns[selectedBooking.id] > 0 && (
-                                <div className="text-sm text-gray-500 text-center">
+                                <div className="text-sm text-white/70 text-center">
                                   Session will be available in{" "}
                                   {sessionCountdowns[selectedBooking.id]}{" "}
                                   minutes
                                   <br />
-                                  <span className="text-sm text-gray-400">
+                                  <span className="text-sm text-white/60">
                                     (Session starts at{" "}
                                     {selectedBooking.class &&
                                       formatTime(
@@ -765,6 +771,7 @@ const ManageSessionsPage: React.FC = () => {
           </Dialog>
         </div>
       </div>
+    </div>
     </StudentPageWrapper>
   );
 };

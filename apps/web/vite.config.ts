@@ -2,7 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// https://vitejs.dev/config/
 export default defineConfig({
   root: __dirname,
   plugins: [react()],
@@ -28,6 +27,8 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    // Add this line to allow your ngrok host
+    allowedHosts: ["prompt-thomson-pairs-fantasy.trycloudflare.com"],
   },
   preview: {
     port: 5000,

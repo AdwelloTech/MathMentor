@@ -35,6 +35,6 @@
     },
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["apps/web/src", "apps/api/src"],
+  "include": ["apps/web/src", "apps/api/src", "server/src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

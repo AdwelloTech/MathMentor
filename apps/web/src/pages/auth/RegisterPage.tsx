@@ -483,7 +483,7 @@ const RegisterPage: React.FC = () => {
         {/* Registration Form */}
         <motion.form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6 w-full max-w-md"
+          className="space-y-6 w-full max-w-3xl"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -626,7 +626,7 @@ const RegisterPage: React.FC = () => {
                 {availablePackages.map((pkg) => (
                   <label
                     key={pkg}
-                    className={`relative flex flex-col p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                    className={`relative flex flex-col p-4 pt-8 min-h-[420px] border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                       watchedPackage === pkg
                         ? "border-[#32a852] bg-green-50 shadow-lg"
                         : "border-gray-200 hover:border-gray-300 hover:shadow-md"
@@ -646,7 +646,7 @@ const RegisterPage: React.FC = () => {
 
                     {/* Popular badge for Gold */}
                     {pkg === "gold" && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                         <span className="bg-yellow-400 text-yellow-900 text-xs font-semibold px-3 py-1 rounded-full">
                           Most Popular
                         </span>

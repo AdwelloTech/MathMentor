@@ -16,7 +16,7 @@ import {
   X,
   Star,
   BookOpen,
-  Video,
+  // Video,
   CheckCircle,
   Loader2,
 } from "lucide-react";
@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 
 const BookSessionPage: React.FC = () => {
   const { user } = useAuth();
@@ -143,7 +144,7 @@ const BookSessionPage: React.FC = () => {
       setBookingLoading(selectedSession.class.id);
 
       // Create booking with payment information
-      await classSchedulingService.bookings.create(
+      await (classSchedulingService as any).bookings.create(
         selectedSession.class.id,
         user.id,
         selectedSession.class.price_per_session,
@@ -198,19 +199,19 @@ const BookSessionPage: React.FC = () => {
     return classType?.name || "Unknown";
   };
 
-  const getClassTypeIcon = (classTypeName: string) => {
-    switch (classTypeName.toLowerCase()) {
-      case "group":
-        return <Users className="w-4 h-4" />;
-      case "consultation":
-        return <BookOpen className="w-4 h-4" />;
-      case "one-on-one":
-      case "one-on-one extended":
-        return <Video className="w-4 h-4" />;
-      default:
-        return <BookOpen className="w-4 h-4" />;
-    }
-  };
+  // const getClassTypeIcon = (classTypeName: string) => {
+  //   switch (classTypeName.toLowerCase()) {
+  //     case "group":
+  //       return <Users className="w-4 h-4" />;
+  //     case "consultation":
+  //       return <BookOpen className="w-4 h-4" />;
+  //     case "one-on-one":
+  //     case "one-on-one extended":
+  //       return <Video className="w-4 h-4" />;
+  //     default:
+  //       return <BookOpen className="w-4 h-4" />;
+  //   }
+  // };
 
   const filteredSessions = sessions.filter((sessionResult) => {
     const session = sessionResult.class;
@@ -254,17 +255,28 @@ const BookSessionPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-green-900 mx-auto mb-4" />
-          <p className="text-green-800 font-medium">Loading sessions...</p>
+      <StudentPageWrapper backgroundClass="bg-[#0f172a]">
+        <div className="min-h-screen" style={{
+          background:
+            "radial-gradient(1000px 600px at 50% -100px, rgba(255,255,255,0.08), transparent)",
+        }}>
+          <div className="flex items-center justify-center py-24">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 animate-spin text-yellow-300 mx-auto mb-4" />
+              <p className="text-white font-medium">Loading sessions...</p>
+            </div>
+          </div>
         </div>
-      </div>
+      </StudentPageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <StudentPageWrapper backgroundClass="bg-[#0f172a]">
+      <div className="min-h-screen p-4 md:p-6" style={{
+        background:
+          "radial-gradient(1000px 600px at 50% -100px, rgba(255,255,255,0.08), transparent)",
+      }}>
       <div className="max-w-full mx-auto">
         {/* Header */}
         <motion.div
@@ -272,12 +284,10 @@ const BookSessionPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl md:text-4xl font-bold text-green-900 mb-3">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-yellow-300 drop-shadow-md tracking-tight mb-3">
             Book a Session
           </h1>
-          <p className="text-lg text-gray-700">
-            Find and book upcoming sessions with our expert tutors
-          </p>
+          <p className="text-lg text-white/90 max-w-2xl drop-shadow">Find and book upcoming sessions with our expert tutors</p>
         </motion.div>
 
         {/* Filters */}
@@ -286,9 +296,14 @@ const BookSessionPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <Card className="border-green-200 bg-white">
+          <Card className="mb-8 rounded-2xl shadow-2xl border border-yellow-400/30" style={{
+            background:
+              "linear-gradient(180deg, rgba(120,53,15,0.95), rgba(100,44,12,0.95)), repeating-linear-gradient(45deg, rgba(0,0,0,0.06) 0, rgba(0,0,0,0.06) 6px, rgba(0,0,0,0.08) 6px, rgba(0,0,0,0.08) 12px)",
+            boxShadow:
+              "0 8px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1)",
+          }}>
             <CardHeader className="pb-4">
-              <CardTitle className="text-green-900 flex items-center gap-2">
+              <CardTitle className="text-yellow-300 flex items-center gap-2 drop-shadow">
                 <Filter className="w-5 h-5" />
                 Filters
               </CardTitle>
@@ -297,17 +312,11 @@ const BookSessionPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Session Type Filter */}
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="session-type"
-                    className="text-gray-900 font-medium"
-                  >
+                  <Label htmlFor="session-type" className="text-white font-medium">
                     Session Type
                   </Label>
                   <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger
-                      id="session-type"
-                      className="border-green-900/60 focus:border-green-900 focus:ring-green-900"
-                    >
+                    <SelectTrigger id="session-type" className="bg-white/90 backdrop-blur">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>
@@ -323,7 +332,7 @@ const BookSessionPage: React.FC = () => {
 
                 {/* Date Filter */}
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="text-gray-900 font-medium">
+                  <Label htmlFor="date" className="text-white font-medium">
                     Date
                   </Label>
                   <Input
@@ -331,16 +340,13 @@ const BookSessionPage: React.FC = () => {
                     type="date"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
-                    className="border-green-900/60 focus:border-green-900 focus:ring-green-900"
+                    className="bg-white/90 backdrop-blur"
                   />
                 </div>
 
                 {/* Subject Filter */}
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="subject"
-                    className="text-gray-900 font-medium"
-                  >
+                  <Label htmlFor="subject" className="text-white font-medium">
                     Subject
                   </Label>
                   <Input
@@ -349,24 +355,24 @@ const BookSessionPage: React.FC = () => {
                     placeholder="e.g., Math, Physics"
                     value={filterSubject}
                     onChange={(e) => setFilterSubject(e.target.value)}
-                    className="border-green-900/60 focus:border-green-900 focus:ring-green-900"
+                    className="bg-white/90 backdrop-blur"
                   />
                 </div>
 
                 {/* Search */}
                 <div className="space-y-2">
-                  <Label htmlFor="search" className="text-gray-900 font-medium">
+                  <Label htmlFor="search" className="text-white font-medium">
                     Search
                   </Label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-900" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/80" />
                     <Input
                       id="search"
                       type="text"
                       placeholder="Search sessions or tutors..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 border-green-900/60 focus:border-green-900 focus:ring-green-900"
+                      className="pl-10 bg-white/90 backdrop-blur"
                     />
                   </div>
                 </div>
@@ -386,7 +392,7 @@ const BookSessionPage: React.FC = () => {
                       setFilterSubject("");
                       setSearchTerm("");
                     }}
-                    className="border-green-900/60 text-gray-700 hover:bg-gray-50 hover:text-gray-800"
+                    className="ml-0 bg-white/90"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Clear all filters
@@ -404,8 +410,8 @@ const BookSessionPage: React.FC = () => {
             animate={{ opacity: 1 }}
             className="mb-6"
           >
-            <Alert className="border-red-200 bg-red-50">
-              <AlertDescription className="text-red-800">
+            <Alert className="border-yellow-300/40 bg-yellow-200/20 text-white">
+              <AlertDescription>
                 {error}
               </AlertDescription>
             </Alert>
@@ -427,7 +433,7 @@ const BookSessionPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="h-full flex flex-col border-green-900/60  transition-all duration-200 hover:shadow-lg bg-white">
+                <Card className="h-full flex flex-col transition-all duration-200 hover:shadow-xl bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between mb-3">
                       <Badge
@@ -439,7 +445,7 @@ const BookSessionPage: React.FC = () => {
                       <div className="text-right">
                         <Badge
                           variant="outline"
-                          className="border-yellow-400 border-2 text-black  text-lg font-bold px-3 py-1"
+                          className="border-yellow-400/60 text-yellow-300 text-lg font-bold px-3 py-1"
                         >
                           <DollarSign className="w-4 h-4 mr-1" />
                           {session.price_per_session}
@@ -448,18 +454,18 @@ const BookSessionPage: React.FC = () => {
                     </div>
 
                     {/* Title & Subject */}
-                    <h3 className="text-lg font-semibold text-gray-900 mt-2">
+                    <h3 className="text-lg font-semibold text-white mt-2">
                       {session.title}
                     </h3>
                     {session.subject && (
                       <div className="mt-1">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white">
                           {session.subject.display_name}
                         </span>
                       </div>
                     )}
                     {session.description && (
-                      <CardDescription className="text-gray-700 line-clamp-2">
+                      <CardDescription className="text-white/80 line-clamp-2">
                         {session.description}
                       </CardDescription>
                     )}
@@ -469,22 +475,22 @@ const BookSessionPage: React.FC = () => {
                     {/* Tutor Info */}
                     <div className="flex items-center gap-3 p-3 rounded-lg">
                       <Avatar className="w-12 h-12">
-                        <AvatarFallback className=" text-gray-900 font-semibold">
+                        <AvatarFallback className=" text-green-900 font-semibold bg-yellow-300">
                           {tutor.full_name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-yellow-300">
                           {tutor.full_name}
                         </p>
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm text-gray-700 font-medium">
+                          <span className="text-sm text-white/80 font-medium">
                             {(
                               tutorRatings[session.tutor?.id || tutor.id]?.avg ?? tutor.rating ?? 0
                             ).toFixed(1)}
                           </span>
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-white/60">
                             (
                             {tutorRatings[session.tutor?.id || tutor.id]?.count ?? tutor.total_reviews ?? 0} reviews)
                           </span>
@@ -494,21 +500,21 @@ const BookSessionPage: React.FC = () => {
 
                     {/* Session Details */}
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <CalendarDays className="w-4 h-4 text-gray-600" />
+                      <div className="flex items-center gap-3 text-white/80">
+                        <CalendarDays className="w-4 h-4 text-yellow-300" />
                         <span className="font-medium">
                           {formatDate(session.date)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <Clock className="w-4 h-4 text-gray-600" />
+                      <div className="flex items-center gap-3 text-white/80">
+                        <Clock className="w-4 h-4 text-yellow-300" />
                         <span className="font-medium">
                           {formatTime(session.start_time)} -{" "}
                           {formatTime(session.end_time)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <Users className="w-4 h-4 text-gray-600" />
+                      <div className="flex items-center gap-3 text-white/80">
+                        <Users className="w-4 h-4 text-yellow-300" />
                         <span className="font-medium">
                           {sessionResult.available_slots} of{" "}
                           {session.max_students} spots available
@@ -586,7 +592,8 @@ const BookSessionPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </StudentPageWrapper>
   );
 };
 

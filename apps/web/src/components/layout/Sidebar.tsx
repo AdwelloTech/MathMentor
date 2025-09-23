@@ -6,7 +6,6 @@ import {
   XMarkIcon,
   AcademicCapIcon,
   UserCircleIcon,
-  Cog6ToothIcon,
   SparklesIcon,
   CalendarDaysIcon,
   UserGroupIcon,
@@ -20,8 +19,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { getRoleDisplayName } from "@/utils/permissions";
-import { db } from "@/lib/db";
-import { supabase } from "@/lib/supabase";
+// import { db } from "@/lib/db";
+// import { supabase } from "@/lib/supabase";
 import type { TutorApplication } from "@/types/auth";
 import { cn } from "@/lib/utils";
 
@@ -124,12 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const hasIDVerification = !!idVerification;
 
   // Tutor features enabled if application + ID approved OR profile carries tutor flags
-  const hasTutorFlags =
-    profile?.role === "tutor" ||
-    profile?.is_tutor === true ||
-    profile?.features?.tutor === true ||
-    profile?.features?.tutor_dashboard === true ||
-    profile?.features?.tutor_subscription === true;
+  const hasTutorFlags = profile?.role === "tutor";
 
   const areTutorFeaturesEnabled =
     (isTutorApproved && isIDVerificationApproved && isTutorActive) || hasTutorFlags;
@@ -217,7 +211,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const isActive = (href: string) => location.pathname === href;
 
   // Get tooltip message based on application status
-  const getTooltipMessage = (item: any) => {
+  const getTooltipMessage = () => {
     if (profile?.role !== "tutor") return "";
 
     if (!isTutorActive) {
@@ -280,10 +274,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       const isHighPriority = highPriorityItems.includes(item.name);
 
       // Role-based colors
-      const isAdminItem = adminNavigation.some((nav) => nav.name === item.name);
-      const isTutorItem = tutorNavigationItems.some(
-        (nav) => nav.name === item.name
-      );
+      // const isAdminItem = adminNavigation.some((nav) => nav.name === item.name);
+      // const isTutorItem = tutorNavigationItems.some(
+      //   (nav) => nav.name === item.name
+      // );
       const isStudentItem =
         profile?.role === "student" &&
         [
@@ -318,8 +312,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       ].includes(item.name);
 
       // Time-based color adaptation (subtle)
-      const hour = new Date().getHours();
-      const isDayTime = hour >= 6 && hour <= 18;
+  // const hour = new Date().getHours();
+      // const isDayTime = hour >= 6 && hour <= 18;
 
       // Color assignment logic
       if (isHighPriority) {
@@ -350,22 +344,21 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
 
     const itemColors = getItemColor(item);
-    const isGreenActive = itemColors.primary === "green";
 
     // Dynamic class generation for context-aware colors
     const getActiveClasses = () => {
       if (itemColors.primary === "green") {
-        return "text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm";
+        return "text-yellow-300 bg-green-900/40 border border-yellow-400/30 shadow-inner";
       } else {
-        return "text-yellow-700 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 shadow-sm";
+        return "text-yellow-300 bg-green-900/40 border border-yellow-400/30 shadow-inner";
       }
     };
 
     const getHoverClasses = () => {
       if (itemColors.primary === "green") {
-        return "text-gray-700 hover:text-green-600 hover:bg-gradient-to-r hover:from-green-50/50 hover:to-emerald-50/50 border border-transparent hover:border-green-100";
+        return "text-white/80 hover:text-yellow-300 hover:bg-green-900/30 border border-transparent hover:border-yellow-400/20";
       } else {
-        return "text-gray-700 hover:text-yellow-600 hover:bg-gradient-to-r hover:from-yellow-50/50 hover:to-amber-50/50 border border-transparent hover:border-yellow-100";
+        return "text-white/80 hover:text-yellow-300 hover:bg-green-900/30 border border-transparent hover:border-yellow-400/20";
       }
     };
 
@@ -402,10 +395,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                 : "text-gray-400 bg-transparent hover:bg-gray-50/50 border border-transparent",
               !isHovered && "justify-center"
             )}
-            title={getTooltipMessage(item)}
+            title={getTooltipMessage()}
           >
-            <div className="relative opacity-50">
-              <item.icon className="h-5 w-5 shrink-0" />
+              <div className="relative opacity-80">
+              <item.icon className="h-5 w-5 shrink-0 text-white" />
             </div>
             <AnimatePresence>
               {isHovered && (
@@ -481,21 +474,16 @@ const Sidebar: React.FC<SidebarProps> = ({
               className={cn(
                 "h-5 w-5 shrink-0 transition-colors duration-200",
                 active
-                  ? isGreenActive
-                    ? "text-green-600"
-                    : "text-yellow-600"
-                  : "text-gray-600",
+                  ? "text-yellow-300"
+                  : "text-white/80",
                 !active &&
-                  (itemColors.primary === "green"
-                    ? "group-hover:text-green-600"
-                    : "group-hover:text-yellow-600")
+                  "group-hover:text-yellow-300"
               )}
             />
             {active && (
               <div
                 className={cn(
-                  "absolute -top-1 -right-1 w-2 h-2 rounded-full",
-                  isGreenActive ? "bg-green-500" : "bg-yellow-500"
+                  "absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-400"
                 )}
               />
             )}
@@ -519,7 +507,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div
               className={cn(
                 "absolute inset-0 rounded-xl",
-                isGreenActive ? "bg-green-100/20" : "bg-yellow-100/20"
+                "bg-yellow-400/10"
               )}
             />
           )}
@@ -548,7 +536,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       : "User";
 
     return (
-      <div className="border-t border-gray-200/50 pt-4 mt-4 mb-8">
+      <div className="border-t border-yellow-400/20 pt-4 mt-4 mb-8">
         <div
           className={cn(
             "flex items-center",
@@ -559,7 +547,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-3">
             {/* Profile Avatar */}
             <motion.div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white font-semibold text-sm">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-700 to-yellow-500 flex items-center justify-center text-white font-semibold text-sm">
                 {profile?.full_name
                   ? profile.full_name.charAt(0).toUpperCase()
                   : "U"}
@@ -570,10 +558,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             {/* Profile Details */}
             {isHovered && (
               <div className="flex flex-col overflow-hidden">
-                <span className="text-sm font-semibold text-gray-900 truncate max-w-[8rem]">
+                <span className="text-sm font-semibold text-white truncate max-w-[8rem]">
                   {displayName}
                 </span>
-                <span className="text-xs text-gray-500 truncate max-w-[8rem]">
+                <span className="text-xs text-white/70 truncate max-w-[8rem]">
                   {displayRole}
                 </span>
               </div>
@@ -589,9 +577,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.2 }}
                 onClick={onSignOut}
-                className="p-2 rounded-lg bg-green-50 border border-green-200 hover:bg-green-100 transition-colors duration-200"
+                className="p-2 rounded-lg bg-green-900/40 border border-yellow-400/30 hover:bg-green-900/60 text-yellow-300 transition-colors duration-200"
               >
-                <ArrowRightOnRectangleIcon className="w-5 h-5 text-green-600" />
+                <ArrowRightOnRectangleIcon className="w-5 h-5 text-yellow-300" />
               </motion.button>
             )}
           </AnimatePresence>
@@ -644,10 +632,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </motion.button>
                 </div>
 
-                <div className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 px-6 pb-4 shadow-2xl relative overflow-hidden">
+                <div className="flex grow flex-col bg-green-950/70 backdrop-blur-xl border-r border-yellow-400/20 px-6 pb-4 shadow-2xl relative overflow-hidden text-white">
                   {/* Subtle background pattern */}
-                  <div className="absolute inset-0 opacity-20">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-200/10 via-transparent to-yellow-200/10" />
+                  <div className="absolute inset-0 opacity-30">
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-900/40 via-green-950/30 to-green-900/40" />
                   </div>
 
                   <div className="relative z-10 flex flex-col h-full overflow-y-auto">
@@ -666,7 +654,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Collapsible sidebar for desktop */}
       <div id="sidebar-navigation" className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col">
         <motion.div
-          className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 shadow-xl relative overflow-hidden"
+          className="flex grow flex-col bg-green-950/70 backdrop-blur-xl border-r border-yellow-400/20 shadow-xl relative overflow-hidden text-white"
           animate={{
             width: isHovered ? 288 : 80, // 288px = 72 * 4 (lg:w-72), 80px for collapsed
           }}
@@ -675,8 +663,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Subtle background pattern */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-200/10 via-transparent to-yellow-200/10" />
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-900/40 via-green-950/30 to-green-900/40" />
           </div>
 
           <div className="relative z-10 flex flex-col h-full overflow-y-auto px-6 pb-4">

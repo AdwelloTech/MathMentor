@@ -11,10 +11,7 @@ import { useTutorial } from "@/contexts/TutorialContext";
 import { TutorialOverlay, TutorialPrompt } from "@/components/tutorial";
 import {
   BookOpenIcon,
-  CalendarDaysIcon,
-  ChartBarIcon,
   VideoCameraIcon,
-  StarIcon,
   ClockIcon,
   UserGroupIcon,
   AcademicCapIcon,
@@ -22,15 +19,12 @@ import {
   ArrowRightIcon,
   PlayIcon,
   DocumentTextIcon,
-  ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
-  TrophyIcon,
-  GiftIcon,
   LightBulbIcon,
-  CheckCircleIcon,
   CogIcon,
   ChartBarIcon as TrendingUpIcon,
 } from "@heroicons/react/24/outline";
+import { GraduationCap, Star, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPackageDisplayName } from "@/utils/permissions";
 import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
@@ -50,7 +44,7 @@ import type { Quiz } from "@/types/quiz";
 import type { FlashcardSet } from "@/types/flashcards";
 
 // Images (bellIcon currently unused; keeping imports intact per original)
-import bellIcon from "../../assets/bell.png";
+// removed unused bellIcon
 import logoutIcon from "../../assets/logout.png";
 
 interface DashboardData {
@@ -82,7 +76,7 @@ async function safeCall<T>(label: string, p: Promise<T>, fallback: T): Promise<T
 const StudentDashboard: React.FC = () => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const { shouldShowTutorial } = useTutorial();
+  // tutorial context not needed for UI here
 
   const handleLogout = async () => {
     try {
@@ -125,7 +119,9 @@ const StudentDashboard: React.FC = () => {
     ] = await Promise.all([
       safeCall(
         "stats.getStudentStats",
-        classSchedulingService.stats.getStudentStats(profile.user_id),
+        (classSchedulingService as any)?.stats?.getStudentStats
+          ? (classSchedulingService as any).stats.getStudentStats(profile.user_id)
+          : Promise.resolve(null as any),
         null
       ),
       safeCall("bookings.getByStudentId", loadUpcomingSessions(), []),
@@ -153,9 +149,8 @@ const StudentDashboard: React.FC = () => {
   const loadUpcomingSessions = async () => {
     if (!profile?.user_id) return [];
     try {
-      const allBookings = await classSchedulingService.bookings.getByStudentId(
-        profile.user_id,
-        { booking_status: "confirmed" }
+      const allBookings = await (classSchedulingService as any).bookings.getByStudentId(
+        profile.user_id
       );
 
       const now = new Date();
@@ -206,10 +201,9 @@ const StudentDashboard: React.FC = () => {
   const loadRecentQuizzes = async () => {
     if (!profile?.user_id) return [];
     try {
-      const recent = await quizService.studentQuizzes.getRecentQuizzes(
-        profile.user_id
-      );
-      if (recent.length > 0) return recent.slice(0, 3);
+      const recentGetter = (quizService as any)?.studentQuizzes?.getRecentQuizzes;
+      const recent = recentGetter ? await recentGetter(profile.user_id) : [];
+      if (recent && recent.length > 0) return recent.slice(0, 3);
 
       const available = await quizService.studentQuizzes.getAvailableQuizzes(
         profile.user_id
@@ -339,20 +333,14 @@ const StudentDashboard: React.FC = () => {
   }
 
   return (
-    <StudentPageWrapper backgroundClass="bg-[#D5FFC5]">
-      <div className="relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]" />
-        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse" />
-        <div
-          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        />
-        <div
-          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "2s" }}
-        />
-
+    <StudentPageWrapper backgroundClass="bg-[#0f172a]">
+      <div
+        className="min-h-screen relative overflow-hidden"
+        style={{
+          background:
+            "radial-gradient(1000px 600px at 50% -100px, rgba(255,255,255,0.08), transparent)",
+        }}
+      >
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -363,14 +351,41 @@ const StudentDashboard: React.FC = () => {
             {/* Header */}
             <motion.div variants={itemVariants}>
               <div className="pt-6 relative">
-                <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    Student Dashboard
-                  </h1>
-                  <div className="flex items-center space-x-4">
+                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-green-900/90 rounded-lg shadow-sm shadow-black/30">
+                        <GraduationCap className="h-8 w-8 text-white" />
+                      </div>
+                      <div>
+                        <h1 className="text-4xl font-extrabold text-yellow-300 drop-shadow-md tracking-tight">
+                          Student Dashboard
+                        </h1>
+                        <Badge
+                          variant="outline"
+                          className="border-yellow-300/40 text-yellow-300 mt-2 bg-green-900/60"
+                        >
+                          Learning Hub
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4 lg:shrink-0">
+                    {profile?.package !== "gold" && (
+                      <Button
+                        onClick={() => navigate("/packages")}
+                        size="lg"
+                        className="bg-yellow-400 hover:bg-yellow-500 text-green-900 font-semibold shadow-lg"
+                      >
+                        <Star className="h-5 w-5 mr-2" />
+                        Upgrade to Premium
+                        <Sparkles className="h-4 w-4 ml-2" />
+                      </Button>
+                    )}
                     <button
                       onClick={handleLogout}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-200"
+                      title="Sign out"
                     >
                       <img src={logoutIcon} alt="Logout" className="w-6 h-6" />
                     </button>
@@ -381,28 +396,28 @@ const StudentDashboard: React.FC = () => {
 
             {/* Welcome */}
             <motion.div variants={itemVariants}>
-              <Card id="dashboard-welcome" className="bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white border-0 shadow-[0_2px_2px_0_rgba(0,0,0,0.5)]">
+              <Card id="dashboard-welcome" className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl shadow-xl">
                 <CardHeader className="pb-4">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-2">
-                      <CardTitle className="text-3xl lg:text-4xl font-bold text-white">
+                      <CardTitle className="text-3xl lg:text-4xl font-bold text-yellow-300">
                         Welcome back, {profile?.full_name?.split(" ")[0]}! 👋
                       </CardTitle>
-                      <CardDescription className="text-white text-lg">
+                      <CardDescription className="text-white/80 text-lg">
                         Ready to continue your learning journey?
                       </CardDescription>
                     </div>
                     <div className="mt-6 lg:mt-0 flex items-center space-x-4">
                       <Badge
                         variant="secondary"
-                        className="bg-white/20 text-white border-white/20"
+                        className="bg-yellow-400/20 text-yellow-300 border-yellow-400/30"
                       >
                         {getPackageDisplayName(profile?.package || "free")}
                       </Badge>
                       {profile?.package !== "gold" && (
                         <Button
                           variant="secondary"
-                          className="bg-white text-[#199421] hover:bg-white/90 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+                          className="bg-yellow-400 text-green-900 hover:bg-yellow-500 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
                           onClick={() => navigate("/packages")}
                         >
                           <SparklesIcon className="w-4 h-4 mr-2" />
@@ -417,31 +432,31 @@ const StudentDashboard: React.FC = () => {
 
             {/* Package Status Card (gradient) */}
             <motion.div variants={itemVariants}>
-              <Card className="bg-gradient-to-r from-green-600 to-green-700 text-white border-0 shadow-2xl shadow-green-900/20">
+              <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl shadow-xl">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-3">
-                      <CardTitle className="text-xl">
+                      <CardTitle className="text-xl text-yellow-300 drop-shadow">
                         My Learning Package
                       </CardTitle>
                       <div className="space-y-2">
-                        <p className="text-green-100">
+                        <p className="text-white/80">
                           {getPackageProgress().used} of{" "}
                           {getPackageProgress().total} sessions used
                         </p>
                         <Progress
                           value={getPackageProgress().percentage}
-                          className="w-64 h-2 bg-white [&>div]:bg-yellow-400"
+                          className="w-64 h-2 bg-white/20 [&>div]:bg-yellow-400"
                         />
                       </div>
                       <div className="flex items-center space-x-4 text-sm">
                         <Badge
                           variant="secondary"
-                          className="border-yellow-500/20"
+                          className="border-yellow-400/30 text-yellow-300 bg-yellow-400/10"
                         >
                           {data.packageInfo?.display_name || "Free Package"}
                         </Badge>
-                        <span className="text-green-100">
+                        <span className="text-white/80">
                           {data.packageInfo?.price_monthly
                             ? `${formatCurrency(
                                 data.packageInfo.price_monthly
@@ -451,16 +466,16 @@ const StudentDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-bold">
+                      <div className="text-3xl font-bold text-yellow-300 drop-shadow">
                         {Math.max(data.upcomingSessions.length, 0)}
                       </div>
-                      <div className="text-green-100 text-sm">
+                      <div className="text-white/80 text-sm">
                         sessions remaining
                       </div>
                     </div>
                   </div>
                   <Button
-                    className="mt-4 bg-yellow-300 text-black hover:bg-yellow-200 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+                    className="mt-4 bg-yellow-400 text-green-900 hover:bg-yellow-500 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
                     onClick={() => navigate("/packages")}
                   >
                     <CurrencyDollarIcon className="w-4 h-4 mr-2" />
@@ -511,22 +526,22 @@ const StudentDashboard: React.FC = () => {
                   variants={itemVariants}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50">
+                  <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-green-900/20 transition-all duration-300 group">
                     <CardHeader className="pb-2">
                       <div
                         className={`${stat.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}
                       >
                         <stat.icon className="w-6 h-6 text-white" />
                       </div>
-                      <CardTitle className="text-2xl font-bold">
+                      <CardTitle className="text-2xl font-bold text-yellow-300 drop-shadow">
                         {stat.value}
                       </CardTitle>
-                      <CardDescription className="text-sm font-medium">
+                      <CardDescription className="text-sm font-medium text-white/80">
                         {stat.name}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-white/60">
                         {stat.description}
                       </p>
                     </CardContent>
@@ -539,14 +554,14 @@ const StudentDashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Study Materials (tall) */}
               <motion.div id="study-materials" variants={itemVariants} className="h-full">
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-full min-h[500px]">
+                <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl shadow-xl h-full min-h-[500px]">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                        <div className="bg-green-900/80 w-8 h-8 rounded-lg flex items-center justify-center shadow-inner">
                           <BookOpenIcon className="w-4 h-4 text-white" />
                         </div>
-                        <CardTitle>Study Materials</CardTitle>
+                        <CardTitle className="text-yellow-300 drop-shadow">Study Materials</CardTitle>
                       </div>
                     </div>
                   </CardHeader>
@@ -583,19 +598,19 @@ const StudentDashboard: React.FC = () => {
 
               {/* Learning Activity */}
               <motion.div variants={itemVariants}>
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+                <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl shadow-xl">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                        <div className="bg-green-900/80 w-8 h-8 rounded-lg flex items-center justify-center shadow-inner">
                           <ClockIcon className="w-4 h-4 text-white" />
                         </div>
-                        <CardTitle>Learning Activity</CardTitle>
+                        <CardTitle className="text-yellow-300 drop-shadow">Learning Activity</CardTitle>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-[#16803D] hover:text-[#16803D] hover:bg-green-50 font-medium"
+                        className="text-yellow-300 hover:text-yellow-400 hover:bg-yellow-400/10 font-medium"
                         onClick={() => navigate("/student/activity")}
                       >
                         View all
@@ -607,13 +622,13 @@ const StudentDashboard: React.FC = () => {
                     {/* Quizzes */}
                     <div id="recent-quizzes" className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">
+                        <h4 className="font-medium text-yellow-300 drop-shadow">
                           Recent Quizzes
                         </h4>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50 font-medium"
+                          className="text-yellow-300 hover:text-yellow-400 hover:bg-yellow-400/10 font-medium"
                           onClick={() => navigate("/student/quizzes")}
                         >
                           View all
@@ -658,7 +673,7 @@ const StudentDashboard: React.FC = () => {
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-white/60">
                           No recent quiz activity
                         </p>
                       )}
@@ -667,13 +682,13 @@ const StudentDashboard: React.FC = () => {
                     {/* Upcoming Sessions (moved here) */}
                     <div id="upcoming-sessions" className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">
+                        <h4 className="font-medium text-yellow-300 drop-shadow">
                           Upcoming Sessions
                         </h4>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50 font-medium"
+                          className="text-yellow-300 hover:text-yellow-400 hover:bg-yellow-400/10 font-medium"
                           onClick={() => navigate("/student/manage-sessions")}
                         >
                           View all
@@ -700,7 +715,7 @@ const StudentDashboard: React.FC = () => {
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-500">No upcoming sessions</p>
+                        <p className="text-sm text-white/60">No upcoming sessions</p>
                       )}
                     </div>
                   </CardContent>
@@ -710,10 +725,10 @@ const StudentDashboard: React.FC = () => {
 
             {/* Quick Actions */}
             <motion.div id="quick-actions" variants={itemVariants} className="mb-16">
-              <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+              <Card className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl shadow-xl">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                  <CardTitle className="flex items-center space-x-2 text-yellow-300 drop-shadow">
+                    <div className="bg-green-900/80 w-8 h-8 rounded-lg flex items-center justify-center shadow-inner">
                       <LightBulbIcon className="w-4 h-4 text-white" />
                     </div>
                     <span>Quick Actions</span>
@@ -753,20 +768,20 @@ const StudentDashboard: React.FC = () => {
                         whileTap={{ scale: 0.98 }}
                       >
                         <Card
-                          className="cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50 border-0"
+                          className="cursor-pointer hover:shadow-2xl hover:shadow-green-900/20 hover:-translate-y-1 transition-all duration-300 group bg-green-950/30 border border-yellow-400/10 backdrop-blur-sm rounded-xl"
                           onClick={action.action}
                         >
                           <CardContent className="p-6 text-center">
-                            <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg">
+                            <div className="bg-green-900/80 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg shadow-inner">
                               <action.icon className="w-6 h-6 text-white" />
                             </div>
-                            <h3 className="font-semibold text-gray-900 mb-2">
+                            <h3 className="font-semibold text-yellow-300 drop-shadow mb-2">
                               {action.title}
                             </h3>
-                            <p className="text-sm text-gray-600 mb-4">
+                            <p className="text-sm text-white/80 mb-4">
                               {action.description}
                             </p>
-                            <div className="bg-yellow-300 text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-all duration-200 shadow-md hover:shadow-lg">
+                            <div className="bg-yellow-400 text-green-900 px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-500 transition-all duration-200 shadow-md hover:shadow-lg">
                               Get Started
                             </div>
                           </CardContent>

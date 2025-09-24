@@ -97,9 +97,30 @@ export class FlashcardService {
     const flashcards = await Flashcard.find({ setId: set._id })
       .sort({ cardOrder: 1 });
 
+    const setObj = set.toObject();
     return {
-      ...set.toObject(),
-      flashcards
+      id: setObj._id.toString(),
+      tutor_id: setObj.tutorId,
+      title: setObj.title,
+      subject: setObj.subject,
+      topic: setObj.topic,
+      grade_level: setObj.gradeLevelId,
+      is_active: setObj.isActive,
+      created_at: setObj.createdAt,
+      updated_at: setObj.updatedAt,
+      tutor: setObj.tutorId && typeof setObj.tutorId === 'object' && 'fullName' in setObj.tutorId ? {
+        id: (setObj.tutorId as any)._id?.toString() || setObj.tutorId.toString(),
+        full_name: (setObj.tutorId as any).fullName || `${(setObj.tutorId as any).firstName} ${(setObj.tutorId as any).lastName}`,
+        email: (setObj.tutorId as any).email
+      } : undefined,
+      cards: flashcards.map(card => ({
+        id: card._id.toString(),
+        set_id: card.setId.toString(),
+        front_text: card.frontText,
+        back_text: card.backText,
+        card_order: card.cardOrder,
+        created_at: card.createdAt
+      }))
     };
   }
 
@@ -158,8 +179,22 @@ export class FlashcardService {
     const setsWithCount = await Promise.all(
       sets.map(async (set) => {
         const count = await Flashcard.countDocuments({ setId: set._id });
+        const setObj = set.toObject();
         return {
-          ...set.toObject(),
+          id: setObj._id.toString(),
+          tutor_id: setObj.tutorId,
+          title: setObj.title,
+          subject: setObj.subject,
+          topic: setObj.topic,
+          grade_level: setObj.gradeLevelId,
+          is_active: setObj.isActive,
+          created_at: setObj.createdAt,
+          updated_at: setObj.updatedAt,
+          tutor: setObj.tutorId && typeof setObj.tutorId === 'object' && 'fullName' in setObj.tutorId ? {
+            id: (setObj.tutorId as any)._id?.toString() || setObj.tutorId.toString(),
+            full_name: (setObj.tutorId as any).fullName || `${(setObj.tutorId as any).firstName} ${(setObj.tutorId as any).lastName}`,
+            email: (setObj.tutorId as any).email
+          } : undefined,
           flashcardCount: count
         };
       })
@@ -468,8 +503,22 @@ export class FlashcardService {
     const setsWithCount = await Promise.all(
       sets.map(async (set) => {
         const count = await Flashcard.countDocuments({ setId: set._id });
+        const setObj = set.toObject();
         return {
-          ...set.toObject(),
+          id: setObj._id.toString(),
+          tutor_id: setObj.tutorId,
+          title: setObj.title,
+          subject: setObj.subject,
+          topic: setObj.topic,
+          grade_level: setObj.gradeLevelId,
+          is_active: setObj.isActive,
+          created_at: setObj.createdAt,
+          updated_at: setObj.updatedAt,
+          tutor: setObj.tutorId && typeof setObj.tutorId === 'object' && 'fullName' in setObj.tutorId ? {
+            id: (setObj.tutorId as any)._id?.toString() || setObj.tutorId.toString(),
+            full_name: (setObj.tutorId as any).fullName || `${(setObj.tutorId as any).firstName} ${(setObj.tutorId as any).lastName}`,
+            email: (setObj.tutorId as any).email
+          } : undefined,
           flashcardCount: count
         };
       })

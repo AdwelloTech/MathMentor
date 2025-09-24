@@ -21,10 +21,12 @@ import { flashcards } from "@/lib/flashcards";
 import type { FlashcardSet } from "@/types/flashcards";
 
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { subjectsService } from "@/lib/subjects";
 import type { Subject } from "@/types/subject";
 
 const FlashcardsListPage: React.FC = () => {
+  const { profile } = useAuth();
   const [sets, setSets] = useState<FlashcardSet[]>([]);
   const [subject, setSubject] = useState("");
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -33,10 +35,12 @@ const FlashcardsListPage: React.FC = () => {
   const navigate = useNavigate();
 
   const load = async () => {
+    if (!profile?.user_id) return;
+
     try {
       setLoading(true);
       setError(null);
-      const data = await flashcards.student.listAvailable(subject || undefined);
+      const data = await flashcards.student.listAvailable(profile.user_id, subject || undefined);
       setSets(data || []);
     } catch (err) {
       console.error("Error loading flashcard sets:", err);
@@ -48,9 +52,11 @@ const FlashcardsListPage: React.FC = () => {
   };
 
   useEffect(() => {
-    load();
+    if (profile?.user_id) {
+      load();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subject]);
+  }, [subject, profile?.user_id]);
 
   useEffect(() => {
     (async () => {

@@ -29,6 +29,7 @@ import subjectsRoutes from './routes/subjects';
 import gradeLevelsRoutes from './routes/gradeLevels';
 import tutorialRoutes from './routes/tutorial';
 import tutorMaterialsRoutes from './routes/tutorMaterials';
+import profileImagesRoutes from './routes/profileImages';
 
 // Load environment variables
 dotenv.config();
@@ -59,6 +60,12 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Static file serving for uploads
+app.use('/uploads', express.static('uploads', {
+  maxAge: '1d', // Cache for 1 day
+  etag: true
+}));
+
 // Request logging
 app.use(requestLogger);
 
@@ -82,6 +89,7 @@ app.use('/api/subjects', subjectsRoutes);
 app.use('/api/grade-levels', gradeLevelsRoutes);
 app.use('/api/tutorial', tutorialRoutes);
 app.use('/api/tutor-materials', tutorMaterialsRoutes);
+app.use('/api/profile-images', profileImagesRoutes);
 
 // 404 handler
 app.use(notFound);

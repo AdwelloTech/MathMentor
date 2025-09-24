@@ -166,10 +166,15 @@ class ApiClient {
     const { skipAuth = false, retries = 1, ...fetchOptions } = options;
 
     // Prepare headers
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...((fetchOptions.headers as Record<string, string>) || {}),
-    };
+    const headers: Record<string, string> = {};
+
+    // Don't set Content-Type for FormData (let browser set it with boundary)
+    if (!(fetchOptions.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    // Add any additional headers
+    Object.assign(headers, (fetchOptions.headers as Record<string, string>) || {});
 
     // Add authorization header if not skipping auth and token exists
     if (!skipAuth && this.accessToken) {

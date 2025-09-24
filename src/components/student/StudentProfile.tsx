@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import {
   UserIcon,
   EnvelopeIcon,
-  AcademicCapIcon,
   HeartIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -32,8 +31,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { useGradeLevels, findGradeLevelById } from "@/lib/gradeLevels";
+import { useGradeLevels } from "@/lib/gradeLevels";
+import AuthService from "@/lib/authService";
 import { getActiveProfileImage } from "@/lib/profileImages";
 import ProfileImageUpload from "@/components/ui/ProfileImageUpload";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -92,62 +91,55 @@ const StudentProfile: React.FC = () => {
       try {
         setIsLoading(true);
 
-        // Fetch fresh profile data from database
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-
-        if (profileError) {
-          console.error("Error fetching fresh profile:", profileError);
-          return;
-        }
+        // Fetch fresh profile data from backend API
+        const fullProfile = await AuthService.getCurrentUser();
 
         // Update form data with fresh profile data
-        if (profileData) {
+        if (fullProfile) {
           setFormData({
             email: user.email || "",
-            firstName: profileData.first_name || "",
-            lastName: profileData.last_name || "",
-            phone: profileData.phone || "",
-            address: profileData.address || "",
-            gender: profileData.gender ?? undefined,
-            emergencyContact: profileData.emergency_contact || "",
-            age: profileData.age || undefined,
-            gradeLevelId: profileData.grade_level_id || undefined,
-            currentGrade: profileData.current_grade || "",
-            academicSet: profileData.academic_set || undefined,
+            firstName: fullProfile.first_name || "",
+            lastName: fullProfile.last_name || "",
+            phone: fullProfile.phone || "",
+            address: fullProfile.address || "",
+            gender: fullProfile.gender as "male" | "female" | "other" | undefined,
+            emergencyContact: fullProfile.emergency_contact || "",
+            age: fullProfile.age || undefined,
+            gradeLevelId: fullProfile.grade_level_id || undefined,
+            currentGrade: fullProfile.current_grade || "",
+            academicSet: fullProfile.academic_set as "Set 1" | "Set 2" | "Set 3" | "Set 4 (Foundation)" | undefined,
             hasLearningDisabilities:
-              profileData.has_learning_disabilities || false,
+              fullProfile.has_learning_disabilities || false,
             learningNeedsDescription:
-              profileData.learning_needs_description ?? "",
+              fullProfile.learning_needs_description ?? "",
             // Parent contact information
-            parentName: profileData.parent_name || "",
-            parentPhone: profileData.parent_phone || "",
-            parentEmail: profileData.parent_email || "",
+            parentName: fullProfile.parent_name || "",
+            parentPhone: fullProfile.parent_phone || "",
+            parentEmail: fullProfile.parent_email || "",
             // Location information
-            city: profileData.city || "",
-            postcode: profileData.postcode || "",
-            schoolName: profileData.school_name || "",
+            city: fullProfile.city || "",
+            postcode: fullProfile.postcode || "",
+            schoolName: fullProfile.school_name || "",
           });
 
           // Set profile image URL
-          setCurrentProfileImageUrl(profileData.profile_image_url || null);
+          setCurrentProfileImageUrl(fullProfile.avatar_url || null);
         }
 
-        // Also try to get the active profile image from profile_images table
-        const activeImage = await getActiveProfileImage(user.id);
-        if (activeImage) {
-          // Get the public URL for the active image
-          const {
-            data: { publicUrl },
-          } = supabase.storage
-            .from("profile-images")
-            .getPublicUrl(activeImage.file_path);
-
-          if (publicUrl) {
-            setCurrentProfileImageUrl(publicUrl);
+        // Get the active profile image from backend API
+        try {
+          const activeImage = await getActiveProfileImage(user.id);
+          if (activeImage) {
+            setCurrentProfileImageUrl(activeImage.url);
+          } else if (fullProfile.avatar_url) {
+            // Fallback to avatar_url from profile data
+            setCurrentProfileImageUrl(fullProfile.avatar_url);
+          }
+        } catch (error) {
+          console.error("Error fetching active profile image:", error);
+          // Fallback to avatar_url from profile data
+          if (fullProfile.avatar_url) {
+            setCurrentProfileImageUrl(fullProfile.avatar_url);
           }
         }
       } catch (error) {
@@ -230,6 +222,7 @@ const StudentProfile: React.FC = () => {
     }
   };
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -241,79 +234,66 @@ const StudentProfile: React.FC = () => {
         throw new Error("User not authenticated");
       }
 
-      // Prepare the update data mapping form fields to database fields
+      // Prepare the update data mapping form fields to backend API fields (snake_case for UserProfile)
       const updateData = {
         first_name: formData.firstName,
         last_name: formData.lastName,
-        full_name: `${formData.firstName} ${formData.lastName}`,
-        phone: formData.phone || null,
-        address: formData.address || null,
+        phone: formData.phone || undefined,
+        address: formData.address || undefined,
 
-        gender: formData.gender || null,
-        emergency_contact: formData.emergencyContact || null,
-        age: formData.age || null,
-        grade_level_id: formData.gradeLevelId || null,
-        current_grade: formData.currentGrade || null,
-        academic_set: formData.academicSet || null,
+        gender: formData.gender || undefined,
+        emergency_contact: formData.emergencyContact || undefined,
+        age: formData.age || undefined,
+        grade_level_id: formData.gradeLevelId || undefined,
+        current_grade: formData.currentGrade || undefined,
+        academic_set: formData.academicSet || undefined,
         has_learning_disabilities: formData.hasLearningDisabilities,
         learning_needs_description: formData.hasLearningDisabilities
-          ? formData.learningNeedsDescription || null
-          : null,
+          ? formData.learningNeedsDescription || undefined
+          : undefined,
 
         // Parent contact information
-        parent_name: formData.parentName || null,
-        parent_phone: formData.parentPhone || null,
-        parent_email: formData.parentEmail || null,
+        parent_name: formData.parentName || undefined,
+        parent_phone: formData.parentPhone || undefined,
+        parent_email: formData.parentEmail || undefined,
 
         // Location information
-        city: formData.city || null,
-        postcode: formData.postcode || null,
-        school_name: formData.schoolName || null,
-
-        updated_at: new Date().toISOString(),
+        city: formData.city || undefined,
+        postcode: formData.postcode || undefined,
+        school_name: formData.schoolName || undefined,
       };
 
       console.log("Updating profile with data:", updateData);
 
-      // Update the profile in the database
-      const { data, error } = await supabase
-        .from("profiles")
-        .update(updateData)
-        .eq("user_id", user.id)
-        .select()
-        .single();
+      // Update the profile via backend API
+      const updatedProfile = await AuthService.updateProfile(updateData);
 
-      if (error) {
-        console.error("Profile update error:", error);
-        throw error;
-      }
-
-      console.log("Profile updated successfully:", data);
+      console.log("Profile updated successfully:", updatedProfile);
 
       // Update AuthContext with the new profile data
       if (updateProfile) {
         // Build raw updates object (may contain undefined values)
         const rawUpdates = {
-          first_name: updateData.first_name,
-          last_name: updateData.last_name,
-          full_name: updateData.full_name,
-          phone: updateData.phone, // allow null
-          address: updateData.address, // allow null
-          gender: updateData.gender, // allow null
-          emergency_contact: updateData.emergency_contact, // allow null
-          age: updateData.age, // allow null
-          grade_level_id: updateData.grade_level_id, // allow null
-          has_learning_disabilities: updateData.has_learning_disabilities,
-          learning_needs_description: updateData.learning_needs_description, // allow null
+          first_name: updatedProfile.first_name,
+          last_name: updatedProfile.last_name,
+          full_name: updatedProfile.full_name,
+          phone: updatedProfile.phone, // allow null
+          address: updatedProfile.address, // allow null
+          gender: updatedProfile.gender, // allow null
+          emergency_contact: updatedProfile.emergency_contact, // allow null
+          age: updatedProfile.age, // allow null
+          grade_level_id: updatedProfile.grade_level_id, // allow null
+          has_learning_disabilities: updatedProfile.has_learning_disabilities,
+          learning_needs_description: updatedProfile.learning_needs_description, // allow null
           // Keep AuthContext in sync for the rest as well
-          current_grade: updateData.current_grade,
-          academic_set: updateData.academic_set,
-          parent_name: updateData.parent_name,
-          parent_phone: updateData.parent_phone,
-          parent_email: updateData.parent_email,
-          city: updateData.city,
-          postcode: updateData.postcode,
-          school_name: updateData.school_name,
+          current_grade: updatedProfile.current_grade,
+          academic_set: updatedProfile.academic_set,
+          parent_name: updatedProfile.parent_name,
+          parent_phone: updatedProfile.parent_phone,
+          parent_email: updatedProfile.parent_email,
+          city: updatedProfile.city,
+          postcode: updatedProfile.postcode,
+          school_name: updatedProfile.school_name,
         };
 
         // Remove undefined keys so Dexie.update leaves them untouched

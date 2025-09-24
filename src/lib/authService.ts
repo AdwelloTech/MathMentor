@@ -28,15 +28,32 @@ export interface AuthTokens {
 
 export interface BackendUser {
   id: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
   email: string;
   role: string;
-  avatarUrl?: string;
+  avatar_url?: string;
   phone?: string;
-  createdAt: string;
-  lastLogin?: string;
+  address?: string;
+  gender?: string;
+  emergency_contact?: string;
+  age?: number;
+  grade_level_id?: string;
+  current_grade?: string;
+  academic_set?: string;
+  has_learning_disabilities: boolean;
+  learning_needs_description?: string;
+  parent_name?: string;
+  parent_phone?: string;
+  parent_email?: string;
+  city?: string;
+  postcode?: string;
+  school_name?: string;
+  profile_image_url?: string;
+  created_at: string;
+  last_login?: string;
 }
 
 class AuthService {

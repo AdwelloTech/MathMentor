@@ -16,19 +16,15 @@ export type StudentPackage = "free" | "silver" | "gold";
 // Profile image interface from database
 export interface ProfileImage {
   id: string;
-  user_id: string;
-  profile_id: string;
-  file_name: string;
-  original_name: string;
-  file_path: string;
-  file_size: number;
-  mime_type: string;
-  width: number | null;
-  height: number | null;
-  is_active: boolean;
-  uploaded_at: string;
-  created_at: string;
-  updated_at: string;
+  fileName: string;
+  originalName: string;
+  fileSize: number;
+  mimeType: string;
+  width?: number;
+  height?: number;
+  url: string;
+  uploadedAt: Date;
+  isActive: boolean;
 }
 
 // Grade level interface from database
@@ -363,10 +359,12 @@ export interface ProfileImageUpload {
 // Profile image upload response
 export interface ProfileImageUploadResponse {
   id: string;
-  file_path: string;
-  file_name: string;
-  file_size: number;
+  fileName: string;
+  originalName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
   width?: number;
   height?: number;
-  public_url: string;
+  url: string;
 }

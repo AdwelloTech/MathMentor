@@ -15,6 +15,7 @@ export interface IUser extends Document {
   address?: string;
   dateOfBirth?: Date;
   gender?: 'male' | 'female' | 'other';
+  emergencyContact?: string;
 
   // Student specific fields
   studentId?: string;
@@ -49,10 +50,6 @@ export interface IUser extends Document {
   availability?: string;
   bio?: string;
 
-  // Tutorial fields
-  tutorialCompleted?: boolean;
-  tutorialDismissedCount?: number;
-  tutorialLastShown?: Date;
   certifications?: string[];
   languages?: string[];
   profileCompleted?: boolean;
@@ -108,6 +105,7 @@ const userSchema = new Schema<IUser>(
     address: { type: String },
     dateOfBirth: { type: Date },
     gender: { type: String, enum: ['male', 'female', 'other'] },
+    emergencyContact: { type: String },
 
     // Student specific fields
     studentId: { type: String, sparse: true },
@@ -145,10 +143,6 @@ const userSchema = new Schema<IUser>(
     languages: [{ type: String }],
     profileCompleted: { type: Boolean, default: false },
 
-    // Tutorial fields
-    tutorialCompleted: { type: Boolean, default: false },
-    tutorialDismissedCount: { type: Number, default: 0 },
-    tutorialLastShown: { type: Date },
 
     // Parent specific fields
     childrenIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],

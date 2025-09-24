@@ -245,4 +245,71 @@ export class AuthService {
     user.password = newPassword;
     await user.save();
   }
+
+  /**
+   * Update user profile
+   */
+  static async updateProfile(userId: string, updates: Partial<any>): Promise<any> {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Update allowed fields
+    const allowedFields = [
+      'firstName', 'lastName', 'fullName', 'phone', 'address', 'gender',
+      'emergencyContact', 'age', 'gradeLevelId', 'currentGrade', 'academicSet',
+      'hasLearningDisabilities', 'learningNeedsDescription', 'parentName',
+      'parentPhone', 'parentEmail', 'city', 'postcode', 'schoolName',
+      'avatarUrl', 'profileImageUrl'
+    ];
+
+    // Build update object with only allowed fields
+    const updateData: any = {};
+    for (const field of allowedFields) {
+      if (updates[field] !== undefined) {
+        // Convert field names to match database schema
+        const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
+        updateData[field] = updates[field];
+      }
+    }
+
+    // Update full name if first or last name changed
+    if (updates.firstName || updates.lastName) {
+      updateData.fullName = `${updates.firstName || user.firstName} ${updates.lastName || user.lastName}`;
+    }
+
+    // Apply updates
+    Object.assign(user, updateData);
+    await user.save();
+
+    return {
+      id: user._id.toString(),
+      user_id: user._id.toString(),
+      first_name: user.firstName,
+      last_name: user.lastName,
+      full_name: user.fullName,
+      email: user.email,
+      role: user.role,
+      avatar_url: user.avatarUrl,
+      phone: user.phone,
+      address: user.address,
+      gender: user.gender,
+      emergency_contact: user.emergencyContact,
+      age: (user as any).age, // Access virtual field
+      grade_level_id: user.gradeLevelId,
+      current_grade: user.currentGrade,
+      academic_set: user.academicSet,
+      has_learning_disabilities: user.hasLearningDisabilities,
+      learning_needs_description: user.learningNeedsDescription,
+      parent_name: user.parentName,
+      parent_phone: user.parentPhone,
+      parent_email: user.parentEmail,
+      city: user.city,
+      postcode: user.postcode,
+      school_name: user.schoolName,
+      profile_image_url: user.profileImageUrl,
+      updated_at: user.updatedAt
+    };
+  }
 }

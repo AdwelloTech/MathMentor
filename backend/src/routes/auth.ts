@@ -143,20 +143,62 @@ router.get('/me', authenticate, async (req, res) => {
     res.json({
       success: true,
       data: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        fullName: user.fullName,
+        id: user._id.toString(),
+        user_id: user._id.toString(),
+        first_name: user.firstName,
+        last_name: user.lastName,
+        full_name: user.fullName,
         email: user.email,
         role: user.role,
-        avatarUrl: user.avatarUrl,
+        avatar_url: user.avatarUrl,
         phone: user.phone,
-        createdAt: user.createdAt,
-        lastLogin: user.lastLogin
+        address: user.address,
+        gender: user.gender,
+        emergency_contact: user.emergencyContact,
+        age: (user as any).age, // Access virtual field
+        grade_level_id: user.gradeLevelId,
+        current_grade: user.currentGrade,
+        academic_set: user.academicSet,
+        has_learning_disabilities: user.hasLearningDisabilities,
+        learning_needs_description: user.learningNeedsDescription,
+        parent_name: user.parentName,
+        parent_phone: user.parentPhone,
+        parent_email: user.parentEmail,
+        city: user.city,
+        postcode: user.postcode,
+        school_name: user.schoolName,
+        profile_image_url: user.profileImageUrl,
+        created_at: user.createdAt,
+        last_login: user.lastLogin
       }
     });
   } catch (error: any) {
     res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Update current user profile
+router.put('/profile', authenticate, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    const updatedProfile = await AuthService.updateProfile(req.user.id, req.body);
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: updatedProfile
+    });
+  } catch (error: any) {
+    res.status(400).json({
       success: false,
       error: error.message
     });

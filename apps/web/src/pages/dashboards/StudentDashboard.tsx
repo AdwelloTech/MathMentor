@@ -126,7 +126,7 @@ const StudentDashboard: React.FC = () => {
       ),
       safeCall("bookings.getByStudentId", loadUpcomingSessions(), []),
       safeCall("quizzes.recentOrAvailable", loadRecentQuizzes(), []),
-      safeCall("flashcards.student.listAvailable", flashcards.student.listAvailable(), []),
+      safeCall("flashcards.student.listAvailable", flashcards.student.listAvailable(profile.user_id), []),
       safeCall("notes+materials", loadStudyMaterials(), []),
       safeCall(
         "packagePricing.getCurrentStudentPackage",

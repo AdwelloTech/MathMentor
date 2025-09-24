@@ -5,9 +5,9 @@
   "type": "module",
   "description": "Modern Institute Enterprise Management System with React/TypeScript and Supabase",
   "scripts": {
-    "dev": "concurrently -n web,api -c blue,magenta \"vite\" \"tsx server/index.ts\"",
+    "dev": "concurrently -n web,api -c blue,magenta \"vite\" \"npm run --prefix backend dev\"",
     "server": "tsx server/index.ts",
-    "dev:full": "concurrently -n web,api -c blue,magenta \"vite\" \"tsx server/index.ts\"",
+    "dev:full": "concurrently -n web,api -c blue,magenta \"vite\" \"npm run --prefix backend dev\"",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",

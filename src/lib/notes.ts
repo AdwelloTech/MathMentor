@@ -54,20 +54,30 @@ export async function searchStudyNotes(
  */
 export async function getNoteSubjects(): Promise<NoteSubject[]> {
   try {
-    console.log("Fetching note subjects from database...");
-    const { data, error } = await supabase
-      .from("note_subjects")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
+    console.log("Fetching note subjects from API...");
+    const apiClient = (await import("./apiClient")).default;
+    const response = await apiClient.get("/api/subjects");
 
-    if (error) {
-      console.error("Error fetching note subjects:", error);
-      throw error;
+    console.log("Subjects API response:", response);
+
+    if (!response || !Array.isArray(response)) {
+      console.warn("No data in subjects response");
+      return [];
     }
 
-    console.log("Note subjects fetched successfully:", data);
-    return data || [];
+    const subjects = response.map((subject: any) => ({
+      id: subject._id,
+      name: subject.name,
+      display_name: subject.displayName,
+      color: subject.color,
+      is_active: true,
+      sort_order: subject.sortOrder || 0,
+      created_at: subject.createdAt,
+      updated_at: subject.updatedAt,
+    }));
+
+    console.log("Note subjects fetched successfully:", subjects);
+    return subjects;
   } catch (error) {
     console.error("Error in getNoteSubjects:", error);
     throw error;

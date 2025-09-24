@@ -1,26 +1,72 @@
 // Tutor Class Scheduling System Types
 
-// Class Types
+// Class Types (for now, keeping simple structure)
 export interface ClassType {
-  id: string;
+  _id: string;
   name: string;
-  description: string;
-  duration_minutes: number;
-  max_students: number;
+  duration_minutes?: number;
+  max_students?: number;
   is_active: boolean;
-  price_per_session: number;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Tutor Classes
-export interface TutorClass {
-  id: string;
-  tutor_id: string;
-  class_type_id: string;
-  subject_id?: string; // optional FK to subjects table
+// Classes (MongoDB backend structure)
+export interface Class {
+  _id: string;
   title: string;
   description?: string;
+  subjectId?: string; // Reference to Subject
+  gradeLevelId?: string; // Reference to GradeLevel
+  teacherId: string; // Reference to User
+  schedule: {
+    dayOfWeek: number; // 0-6 (Sunday-Saturday)
+    startTime: string; // HH:MM format
+    endTime: string; // HH:MM format
+    duration: number; // in minutes
+  };
+  startDate: string;
+  endDate?: string;
+  capacity: number;
+  enrolledCount: number;
+  price?: number;
+  currency?: string;
+  isActive: boolean;
+  isFull: boolean;
+  prerequisites?: string[];
+  materials?: string[];
+  meetingLink?: string;
+  roomNumber?: string;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
+
+  // Populated fields
+  teacherId_populated?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    email: string;
+  };
+  subjectId_populated?: {
+    _id: string;
+    name: string;
+    displayName: string;
+    color?: string;
+  };
+  gradeLevelId_populated?: {
+    _id: string;
+    displayName: string;
+  };
+}
+
+// Keep TutorClass for backward compatibility (maps to Class)
+export interface TutorClass extends Class {
+  id: string;
+  tutor_id: string;
+  class_type_id?: string;
+  subject_id?: string;
   date: string;
   start_time: string;
   end_time: string;
@@ -28,11 +74,8 @@ export interface TutorClass {
   max_students: number;
   current_students: number;
   price_per_session: number;
-  jitsi_meeting_url?: string;
-  jitsi_room_name?: string;
-  jitsi_password?: string;
-  status: "scheduled" | "in_progress" | "completed" | "cancelled";
-  is_recurring: boolean;
+  status?: "scheduled" | "in_progress" | "completed" | "cancelled";
+  is_recurring?: boolean;
   recurring_pattern?: "daily" | "weekly" | "biweekly" | "monthly";
   recurring_end_date?: string;
   created_at: string;
@@ -53,18 +96,74 @@ export interface TutorClass {
   };
 }
 
-// Class Bookings
-export interface ClassBooking {
+// Bookings (MongoDB backend structure)
+export interface Booking {
+  _id: string;
+  studentId: string;
+  teacherId?: string;
+  classId?: string;
+  bookingType: 'class' | 'session' | 'consultation';
+  title: string;
+  description?: string;
+  subjectId?: string;
+  gradeLevelId?: string;
+  scheduledDate: string;
+  startTime: string;
+  endTime: string;
+  duration: number;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+  isConfirmed: boolean;
+  confirmedAt?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
+  price?: number;
+  currency?: string;
+  paymentStatus: 'pending' | 'paid' | 'refunded' | 'cancelled';
+  paymentId?: string;
+  notes?: string;
+  specialRequirements?: string;
+  meetingLink?: string;
+  roomNumber?: string;
+  location?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+
+  // Populated fields
+  studentId_populated?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    email: string;
+  };
+  teacherId_populated?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    email: string;
+  };
+  classId_populated?: Class;
+  subjectId_populated?: {
+    _id: string;
+    name: string;
+    displayName: string;
+    color?: string;
+  };
+  gradeLevelId_populated?: {
+    _id: string;
+    displayName: string;
+  };
+}
+
+// Keep ClassBooking for backward compatibility (maps to Booking)
+export interface ClassBooking extends Booking {
   id: string;
   class_id: string;
   student_id: string;
-  booking_status:
-    | "pending"
-    | "confirmed"
-    | "cancelled"
-    | "completed"
-    | "no_show";
-  payment_status: "pending" | "paid" | "refunded" | "failed";
+  booking_status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+  payment_status: 'pending' | 'paid' | 'refunded' | 'failed';
   payment_amount: number;
   stripe_payment_intent_id?: string;
   notes?: string;
@@ -315,7 +414,7 @@ export interface ClassSearchFilters {
 }
 
 export interface ClassSearchResult {
-  class: TutorClass;
+  class: Class;
   tutor: {
     id: string;
     full_name: string;

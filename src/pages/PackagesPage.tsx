@@ -33,7 +33,7 @@ import { useNavigate } from "react-router-dom";
 type PackagePricing = Database["public"]["Tables"]["package_pricing"]["Row"];
 
 const PackagesPage: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, updatePackage } = useAuth();
   const [packages, setPackages] = useState<PackagePricing[]>([]);
   const [currentPackage, setCurrentPackage] = useState<PackagePricing | null>(
     null
@@ -95,7 +95,13 @@ const PackagesPage: React.FC = () => {
       setUpgrading(packageType);
 
       // Update the package in the database
-      await packagePricingService.updateStudentPackage(user.id, packageType);
+      const updatedPackage = await packagePricingService.updateStudentPackage(user.id, packageType);
+
+      // Update AuthContext profile with new package
+      await updatePackage(packageType as "free" | "silver" | "gold");
+
+      // Update local state with the new package
+      setCurrentPackage(updatedPackage);
 
       // Reload packages to reflect the change
       await loadPackages();

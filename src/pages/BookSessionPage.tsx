@@ -140,13 +140,13 @@ const BookSessionPage: React.FC = () => {
     if (!selectedSession || !user) return;
 
     try {
-      setBookingLoading(selectedSession.class.id);
+      setBookingLoading(selectedSession.class._id);
 
       // Create booking with payment information
       await classSchedulingService.bookings.create(
-        selectedSession.class.id,
+        selectedSession.class._id,
         user.id,
-        selectedSession.class.price_per_session,
+        selectedSession.class.price || 0,
         paymentIntentId
       );
 
@@ -194,8 +194,8 @@ const BookSessionPage: React.FC = () => {
   };
 
   const getClassTypeName = (classTypeId: string) => {
-    const classType = classTypes.find((ct) => ct.id === classTypeId);
-    return classType?.name || "Unknown";
+    // For now, return a generic name since we don't have class types in the new backend
+    return "Class";
   };
 
   const getClassTypeIcon = (classTypeName: string) => {
@@ -216,17 +216,17 @@ const BookSessionPage: React.FC = () => {
     const session = sessionResult.class;
 
     // Filter out past sessions - only show upcoming sessions
-    const sessionDate = session.date;
-    const sessionTime = session.start_time;
+    const sessionDate = session.startDate;
+    const sessionTime = session.schedule.startTime;
     const sessionDateTime = new Date(`${sessionDate}T${sessionTime}`);
     const now = new Date();
     const isUpcoming = sessionDateTime > now;
 
     if (!isUpcoming) return false;
 
-    const matchesType =
-      filterType === "all" || session.class_type_id === filterType;
-    const matchesDate = !filterDate || session.date === filterDate;
+    // For now, skip class type filtering since we don't have class types in the new backend
+    const matchesType = filterType === "all";
+    const matchesDate = !filterDate || session.startDate === filterDate;
     const matchesSubject =
       !filterSubject ||
       session.title.toLowerCase().includes(filterSubject.toLowerCase()) ||
@@ -313,7 +313,7 @@ const BookSessionPage: React.FC = () => {
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
                       {classTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>
+                        <SelectItem key={type._id} value={type._id}>
                           {type.name}
                         </SelectItem>
                       ))}
@@ -417,12 +417,12 @@ const BookSessionPage: React.FC = () => {
           {filteredSessions.map((sessionResult, index) => {
             const session = sessionResult.class;
             const tutor = sessionResult.tutor;
-            const isBooking = bookingLoading === session.id;
+            const isBooking = bookingLoading === session._id;
 
             // ... existing code ...
             return (
               <motion.div
-                key={session.id}
+                key={session._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -434,7 +434,7 @@ const BookSessionPage: React.FC = () => {
                         variant="secondary"
                         className="bg-green-900 hover:bg-green-900 text-white flex items-center gap-1"
                       >
-                        {getClassTypeName(session.class_type_id)}
+                        {getClassTypeName('class')}
                       </Badge>
                       <div className="text-right">
                         <Badge
@@ -442,7 +442,7 @@ const BookSessionPage: React.FC = () => {
                           className="border-yellow-400 border-2 text-black  text-lg font-bold px-3 py-1"
                         >
                           <DollarSign className="w-4 h-4 mr-1" />
-                          {session.price_per_session}
+                          {session.price}
                         </Badge>
                       </div>
                     </div>
@@ -451,10 +451,10 @@ const BookSessionPage: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-900 mt-2">
                       {session.title}
                     </h3>
-                    {session.subject && (
+                    {session.subjectId_populated && (
                       <div className="mt-1">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {session.subject.display_name}
+                          {session.subjectId_populated.displayName}
                         </span>
                       </div>
                     )}
@@ -481,12 +481,12 @@ const BookSessionPage: React.FC = () => {
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
                           <span className="text-sm text-gray-700 font-medium">
                             {(
-                              tutorRatings[session.tutor?.id || tutor.id]?.avg ?? tutor.rating ?? 0
+                              tutorRatings[tutor.id]?.avg ?? tutor.rating ?? 0
                             ).toFixed(1)}
                           </span>
                           <span className="text-sm text-gray-600">
                             (
-                            {tutorRatings[session.tutor?.id || tutor.id]?.count ?? tutor.total_reviews ?? 0} reviews)
+                            {tutorRatings[tutor.id]?.count ?? tutor.total_reviews ?? 0} reviews)
                           </span>
                         </div>
                       </div>
@@ -497,21 +497,21 @@ const BookSessionPage: React.FC = () => {
                       <div className="flex items-center gap-3 text-gray-700">
                         <CalendarDays className="w-4 h-4 text-gray-600" />
                         <span className="font-medium">
-                          {formatDate(session.date)}
+                          {formatDate(session.startDate)}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-gray-700">
                         <Clock className="w-4 h-4 text-gray-600" />
                         <span className="font-medium">
-                          {formatTime(session.start_time)} -{" "}
-                          {formatTime(session.end_time)}
+                          {formatTime(session.schedule.startTime)} -{" "}
+                          {formatTime(session.schedule.endTime)}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-gray-700">
                         <Users className="w-4 h-4 text-gray-600" />
                         <span className="font-medium">
                           {sessionResult.available_slots} of{" "}
-                          {session.max_students} spots available
+                          {session.capacity} spots available
                         </span>
                       </div>
                     </div>
@@ -575,9 +575,9 @@ const BookSessionPage: React.FC = () => {
             <SessionPaymentForm
               sessionTitle={selectedSession.class.title}
               tutorName={selectedSession.tutor.full_name}
-              sessionDate={selectedSession.class.date}
-              sessionTime={selectedSession.class.start_time}
-              amount={selectedSession.class.price_per_session}
+              sessionDate={selectedSession.class.startDate}
+              sessionTime={selectedSession.class.schedule.startTime}
+              amount={selectedSession.class.price || 0}
               customerEmail={user?.email || ""}
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}

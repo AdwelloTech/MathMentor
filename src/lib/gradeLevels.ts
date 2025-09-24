@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import apiClient from "@/lib/apiClient";
 import type { GradeLevel } from "@/types/auth";
 
 // Cache for grade levels to avoid repeated database calls
@@ -18,23 +18,26 @@ export const fetchGradeLevels = async (): Promise<GradeLevel[]> => {
   }
 
   try {
-    console.log("Fetching grade levels from database...");
+    console.log("Fetching grade levels from backend...");
 
-    const { data, error } = await supabase
-      .from("grade_levels")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
+    const data = await apiClient.get<any[]>("/api/grade-levels");
 
-    if (error) {
-      console.error("Error fetching grade levels:", error);
-      throw error;
-    }
+    // Transform backend data to match frontend interface
+    const transformedData = data.map(item => ({
+      id: item._id || item.id,
+      code: item.code,
+      display_name: item.displayName || item.display_name,
+      sort_order: item.sortOrder || item.sort_order,
+      category: item.category,
+      is_active: item.isActive !== undefined ? item.isActive : item.is_active,
+      created_at: item.createdAt || item.created_at,
+      updated_at: item.updatedAt || item.updated_at,
+    }));
 
-    console.log(`Fetched ${data?.length || 0} grade levels`);
+    console.log(`Fetched ${transformedData?.length || 0} grade levels`);
 
     // Update cache
-    gradeLevelsCache = data || [];
+    gradeLevelsCache = transformedData || [];
     lastFetchTime = now;
 
     return gradeLevelsCache;

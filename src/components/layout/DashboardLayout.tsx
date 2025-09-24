@@ -12,8 +12,6 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { getRoleContainerClass } from "@/utils/roleStyles";
-import { db } from "@/lib/db";
-import { supabase } from "@/lib/supabase";
 import type { TutorApplication } from "@/types/auth";
 import Sidebar from "./Sidebar";
 import {
@@ -51,21 +49,27 @@ const DashboardLayout: React.FC = () => {
   useEffect(() => {
     const loadSubjects = async () => {
       try {
-        const { data, error } = await (supabase as any)
-          .from("note_subjects")
-          .select("id, display_name, name")
-          .eq("is_active", true);
+        // Use the new API client instead of Supabase
+        const response = await fetch('/api/subjects', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-        if (error) {
-          console.error("Error loading subjects:", error);
+        if (!response.ok) {
+          console.error("Error loading subjects:", response.statusText);
           return;
         }
 
-        const subjectsMap: { [key: string]: string } = {};
-        data?.forEach((subject: any) => {
-          subjectsMap[subject.id] = subject.display_name || subject.name;
-        });
-        setSubjects(subjectsMap);
+        const result = await response.json();
+        if (result.success && result.data) {
+          const subjectsMap: { [key: string]: string } = {};
+          result.data.forEach((subject: any) => {
+            subjectsMap[subject._id] = subject.displayName || subject.name;
+          });
+          setSubjects(subjectsMap);
+        }
       } catch (error) {
         console.error("Error loading subjects:", error);
       }

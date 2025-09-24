@@ -151,7 +151,8 @@ export interface AuthContextType {
     userData: Partial<UserProfile>
   ) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<UserProfile>;
+  updatePackage: (newPackage: StudentPackage) => Promise<UserProfile>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   hasRole: (role: UserRole | UserRole[]) => boolean;

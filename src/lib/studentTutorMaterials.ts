@@ -1,11 +1,36 @@
-import { supabase } from "./supabase";
-import type { Database } from "@/types/database";
+import apiClient from "./apiClient";
 
 // Types
-export type StudentTutorMaterial =
-  Database["public"]["Functions"]["get_student_tutor_materials"]["Returns"][0];
-export type StudentTutorMaterialWithAccess =
-  Database["public"]["Functions"]["get_student_tutor_material_by_id"]["Returns"][0];
+export interface StudentTutorMaterial {
+  id: string;
+  title: string;
+  description: string | null;
+  content: string | null;
+  file_url: string | null;
+  file_name: string | null;
+  file_size: number | null;
+  subject_id: string | null;
+  subject_name: string | null;
+  subject_display_name: string | null;
+  subject_color: string | null;
+  grade_level_display: string | null;
+  tutor_id: string;
+  tutor_name: string;
+  is_premium: boolean;
+  view_count: number;
+  download_count: number;
+  like_count: number;
+  tags: string[];
+  price: number | null;
+  preview_content: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StudentTutorMaterialWithAccess extends StudentTutorMaterial {
+  can_access: boolean;
+  has_premium_access: boolean;
+}
 
 export interface StudentTutorMaterialsSearchParams {
   searchTerm?: string;
@@ -36,53 +61,54 @@ export const getStudentTutorMaterials = async (
   studentId: string,
   params?: StudentTutorMaterialsSearchParams
 ): Promise<StudentTutorMaterial[]> => {
-  const { data, error } = await supabase.rpc("get_student_tutor_materials", {
-    p_student_id: studentId,
-    p_search_term: params?.searchTerm || null,
-    p_subject_filter: params?.subjectFilter || null,
-  });
+  try {
+    const queryParams = new URLSearchParams();
 
-  if (error) {
+    if (params?.searchTerm) {
+      queryParams.append('q', params.searchTerm);
+    }
+
+    if (params?.subjectFilter && params.subjectFilter !== 'all') {
+      queryParams.append('subjectId', params.subjectFilter);
+    }
+
+    const queryString = queryParams.toString();
+    const url = `/api/tutor-materials${queryString ? `?${queryString}` : ''}`;
+
+    const response = await apiClient.get(url);
+    return response || [];
+  } catch (error) {
     console.error("Error fetching student tutor materials:", error);
     throw error;
   }
-
-  return data || [];
 };
 
 export const getStudentTutorMaterialById = async (
   studentId: string,
   materialId: string
 ): Promise<StudentTutorMaterialWithAccess | null> => {
-  const { data, error } = await supabase.rpc(
-    "get_student_tutor_material_by_id",
-    {
-      p_student_id: studentId,
-      p_material_id: materialId,
+  try {
+    const response = await apiClient.get(`/api/tutor-materials/${materialId}`);
+    return response || null;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return null;
     }
-  );
-
-  if (error) {
     console.error("Error fetching student tutor material:", error);
     throw error;
   }
-
-  return data?.[0] || null;
 };
 
 export const checkStudentPremiumAccess = async (
   studentId: string
 ): Promise<boolean> => {
-  const { data, error } = await supabase.rpc("student_has_premium_access", {
-    p_student_id: studentId,
-  });
-
-  if (error) {
+  try {
+    const response = await apiClient.get('/api/tutor-materials/premium/check');
+    return response?.has_premium_access || false;
+  } catch (error) {
     console.error("Error checking student premium access:", error);
-    throw error;
+    return false;
   }
-
-  return data || false;
 };
 
 // Utility functions
@@ -164,13 +190,11 @@ export const truncateStudentTutorMaterialText = (
 export const incrementStudentTutorMaterialViewCount = async (
   materialId: string
 ): Promise<void> => {
-  const { error } = await supabase.rpc("increment_tutor_note_view_count", {
-    note_id: materialId,
-  });
-
-  if (error) {
+  try {
+    await apiClient.post(`/api/tutor-materials/${materialId}/view`);
+  } catch (error) {
     console.error("Error incrementing view count:", error);
-    throw error;
+    // Don't throw error for view tracking to avoid breaking the user experience
   }
 };
 
@@ -179,40 +203,27 @@ export const incrementStudentTutorMaterialViewCountUnique = async (
   studentId: string
 ): Promise<void> => {
   try {
-    // For now, use simple view tracking since the unique function has database issues
-    // TODO: Fix the database function increment_tutor_note_view_count_unique to resolve ambiguous column reference
-    const { error } = await supabase.rpc("increment_tutor_note_view_count", {
-      note_id: materialId,
-    });
-
-    if (error) {
-      console.error(
-        `RPC increment_tutor_note_view_count failed for materialId=${materialId}:`,
-        error
-      );
-      throw error;
-    }
+    // For now, use simple view tracking
+    await apiClient.post(`/api/tutor-materials/${materialId}/view`);
   } catch (error) {
     console.error(
-      `RPC increment_tutor_note_view_count failed for materialId=${materialId}:`,
+      `View count increment failed for materialId=${materialId}:`,
       error
     );
-    throw error;
+    // Don't throw error for view tracking to avoid breaking the user experience
   }
 };
 
 export const incrementStudentTutorMaterialDownloadCount = async (
   materialId: string
 ): Promise<void> => {
-  const { error } = await supabase.rpc("increment_tutor_note_download_count", {
-    note_id: materialId,
-  });
-
-  if (error) {
+  try {
+    await apiClient.post(`/api/tutor-materials/${materialId}/download`);
+  } catch (error) {
     console.error(
-      `RPC increment_tutor_note_download_count failed for materialId=${materialId}:`,
+      `Download count increment failed for materialId=${materialId}:`,
       error
     );
-    throw error;
+    // Don't throw error for download tracking to avoid breaking the user experience
   }
 };

@@ -917,9 +917,9 @@ Requirements:
       ? hostValue
       : `http://${hostValue}`;
 
-    // Always use DeepSeek R1 and pass extracted PDF text as context
-    const modelId = "deepseek/deepseek-r1:free";
-    console.log("- Using model:", modelId, "(text-only, PDF text as context)");
+    // Use GPT-3.5-turbo for reliable and fast quiz generation
+    const modelId = "openai/gpt-3.5-turbo";
+    console.log("- Using model:", modelId, "(fast and reliable)");
 
     const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -1572,9 +1572,9 @@ ${contextLine}${pdfContext}
       ? hostValue
       : `http://${hostValue}`;
 
-    // Always use DeepSeek R1 and pass extracted PDF text as context
-    const modelId = "deepseek/deepseek-r1:free";
-    console.log("- Using model:", modelId, "(text-only, PDF text as context)");
+    // Use GPT-3.5-turbo for reliable and fast quiz generation
+    const modelId = "openai/gpt-3.5-turbo";
+    console.log("- Using model:", modelId, "(fast and reliable)");
 
     try {
       const resp = await fetch(

@@ -2,13 +2,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   MagnifyingGlassIcon,
-  FunnelIcon,
   EyeIcon,
   TrashIcon,
   CheckCircleIcon,
   ChartBarIcon,
   DocumentTextIcon,
-  AcademicCapIcon,
   ClockIcon,
   UserIcon,
   XCircleIcon,
@@ -94,8 +92,8 @@ const ManageQuizzesPage: React.FC = () => {
       filtered = filtered.filter(
         (quiz) =>
           quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          quiz.tutor.full_name
-            .toLowerCase()
+          quiz.tutor?.full_name
+            ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
           quiz.subject.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -168,7 +166,7 @@ const ManageQuizzesPage: React.FC = () => {
   };
 
   const uniqueSubjects = Array.from(
-    new Set(quizzes.map((quiz) => quiz.subject))
+    new Set(quizzes.map((quiz) => quiz.subject).filter(Boolean))
   ).sort();
 
   if (loading) {
@@ -332,8 +330,8 @@ const ManageQuizzesPage: React.FC = () => {
                           onChange={(e) => setFilterSubject(e.target.value)}
                         >
                           <option value="all">All Subjects</option>
-                          {uniqueSubjects.map((subject) => (
-                            <option key={subject} value={subject}>
+                          {uniqueSubjects.map((subject, index) => (
+                            <option key={`subject-${subject}-${index}`} value={subject}>
                               {subject}
                             </option>
                           ))}
@@ -416,10 +414,10 @@ const ManageQuizzesPage: React.FC = () => {
                                   <UserIcon className="h-4 w-4 text-gray-400 mr-2" />
                                   <div>
                                     <div className="text-sm font-medium text-gray-900">
-                                      {quiz.tutor.full_name}
+                                      {quiz.tutor?.full_name || 'Unknown Tutor'}
                                     </div>
                                     <div className="text-sm text-gray-500">
-                                      {quiz.tutor.email}
+                                      {quiz.tutor?.email || 'No email'}
                                     </div>
                                   </div>
                                 </div>
@@ -441,10 +439,10 @@ const ManageQuizzesPage: React.FC = () => {
                                 </div>
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-900">
-                                {quiz.total_attempts}
-                                {quiz.total_attempts > 0 && (
+                                {quiz.total_attempts || 0}
+                                {(quiz.total_attempts || 0) > 0 && (
                                   <div className="text-xs text-gray-500">
-                                    Avg: {quiz.avg_score.toFixed(1)}%
+                                    Avg: {(quiz.avg_score || 0).toFixed(1)}%
                                   </div>
                                 )}
                               </td>
@@ -533,7 +531,7 @@ const ManageQuizzesPage: React.FC = () => {
                     {selectedQuiz.title}
                   </h2>
                   <p className="text-gray-600 mt-1">
-                    Created by {selectedQuiz.tutor.full_name}
+                    Created by {selectedQuiz.tutor?.full_name || 'Unknown Tutor'}
                   </p>
                 </div>
                 <button

@@ -9,6 +9,11 @@
     "server": "tsx server/index.ts",
     "dev:full": "concurrently -n web,api -c blue,magenta \"vite\" \"npm run --prefix backend dev\"",
     "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --config vite.config.dev.ts",
+    "build:prod": "tsc && vite build --config vite.config.prod.ts",
+    "start:dev": "cp .env.dev .env && concurrently -n web,api -c blue,magenta \"vite --config vite.config.dev.ts\" \"npm run --prefix backend dev -- --env-file=.env.dev\"",
+    "start:prod": "cp .env.prod .env && concurrently -n web,api -c blue,magenta \"vite preview --config vite.config.prod.ts --port 3001\" \"npm run --prefix backend start -- --env-file=.env.prod\"",
+    "start:both": "concurrently -n dev-web,dev-api,prod-web,prod-api -c blue,magenta,green,yellow \"npm run start:dev\" \"npm run start:prod\"",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"

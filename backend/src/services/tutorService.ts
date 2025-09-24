@@ -74,6 +74,33 @@ export class TutorService {
     }
   }
 
+  static async createTutorApplication(applicationData: Omit<TutorApplication, '_id' | 'created_at' | 'updated_at'>): Promise<TutorApplication> {
+    const client = this.getClient();
+
+    try {
+      await client.connect();
+      const db = client.db(DB_NAME);
+
+      const now = new Date().toISOString();
+      const application: TutorApplication = {
+        ...applicationData,
+        application_status: 'pending',
+        submitted_at: now,
+        created_at: now,
+        updated_at: now,
+      };
+
+      const result = await db.collection('tutor_applications').insertOne(application);
+
+      return {
+        ...application,
+        _id: result.insertedId,
+      };
+    } finally {
+      await client.close();
+    }
+  }
+
   static async getIDVerification(userId: string): Promise<IDVerification | null> {
     const client = this.getClient();
 

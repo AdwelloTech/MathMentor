@@ -167,26 +167,22 @@ export const db = {
       cv_url?: string;
       cv_file_size?: number;
       additional_notes?: string;
+      postcode?: string;
+      based_in_country?: string;
+      past_experience?: string;
+      weekly_availability?: string;
+      employment_status?: string;
+      education_level?: string;
+      average_weekly_hours?: number;
+      expected_hourly_rate?: number;
     }) => {
-      const { data, error } = await supabase
-        .from('tutor_applications')
-        .insert([application])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      const result = await apiClient.post('/api/tutors/applications', application);
+      return result;
     },
 
-    getByUserId: async (userId: string) => {
-      const { data, error } = await supabase
-        .from('tutor_applications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('submitted_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+    getByUserId: async (_userId: string) => {
+      const result = await apiClient.get('/api/tutors/applications');
+      return result;
     },
 
     getById: async (id: string) => {

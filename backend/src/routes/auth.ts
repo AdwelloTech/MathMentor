@@ -205,4 +205,105 @@ router.put('/profile', authenticate, async (req, res) => {
   }
 });
 
+// Admin login
+router.post('/admin/login', async (req, res) => {
+  try {
+    // Validate input
+    const { email, password } = validateOrThrow(loginSchema, req.body) as LoginData;
+
+    // Login admin
+    const result = await AuthService.adminLogin({ email, password });
+
+    res.json({
+      success: true,
+      message: 'Admin login successful',
+      data: result
+    });
+  } catch (error: any) {
+    res.status(401).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Admin logout
+router.post('/admin/logout', authenticate, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    // Verify user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    const { refreshToken } = req.body;
+
+    if (refreshToken) {
+      await AuthService.logout(refreshToken);
+    }
+
+    res.json({
+      success: true,
+      message: 'Admin logout successful'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Validate admin session
+router.get('/admin/validate-session', authenticate, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    // Verify user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    const user = await AuthService.getUserById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        valid: true,
+        admin_id: user._id.toString(),
+        admin_email: user.email
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 export default router;

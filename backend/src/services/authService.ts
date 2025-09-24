@@ -277,6 +277,59 @@ export class AuthService {
   }
 
   /**
+   * Admin login - verifies admin role
+   */
+  static async adminLogin(data: LoginData): Promise<AuthTokens> {
+    const { email, password } = data;
+
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    if (!user) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      throw new Error('Account is deactivated');
+    }
+
+    // Verify user has admin role
+    if (user.role !== 'admin') {
+      throw new Error('Access denied: Admin privileges required');
+    }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Generate tokens
+    const tokens = generateTokenPair(user._id, user.email, user.role);
+
+    // Save refresh token
+    await this.saveRefreshToken(user._id, tokens.tokenId, tokens.refreshToken);
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user._id.toString(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        avatarUrl: user.avatarUrl
+      }
+    };
+  }
+
+  /**
    * Update user profile
    */
   static async updateProfile(userId: string, updates: Partial<any>): Promise<any> {

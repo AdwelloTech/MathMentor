@@ -173,7 +173,7 @@ export interface RegisterFormData {
   role: UserRole;
   phone?: string;
   package?: StudentPackage; // For students
-  subjects?: string; // For tutors
+  subjects?: string; // For tutors (comma-separated string from form)
   experience?: string; // For tutors
   qualification?: string; // For tutors
   agreesToTerms: boolean;

@@ -73,7 +73,7 @@ class AuthService {
       // Add role-specific fields
       ...(data.role === 'student' && { package: data.package }),
       ...(data.role === 'tutor' && {
-        subjects: data.subjects?.split(',').map(s => s.trim()).filter(Boolean) || [],
+        subjects: data.subjects || [],
         experience: data.experience,
         qualification: data.qualification,
       }),

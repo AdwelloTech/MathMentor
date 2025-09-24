@@ -30,13 +30,11 @@ import {
 import { Star } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
-import { db } from "@/lib/db";
 import {
   instantSessionService,
   type InstantRequest,
 } from "@/lib/instantSessionService";
 import { classSchedulingService } from "@/lib/classSchedulingService";
-import { supabase } from "@/lib/supabase";
 import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
 import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
 import { Button } from "@/components/ui/button";
@@ -72,21 +70,27 @@ const TutorDashboard: React.FC = () => {
   useEffect(() => {
     const loadSubjects = async () => {
       try {
-        const { data, error } = await (supabase as any)
-          .from("note_subjects")
-          .select("id, display_name, name")
-          .eq("is_active", true);
+        // Use API call instead of direct Supabase access
+        const response = await fetch('/api/subjects', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-        if (error) {
-          console.error("Error loading subjects:", error);
+        if (!response.ok) {
+          console.error("Error loading subjects:", response.statusText);
           return;
         }
 
-        const subjectsMap: { [key: string]: string } = {};
-        data?.forEach((subject: any) => {
-          subjectsMap[subject.id] = subject.display_name || subject.name;
-        });
-        setSubjects(subjectsMap);
+        const result = await response.json();
+        if (result.success && result.data) {
+          const subjectsMap: { [key: string]: string } = {};
+          result.data.forEach((subject: any) => {
+            subjectsMap[subject._id] = subject.displayName || subject.name;
+          });
+          setSubjects(subjectsMap);
+        }
       } catch (error) {
         console.error("Error loading subjects:", error);
       }
@@ -177,31 +181,11 @@ const TutorDashboard: React.FC = () => {
     }
 
     // Polling mechanism to fetch pending requests every 10 seconds
+    // For now, we'll skip polling since the API isn't implemented yet
     const poll = setInterval(async () => {
       try {
-        const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // Last 5 minutes
-        const { data, error } = await (supabase as any)
-          .from("instant_requests")
-          .select("*")
-          .eq("status", "pending")
-          .gte("created_at", sinceIso)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        if (error) return;
-        if (!data) return;
-        setInstantRequests((prev) => {
-          const map = new Map(prev.map((r) => [r.id, r]));
-          for (const row of data as any) map.set(row.id, row);
-          const merged = Array.from(map.values()).filter(
-            (r: any) => r.status === "pending"
-          );
-          console.log("[TutorDashboard] Polling update:", {
-            fetched: (data as any).length,
-            merged: merged.length,
-            current: prev.length,
-          });
-          return merged;
-        });
+        // Skip polling for now - implement when instant requests API is ready
+        console.log("[TutorDashboard] polling skipped - API not implemented yet");
       } catch (_) {}
     }, 10000);
 
@@ -295,17 +279,30 @@ const TutorDashboard: React.FC = () => {
     }
 
     try {
-      const existingApplications = await db.tutorApplications.getByUserId(
-        user.id
-      );
-      // Get the most recent application (first in the array since it's ordered by submitted_at desc)
-      const mostRecentApplication = existingApplications?.[0] || null;
-      setApplication(mostRecentApplication);
+      // Use API call instead of direct database access
+      const response = await fetch('/api/tutors/applications', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Error fetching tutor applications:", response.statusText);
+        return;
+      }
+
+      const result = await response.json();
+      if (result.success && result.data && result.data.length > 0) {
+        // Get the most recent application
+        const mostRecentApplication = result.data[0];
+        setApplication(mostRecentApplication);
+      } else {
+        setApplication(null);
+      }
     } catch (error: any) {
       // If no application found, that's fine
-      if (error.code !== "PGRST116") {
-        console.error("Error checking application:", error);
-      }
+      console.error("Error checking application:", error);
     } finally {
       setLoading(false);
     }
@@ -315,19 +312,25 @@ const TutorDashboard: React.FC = () => {
     if (!user || !profile) return;
 
     try {
-      const { data, error } = await supabase
-        .from("id_verifications")
-        .select("*")
-        .eq("user_id", profile.id) // Use profile.id instead of user.id
-        .order("submitted_at", { ascending: false })
-        .limit(1);
+      // Use API call instead of direct Supabase access
+      const response = await fetch('/api/tutors/id-verification', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (error) {
-        console.error("Error checking ID verification:", error);
+      if (!response.ok) {
+        console.error("Error fetching ID verification:", response.statusText);
         setIdVerification(null);
+        return;
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setIdVerification(result.data);
       } else {
-        // Set the first record or null if no records found
-        setIdVerification(data?.[0] || null);
+        setIdVerification(null);
       }
     } catch (error) {
       console.error("Error checking ID verification:", error);

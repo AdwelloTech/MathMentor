@@ -103,14 +103,16 @@ export const registerSchema = Joi.object({
 
   subjects: Joi.when('role', {
     is: 'tutor',
-    then: Joi.string()
+    then: Joi.array()
+      .items(Joi.string().trim().min(1).max(100))
       .min(1)
-      .max(500)
       .required()
       .messages({
-        'string.empty': 'Subjects are required for tutors',
-        'string.min': 'Subjects must be at least 1 character',
-        'string.max': 'Subjects must not exceed 500 characters'
+        'array.base': 'Subjects must be an array',
+        'array.min': 'At least one subject is required for tutors',
+        'string.empty': 'Subject names cannot be empty',
+        'string.min': 'Subject names must be at least 1 character',
+        'string.max': 'Subject names must not exceed 100 characters'
       }),
     otherwise: Joi.forbidden()
   }),

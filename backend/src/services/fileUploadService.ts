@@ -188,10 +188,18 @@ export class FileUploadService {
   /**
    * Get public URL for a file
    */
-  static getFileUrl(filePath: string): string {
+  static getFileUrl(filePath: string, baseUrl?: string): string {
     // For local storage, construct URL relative to uploads directory
     const relativePath = path.relative(path.join(__dirname, '../../uploads'), filePath);
-    return `/uploads/${relativePath.replace(/\\/g, '/')}`;
+    const urlPath = `/uploads/${relativePath.replace(/\\/g, '/')}`;
+
+    // If baseUrl is provided, return full URL
+    if (baseUrl) {
+      return `${baseUrl}${urlPath}`;
+    }
+
+    // Otherwise return relative URL
+    return urlPath;
   }
 
   /**

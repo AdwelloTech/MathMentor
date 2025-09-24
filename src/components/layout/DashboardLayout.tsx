@@ -150,50 +150,23 @@ const DashboardLayout: React.FC = () => {
   useEffect(() => {
     if (profile?.role !== "tutor") return;
 
-    // Initial fetch to validate RLS and data visibility
+    // Initial fetch to validate data visibility
     (async () => {
       try {
-        const sinceIso = new Date(Date.now() - FRESH_WINDOW_MS).toISOString();
-        const { data, error } = await supabase
-          .from("instant_requests")
-          .select("*")
-          .eq("status", "pending")
-          .gte("created_at", sinceIso)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        if (error) {
-          console.error("[Instant] initial fetch error", error);
-        } else {
-          console.log("[Instant] initial pending count", data?.length || 0);
-          if (data && data.length > 0) {
-            const unique = Array.from(
-              new Map(data.map((r: any) => [r.id, r])).values()
-            ) as any;
-            setInstantRequests(unique);
-          }
-        }
+        // For now, we'll skip the initial fetch since the API isn't implemented yet
+        // This can be implemented later when the instant requests API is ready
+        console.log("[Instant] initial fetch skipped - API not implemented yet");
       } catch (e) {
         console.error("[Instant] initial fetch exception", e);
       }
     })();
 
     // Fallback polling every 10s (until Realtime confirmed)
+    // For now, we'll skip polling since the API isn't implemented yet
     const poll = setInterval(async () => {
       try {
-        const sinceIso = new Date(Date.now() - FRESH_WINDOW_MS).toISOString();
-        const { data, error } = await supabase
-          .from("instant_requests")
-          .select("*")
-          .eq("status", "pending")
-          .gte("created_at", sinceIso)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        if (error) return;
-        if (!data) return;
-        // Replace the list with current pending requests to avoid stale items lingering
-        setInstantRequests(
-          (data as any[]).filter((r: any) => r.status === "pending")
-        );
+        // Skip polling for now - implement when instant requests API is ready
+        console.log("[Instant] polling skipped - API not implemented yet");
       } catch (_) {}
     }, 10000);
 
@@ -245,10 +218,27 @@ const DashboardLayout: React.FC = () => {
 
     setLoadingApplication(true);
     try {
-      const applications = await db.tutorApplications.getByUserId(user.id);
-      // Get the most recent application
-      const mostRecentApplication = applications?.[0] || null;
-      setTutorApplication(mostRecentApplication);
+      // Use API call instead of direct database access
+      const response = await fetch('/api/tutors/applications', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Error fetching tutor applications:", response.statusText);
+        return;
+      }
+
+      const result = await response.json();
+      if (result.success && result.data && result.data.length > 0) {
+        // Get the most recent application
+        const mostRecentApplication = result.data[0];
+        setTutorApplication(mostRecentApplication);
+      } else {
+        setTutorApplication(null);
+      }
     } catch (error) {
       console.error("Error checking tutor application:", error);
     } finally {
@@ -260,19 +250,25 @@ const DashboardLayout: React.FC = () => {
     if (!user || !profile) return;
 
     try {
-      const { data, error } = await supabase
-        .from("id_verifications")
-        .select("*")
-        .eq("user_id", profile.id) // Use profile.id instead of user.id
-        .order("submitted_at", { ascending: false })
-        .limit(1);
+      // Use API call instead of direct Supabase access
+      const response = await fetch('/api/tutors/id-verification', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (error) {
-        console.error("Error checking ID verification:", error);
+      if (!response.ok) {
+        console.error("Error fetching ID verification:", response.statusText);
         setIdVerification(null);
+        return;
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setIdVerification(result.data);
       } else {
-        // Set the first record or null if no records found
-        setIdVerification(data?.[0] || null);
+        setIdVerification(null);
       }
     } catch (error) {
       console.error("Error checking ID verification:", error);

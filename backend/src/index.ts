@@ -30,6 +30,7 @@ import gradeLevelsRoutes from './routes/gradeLevels';
 import tutorialRoutes from './routes/tutorial';
 import tutorMaterialsRoutes from './routes/tutorMaterials';
 import profileImagesRoutes from './routes/profileImages';
+import tutorRoutes from './routes/tutors';
 
 // Load environment variables
 dotenv.config();
@@ -111,6 +112,7 @@ app.use('/api/grade-levels', gradeLevelsRoutes);
 app.use('/api/tutorial', tutorialRoutes);
 app.use('/api/tutor-materials', tutorMaterialsRoutes);
 app.use('/api/profile-images', profileImagesRoutes);
+app.use('/api/tutors', tutorRoutes);
 
 // 404 handler
 app.use(notFound);

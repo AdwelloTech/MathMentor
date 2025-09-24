@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import apiClient from './apiClient';
 import type { UserProfile, TutorApplication, TutorApplicationStats, TutorApplicationFormData } from '@/types/auth';
 
 // Subscription management
@@ -266,37 +267,34 @@ export const db = {
   // Storage operations for CV uploads
   storage: {
     uploadTutorCV: async (userId: string, file: File): Promise<{ url: string; path: string; size: number }> => {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}_${Date.now()}.${fileExt}`;
-      const filePath = `tutor-applications/${userId}/${fileName}`;
+      // Use backend API instead of Supabase storage
+      const formData = new FormData();
+      formData.append('document', file); // Backend expects field name 'document'
+      formData.append('userId', userId);
+      formData.append('entityType', 'tutor_application');
+      formData.append('entityId', userId); // Use userId as entityId for tutor applications
+      formData.append('isPublic', 'false'); // Will be converted to boolean by Joi
 
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('documents')
-        .getPublicUrl(filePath);
+      const result = await apiClient.post<{
+        id: string;
+        fileName: string;
+        originalName: string;
+        fileSize: number;
+        mimeType: string;
+        extension: string;
+        entityType: string;
+        entityId: string;
+        isPublic: boolean;
+        uploadedAt: string;
+        url: string;
+        filePath: string;
+      }>('/api/files/documents/upload', formData);
 
       return {
-        url: publicUrl,
-        path: filePath,
-        size: file.size
+        url: result.url,
+        path: result.filePath,
+        size: result.fileSize
       };
-    },
-
-    deleteTutorCV: async (filePath: string) => {
-      const { error } = await supabase.storage
-        .from('documents')
-        .remove([filePath]);
-
-      if (error) throw error;
-      return true;
     },
   },
 };

@@ -28,9 +28,15 @@ router.post('/upload', uploadInstances.profileImages.single('profileImage'), asy
       });
     }
 
+    // Construct base URL for full image URLs
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+
     const result = await ProfileImageService.uploadProfileImage(
       req.user.id,
-      req.file
+      req.file,
+      baseUrl
     );
 
     res.status(201).json({
@@ -60,7 +66,12 @@ router.get('/active', async (req, res) => {
       });
     }
 
-    const profileImage = await ProfileImageService.getActiveProfileImage(req.user.id);
+    // Construct base URL for full image URLs
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+
+    const profileImage = await ProfileImageService.getActiveProfileImage(req.user.id, baseUrl);
 
     res.json({
       success: true,
@@ -88,7 +99,12 @@ router.get('/', async (req, res) => {
       });
     }
 
-    const profileImages = await ProfileImageService.getUserProfileImages(req.user.id);
+    // Construct base URL for full image URLs
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+
+    const profileImages = await ProfileImageService.getUserProfileImages(req.user.id, baseUrl);
 
     res.json({
       success: true,
@@ -105,9 +121,9 @@ router.get('/', async (req, res) => {
 
 /**
  * Activate a specific profile image
- * PATCH /api/profile-images/:imageId/activate
+ * PUT /api/profile-images/:imageId/activate
  */
-router.patch('/:imageId/activate', async (req, res) => {
+router.put('/:imageId/activate', async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -116,9 +132,15 @@ router.patch('/:imageId/activate', async (req, res) => {
       });
     }
 
+    // Construct base URL for full image URLs
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+
     const result = await ProfileImageService.activateProfileImage(
       req.user.id,
-      req.params.imageId
+      req.params.imageId,
+      baseUrl
     );
 
     res.json({

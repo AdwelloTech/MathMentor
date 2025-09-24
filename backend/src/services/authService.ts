@@ -8,8 +8,14 @@ export interface RegisterData {
   lastName: string;
   email: string;
   password: string;
-  role: 'admin' | 'principal' | 'teacher' | 'student' | 'parent' | 'hr' | 'finance' | 'support';
+  role: 'admin' | 'principal' | 'teacher' | 'student' | 'parent' | 'tutor' | 'hr' | 'finance' | 'support';
   phone?: string;
+  // Student specific fields
+  package?: 'free' | 'silver' | 'gold';
+  // Tutor specific fields
+  subjects?: string[];
+  experience?: string;
+  qualification?: string;
 }
 
 export interface LoginData {
@@ -36,7 +42,7 @@ export class AuthService {
    * Register a new user
    */
   static async register(data: RegisterData): Promise<AuthTokens> {
-    const { firstName, lastName, email, password, role, phone } = data;
+    const { firstName, lastName, email, password, role, phone, package: studentPackage, subjects, experience, qualification } = data;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -46,7 +52,7 @@ export class AuthService {
 
     // Create new user
     const fullName = `${firstName} ${lastName}`;
-    const user = new User({
+    const userData: any = {
       firstName,
       lastName,
       fullName,
@@ -55,7 +61,31 @@ export class AuthService {
       role,
       phone,
       isActive: true
-    });
+    };
+
+    // Add role-specific fields
+    if (role === 'student' && studentPackage) {
+      userData.package = studentPackage;
+    }
+
+    if (role === 'tutor') {
+      if (subjects) userData.subjects = subjects;
+      if (qualification) userData.qualification = qualification;
+      if (experience) {
+        // Convert experience string to number
+        const parseExperience = (exp: string): number => {
+          if (exp === "0-1") return 1;
+          if (exp === "1-3") return 2;
+          if (exp === "3-5") return 4;
+          if (exp === "5-10") return 7;
+          if (exp === "10+") return 10;
+          return 0;
+        };
+        userData.experienceYears = parseExperience(experience);
+      }
+    }
+
+    const user = new User(userData);
 
     await user.save();
 

@@ -37,7 +37,8 @@ export class ProfileImageService {
    */
   static async uploadProfileImage(
     userId: string,
-    file: Express.Multer.File
+    file: Express.Multer.File,
+    baseUrl?: string
   ): Promise<ProfileImageUploadResult> {
     try {
       // Validate the file
@@ -80,7 +81,7 @@ export class ProfileImageService {
       await profileImage.save();
 
       // Update user's profile image URL
-      const imageUrl = FileUploadService.getFileUrl(file.path);
+      const imageUrl = FileUploadService.getFileUrl(file.path, baseUrl);
       await User.findByIdAndUpdate(userId, {
         profileImageUrl: imageUrl,
         updatedAt: new Date()
@@ -111,7 +112,7 @@ export class ProfileImageService {
   /**
    * Get active profile image for a user
    */
-  static async getActiveProfileImage(userId: string): Promise<ProfileImageInfo | null> {
+  static async getActiveProfileImage(userId: string, baseUrl?: string): Promise<ProfileImageInfo | null> {
     const profileImage = await ProfileImage.findOne({ userId, isActive: true })
       .sort({ uploadedAt: -1 });
 
@@ -127,7 +128,7 @@ export class ProfileImageService {
       mimeType: profileImage.mimeType,
       width: profileImage.width,
       height: profileImage.height,
-      url: FileUploadService.getFileUrl(profileImage.filePath),
+      url: FileUploadService.getFileUrl(profileImage.filePath, baseUrl),
       uploadedAt: profileImage.uploadedAt,
       isActive: profileImage.isActive
     };
@@ -136,7 +137,7 @@ export class ProfileImageService {
   /**
    * Get all profile images for a user
    */
-  static async getUserProfileImages(userId: string): Promise<ProfileImageInfo[]> {
+  static async getUserProfileImages(userId: string, baseUrl?: string): Promise<ProfileImageInfo[]> {
     const profileImages = await ProfileImage.find({ userId })
       .sort({ uploadedAt: -1 });
 
@@ -148,7 +149,7 @@ export class ProfileImageService {
       mimeType: img.mimeType,
       width: img.width,
       height: img.height,
-      url: FileUploadService.getFileUrl(img.filePath),
+      url: FileUploadService.getFileUrl(img.filePath, baseUrl),
       uploadedAt: img.uploadedAt,
       isActive: img.isActive
     }));
@@ -157,7 +158,7 @@ export class ProfileImageService {
   /**
    * Activate a specific profile image (deactivate others)
    */
-  static async activateProfileImage(userId: string, imageId: string): Promise<ProfileImageInfo> {
+  static async activateProfileImage(userId: string, imageId: string, baseUrl?: string): Promise<ProfileImageInfo> {
     // Deactivate all images for this user
     await ProfileImage.updateMany(
       { userId },
@@ -176,7 +177,7 @@ export class ProfileImageService {
     }
 
     // Update user's profile image URL
-    const imageUrl = FileUploadService.getFileUrl(profileImage.filePath);
+    const imageUrl = FileUploadService.getFileUrl(profileImage.filePath, baseUrl);
     await User.findByIdAndUpdate(userId, {
       profileImageUrl: imageUrl,
       updatedAt: new Date()

@@ -30,11 +30,11 @@ function getBaseUrl(): string {
   const fromWindow =
     typeof window !== "undefined" ? (window as any).__API_BASE_URL__ : "";
 
-  const url = (fromVite || fromNode || fromWindow || "http://localhost:8000")
+  const url = (fromVite || fromNode || fromWindow || "http://localhost:8080")
     .toString()
     .replace(/\/$/, "");
 
-  return url || "http://localhost:8000";
+  return url || "http://localhost:8080";
 }
 
 export async function listSubjects() {

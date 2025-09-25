@@ -13,7 +13,7 @@ const QuizAttemptReviewPage: React.FC = () => {
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
+alert()
   useEffect(() => {
     if (!attemptId) return;
     load();

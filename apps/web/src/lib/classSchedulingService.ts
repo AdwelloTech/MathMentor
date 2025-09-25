@@ -1,5 +1,5 @@
 // apps/web/src/lib/classSchedulingService.ts
-const API_BASES = ["http://localhost:8080", "http://localhost:8000"] as const;
+const API_BASES = ["http://localhost:8080", "http://localhost:8080"] as const;
 
 async function tryFetch(url: string, init?: RequestInit): Promise<Response | null> {
   try {

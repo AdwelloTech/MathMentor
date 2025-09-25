@@ -1,6 +1,6 @@
 
-// --- Safe listen with 8080→8000 fallback ---
-function safeListen(app: any, primary = Number(process.env.PORT) || 8080, fallback = 8000) {
+// --- Safe listen with 8080→8080 fallback ---
+function safeListen(app: any, primary = Number(process.env.PORT) || 8080, fallback = 8080) {
   const server = app.listen(primary, () => {
     console.log(`[api] listening on :${primary}`);
   });
@@ -164,6 +164,20 @@ const TutorMaterialSchema = new Schema(
   { timestamps: true }
 );
 
+const InstantRequestSchema = new Schema(
+  {
+    student_id: String,
+    subject_id: { type: Schema.Types.ObjectId, ref: "Subject" },
+    status: {
+      type: String,
+      enum: ["pending", "in_progress", "completed"],
+      default: "pending",
+    },
+    created_at: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
 const SessionBookingSchema = new Schema(
   {
     student_id: String,
@@ -256,6 +270,7 @@ const SessionBooking = model(
   SessionBookingSchema,
   "session_bookings"
 );
+const InstantRequest = model("InstantRequest", InstantRequestSchema, "instant_requests");
 const Quiz = model("Quiz", QuizSchema, "quizzes");
 const QuizAttempt = model("QuizAttempt", QuizAttemptSchema, "quiz_attempts");
 const AdminUser = model("AdminUser", AdminUserSchema, "admin_users");
@@ -272,8 +287,9 @@ const PackagePricing = model(
 ================================== */
 const app = express();
 
+
 // CORS and logging
-app.use(cors({ origin: ["http://localhost:3000", "http://localhost:5173"] }));
+app.use(cors({ origin: ["http://localhost:3000", "http://localhost:5173"] , credentials: true }));
 app.use(morgan("dev"));
 
 // Disable ETag / conditional GET so the API always returns 200 with a body
@@ -547,6 +563,7 @@ async function dynamicFind(res: Response, Model: any, options: any = {}) {
     if (typeof offset === "number") query.skip(offset);
     if (populate) query.populate(populate);
     const rows = await query.exec();
+   
     res.json({ ok: true, data: rows });
   } catch (e: any) {
     console.error(e);
@@ -775,6 +792,7 @@ app.post("/api/quizzes", async (req, res) => {
 });
 
 // CREATE subject
+
 app.post("/api/subjects", async (req, res) => {
   try {
     const doc = await Subject.create(req.body || {});
@@ -883,12 +901,15 @@ app.post("/api/quizzes/:id/attempts", async (req, res) => {
 });
 
 /* ---------- Subjects / Grade Levels ---------- */
+
 app.get("/api/subjects", async (req, res) => {
-  const q = parseJSON<any>(req.query.q as string) || {};
+  const q = parseJSON<any>(req.query.q as string) || {is_active: true};
   const sort = parseJSON<any>(req.query.sort as string) || { name: 1 };
   const limit = req.query.limit ? Number(req.query.limit) : 200;
   const offset = req.query.offset ? Number(req.query.offset) : 0;
   await dynamicFind(res, Subject, { q, sort, limit, offset });
+  
+ 
 });
 
 // Alias used by notes UI
@@ -1328,6 +1349,15 @@ app.get("/api/check_premium_access", async (req, res) => {
   }
 });
 
+/**-------------Instant Request-------- */
+app.post("/api/instant_requests", async (req, res) => {
+  try {
+    const doc = await InstantRequest.create(req.body || {});
+    res.json({ ok: true, data: doc });
+  } catch (e: any) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+});
 /* ---------- Package pricing (UI calls) ---------- */
 app.get("/api/package_pricing", async (req, res) => {
   const q = parseJSON<any>(req.query.q as string) || {};
@@ -1396,5 +1426,5 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
 const PORT = Number(process.env.API_PORT || 8080);
 app.listen(PORT, () => {
-  console.log(`🚀 API listening on http://localhost:${PORT}`);
+  console.log(`🚀 API listening on http://localhost:${PORT} ###`);
 });

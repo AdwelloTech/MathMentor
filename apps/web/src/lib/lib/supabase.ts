@@ -59,8 +59,8 @@ function makeAxios(baseURL: string): AxiosInstance {
       if (isNetwork && !cfg.__failoverTried) {
         const current = (instance.defaults.baseURL || "") as string;
         const next =
-          current.includes(":8080") ? current.replace(":8080", ":8000")
-          : current.includes(":8000") ? current.replace(":8000", ":8080")
+          current.includes(":8080") ? current.replace(":8080", ":8080")
+          : current.includes(":8080") ? current.replace(":8080", ":8080")
           : "";
         if (next) {
           try {

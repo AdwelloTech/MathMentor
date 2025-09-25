@@ -1,29 +1,13 @@
-import { supabase } from "@/lib/supabase";
+// src/lib/instantSessionService.ts (custom API via axios — no Supabase)
 
-// Shared broadcast channel (singleton) to minimize latency when sending events
-// We subscribe once and reuse the same channel for .send() calls
-let __instantSharedChannel: any | null = null;
-let __instantSharedReady: Promise<void> | null = null;
+/* -------------------- axios client -------------------- */
+import axios from "axios";
 
-function getInstantSharedChannel() {
-  const channelId = `instant_requests:pending:shared`;
-  if (!__instantSharedChannel) {
-    __instantSharedChannel = (supabase as any).channel(channelId);
-    __instantSharedReady = new Promise<void>((resolve) => {
-      try {
-        __instantSharedChannel.subscribe((status: any) => {
-          if (status === "SUBSCRIBED") resolve();
-        });
-      } catch (_) {
-        // Best-effort; if subscribe throws, we'll still try to send later
-        resolve();
-      }
-    });
-  }
-  return { channel: __instantSharedChannel, ready: __instantSharedReady! };
-}
+const API_BASE = "http://localhost:8080"; // force 8080 only
+const api = axios.create({ baseURL: API_BASE });
 
-type InstantRequest = {
+/* -------------------- types -------------------- */
+export type InstantRequest = {
   id: string;
   student_id: string;
   subject_id: string;
@@ -35,39 +19,156 @@ type InstantRequest = {
   updated_at: string;
 };
 
-export const instantSessionService = {
-  // Student creates a new instant request (fixed 15 minutes)
-  createRequest: async (studentProfileId: string, subjectId: string) => {
-    console.log("[Instant] createRequest", { studentProfileId, subjectId });
-    const id =
-      (globalThis.crypto?.randomUUID && globalThis.crypto.randomUUID()) ||
-      Math.random().toString(36).slice(2) + Date.now().toString(36);
+/* -------------------- utilities -------------------- */
+function makeId() {
+  return (
+    (globalThis.crypto?.randomUUID && globalThis.crypto.randomUUID()) ||
+    Math.random().toString(36).slice(2) + Date.now().toString(36)
+  );
+}
+function jitsiUrlFor(id: string) {
+  return `https://meet.jit.si/instant-${id}`;
+}
 
-    // Deterministic canonical room, derived from request id
-    const jitsiUrl = `https://meet.jit.si/instant-${id}`;
+/* -------------------- realtime (SSE or polling) -------------------- */
+type Unsubscribe = () => void;
 
-    const { data, error } = await (supabase as any)
-      .from("instant_requests")
-      .insert([
-        {
-          id,
-          student_id: studentProfileId,
-          subject_id: subjectId,
-          duration_minutes: 15,
+/** Server-Sent Events stream of pending requests (if your backend provides it). */
+function subscribeViaSSE(
+  onEvent: (payload: {
+    new: InstantRequest;
+    old: InstantRequest | null;
+    eventType: string;
+  }) => void
+): Unsubscribe {
+  const url = `${API_BASE}/api/instant_requests/stream`; // endpoint you expose on the server
+  let es: EventSource | null = null;
+
+  try {
+    es = new EventSource(url, { withCredentials: false });
+
+    es.addEventListener("open", () => {
+      console.log("[Instant] SSE connected");
+    });
+
+    es.addEventListener("insert", (e: any) => {
+      const data = JSON.parse(e.data);
+      onEvent({ new: data as InstantRequest, old: null, eventType: "INSERT" });
+    });
+
+    es.addEventListener("update", (e: any) => {
+      const data = JSON.parse(e.data);
+      onEvent({ new: data as InstantRequest, old: null, eventType: "UPDATE" });
+    });
+
+    es.addEventListener("accepted", (e: any) => {
+      const data = JSON.parse(e.data);
+      onEvent({
+        new: { ...(data as InstantRequest), status: "accepted" },
+        old: null,
+        eventType: "BROADCAST_ACCEPTED",
+      });
+    });
+
+    es.addEventListener("error", (e) => {
+      console.warn("[Instant] SSE error", e);
+    });
+  } catch (e) {
+    console.warn("[Instant] SSE init failed", e);
+  }
+
+  return () => {
+    try {
+      es?.close();
+      console.log("[Instant] SSE closed");
+    } catch {}
+  };
+}
+
+/** Polling fallback for pending requests. */
+function subscribeViaPolling(
+  callback: (payload: {
+    new: InstantRequest;
+    old: InstantRequest | null;
+    eventType: string;
+  }) => void
+): Unsubscribe {
+  console.log("[Instant] Using polling fallback");
+  let stopped = false;
+  let lastIds = new Set<string>();
+
+  const tick = async () => {
+    if (stopped) return;
+    try {
+      const res = await api.get("/api/instant_requests", {
+        params: {
           status: "pending",
-          jitsi_meeting_url: jitsiUrl,
+          limit: 50,
+          sort: JSON.stringify({ created_at: -1 }),
         },
-      ])
-      .select("*")
-      .single();
+        withCredentials: false,
+      });
+      const items: InstantRequest[] = Array.isArray(res.data?.items)
+        ? res.data.items
+        : Array.isArray(res.data?.data)
+        ? res.data.data
+        : (res.data as InstantRequest[]) || [];
 
-    if (error) throw error;
+      // detect new inserts
+      for (const it of items) {
+        if (!lastIds.has(it.id)) {
+          callback({ new: it, old: null, eventType: "INSERT" });
+        }
+      }
+      lastIds = new Set(items.map((x) => x.id));
+    } catch {
+      // non-fatal
+    } finally {
+      setTimeout(tick, 3000);
+    }
+  };
+
+  tick();
+  return () => {
+    stopped = true;
+  };
+}
+
+/* -------------------- service -------------------- */
+export const instantSessionService = {
+  /** Student creates a new instant request (default 15 minutes) */
+  async createRequest(studentProfileId: string, subjectId: string) {
+    console.log("[Instant] createRequest", { studentProfileId, subjectId });
+
+    const id = makeId();
+    const jitsi_meeting_url = jitsiUrlFor(id);
+
+    // POST /api/instant_requests -> creates and returns the row
+    const res = await api.post(
+      "/api/instant_requests",
+      {
+        id,
+        student_id: studentProfileId,
+        subject_id: subjectId,
+        duration_minutes: 15,
+        status: "pending",
+        jitsi_meeting_url,
+      },
+      { withCredentials: false }
+    );
+
+    const data =
+      (res.data?.data as InstantRequest) ||
+      (res.data as InstantRequest);
     console.log("[Instant] createRequest ->", data?.id);
-    return data as InstantRequest;
+    return data;
   },
 
-  // Tutors listen for new pending requests (only if online)
-  subscribeToPending: (
+  /**
+   * Tutors listen for new/updated requests.
+   * Uses SSE at /api/instant_requests/stream, falls back to polling GET /api/instant_requests?status=pending
+   */
+  subscribeToPending(
     callback: (payload: {
       new: InstantRequest;
       old: InstantRequest | null;
@@ -75,173 +176,74 @@ export const instantSessionService = {
     }) => void,
     _subjectId?: string,
     isOnline: boolean = false
-  ) => {
-    // Don't subscribe if tutor is offline
+  ): Unsubscribe {
     if (!isOnline) {
       console.log("[Instant] Tutor is offline, not subscribing to requests");
-      return () => {}; // Return empty cleanup function
+      return () => {};
     }
-    const channelId = `instant_requests:pending:shared`;
-    const channel = (supabase as any).channel(channelId);
-    console.log("[Instant] subscribeToPending start", channelId);
 
-    // Listen for acceptance broadcasts; include the canonical meeting URL
-    channel.on("broadcast", { event: "accepted" } as any, (payload: any) => {
-      try {
-        const requestId = payload?.payload?.id;
-        const url = payload?.payload?.jitsi_meeting_url || null;
-        if (!requestId) return;
-        console.log("[Instant] BROADCAST accepted", { requestId, url });
-        // Synthesize a minimal payload to unify handling upstream
-        const minimal = {
-          id: requestId,
-          status: "accepted",
-          jitsi_meeting_url: url,
-        } as unknown as InstantRequest;
-        callback({
-          new: minimal,
-          old: null,
-          eventType: "BROADCAST_ACCEPTED",
-        });
-      } catch (e) {
-        console.warn("[Instant] broadcast accepted handler error", e);
-      }
-    });
+    // Try SSE first
+    const sseUnsub = subscribeViaSSE(callback);
 
-    channel.on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "instant_requests",
-      } as any,
-      (payload: any) => {
-        console.log("[Instant] INSERT payload", payload?.new?.id);
-        callback({
-          new: payload.new,
-          old: payload.old,
-          eventType: payload.eventType,
-        });
-      }
-    );
-
-    channel.on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "instant_requests",
-      } as any,
-      (payload: any) => {
-        console.log("[Instant] UPDATE payload received:", {
-          id: payload?.new?.id,
-          status: payload?.new?.status,
-          channel: channelId,
-          eventType: payload.eventType,
-        });
-        callback({
-          new: payload.new,
-          old: payload.old,
-          eventType: payload.eventType,
-        });
-      }
-    );
-
-    channel.subscribe((status: any) => {
-      console.log("[Instant] channel status", status, channelId);
-      if (status === "SUBSCRIBED") {
-        console.log(
-          "[Instant] Successfully subscribed to instant_requests changes"
-        );
-      } else if (status === "CHANNEL_ERROR") {
-        console.error("[Instant] Channel subscription error");
-      } else if (status === "TIMED_OUT") {
-        console.error("[Instant] Channel subscription timed out");
-      }
-    });
+    // Watchdog: if SSE doesn't connect quickly, start polling too (harmless if both run briefly)
+    const pollTimer = setTimeout(() => {
+      subscribeViaPolling(callback);
+    }, 1000);
 
     return () => {
-      console.log("[Instant] unsubscribe channel", channelId);
-      try {
-        (supabase as any).removeChannel(channel);
-      } catch (error) {
-        console.error("[Instant] Error removing channel:", error);
-      }
+      sseUnsub?.();
+      clearTimeout(pollTimer);
     };
   },
 
-  // Student cancels their pending request
-  cancelRequest: async (requestId: string, studentProfileId: string) => {
+  /** Student cancels their pending request */
+  async cancelRequest(requestId: string, studentProfileId: string) {
     console.log("[Instant] cancelRequest", { requestId });
-    const { data, error } = await (supabase as any)
-      .from("instant_requests")
-      .update({ status: "cancelled" })
-      .eq("id", requestId)
-      .eq("student_id", studentProfileId)
-      .select("*")
-      .single();
 
-    if (error) throw error;
-    return data as InstantRequest;
+    // PUT /api/instant_requests/:id/cancel
+    const res = await api.put(
+      `/api/instant_requests/${encodeURIComponent(requestId)}/cancel`,
+      { student_id: studentProfileId },
+      { withCredentials: false }
+    );
+
+    return (
+      (res.data?.data as InstantRequest) ||
+      (res.data as InstantRequest)
+    );
   },
 
-  // Tutor rejects a pending request (local dismissal)
-  rejectRequest: async (requestId: string, tutorProfileId: string) => {
-    console.log("[Instant] rejectRequest", { requestId, tutorProfileId });
-    // For now, just return success - the rejection is handled locally
-    // In the future, we could track rejections in the database
+  /** Tutor rejects a pending request (local-only right now) */
+  async rejectRequest(requestId: string, _tutorProfileId: string) {
+    console.log("[Instant] rejectRequest", { requestId });
     return { id: requestId } as InstantRequest;
   },
 
-  // Atomic accept: only succeeds if still pending. Use existing meeting URL (single source of truth)
-  acceptRequest: async (requestId: string, tutorProfileId: string) => {
+  /** Tutor accepts a pending request (atomic on the server) */
+  async acceptRequest(requestId: string, tutorProfileId: string) {
     console.log("[Instant] acceptRequest", { requestId, tutorProfileId });
 
-    const { data: accepted, error: acceptError } = await (supabase as any)
-      .from("instant_requests")
-      .update({ status: "accepted", accepted_by_tutor_id: tutorProfileId })
-      .eq("id", requestId)
-      .eq("status", "pending")
-      .select("*")
-      .single();
+    // PUT /api/instant_requests/:id/accept
+    const res = await api.put(
+      `/api/instant_requests/${encodeURIComponent(requestId)}/accept`,
+      { tutor_id: tutorProfileId },
+      { withCredentials: false }
+    );
 
-    if (acceptError) throw acceptError;
-    if (!accepted) throw new Error("Request was already accepted or cancelled");
+    // Server should return the updated record with a canonical Jitsi URL.
+    const accepted: InstantRequest =
+      (res.data?.data as InstantRequest) ||
+      (res.data as InstantRequest);
 
-    // Ensure a meeting URL exists (deterministic canonical)
-    const jitsiMeetingUrl =
-      accepted.jitsi_meeting_url ||
-      `https://meet.jit.si/instant-${accepted.id}`;
+    const jitsi_meeting_url =
+      accepted.jitsi_meeting_url || jitsiUrlFor(accepted.id);
 
-    // If URL was missing for some reason, persist it once
-    if (!accepted.jitsi_meeting_url) {
-      const { error: setUrlError } = await (supabase as any)
-        .from("instant_requests")
-        .update({ jitsi_meeting_url: jitsiMeetingUrl })
-        .eq("id", accepted.id);
-      if (setUrlError)
-        console.warn("[Instant] failed to set meeting url", setUrlError);
-    }
-
-    // Broadcast acceptance INCLUDING the canonical URL so students open the same room
+    // Best-effort audit booking (optional): POST /api/bookings
     try {
-      const { channel, ready } = getInstantSharedChannel();
-      await ready; // ensure SUBSCRIBED at least once
-      await channel.send({
-        type: "broadcast",
-        event: "accepted",
-        payload: { id: requestId, jitsi_meeting_url: jitsiMeetingUrl },
-      });
-    } catch (e) {
-      console.warn("[Instant] acceptance broadcast failed (non-fatal)", e);
-    }
-
-    // Create audit booking (best-effort)
-    const startIso = new Date().toISOString();
-    const endIso = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-    const { error: bookingError } = await (supabase as any)
-      .from("bookings")
-      .insert([
+      const startIso = new Date().toISOString();
+      const endIso = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      await api.post(
+        "/api/bookings",
         {
           student_id: accepted.student_id,
           teacher_id: tutorProfileId,
@@ -250,20 +252,15 @@ export const instantSessionService = {
           start_time: startIso,
           end_time: endIso,
           status: "confirmed",
-          jitsi_meeting_url: jitsiMeetingUrl,
+          jitsi_meeting_url,
         },
-      ]);
-    if (bookingError) {
-      console.warn(
-        "Booking insert failed (will not block acceptance)",
-        bookingError
+        { withCredentials: false }
       );
+    } catch (e) {
+      console.warn("[Instant] booking create failed (non-fatal)", e);
     }
 
-    return {
-      ...(accepted as any),
-      jitsi_meeting_url: jitsiMeetingUrl,
-    } as InstantRequest;
+    return { ...accepted, jitsi_meeting_url } as InstantRequest;
   },
 };
 

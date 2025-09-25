@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿import { AxiosError } from "axios";
 import { getApi } from "./api";
 
@@ -68,6 +69,15 @@ function unwrapList(payload: RawList): RawDoc[] {
   if (Array.isArray(payload.data)) return payload.data.filter(Boolean) as RawDoc[];
   if (Array.isArray(payload.items)) return payload.items.filter(Boolean) as RawDoc[];
   return [];
+=======
+// apps/web/src/lib/adminQuizService.ts
+export type Quiz = { id: string; title: string; subject_id?: string; questions?: any[]; is_active?: boolean; createdAt?: string };
+const API_BASES = ["", "http://localhost:8080", "http://localhost:8080"] as const;
+function withParams(path: string, params?: Record<string, any>) {
+  const u = new URL(path, "http://x");
+  if (params) for (const [k,v] of Object.entries(params)) u.searchParams.set(k, typeof v==="string"? v : JSON.stringify(v));
+  return u.pathname + (u.search ? u.search : "");
+>>>>>>> b8ee56aca5a5154611ff306bfb172bd409270732
 }
 
 function toStringId(value: any): string {

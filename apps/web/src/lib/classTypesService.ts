@@ -1,5 +1,5 @@
 // apps/web/src/lib/classTypesService.ts
-const API_BASES = ["", "http://localhost:8080", "http://localhost:8000"] as const;
+const API_BASES = ["", "http://localhost:8080", "http://localhost:8080"] as const;
 function withParams(path: string, params?: Record<string, any>) {
   const u = new URL(path, "http://x"); if (params) for (const [k,v] of Object.entries(params)) u.searchParams.set(k, typeof v==="string"? v : JSON.stringify(v));
   return u.pathname + (u.search ? u.search : "");

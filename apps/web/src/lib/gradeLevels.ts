@@ -5,7 +5,7 @@ import type { GradeLevel } from "@/types/auth";
 import { getPublicEnv } from "./env";
 
 // ---- Config ----
-const BASE = getPublicEnv("API_BASE_URL", "http://localhost:8000");
+const BASE = getPublicEnv("API_BASE_URL", "http://localhost:8080");
 const ENDPOINT = `${BASE}/api/grade_levels`;
 
 // ---- Cache ----

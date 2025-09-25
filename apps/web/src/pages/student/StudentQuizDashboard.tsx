@@ -93,7 +93,7 @@ const StudentQuizDashboard: React.FC = () => {
 
       console.log("Quizzes loaded:", quizzesData);
       console.log("Subjects loaded:", subjectsDataRaw);
-
+      
       // normalize subjects from service
       let normalizedSubjects = normalizeSubjects(subjectsDataRaw as any[]);
 

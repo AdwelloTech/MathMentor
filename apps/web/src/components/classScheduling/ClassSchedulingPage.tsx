@@ -47,7 +47,7 @@ const ClassSchedulingPage: React.FC = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
 
 // --- Local helpers: resilient fetch fallbacks for create ---
-const API_BASES = ["", "http://localhost:8080", "http://localhost:8000"] as const;
+const API_BASES = ["", "http://localhost:8080"] as const;
 
 async function tryFetchJSON(url: string, init?: RequestInit) {
   try {
@@ -74,7 +74,7 @@ async function createClassCompat(payload: any) {
     });
     if (res) return res;
   }
-  throw new Error("No classes create route available on /api, :8080 or :8000");
+  throw new Error("No classes create route available on /api, :8080 ");
 }
 
 

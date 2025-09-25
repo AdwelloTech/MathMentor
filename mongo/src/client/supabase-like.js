@@ -34,4 +34,4 @@ export function createClient(baseUrl){
     }
   }
 }
-export const supabase = createClient((typeof process!=='undefined' && (process.env.NEXT_PUBLIC_API_URL || process.env.VITE_API_URL)) || 'http://localhost:8000');
+export const supabase = createClient((typeof process!=='undefined' && (process.env.NEXT_PUBLIC_API_URL || process.env.VITE_API_URL)) || 'http://localhost:8080');

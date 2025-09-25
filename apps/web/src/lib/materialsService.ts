@@ -2,7 +2,7 @@
 import axios from "axios";
 import { getPublicEnv } from "./env";
 
-const BASE = getPublicEnv("API_BASE_URL", "http://localhost:8000");
+const BASE = getPublicEnv("API_BASE_URL", "http://localhost:8080");
 
 function normMaterial(doc: any) {
   return {

@@ -26,8 +26,8 @@ function getBaseUrl() {
       ? (process as any)?.env?.VITE_API_URL ||
         (process as any)?.env?.NEXT_PUBLIC_API_URL
       : "") ||
-    "http://localhost:8000";
-  return (url || "http://localhost:8000").replace(/\/$/, "");
+    "http://localhost:8080";
+  return (url || "http://localhost:8080").replace(/\/$/, "");
 }
 
 const api = axios.create({

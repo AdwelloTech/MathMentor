@@ -1,9 +1,9 @@
 // apps/web/src/lib/tutorCompatServices.ts
 // Fallback-safe services for Tutor pages in Mongo mode (or when older services are missing).
-// They probe multiple API bases (proxy / 8080 / 8000) and multiple route shapes.
+// They probe multiple API bases (proxy / 8080 / 8080) and multiple route shapes.
 type Json = any;
 
-const API_BASES = ["", "http://localhost:8080", "http://localhost:8000"] as const;
+const API_BASES = ["", "http://localhost:8080", "http://localhost:8080"] as const;
 
 async function tryFetch(url: string, init?: RequestInit): Promise<Response | null> {
   try { const r = await fetch(url, { ...init, credentials: "omit" }); return r.ok ? r : null; } catch { return null; }

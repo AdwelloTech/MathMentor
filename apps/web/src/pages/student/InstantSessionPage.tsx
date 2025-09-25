@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { api } from "@/lib/subjects.api";
 import { instantSessionService } from "../../lib/instantSessionService";
 import { useAuth } from "../../contexts/AuthContext";
 import { STUDENT_INSTANT_SESSION_BACKGROUND } from "../../utils/roleStyles";
@@ -119,7 +120,7 @@ export default function InstantSessionPage() {
       localStorage.removeItem("instantSessionState");
     }
   }, [requestId, status, jitsiUrl, subjectId, acceptedAt]);
-
+/*
   const handleRequest = async () => {
     if (!user?.id || !subjectId) return;
 
@@ -142,6 +143,41 @@ export default function InstantSessionPage() {
       console.error("Error creating request:", error);
     }
   };
+*/
+
+// at top of file (if not already present):
+// import { api } from "@/lib/subjects.api";
+
+const handleRequest = async () => {
+  if (!user?.id || !subjectId) return;
+
+  try {
+    // 1) Look up the student's profile id via custom API
+    const res = await api.get("/api/profiles", {
+      params: { q: JSON.stringify({ user_id: user._id }), limit: 1 },
+      withCredentials: false, // this read doesn’t need cookies
+    });
+
+    const rows = Array.isArray(res.data?.data) ? res.data.data : res.data?.items || [];
+    const studentProfileId = rows?.[0]?._id ?? rows?.[0]?.id;
+    if (!studentProfileId) {
+      console.error("No profile found for user");
+      return;
+    }
+
+    // 2) Create the instant request via your custom service (axios → :8000)
+    const request = await instantSessionService.createRequest(
+      String(studentProfileId),
+      subjectId
+    );
+
+    // 3) Update UI state
+    setRequestId(request.id);
+    setStatus("waiting");
+  } catch (error) {
+    console.error("Error creating request:", error);
+  }
+};
 
   const handleCancel = async () => {
     if (!requestId || !user?.id) return;

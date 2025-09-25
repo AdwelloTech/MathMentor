@@ -15,14 +15,14 @@ This patch adds a MongoDB-backed Express API that supports:
    ```bash
    npm i
    ```
-3. Start the API (port 8000 by default):
+3. Start the API (port 8080 by default):
    ```bash
    npm run dev:api
    # or
    npm run server
    ```
 4. Set your web app to call the new API:
-   - Add `VITE_API_URL=http://localhost:8000` to `apps/web/.env`
+   - Add `VITE_API_URL=http://localhost:8080` to `apps/web/.env`
    - Ensure axios-based libs are used (see below)
 
 ## Frontend changes (replace Supabase calls with Axios)
@@ -67,7 +67,7 @@ The server defines Mongoose schemas for Subjects, GradeLevels, FlashcardSets, Fl
 ## Health check
 
 ```
-GET http://localhost:8000/health
+GET http://localhost:8080/health
 ```
 
 If you need help swapping specific pages to the axios helpers, ping me with the file paths and I’ll patch them.

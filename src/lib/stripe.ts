@@ -35,7 +35,7 @@ export interface PaymentIntent {
 }
 
 // Function to create payment intent (this would typically be done on the backend)
-export const createPaymentIntent = async (packageType: 'silver' | 'gold', customerEmail: string) => {
+export const createPaymentIntent = async (packageType: 'silver' | 'gold') => {
   // In a real application, this would be a call to your backend API using the secret key
   // Backend would use: sk_test_51OYCbPFUqDTwzZQxRI5JMdxefgbU8sM7MKWmorDAI6HZRjZtzsHNcRDTkAZSL0kK49HkkPP1oWr4QCJrc7ffqKGW00sFLxKg2O
   // For demo purposes, we'll simulate the response

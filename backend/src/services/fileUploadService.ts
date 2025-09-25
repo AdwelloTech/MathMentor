@@ -19,6 +19,12 @@ export const FILE_TYPE_CONFIGS: Record<string, FileTypeConfig> = {
     allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
     folder: 'profile-images'
   },
+  idVerificationImages: {
+    maxSize: 5 * 1024 * 1024, // 5MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp'],
+    folder: 'id-verification'
+  },
   documents: {
     maxSize: 10 * 1024 * 1024, // 10MB
     allowedTypes: [
@@ -109,6 +115,15 @@ export const uploadInstances = {
       files: 1
     },
     fileFilter: createFileFilter(FILE_TYPE_CONFIGS.profileImages)
+  }),
+
+  idVerificationImages: multer({
+    storage: createStorage(FILE_TYPE_CONFIGS.idVerificationImages.folder),
+    limits: {
+      fileSize: FILE_TYPE_CONFIGS.idVerificationImages.maxSize,
+      files: 3 // front, back, selfie
+    },
+    fileFilter: createFileFilter(FILE_TYPE_CONFIGS.idVerificationImages)
   }),
 
   documents: multer({

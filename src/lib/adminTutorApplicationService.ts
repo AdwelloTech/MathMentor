@@ -298,38 +298,38 @@ export class AdminTutorApplicationService {
 
       // Transform the data
       const application: TutorApplication = {
-        id: data.id,
-        user_id: data.user_id,
-        applicant_email: data.applicant_email,
-        full_name: data.full_name,
-        phone_number: data.phone_number,
-        subjects: Array.isArray(data.subjects)
-          ? data.subjects
-          : JSON.parse(data.subjects || "[]"),
+        id: (data as any).id,
+        user_id: (data as any).user_id,
+        applicant_email: (data as any).applicant_email,
+        full_name: (data as any).full_name,
+        phone_number: (data as any).phone_number,
+        subjects: Array.isArray((data as any).subjects)
+          ? (data as any).subjects
+          : JSON.parse((data as any).subjects || "[]"),
         specializes_learning_disabilities:
-          data.specializes_learning_disabilities || false,
-        cv_file_name: data.cv_file_name,
-        cv_url: data.cv_url,
-        cv_file_size: data.cv_file_size,
-        additional_notes: data.additional_notes,
-        application_status: data.application_status || "pending",
-        admin_notes: data.admin_notes,
-        rejection_reason: data.rejection_reason,
-        submitted_at: data.submitted_at,
-        reviewed_at: data.reviewed_at,
-        reviewed_by: data.reviewed_by,
-        approved_by: data.approved_by,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
+          (data as any).specializes_learning_disabilities || false,
+        cv_file_name: (data as any).cv_file_name,
+        cv_url: (data as any).cv_url,
+        cv_file_size: (data as any).cv_file_size,
+        additional_notes: (data as any).additional_notes,
+        application_status: (data as any).application_status || "pending",
+        admin_notes: (data as any).admin_notes,
+        rejection_reason: (data as any).rejection_reason,
+        submitted_at: (data as any).submitted_at,
+        reviewed_at: (data as any).reviewed_at,
+        reviewed_by: (data as any).reviewed_by,
+        approved_by: (data as any).approved_by,
+        created_at: (data as any).created_at,
+        updated_at: (data as any).updated_at,
         // New fields
-        postcode: data.postcode || 'N/A',
-        past_experience: data.past_experience,
-        weekly_availability: data.weekly_availability,
-        employment_status: data.employment_status,
-        education_level: data.education_level,
-        average_weekly_hours: data.average_weekly_hours,
-        expected_hourly_rate: data.expected_hourly_rate,
-        based_in_country: data.based_in_country || 'Not specified',
+        postcode: (data as any).postcode || 'N/A',
+        past_experience: (data as any).past_experience,
+        weekly_availability: (data as any).weekly_availability,
+        employment_status: (data as any).employment_status,
+        education_level: (data as any).education_level,
+        average_weekly_hours: (data as any).average_weekly_hours,
+        expected_hourly_rate: (data as any).expected_hourly_rate,
+        based_in_country: (data as any).based_in_country || 'Not specified',
       };
 
       return application;

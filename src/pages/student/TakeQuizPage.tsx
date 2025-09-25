@@ -1,29 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft,
-  Clock,
-  CheckCircle,
-  XCircle,
-  ChevronLeft,
-  ChevronRight,
   Send,
   AlertTriangle,
   BookOpen,
   Target,
-  Award,
-  Timer,
-  User,
 } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Textarea } from "@/components/ui/textarea";
 import { quizService } from "@/lib/quizService";
-import type { Quiz, Question, Answer, QuizAttempt } from "@/types/quiz";
+import type { Quiz, QuizAttempt } from "@/types/quiz";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StudentAnswer {
@@ -34,7 +24,6 @@ interface StudentAnswer {
 
 const TakeQuizPage: React.FC = () => {
   const { attemptId } = useParams<{ attemptId: string }>();
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -86,21 +75,33 @@ const TakeQuizPage: React.FC = () => {
       );
       setAttempt(attemptData.attempt);
 
-      // Get quiz with questions
+      // Get quiz data
       const quizData = await quizService.studentQuizzes.getQuizForTaking(
         attemptData.attempt.quiz_id
       );
-      setQuiz(quizData);
+
+      // Get questions for the quiz
+      const questionsData = await quizService.questions.getByQuizId(
+        attemptData.attempt.quiz_id
+      );
+
+      // Combine quiz data with questions
+      const quizWithQuestions = {
+        ...quizData,
+        questions: questionsData,
+      };
+
+      setQuiz(quizWithQuestions);
 
       // Initialize answers array
       const initialAnswers: StudentAnswer[] =
-        quizData.questions?.map((q) => ({
+        questionsData?.map((q) => ({
           questionId: q.id,
         })) || [];
       setAnswers(initialAnswers);
 
       // Set time remaining
-      setTimeRemaining(quizData.time_limit_minutes * 60);
+      setTimeRemaining(quizWithQuestions.time_limit_minutes * 60);
     } catch (error) {
       console.error("Error loading quiz data:", error);
       toast.error("Failed to load quiz");
@@ -164,11 +165,6 @@ const TakeQuizPage: React.FC = () => {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  };
 
   const getCurrentAnswer = () => {
     return answers.find(
@@ -220,9 +216,6 @@ const TakeQuizPage: React.FC = () => {
 
   const currentQuestion = quiz.questions?.[currentQuestionIndex];
   const totalQuestions = quiz.questions?.length || 0;
-  const answeredQuestions = answers.filter(
-    (a) => a.selectedAnswerId || a.answerText
-  ).length;
 
   return (
     <div className="min-h-screen">

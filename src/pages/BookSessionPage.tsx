@@ -16,7 +16,6 @@ import {
   X,
   Star,
   BookOpen,
-  Video,
   CheckCircle,
   Loader2,
 } from "lucide-react";
@@ -41,7 +40,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const BookSessionPage: React.FC = () => {
   const { user } = useAuth();
@@ -62,6 +61,11 @@ const BookSessionPage: React.FC = () => {
   const [filterDate, setFilterDate] = useState<string>("");
   const [filterSubject, setFilterSubject] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  const getClassTypeName = (classTypeId: string) => {
+    const classType = classTypes.find((ct) => ct.id === classTypeId);
+    return classType ? classType.name : 'Unknown';
+  };
 
   useEffect(() => {
     loadSessions();
@@ -193,24 +197,6 @@ const BookSessionPage: React.FC = () => {
     });
   };
 
-  const getClassTypeName = (classTypeId: string) => {
-    // For now, return a generic name since we don't have class types in the new backend
-    return "Class";
-  };
-
-  const getClassTypeIcon = (classTypeName: string) => {
-    switch (classTypeName.toLowerCase()) {
-      case "group":
-        return <Users className="w-4 h-4" />;
-      case "consultation":
-        return <BookOpen className="w-4 h-4" />;
-      case "one-on-one":
-      case "one-on-one extended":
-        return <Video className="w-4 h-4" />;
-      default:
-        return <BookOpen className="w-4 h-4" />;
-    }
-  };
 
   const filteredSessions = sessions.filter((sessionResult) => {
     const session = sessionResult.class;
@@ -572,17 +558,25 @@ const BookSessionPage: React.FC = () => {
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
           {selectedSession && (
-            <SessionPaymentForm
-              sessionTitle={selectedSession.class.title}
-              tutorName={selectedSession.tutor.full_name}
-              sessionDate={selectedSession.class.startDate}
-              sessionTime={selectedSession.class.schedule.startTime}
-              amount={selectedSession.class.price || 0}
-              customerEmail={user?.email || ""}
-              onPaymentSuccess={handlePaymentSuccess}
-              onPaymentError={handlePaymentError}
-              onCancel={handlePaymentCancel}
-            />
+            <>
+              <DialogTitle className="sr-only">
+                Complete Payment for {selectedSession.class.title}
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                Complete your payment to book a session with {selectedSession.tutor.full_name} on {selectedSession.class.startDate} at {selectedSession.class.schedule.startTime}
+              </DialogDescription>
+              <SessionPaymentForm
+                sessionTitle={selectedSession.class.title}
+                tutorName={selectedSession.tutor.full_name}
+                sessionDate={selectedSession.class.startDate}
+                sessionTime={selectedSession.class.schedule.startTime}
+                amount={selectedSession.class.price || 0}
+                customerEmail={user?.email || ""}
+                onPaymentSuccess={handlePaymentSuccess}
+                onPaymentError={handlePaymentError}
+                onCancel={handlePaymentCancel}
+              />
+            </>
           )}
         </DialogContent>
       </Dialog>

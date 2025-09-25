@@ -333,10 +333,13 @@ export class AuthService {
    * Update user profile
    */
   static async updateProfile(userId: string, updates: Partial<any>): Promise<any> {
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
+    console.log('AuthService.updateProfile called with userId:', userId, 'updates:', updates);
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      console.log('Found user:', user._id);
 
     // Update allowed fields
     const allowedFields = [
@@ -344,16 +347,28 @@ export class AuthService {
       'emergencyContact', 'age', 'gradeLevelId', 'currentGrade', 'academicSet',
       'hasLearningDisabilities', 'learningNeedsDescription', 'parentName',
       'parentPhone', 'parentEmail', 'city', 'postcode', 'schoolName',
-      'avatarUrl', 'profileImageUrl'
+      'avatarUrl', 'profileImageUrl',
+      // Tutor-specific fields
+      'qualification', 'experienceYears', 'specializations', 'hourlyRate',
+      'availability', 'bio', 'certifications', 'languages', 'cvUrl',
+      'cvFileName', 'dateOfBirth'
     ];
+
+    // Fields that should remain camelCase (not converted to snake_case)
+    const camelCaseFields = ['cvUrl', 'cvFileName'];
 
     // Build update object with only allowed fields
     const updateData: any = {};
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
-        // Convert field names to match database schema
-        const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
-        updateData[field] = updates[field];
+        if (camelCaseFields.includes(field)) {
+          // Keep camelCase for these fields
+          updateData[field] = updates[field];
+        } else {
+          // Convert other field names to match database schema (snake_case)
+          const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
+          updateData[field] = updates[field];
+        }
       }
     }
 
@@ -362,37 +377,66 @@ export class AuthService {
       updateData.fullName = `${updates.firstName || user.firstName} ${updates.lastName || user.lastName}`;
     }
 
-    // Apply updates
-    Object.assign(user, updateData);
-    await user.save();
+    // Handle dateOfBirth conversion if it's a string
+    if (updateData.dateOfBirth && typeof updateData.dateOfBirth === 'string') {
+      updateData.dateOfBirth = new Date(updateData.dateOfBirth);
+    }
 
-    return {
-      id: user._id.toString(),
-      user_id: user._id.toString(),
-      first_name: user.firstName,
-      last_name: user.lastName,
-      full_name: user.fullName,
-      email: user.email,
-      role: user.role,
-      avatar_url: user.avatarUrl,
-      phone: user.phone,
-      address: user.address,
-      gender: user.gender,
-      emergency_contact: user.emergencyContact,
-      age: (user as any).age, // Access virtual field
-      grade_level_id: user.gradeLevelId,
-      current_grade: user.currentGrade,
-      academic_set: user.academicSet,
-      has_learning_disabilities: user.hasLearningDisabilities,
-      learning_needs_description: user.learningNeedsDescription,
-      parent_name: user.parentName,
-      parent_phone: user.parentPhone,
-      parent_email: user.parentEmail,
-      city: user.city,
-      postcode: user.postcode,
-      school_name: user.schoolName,
-      profile_image_url: user.profileImageUrl,
-      updated_at: user.updatedAt
-    };
+    // Apply updates
+    console.log('Applying updates:', updateData);
+    Object.assign(user, updateData);
+    console.log('Saving user...');
+    try {
+      await user.save();
+      console.log('User saved successfully');
+    } catch (saveError: any) {
+      console.error('Error saving user:', saveError);
+      throw saveError;
+    }
+
+      return {
+        id: user._id.toString(),
+        user_id: user._id.toString(),
+        first_name: user.firstName,
+        last_name: user.lastName,
+        full_name: user.fullName,
+        email: user.email,
+        role: user.role,
+        avatar_url: user.avatarUrl,
+        phone: user.phone,
+        address: user.address,
+        gender: user.gender,
+        emergency_contact: user.emergencyContact,
+        date_of_birth: user.dateOfBirth,
+        age: (user as any).age, // Access virtual field
+        grade_level_id: user.gradeLevelId,
+        current_grade: user.currentGrade,
+        academic_set: user.academicSet,
+        has_learning_disabilities: user.hasLearningDisabilities,
+        learning_needs_description: user.learningNeedsDescription,
+        parent_name: user.parentName,
+        parent_phone: user.parentPhone,
+        parent_email: user.parentEmail,
+        city: user.city,
+        postcode: user.postcode,
+        school_name: user.schoolName,
+        profile_image_url: user.profileImageUrl,
+        // Tutor-specific fields
+        qualification: user.qualification,
+        experience_years: user.experienceYears,
+        specializations: user.specializations,
+        hourly_rate: user.hourlyRate,
+        availability: user.availability,
+        bio: user.bio,
+        certifications: user.certifications,
+        languages: user.languages,
+        cv_url: user.cvUrl,
+        cv_file_name: user.cvFileName,
+        updated_at: user.updatedAt
+      };
+    } catch (error: any) {
+      console.error('Error in updateProfile:', error);
+      throw error;
+    }
   }
 }

@@ -308,6 +308,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
       await db.tutorApplications.create(applicationData);
 
       toast.success("Application submitted successfully!");
+
       onSuccess();
     } catch (error: any) {
       console.error("Application submission error:", error);

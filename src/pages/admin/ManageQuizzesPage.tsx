@@ -2,13 +2,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   MagnifyingGlassIcon,
-  FunnelIcon,
   EyeIcon,
   TrashIcon,
   CheckCircleIcon,
   ChartBarIcon,
   DocumentTextIcon,
-  AcademicCapIcon,
   ClockIcon,
   UserIcon,
   XCircleIcon,
@@ -428,9 +426,9 @@ const ManageQuizzesPage: React.FC = () => {
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                   {quiz.subject}
                                 </span>
-                                {quiz.grade_level && (
+                                {quiz.gradeLevelId && (
                                   <div className="text-xs text-gray-500 mt-1">
-                                    Grade: {quiz.grade_level}
+                                    Grade: {quiz.gradeLevelId.displayName}
                                   </div>
                                 )}
                               </td>
@@ -449,7 +447,7 @@ const ManageQuizzesPage: React.FC = () => {
                                 )}
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-500">
-                                {new Date(quiz.created_at).toLocaleDateString()}
+                                {new Date(quiz.createdAt).toLocaleDateString()}
                               </td>
                               <td className="px-6 py-4 text-right text-sm font-medium">
                                 <div className="flex justify-end space-x-2">

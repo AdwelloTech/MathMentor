@@ -3,9 +3,12 @@
 // Class Types (for now, keeping simple structure)
 export interface ClassType {
   _id: string;
+  id: string; // Alias for _id for backward compatibility
   name: string;
+  description?: string;
   duration_minutes?: number;
   max_students?: number;
+  price_per_session?: number;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -36,6 +39,8 @@ export interface Class {
   prerequisites?: string[];
   materials?: string[];
   meetingLink?: string;
+  jitsiRoomName?: string;
+  jitsiPassword?: string;
   roomNumber?: string;
   location?: string;
   createdAt: string;
@@ -80,6 +85,9 @@ export interface TutorClass extends Class {
   recurring_end_date?: string;
   created_at: string;
   updated_at: string;
+  jitsi_meeting_url?: string;
+  jitsi_room_name?: string;
+  jitsi_password?: string;
 
   // Joined fields
   class_type?: ClassType;
@@ -234,6 +242,7 @@ export interface ClassReview {
 export interface CreateClassFormData {
   class_type_id: string;
   subject_id?: string;
+  grade_level_id?: string;
   title: string;
   description?: string;
   date: string;
@@ -414,7 +423,7 @@ export interface ClassSearchFilters {
 }
 
 export interface ClassSearchResult {
-  class: Class;
+  class: TutorClass;
   tutor: {
     id: string;
     full_name: string;

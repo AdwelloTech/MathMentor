@@ -14,6 +14,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { classSchedulingService } from "@/lib/classSchedulingService";
 import { subjectsService } from "@/lib/subjects";
+import { useGradeLevels } from "@/lib/gradeLevels";
+import { GradeSelect } from "@/components/ui/GradeSelect";
 import type {
   ClassType,
   CreateClassFormData,
@@ -43,12 +45,17 @@ const ClassSchedulingPage: React.FC = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [subjects, setSubjects] = useState<Subject[]>([]);
 
+  // Grade levels hook
+  const { gradeLevels } = useGradeLevels();
+
   // Check if tutor is active
   const isActiveTutor = profile?.is_active !== false; // Default to true if not set
 
   // Form state
   const [formData, setFormData] = useState<CreateClassFormData>({
     class_type_id: "",
+    subject_id: undefined,
+    grade_level_id: undefined,
     title: "",
     description: "",
     date: "",
@@ -130,7 +137,6 @@ const ClassSchedulingPage: React.FC = () => {
 
     // Get the first day of the current month
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
 
     // Get the start of the week that contains the first day of the month
     const startOfWeek = new Date(firstDayOfMonth);
@@ -199,7 +205,7 @@ const ClassSchedulingPage: React.FC = () => {
         // Check if time slot fits the class duration
         const slotEndTime = new Date(`2000-01-01T${timeString}`);
         slotEndTime.setMinutes(
-          slotEndTime.getMinutes() + classType.duration_minutes
+          slotEndTime.getMinutes() + (classType.duration_minutes || 60)
         );
         const slotEndString = slotEndTime.toTimeString().slice(0, 5);
 
@@ -228,8 +234,8 @@ const ClassSchedulingPage: React.FC = () => {
     setFormData((prev) => ({
       ...prev,
       class_type_id: classType.id,
-      max_students: classType.max_students,
-      price_per_session: classType.price_per_session,
+      max_students: classType.max_students || 1,
+      price_per_session: classType.price_per_session || 0,
     }));
     setShowTimeSelection(false);
     setSelectedDate("");
@@ -242,8 +248,8 @@ const ClassSchedulingPage: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         class_type_id: selectedClassType.id,
-        max_students: selectedClassType.max_students,
-        price_per_session: selectedClassType.price_per_session,
+        max_students: selectedClassType.max_students || 1,
+        price_per_session: selectedClassType.price_per_session || 0,
         title: `${selectedClassType.name} Session`,
         description: selectedClassType.description || "",
       }));
@@ -306,6 +312,11 @@ const ClassSchedulingPage: React.FC = () => {
       return;
     }
 
+    if (!formData.grade_level_id) {
+      toast.error("Please select a grade level");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -339,6 +350,7 @@ const ClassSchedulingPage: React.FC = () => {
       setFormData({
         class_type_id: "",
         subject_id: undefined,
+        grade_level_id: undefined,
         title: "",
         description: "",
         date: "",
@@ -409,11 +421,6 @@ const ClassSchedulingPage: React.FC = () => {
     }
   };
 
-  const goToCurrentMonth = () => {
-    const today = new Date();
-    setCurrentMonth(today.getMonth());
-    setCurrentYear(today.getFullYear());
-  };
 
   if (loading) {
     return (
@@ -495,7 +502,7 @@ const ClassSchedulingPage: React.FC = () => {
                   {classType.name}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  {classType.description}
+z                  {classType.description || "No description available"}
                 </p>
 
                 <div className="space-y-3 text-sm text-gray-600">
@@ -513,8 +520,8 @@ const ClassSchedulingPage: React.FC = () => {
                       <UserGroupIcon className="h-3 w-3 text-yellow-600" />
                     </div>
                     <span className="font-medium">
-                      Max {classType.max_students} student
-                      {classType.max_students > 1 ? "s" : ""}
+                      Max {classType.max_students || 1} student
+                      {(classType.max_students || 1) > 1 ? "s" : ""}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -522,7 +529,7 @@ const ClassSchedulingPage: React.FC = () => {
                       <CurrencyDollarIcon className="h-3 w-3 text-blue-600" />
                     </div>
                     <span className="font-medium">
-                      ${classType.price_per_session}/session
+                      ${classType.price_per_session || 0}/session
                     </span>
                   </div>
                 </div>
@@ -764,6 +771,23 @@ const ClassSchedulingPage: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Grade Level
+                </label>
+                <GradeSelect
+                  value={formData.grade_level_id || ""}
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      grade_level_id: value || undefined,
+                    }))
+                  }
+                  placeholder="Select grade level"
+                  className="w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Class Title
                 </label>
                 <input
@@ -795,7 +819,7 @@ const ClassSchedulingPage: React.FC = () => {
                 />
               </div>
 
-              {selectedClassType && selectedClassType.max_students > 1 && (
+              {selectedClassType && (selectedClassType.max_students || 1) > 1 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Max Students
@@ -838,7 +862,7 @@ const ClassSchedulingPage: React.FC = () => {
               <div className="flex items-center space-x-4 pt-4">
                 <button
                   onClick={handleCreateClass}
-                  disabled={loading || !formData.title || !formData.subject_id}
+                  disabled={loading || !formData.title || !formData.subject_id || !formData.grade_level_id}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Creating..." : "Create Class"}

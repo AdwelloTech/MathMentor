@@ -196,9 +196,21 @@ class ApiClient {
           // Retry the request with new token
           return this.makeRequest<T>(endpoint, options, retryCount + 1);
         } catch (refreshError) {
-          // Token refresh failed, throw original 401 error
+          // Token refresh failed, clear tokens and notify app
+          this.clearTokens();
+          // Dispatch custom event to notify AuthContext of auth failure
+          window.dispatchEvent(new CustomEvent('auth:expired'));
           throw new ApiClientError('Authentication expired', 401);
         }
+      }
+
+      // Handle other 401 errors (not related to token refresh)
+      if (response.status === 401 && !skipAuth) {
+        // Clear tokens and notify app
+        this.clearTokens();
+        // Dispatch custom event to notify AuthContext of auth failure
+        window.dispatchEvent(new CustomEvent('auth:expired'));
+        throw new ApiClientError('Authentication required', 401);
       }
 
       // Handle other HTTP errors
@@ -283,7 +295,7 @@ class ApiClient {
   }
 
   /**
-   * Upload file
+   * Upload file with additional data
    */
   async uploadFile<T>(
     endpoint: string,
@@ -310,6 +322,44 @@ class ApiClient {
 
     const response = await fetch(url, {
       method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData: ApiResponse<any> = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new ApiClientError(errorMessage, response.status);
+    }
+
+    const data: ApiResponse<T> = await response.json();
+    if (!data.success) {
+      throw new ApiClientError(data.error || 'Upload failed', response.status);
+    }
+
+    return data.data!;
+  }
+
+  /**
+   * Upload FormData (for complex forms with multiple fields)
+   */
+  async uploadFormData<T>(endpoint: string, formData: FormData, method: 'POST' | 'PUT' = 'POST'): Promise<T> {
+    const headers: Record<string, string> = {};
+
+    // Add authorization header if token exists
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+
+    const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
+
+    const response = await fetch(url, {
+      method,
       headers,
       body: formData,
     });

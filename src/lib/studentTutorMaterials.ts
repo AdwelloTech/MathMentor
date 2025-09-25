@@ -58,7 +58,6 @@ export interface StudentTutorMaterialCardProps {
 
 // Service functions
 export const getStudentTutorMaterials = async (
-  studentId: string,
   params?: StudentTutorMaterialsSearchParams
 ): Promise<StudentTutorMaterial[]> => {
   try {
@@ -84,7 +83,6 @@ export const getStudentTutorMaterials = async (
 };
 
 export const getStudentTutorMaterialById = async (
-  studentId: string,
   materialId: string
 ): Promise<StudentTutorMaterialWithAccess | null> => {
   try {
@@ -99,9 +97,7 @@ export const getStudentTutorMaterialById = async (
   }
 };
 
-export const checkStudentPremiumAccess = async (
-  studentId: string
-): Promise<boolean> => {
+export const checkStudentPremiumAccess = async (): Promise<boolean> => {
   try {
     const response = await apiClient.get('/api/tutor-materials/premium/check');
     return response?.has_premium_access || false;
@@ -199,8 +195,7 @@ export const incrementStudentTutorMaterialViewCount = async (
 };
 
 export const incrementStudentTutorMaterialViewCountUnique = async (
-  materialId: string,
-  studentId: string
+  materialId: string
 ): Promise<void> => {
   try {
     // For now, use simple view tracking

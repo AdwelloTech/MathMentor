@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { EyeIcon, EyeSlashIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { useAdmin } from '@/contexts/AdminContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import toast from 'react-hot-toast';
 
 interface AdminLoginFormData {
   email: string;

@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { UserIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import StudentProfile from "@/components/student/StudentProfile";
 import TutorProfile from "@/components/tutor/TutorProfile";

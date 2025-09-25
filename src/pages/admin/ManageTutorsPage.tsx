@@ -16,7 +16,6 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   MapPinIcon,
-  DocumentTextIcon,
   VideoCameraIcon,
   LinkIcon,
 } from "@heroicons/react/24/outline";
@@ -76,7 +75,7 @@ const ManageTutorsPage: React.FC = () => {
       filtered = filtered.filter(
         (tutor) =>
           tutor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          tutor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (tutor.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
           tutor.phone?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }

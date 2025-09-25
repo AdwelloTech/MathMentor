@@ -150,11 +150,13 @@ router.get('/me', authenticate, async (req, res) => {
         full_name: user.fullName,
         email: user.email,
         role: user.role,
+        package: user.package, // Include package for students
         avatar_url: user.avatarUrl,
         phone: user.phone,
         address: user.address,
         gender: user.gender,
         emergency_contact: user.emergencyContact,
+        date_of_birth: user.dateOfBirth,
         age: (user as any).age, // Access virtual field
         grade_level_id: user.gradeLevelId,
         current_grade: user.currentGrade,
@@ -168,6 +170,18 @@ router.get('/me', authenticate, async (req, res) => {
         postcode: user.postcode,
         school_name: user.schoolName,
         profile_image_url: user.profileImageUrl,
+        // Tutor-specific fields
+        qualification: user.qualification,
+        experience_years: user.experienceYears,
+        specializations: user.specializations,
+        hourly_rate: user.hourlyRate,
+        availability: user.availability,
+        bio: user.bio,
+        certifications: user.certifications,
+        languages: user.languages,
+        cv_url: user.cvUrl,
+        cv_file_name: user.cvFileName,
+        profile_completed: user.profileCompleted,
         created_at: user.createdAt,
         last_login: user.lastLogin
       }
@@ -198,9 +212,10 @@ router.put('/profile', authenticate, async (req, res) => {
       data: updatedProfile
     });
   } catch (error: any) {
-    res.status(400).json({
+    console.error('Profile update error:', error);
+    res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message || 'Failed to update profile'
     });
   }
 });

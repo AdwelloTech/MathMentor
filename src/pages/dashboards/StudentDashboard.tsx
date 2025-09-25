@@ -11,10 +11,7 @@ import { useTutorial } from "@/contexts/TutorialContext";
 import { TutorialOverlay, TutorialPrompt } from "@/components/tutorial";
 import {
   BookOpenIcon,
-  CalendarDaysIcon,
-  ChartBarIcon,
   VideoCameraIcon,
-  StarIcon,
   ClockIcon,
   UserGroupIcon,
   AcademicCapIcon,
@@ -22,12 +19,8 @@ import {
   ArrowRightIcon,
   PlayIcon,
   DocumentTextIcon,
-  ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
-  TrophyIcon,
-  GiftIcon,
   LightBulbIcon,
-  CheckCircleIcon,
   CogIcon,
   ChartBarIcon as TrendingUpIcon,
 } from "@heroicons/react/24/outline";
@@ -49,14 +42,14 @@ import type { StudentDashboardStats } from "@/lib/dashboardService";
 import type { Quiz } from "@/types/quiz";
 import type { FlashcardSet } from "@/types/flashcards";
 
-// Images (bellIcon currently unused; keeping imports intact per original)
-import bellIcon from "../../assets/bell.png";
+// Images
 import logoutIcon from "../../assets/logout.png";
 
 interface DashboardData {
   stats: StudentDashboardStats | null;
   upcomingSessions: any[];
   recentQuizzes: Quiz[];
+  recentQuizAttempts: any[];
   availableFlashcards: FlashcardSet[];
   studyMaterials: any[];
   packageInfo: any;
@@ -66,7 +59,7 @@ interface DashboardData {
 const StudentDashboard: React.FC = () => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const { shouldShowTutorial } = useTutorial();
+  const { } = useTutorial();
 
   const handleLogout = async () => {
     try {
@@ -81,6 +74,7 @@ const StudentDashboard: React.FC = () => {
     stats: null,
     upcomingSessions: [],
     recentQuizzes: [],
+    recentQuizAttempts: [],
     availableFlashcards: [],
     studyMaterials: [],
     packageInfo: null,
@@ -104,6 +98,7 @@ const StudentDashboard: React.FC = () => {
         stats,
         upcomingSessions,
         recentQuizzes,
+        recentQuizAttempts,
         availableFlashcardsRes,
         studyMaterials,
         packageInfo,
@@ -111,6 +106,7 @@ const StudentDashboard: React.FC = () => {
         dashboardService.getStudentStats(profile.user_id),
         loadUpcomingSessions(),
         loadRecentQuizzes(),
+        loadRecentQuizAttempts(),
         flashcards.student.listAvailable(profile.user_id),
         loadStudyMaterials(),
         packagePricingService.getCurrentStudentPackage(profile.user_id),
@@ -121,6 +117,8 @@ const StudentDashboard: React.FC = () => {
         upcomingSessions.status === "fulfilled" ? upcomingSessions.value : [];
       const recentQuizzesResult =
         recentQuizzes.status === "fulfilled" ? recentQuizzes.value : [];
+      const recentQuizAttemptsResult =
+        recentQuizAttempts.status === "fulfilled" ? recentQuizAttempts.value : [];
       const availableFlashcardsResult =
         availableFlashcardsRes.status === "fulfilled"
           ? availableFlashcardsRes.value
@@ -134,6 +132,7 @@ const StudentDashboard: React.FC = () => {
         stats: statsResult,
         upcomingSessions: upcomingSessionsResult,
         recentQuizzes: recentQuizzesResult.slice(0, 3),
+        recentQuizAttempts: recentQuizAttemptsResult.slice(0, 3),
         availableFlashcards: availableFlashcardsResult.slice(0, 3),
         studyMaterials: studyMaterialsResult.slice(0, 3),
         packageInfo: packageInfoResult,
@@ -171,7 +170,7 @@ const StudentDashboard: React.FC = () => {
     try {
       const [notes, materials] = await Promise.all([
         searchStudyNotes(),
-        getStudentTutorMaterials(profile.user_id),
+        getStudentTutorMaterials(),
       ]);
       return [...notes, ...materials].slice(0, 6);
     } catch (error) {
@@ -203,6 +202,22 @@ const StudentDashboard: React.FC = () => {
         console.error("Fallback quizzes error:", fallbackError);
         return [];
       }
+    }
+  };
+
+  const loadRecentQuizAttempts = async () => {
+    if (!profile?.user_id) return [];
+    try {
+      const attempts = await quizService.studentQuizzes.getStudentAttempts(
+        profile.user_id
+      );
+      // Filter for completed attempts and take the most recent 3
+      return attempts
+        .filter((attempt: any) => attempt.status === 'completed')
+        .slice(0, 3);
+    } catch (error) {
+      console.error("Error loading recent quiz attempts:", error);
+      return [];
     }
   };
 
@@ -637,6 +652,58 @@ const StudentDashboard: React.FC = () => {
                       ) : (
                         <p className="text-sm text-gray-500">
                           No recent quiz activity
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Recent Quiz Results */}
+                    <div id="recent-quiz-results" className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-gray-900">
+                          Recent Quiz Results
+                        </h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50 font-medium"
+                          onClick={() => navigate("/student/quiz-results")}
+                        >
+                          View all results
+                          <ArrowRightIcon className="w-4 h-4 ml-1" />
+                        </Button>
+                      </div>
+
+                      {data.recentQuizAttempts.length > 0 ? (
+                        data.recentQuizAttempts.map((attempt: any) => (
+                          <div
+                            key={attempt.id || attempt._id}
+                            className="flex items-center space-x-3 p-3 bg-[#FFF3CD] rounded-[10px] shadow-sm cursor-pointer hover:bg-[#FFF0B3] transition-colors duration-200"
+                            onClick={() => navigate(`/student/quiz-results/${attempt.id || attempt._id}`)}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-black truncate">
+                                {attempt.quiz_id?.title || "Quiz"}
+                              </p>
+                              <p className="text-sm text-black">
+                                {attempt.quiz_id?.subject || "General"} •{" "}
+                                {new Date(attempt.completed_at || attempt.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-black font-bold">
+                                {attempt.score !== undefined && attempt.max_score !== undefined
+                                  ? `${Math.round((attempt.score / attempt.max_score) * 100)}%`
+                                  : "—"}
+                              </div>
+                              <div className="text-sm text-black">
+                                {attempt.correct_answers || 0}/{attempt.total_questions || 0} correct
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          No completed quizzes yet
                         </p>
                       )}
                     </div>

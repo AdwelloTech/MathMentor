@@ -11,16 +11,15 @@ import {
   ArrowDownTrayIcon,
   BookOpenIcon,
 } from "@heroicons/react/24/outline";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import CreateTutorNoteModal from "@/components/tutor/CreateTutorNoteModal";
 import EditTutorNoteModal from "@/components/tutor/EditTutorNoteModal";
 import DeleteTutorNoteModal from "@/components/tutor/DeleteTutorNoteModal";
 import TutorNoteCard from "@/components/tutor/TutorNoteCard";
 import TutorPageWrapper from "@/components/ui/TutorPageWrapper";
 import {
-  searchTutorNotes,
-  getTutorNotesByTutorId,
-  deleteTutorNote,
+  searchTutorMaterialsRest,
+  getTutorMaterialsRest,
+  deleteTutorMaterialRest,
   transformTutorNoteForCard,
   type TutorNoteWithDetails,
 } from "@/lib/tutorNotes";
@@ -35,7 +34,7 @@ const ManageMaterialsPage: React.FC = () => {
       id: string;
       name: string;
       display_name: string;
-      color: string;
+      color?: string | null;
     }>
   >([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +60,7 @@ const ManageMaterialsPage: React.FC = () => {
     try {
       setLoading(true);
       const [notesData, subjectsData] = await Promise.all([
-        getTutorNotesByTutorId(user!.id),
+        getTutorMaterialsRest(),
         subjectsService.listActive(),
       ]);
 
@@ -77,11 +76,13 @@ const ManageMaterialsPage: React.FC = () => {
 
   const handleSearch = async () => {
     try {
-      const searchResults = await searchTutorNotes({
-        searchTerm,
-        tutorId: user!.id,
-      });
-      setNotes(searchResults);
+      if (searchTerm.trim()) {
+        const searchResults = await searchTutorMaterialsRest(searchTerm);
+        setNotes(searchResults);
+      } else {
+        // If search term is empty, reload all materials
+        await loadData();
+      }
     } catch (error) {
       console.error("Error searching notes:", error);
       toast.error("Failed to search materials");
@@ -106,7 +107,7 @@ const ManageMaterialsPage: React.FC = () => {
 
     try {
       setDeletingNoteId(noteToDelete.id);
-      await deleteTutorNote(noteToDelete.id);
+      await deleteTutorMaterialRest(noteToDelete.id);
       setNotes(notes.filter((note) => note.id !== noteToDelete.id));
       toast.success("Material deleted successfully");
     } catch (error) {
@@ -379,7 +380,7 @@ const ManageMaterialsPage: React.FC = () => {
             isOpen={showCreateModal}
             onClose={handleModalClose}
             onNoteCreated={handleNoteCreated}
-            subjects={subjects}
+            subjects={subjects.map(s => ({ ...s, color: s.color || undefined }))}
           />
         )}
 
@@ -389,7 +390,7 @@ const ManageMaterialsPage: React.FC = () => {
             onClose={handleModalClose}
             onNoteUpdated={handleNoteUpdated}
             note={editingNote}
-            subjects={subjects}
+            subjects={subjects.map(s => ({ ...s, color: s.color || undefined }))}
           />
         )}
 

@@ -8,7 +8,6 @@ import {
   ClockIcon,
   DocumentTextIcon,
   UserGroupIcon,
-  AcademicCapIcon,
   PhoneIcon,
   EnvelopeIcon,
   CalendarIcon,

@@ -1,7 +1,6 @@
 import { supabase } from "./supabase";
 import type { Database } from "@/types/database";
 
-type StudyNote = Database["public"]["Tables"]["study_notes"]["Row"];
 type StudyNoteWithDetails =
   Database["public"]["Functions"]["search_study_notes"]["Returns"][0];
 type NoteSubject = Database["public"]["Tables"]["note_subjects"]["Row"];
@@ -69,6 +68,7 @@ export async function getNoteSubjects(): Promise<NoteSubject[]> {
       id: subject._id,
       name: subject.name,
       display_name: subject.displayName,
+      description: subject.description || null,
       color: subject.color,
       is_active: true,
       sort_order: subject.sortOrder || 0,
@@ -92,7 +92,7 @@ export async function getStudyNoteById(
 ): Promise<(StudyNoteWithDetails & { subject_id: string | null }) | null> {
   try {
     // First get the basic note data with subject_id
-    const { data: noteData, error: noteError } = await supabase
+    const { data: noteData, error: noteError } = await (supabase as any)
       .from("study_notes")
       .select(
         `

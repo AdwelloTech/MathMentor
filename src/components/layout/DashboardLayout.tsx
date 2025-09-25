@@ -18,6 +18,8 @@ import {
   instantSessionService,
   type InstantRequest,
 } from "@/lib/instantSessionService";
+import { idVerificationService } from "@/lib/idVerificationService";
+import apiClient from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,23 +51,11 @@ const DashboardLayout: React.FC = () => {
   useEffect(() => {
     const loadSubjects = async () => {
       try {
-        // Use the new API client instead of Supabase
-        const response = await fetch('/api/subjects', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          console.error("Error loading subjects:", response.statusText);
-          return;
-        }
-
-        const result = await response.json();
-        if (result.success && result.data) {
+        // Use apiClient for consistent URL handling
+        const result = await apiClient.get<any[]>('/api/subjects');
+        if (result) {
           const subjectsMap: { [key: string]: string } = {};
-          result.data.forEach((subject: any) => {
+          result.forEach((subject: any) => {
             subjectsMap[subject._id] = subject.displayName || subject.name;
           });
           setSubjects(subjectsMap);
@@ -218,23 +208,12 @@ const DashboardLayout: React.FC = () => {
 
     setLoadingApplication(true);
     try {
-      // Use API call instead of direct database access
-      const response = await fetch('/api/tutors/applications', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // Use apiClient instead of direct fetch for consistent URL handling
+      const result = await apiClient.get<TutorApplication[]>('/api/tutors/applications');
 
-      if (!response.ok) {
-        console.error("Error fetching tutor applications:", response.statusText);
-        return;
-      }
-
-      const result = await response.json();
-      if (result.success && result.data && result.data.length > 0) {
+      if (result && result.length > 0) {
         // Get the most recent application
-        const mostRecentApplication = result.data[0];
+        const mostRecentApplication = result[0];
         setTutorApplication(mostRecentApplication);
       } else {
         setTutorApplication(null);
@@ -250,26 +229,8 @@ const DashboardLayout: React.FC = () => {
     if (!user || !profile) return;
 
     try {
-      // Use API call instead of direct Supabase access
-      const response = await fetch('/api/tutors/id-verification', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        console.error("Error fetching ID verification:", response.statusText);
-        setIdVerification(null);
-        return;
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setIdVerification(result.data);
-      } else {
-        setIdVerification(null);
-      }
+      const verification = await idVerificationService.getVerificationByUserId();
+      setIdVerification(verification);
     } catch (error) {
       console.error("Error checking ID verification:", error);
       setIdVerification(null);

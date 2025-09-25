@@ -71,15 +71,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           try {
             // Try to get current user profile
-            const backendUser = await AuthService.getCurrentUser();
-            console.log("Retrieved user profile for:", backendUser.email);
-
-            // For now, we'll need to get the full profile from a separate endpoint
-            // This might need adjustment based on your backend implementation
-            const fullProfile = await AuthService.getCurrentUser(); // Adjust this as needed
+            const userProfile = await AuthService.getCurrentUser();
+            console.log("Retrieved user profile for:", userProfile.email);
 
             // Transform and set user data
-            const userData = AuthService.transformUserData(backendUser, fullProfile);
+            const userData = AuthService.transformUserData(userProfile, userProfile);
             await handleAuthStateChange(userData, false);
           } catch (error) {
             console.error("Failed to get user profile:", error);
@@ -112,9 +108,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     window.addEventListener('storage', handleStorageChange);
 
+    // Listen for authentication expiration events from API client
+    const handleAuthExpired = () => {
+      console.log("Authentication expired, clearing auth state");
+      clearAuthState();
+    };
+
+    window.addEventListener('auth:expired', handleAuthExpired);
+
     return () => {
       mounted.current = false;
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth:expired', handleAuthExpired);
     };
   }, []);
 
@@ -237,14 +242,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       console.log("Sign in successful for:", result.user.email);
 
+      // Fetch the complete user profile from /me endpoint
+      const fullProfile = await AuthService.getCurrentUser();
+      console.log("Fetched full user profile for:", fullProfile.email);
+
       // Transform backend user data to frontend format
-      // Create a complete BackendUser object from the result
-      const backendUser: any = {
-        ...result.user,
-        createdAt: new Date().toISOString(), // Use current time as fallback
-        lastLogin: new Date().toISOString(),
-      };
-      const userData = AuthService.transformUserData(backendUser, backendUser);
+      const userData = AuthService.transformUserData(fullProfile, fullProfile);
 
       // Handle auth state change
       await handleAuthStateChange(userData, true); // true = show welcome message

@@ -6,7 +6,6 @@ import SessionRatingModal from "./SessionRatingModal";
 import { sessionRatingService } from "@/lib/sessionRatingService";
 import { classSchedulingService } from "@/lib/classSchedulingService";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import type { StudentUpcomingSession } from "@/types/classScheduling";
 
@@ -31,6 +30,7 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
   const [hasRated, setHasRated] = useState<boolean>(false);
   const [manuallyEnded, setManuallyEnded] = useState<boolean>(false);
   const [ratingSubmitted, setRatingSubmitted] = useState<boolean>(false);
+  const [ratingModalShown, setRatingModalShown] = useState<boolean>(false);
   const [endingSession, setEndingSession] = useState<boolean>(false);
   const [cancellingSession, setCancellingSession] = useState<boolean>(false);
   const [isSessionCancelled, setIsSessionCancelled] = useState<boolean>(false);
@@ -199,20 +199,22 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
       showRatingModal,
       ratingSubmitted,
       hasRated,
+      ratingModalShown,
     });
-    if (isSessionEnded && !showRatingModal && !ratingSubmitted && !hasRated) {
+    if (isSessionEnded && !showRatingModal && !ratingSubmitted && !hasRated && !ratingModalShown) {
       console.log("Setting up rating modal timer...");
       // Small delay to let user see session ended state
       const timer = setTimeout(() => {
         console.log("Showing rating modal now!");
         setShowRatingModal(true);
+        setRatingModalShown(true);
       }, 2000);
 
       return () => clearTimeout(timer);
     } else if (isSessionEnded && (ratingSubmitted || hasRated)) {
       console.log("Session ended and already rated - no modal needed");
     }
-  }, [isSessionEnded, showRatingModal, ratingSubmitted, hasRated]);
+  }, [isSessionEnded, showRatingModal, ratingSubmitted, hasRated, ratingModalShown]);
 
   // Format time display
   const formatTime = (seconds: number): string => {
@@ -247,13 +249,15 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
             classId: session.id,
           });
 
-          const { data: existingBookings, error: findError } = await supabase
-            .from("class_bookings")
-            .select("id")
-            .eq("student_id", studentId)
-            .eq("class_id", session.id);
+          // Use backend API instead of direct Supabase query due to typing issues
+          const bookingsResponse = await fetch(`/api/bookings/student/${studentId}`);
+          if (!bookingsResponse.ok) throw new Error('Failed to fetch bookings');
 
-          if (findError) throw findError;
+          const allBookings = await bookingsResponse.json();
+          const existingBookings = allBookings.filter((b: any) =>
+            b.class_id === session.id || b.classId?._id === session.id
+          );
+
           if (!existingBookings || existingBookings.length === 0) {
             throw new Error("Booking not found for this class");
           }
@@ -376,9 +380,14 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
   const handleRatingSubmit = async (ratingData: any) => {
     try {
       console.log("Rating submitted with data:", ratingData);
+
+      // Set state to indicate rating was submitted
       setShowRatingModal(false);
       setRatingSubmitted(true);
       setHasRated(true); // Mark as rated for this session
+
+      // Refresh data to update rating stats
+      onSessionEnd?.();
 
       toast.success("Thank you for your feedback!");
     } catch (error) {

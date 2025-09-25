@@ -76,18 +76,22 @@ const ManageSessionsPage: React.FC = () => {
           const sessionDate = new Date(
             `${booking.class.date}T${booking.class.start_time}`
           );
-          const fiveMinutesBeforeSession = new Date(
-            sessionDate.getTime() - 5 * 60 * 1000
-          );
+          // TEMPORARY: Allow joining anytime for testing
+          // OLD CODE (commented out):
+          // // Allow joining 1 hour before session for testing purposes
+          // const oneHourBeforeSession = new Date(
+          //   sessionDate.getTime() - 60 * 60 * 1000
+          // );
+          // const isNowJoinable = now >= oneHourBeforeSession;
 
-          const wasJoinable = sessionJoinability[booking.id] || false;
-          const isNowJoinable = now >= fiveMinutesBeforeSession;
+          // NEW TEMPORARY CODE: Allow joining anytime
+          const isNowJoinable = true;
 
           newJoinability[booking.id] = isNowJoinable;
 
-          // Calculate countdown in minutes
-          if (now < fiveMinutesBeforeSession) {
-            const diffMs = fiveMinutesBeforeSession.getTime() - now.getTime();
+          // Calculate countdown in minutes until session starts
+          if (now < sessionDate) {
+            const diffMs = sessionDate.getTime() - now.getTime();
             newCountdowns[booking.id] = Math.ceil(diffMs / (1000 * 60));
           } else {
             newCountdowns[booking.id] = 0;
@@ -225,14 +229,31 @@ const ManageSessionsPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    const [year, month, day] = dateString.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    if (!dateString) return "Invalid Date";
+
+    try {
+      // Handle ISO date strings (e.g., "2025-09-26T00:00:00.000Z")
+      let date: Date;
+      if (dateString.includes('T')) {
+        date = new Date(dateString);
+      } else {
+        // Handle YYYY-MM-DD format
+        const [year, month, day] = dateString.split("-").map(Number);
+        date = new Date(year, month - 1, day);
+      }
+
+      if (isNaN(date.getTime())) return "Invalid Date";
+
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", dateString, error);
+      return "Invalid Date";
+    }
   };
 
   const formatTime = (timeString: string) => {
@@ -243,10 +264,10 @@ const ManageSessionsPage: React.FC = () => {
     });
   };
 
-  // Filter to show only upcoming sessions
+  // Filter to show only upcoming sessions (confirmed and pending)
   const filteredUpcomingBookings = upcomingBookings.filter(
     (booking) =>
-      !isSessionPast(booking) && booking.booking_status === "confirmed"
+      !isSessionPast(booking) && (booking.booking_status === "confirmed" || booking.booking_status === "pending")
   );
 
   if (loading) {
@@ -453,7 +474,7 @@ const ManageSessionsPage: React.FC = () => {
                                       session.jitsi_meeting_url,
                                     jitsi_room_name: session.jitsi_room_name,
                                     jitsi_password: session.jitsi_password,
-                                    class_status: session.status,
+                                    class_status: session.status || "scheduled",
                                     booking_status: booking.booking_status,
                                     payment_status: booking.payment_status,
                                     class_type: session.class_type?.name || "",
@@ -688,7 +709,7 @@ const ManageSessionsPage: React.FC = () => {
                                 selectedBooking.class!.jitsi_room_name,
                               jitsi_password:
                                 selectedBooking.class!.jitsi_password,
-                              class_status: selectedBooking.class!.status,
+                              class_status: selectedBooking.class!.status || "scheduled",
                               booking_status: selectedBooking.booking_status,
                               payment_status: selectedBooking.payment_status,
                               class_type:

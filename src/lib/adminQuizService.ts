@@ -208,7 +208,7 @@ export class AdminQuizService {
 
       // 5. Delete quiz answers for these questions
       if (questionIds && questionIds.length > 0) {
-        const questionIdList = questionIds.map((q) => q.id);
+        const questionIdList = (questionIds as { id: string }[]).map((q) => q.id);
         const { error: answersError } = await supabase
           .from("quiz_answers")
           .delete()
@@ -270,20 +270,21 @@ export class AdminQuizService {
       }
       if (!quiz) return null;
 
-      console.log("Quiz found:", quiz.title);
+      const typedQuiz = quiz as Quiz;
+      console.log("Quiz found:", typedQuiz.title);
 
       // Get tutor information separately
       let tutor = {
-        id: quiz.tutor_id,
+        id: typedQuiz.tutor_id,
         full_name: "Unknown Tutor",
         email: "unknown@example.com",
       };
 
-      if (quiz.tutor_id) {
+      if (typedQuiz.tutor_id) {
         const { data: tutorData, error: tutorError } = await supabase
           .from("profiles")
           .select("id, full_name, email")
-          .eq("id", quiz.tutor_id)
+          .eq("id", typedQuiz.tutor_id)
           .single();
 
         if (tutorError) {
@@ -319,22 +320,22 @@ export class AdminQuizService {
         console.log("First question:", questions[0]);
         console.log(
           "All question IDs:",
-          questions.map((q) => q.id)
+          (questions as Question[]).map((q) => q.id)
         );
       }
 
       // Also check if there are ANY questions in the quiz_questions table
-      const { count: totalQuestions } = await supabase
+      const totalQuestionsResult = await supabase
         .from("quiz_questions")
         .select("*", { count: "exact", head: true });
 
-      console.log("Total questions in database:", totalQuestions);
+      console.log("Total questions in database:", totalQuestionsResult.count);
 
       // Get answers for each question if questions exist
-      let questionsWithAnswers = [];
+      let questionsWithAnswers: Question[] = [];
       if (questions && questions.length > 0) {
         questionsWithAnswers = await Promise.all(
-          questions.map(async (question) => {
+          (questions as Question[]).map(async (question) => {
             const { data: answers, error: answersError } = await supabase
               .from("quiz_answers")
               .select("id, answer_text, is_correct, answer_order")
@@ -365,18 +366,19 @@ export class AdminQuizService {
       const { data: attempts } = await supabase
         .from("quiz_attempts")
         .select("score, max_score")
-        .eq("quiz_id", quizId)
+        .eq("quiz_id", typedQuiz.id)
         .eq("status", "completed");
 
-      const totalAttempts = attempts?.length || 0;
+      const typedAttempts = attempts as { score?: number; max_score?: number }[] | null;
+      const totalAttempts = typedAttempts?.length || 0;
       const avgScore =
         totalAttempts > 0
-          ? attempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0) /
+          ? typedAttempts!.reduce((sum: number, attempt: { score?: number }) => sum + (attempt.score || 0), 0) /
             totalAttempts
           : 0;
 
       const result = {
-        ...quiz,
+        ...typedQuiz,
         tutor,
         questions: questionsWithAnswers,
         total_attempts: totalAttempts,

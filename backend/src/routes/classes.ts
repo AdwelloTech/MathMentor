@@ -26,6 +26,8 @@ const createClassSchema = Joi.object({
   prerequisites: Joi.array().items(Joi.string()).optional(),
   materials: Joi.array().items(Joi.string()).optional(),
   meetingLink: Joi.string().optional(),
+  jitsiRoomName: Joi.string().max(100).optional(),
+  jitsiPassword: Joi.string().max(50).optional(),
   roomNumber: Joi.string().max(50).optional(),
   location: Joi.string().max(200).optional(),
 });
@@ -47,9 +49,12 @@ const updateClassSchema = Joi.object({
   price: Joi.number().min(0).optional(),
   currency: Joi.string().valid('USD', 'EUR', 'GBP', 'CAD', 'AUD').optional(),
   isActive: Joi.boolean().optional(),
+  status: Joi.string().valid('scheduled', 'in_progress', 'completed', 'cancelled').optional(),
   prerequisites: Joi.array().items(Joi.string()).optional(),
   materials: Joi.array().items(Joi.string()).optional(),
   meetingLink: Joi.string().optional(),
+  jitsiRoomName: Joi.string().max(100).optional(),
+  jitsiPassword: Joi.string().max(50).optional(),
   roomNumber: Joi.string().max(50).optional(),
   location: Joi.string().max(200).optional(),
 });
@@ -66,9 +71,10 @@ router.post('/', authenticate, authorize('tutor'), async (req, res) => {
       data: result,
     });
   } catch (error: any) {
+    console.error('Error creating class:', error);
     res.status(400).json({
       success: false,
-      error: error.message,
+      error: error.message || 'Unknown error occurred',
     });
   }
 });

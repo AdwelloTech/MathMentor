@@ -114,25 +114,6 @@ const NotesPage: React.FC = () => {
     setSelectedNote(null);
   };
 
-  const handleNoteCreated = async () => {
-    // Refresh the notes list after creating a new note
-    try {
-      const searchParams: NotesSearchParams = {};
-
-      if (searchTerm.trim()) {
-        searchParams.searchTerm = searchTerm.trim();
-      }
-
-      if (selectedSubject) {
-        searchParams.subjectFilter = selectedSubject;
-      }
-
-      const updatedNotes = await searchStudyNotes(searchParams);
-      setNotes(updatedNotes);
-    } catch (error) {
-      console.error("Error refreshing notes:", error);
-    }
-  };
 
   const clearFilters = () => {
     setSearchTerm("");

@@ -25,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getNoteSubjects } from "@/lib/notes";
 import { getGradeLevelDisplayName } from "@/lib/gradeLevels";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,9 +73,9 @@ const CreateQuizPage: React.FC = () => {
   >([]);
 
   // Also referenced by the uploader UI; define these so TS/JSX compiles
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
-  const [pdfName, setPdfName] = useState<string | null>(null);
-  const [pdfSize, setPdfSize] = useState<number | null>(null);
+  const [_pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [_pdfName, setPdfName] = useState<string | null>(null);
+  const [_pdfSize, setPdfSize] = useState<number | null>(null);
 
   // Quiz basic info
   const [quizData, setQuizData] = useState({
@@ -109,6 +108,13 @@ const CreateQuizPage: React.FC = () => {
 
   // Questions data - start with 0 questions, can add up to 40
   const [questions, setQuestions] = useState<CreateQuestionData[]>([]);
+
+  // Helper function to get the next question order
+  const getNextQuestionOrder = () => {
+    if (questions.length === 0) return 1;
+    const maxOrder = Math.max(...questions.map(q => q.question_order || 0));
+    return maxOrder + 1;
+  };
 
   const visibleQuestions = questions.filter((q) => {
     const isAI = (q as any).is_ai_generated === true;
@@ -179,7 +185,7 @@ const CreateQuizPage: React.FC = () => {
       question_text: "",
       question_type: "multiple_choice",
       points: 10,
-      question_order: questions.length + 1,
+      question_order: getNextQuestionOrder(),
       answers: [
         { answer_text: "", is_correct: false, answer_order: 1 },
         { answer_text: "", is_correct: false, answer_order: 2 },
@@ -220,11 +226,14 @@ const CreateQuizPage: React.FC = () => {
         pdfs: pdfs.length > 0 ? pdfs : undefined,
       });
 
+      // Calculate the starting order for AI questions
+      const currentMaxOrder = questions.length === 0 ? 0 : Math.max(...questions.map(q => q.question_order || 0));
+
       const mapped = ai.map((q: AIQuestion, idx: number) => ({
         question_text: q.question_text,
         question_type: q.question_type,
         points: q.points ?? 10,
-        question_order: questions.length + idx + 1,
+        question_order: currentMaxOrder + idx + 1,
         is_ai_generated: true,
         ai_status: (q.ai_status || "pending") as
           | "approved"
@@ -360,12 +369,17 @@ const CreateQuizPage: React.FC = () => {
         return !isAI || status === "approved";
       });
 
-      const totalPoints = included.reduce((sum, q) => sum + (q.points || 0), 0);
       const createQuizData: CreateQuizData = {
-        ...quizData,
-        total_questions: included.length,
-        total_points: totalPoints,
+        title: quizData.title,
+        description: quizData.description,
+        subject: quizData.subject,
+        gradeLevelId: quizData.grade_level,
+        timeLimit: quizData.time_limit_minutes,
+        totalQuestions: included.length,
         questions: included,
+        // Default values for required fields
+        difficulty: 'medium',
+        questionType: 'multiple_choice',
       };
 
       await quizService.quizzes.create(profile!.id, createQuizData);
@@ -896,7 +910,7 @@ const CreateQuizPage: React.FC = () => {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <h4 className="text-lg font-medium text-gray-900">
-                                Question {questionIndex + 1}
+                                Question {question.question_order || questionIndex + 1}
                               </h4>
                               {isAI && (
                                 <Badge

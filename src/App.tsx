@@ -10,7 +10,6 @@ import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfilePage from "./pages/ProfilePage";
-import SettingsPage from "./pages/SettingsPage";
 
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
@@ -24,7 +23,6 @@ import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
 import AdminLayout from "./components/layout/AdminLayout";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
-import TutorDashboard from "./pages/dashboards/TutorDashboard";
 import ScheduleClassPage from "./components/classScheduling/ClassSchedulingPage";
 import TutorManageClassesPage from "./pages/TutorManageClassesPage";
 
@@ -74,9 +72,6 @@ function App() {
   // Check if user is fully authenticated (both user and profile exist)
   const isUserAuthenticated = user && profile;
 
-  // Check if we're on admin routes
-  const isOnAdminRoute = location.pathname.startsWith("/admin");
-
   // List of public routes that don't require authentication
   const publicRoutes = [
     "/login",
@@ -85,7 +80,6 @@ function App() {
     "/forgot-password",
     "/reset-password",
   ];
-  const isOnPublicRoute = publicRoutes.includes(location.pathname);
 
   // Show loading spinner while checking authentication
   if (loading || adminLoading) {

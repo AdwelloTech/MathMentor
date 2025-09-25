@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import apiClient from './apiClient';
 
 export interface IDVerification {
   id: string;
@@ -36,233 +36,88 @@ export interface IDVerificationFormData {
 }
 
 export interface IDVerificationStats {
-  total: number;
-  pending: number;
-  approved: number;
-  rejected: number;
-  expired: number;
-  recentSubmissions: number;
+  total_verifications: number;
+  pending_verifications: number;
+  approved_verifications: number;
+  rejected_verifications: number;
+  expired_verifications: number;
+  total_users: number;
+  verification_rate: number;
 }
 
 class IDVerificationService {
-  private bucketName = 'id-verification-documents';
 
-  async submitVerification(userId: string, formData: IDVerificationFormData): Promise<IDVerification> {
+  async submitVerification(formData: IDVerificationFormData): Promise<IDVerification> {
     try {
-      // Upload images to storage
-      const [frontImageUrl, backImageUrl, selfieUrl] = await Promise.all([
-        this.uploadImage(userId, 'front', formData.front_image),
-        this.uploadImage(userId, 'back', formData.back_image),
-        this.uploadImage(userId, 'selfie', formData.selfie_with_id)
-      ]);
+      // Create FormData for multipart upload
+      const formDataToSend = new FormData();
 
-      // Create verification record
-      const { data, error } = await supabase
-        .from('id_verifications')
-        .insert({
-          user_id: userId,
-          id_type: formData.id_type,
-          id_number: formData.id_number,
-          full_name: formData.full_name,
-          date_of_birth: formData.date_of_birth,
-          expiry_date: formData.expiry_date,
-          issuing_country: formData.issuing_country,
-          issuing_authority: formData.issuing_authority,
-          front_image_url: frontImageUrl,
-          back_image_url: backImageUrl,
-          selfie_with_id_url: selfieUrl,
-          verification_status: 'pending'
-        })
-        .select()
-        .single();
+      // Add form fields
+      formDataToSend.append('id_type', formData.id_type);
+      formDataToSend.append('id_number', formData.id_number);
+      formDataToSend.append('full_name', formData.full_name);
 
-      if (error) {
-        console.error('Error submitting ID verification:', error);
-        throw error;
-      }
+      if (formData.date_of_birth) formDataToSend.append('date_of_birth', formData.date_of_birth);
+      if (formData.expiry_date) formDataToSend.append('expiry_date', formData.expiry_date);
+      if (formData.issuing_country) formDataToSend.append('issuing_country', formData.issuing_country);
+      if (formData.issuing_authority) formDataToSend.append('issuing_authority', formData.issuing_authority);
 
-      return data;
+      // Add image files
+      formDataToSend.append('front_image', formData.front_image);
+      formDataToSend.append('back_image', formData.back_image);
+      formDataToSend.append('selfie_with_id', formData.selfie_with_id);
+
+      return await apiClient.post<IDVerification>('/api/tutors/id-verification', formDataToSend);
     } catch (error) {
       console.error('Error in submitVerification:', error);
       throw error;
     }
   }
 
-  private async uploadImage(userId: string, imageType: 'front' | 'back' | 'selfie', file: File): Promise<string> {
+
+  async getVerificationByUserId(): Promise<IDVerification | null> {
     try {
-      const fileExt = file.name.split('.').pop();
-      // Use the auth user ID (not profile ID) for the folder structure to match storage policies
-      const { data: { user } } = await supabase.auth.getUser();
-      const authUserId = user?.id || userId;
-      const fileName = `${authUserId}/${imageType}_${Date.now()}.${fileExt}`;
-      
-      const { data, error } = await supabase.storage
-        .from(this.bucketName)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) {
-        console.error(`Error uploading ${imageType} image:`, error);
-        throw error;
+      return await apiClient.get<IDVerification | null>('/api/tutors/id-verification');
+    } catch (error: any) {
+      // If 404, return null (no verification found)
+      if (error.status === 404) {
+        return null;
       }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from(this.bucketName)
-        .getPublicUrl(fileName);
-
-      return urlData.publicUrl;
-    } catch (error) {
-      console.error(`Error in uploadImage for ${imageType}:`, error);
-      throw error;
-    }
-  }
-
-  async getVerificationByUserId(userId: string): Promise<IDVerification | null> {
-    try {
-      const { data, error } = await supabase
-        .from('id_verifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('submitted_at', { ascending: false })
-        .limit(1);
-
-      if (error) {
-        console.error('Error fetching ID verification:', error);
-        throw error;
-      }
-
-      // Return the first record or null if no records found
-      return data?.[0] || null;
-    } catch (error) {
       console.error('Error in getVerificationByUserId:', error);
       throw error;
     }
   }
 
-  async getVerificationById(verificationId: string): Promise<IDVerification | null> {
-    try {
-      const { data, error } = await supabase
-        .from('id_verifications')
-        .select('*')
-        .eq('id', verificationId)
-        .limit(1);
-
-      if (error) {
-        console.error('Error fetching ID verification:', error);
-        throw error;
-      }
-
-      // Return the first record or null if no records found
-      return data?.[0] || null;
-    } catch (error) {
-      console.error('Error in getVerificationById:', error);
-      throw error;
-    }
-  }
-
-  async getAllVerifications(): Promise<IDVerification[]> {
-    try {
-      const { data, error } = await supabase
-        .from('id_verifications')
-        .select(`
-          *,
-          profiles:user_id (
-            id,
-            user_id,
-            full_name,
-            email,
-            phone
-          )
-        `)
-        .order('submitted_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching all ID verifications:', error);
-        throw error;
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in getAllVerifications:', error);
-      throw error;
-    }
-  }
-
   async updateVerificationStatus(
-    verificationId: string, 
-    status: 'approved' | 'rejected' | 'expired',
+    userId: string,
+    status: IDVerification['verification_status'],
     adminNotes?: string,
-    rejectionReason?: string,
-    verifiedBy?: string
-  ): Promise<void> {
+    rejectionReason?: string
+  ): Promise<IDVerification> {
     try {
-      const updateData: any = {
-        verification_status: status,
-        verified_at: new Date().toISOString()
-      };
+      const payload: any = { status };
+      if (adminNotes) payload.admin_notes = adminNotes;
+      if (rejectionReason) payload.rejection_reason = rejectionReason;
 
-      if (adminNotes) updateData.admin_notes = adminNotes;
-      if (rejectionReason) updateData.rejection_reason = rejectionReason;
-      if (verifiedBy) updateData.verified_by = verifiedBy;
-
-      const { error } = await supabase
-        .from('id_verifications')
-        .update(updateData)
-        .eq('id', verificationId);
-
-      if (error) {
-        console.error('Error updating verification status:', error);
-        throw error;
-      }
+      return await apiClient.put<IDVerification>(`/api/tutors/id-verification/${userId}`, payload);
     } catch (error) {
       console.error('Error in updateVerificationStatus:', error);
       throw error;
     }
   }
 
+  async getAllVerifications(): Promise<IDVerification[]> {
+    try {
+      return await apiClient.get<IDVerification[]>('/api/admin/id-verifications');
+    } catch (error) {
+      console.error('Error in getAllVerifications:', error);
+      throw error;
+    }
+  }
+
   async getVerificationStats(): Promise<IDVerificationStats> {
     try {
-      // Get total count
-      const { count: total, error: totalError } = await supabase
-        .from('id_verifications')
-        .select('*', { count: 'exact', head: true });
-
-      if (totalError) throw totalError;
-
-      // Get status counts
-      const { data: verifications, error: statusError } = await supabase
-        .from('id_verifications')
-        .select('verification_status');
-
-      if (statusError) throw statusError;
-
-      const pending = verifications?.filter(v => v.verification_status === 'pending').length || 0;
-      const approved = verifications?.filter(v => v.verification_status === 'approved').length || 0;
-      const rejected = verifications?.filter(v => v.verification_status === 'rejected').length || 0;
-      const expired = verifications?.filter(v => v.verification_status === 'expired').length || 0;
-
-      // Get recent submissions (last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-      const { count: recentSubmissions, error: recentError } = await supabase
-        .from('id_verifications')
-        .select('*', { count: 'exact', head: true })
-        .gte('submitted_at', sevenDaysAgo.toISOString());
-
-      if (recentError) throw recentError;
-
-      return {
-        total: total || 0,
-        pending,
-        approved,
-        rejected,
-        expired,
-        recentSubmissions: recentSubmissions || 0
-      };
+      return await apiClient.get<IDVerificationStats>('/api/admin/id-verifications/stats');
     } catch (error) {
       console.error('Error in getVerificationStats:', error);
       throw error;
@@ -271,61 +126,13 @@ class IDVerificationService {
 
   async deleteVerification(verificationId: string): Promise<void> {
     try {
-      // Get verification to delete associated images
-      const verification = await this.getVerificationById(verificationId);
-      if (!verification) {
-        throw new Error('Verification not found');
-      }
-
-      // Delete images from storage
-      const imageUrls = [
-        verification.front_image_url,
-        verification.back_image_url,
-        verification.selfie_with_id_url
-      ].filter(Boolean);
-
-      for (const url of imageUrls) {
-        if (url) {
-          const path = url.split('/').slice(-2).join('/'); // Extract path from URL
-          await supabase.storage
-            .from(this.bucketName)
-            .remove([path]);
-        }
-      }
-
-      // Delete verification record
-      const { error } = await supabase
-        .from('id_verifications')
-        .delete()
-        .eq('id', verificationId);
-
-      if (error) {
-        console.error('Error deleting verification:', error);
-        throw error;
-      }
+      await apiClient.delete(`/api/admin/id-verifications/${verificationId}`);
     } catch (error) {
       console.error('Error in deleteVerification:', error);
       throw error;
     }
   }
 
-  async getImageUrl(imageUrl: string): Promise<string> {
-    try {
-      if (!imageUrl) return '';
-      
-      // Extract path from URL
-      const path = imageUrl.split('/').slice(-2).join('/');
-      
-      const { data } = supabase.storage
-        .from(this.bucketName)
-        .getPublicUrl(path);
-
-      return data.publicUrl;
-    } catch (error) {
-      console.error('Error getting image URL:', error);
-      return imageUrl; // Return original URL as fallback
-    }
-  }
 }
 
 export const idVerificationService = new IDVerificationService(); 

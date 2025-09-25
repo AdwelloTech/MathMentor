@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTutorial } from "@/contexts/TutorialContext";
 import { TutorialOverlay, TutorialPrompt } from "@/components/tutorial";
+import apiClient from "@/lib/apiClient";
 import {
   DocumentArrowUpIcon,
   CheckCircleIcon,
@@ -16,16 +16,10 @@ import {
   PlusIcon,
   VideoCameraIcon,
   UserGroupIcon,
-  ChatBubbleLeftRightIcon,
   XCircleIcon,
   IdentificationIcon,
   DocumentTextIcon,
-  SparklesIcon,
-  XMarkIcon,
-  CheckIcon,
-  ArrowRightIcon,
   LightBulbIcon,
-  BookOpenIcon,
 } from "@heroicons/react/24/outline";
 import { Star } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -34,12 +28,11 @@ import {
   instantSessionService,
   type InstantRequest,
 } from "@/lib/instantSessionService";
-import { classSchedulingService } from "@/lib/classSchedulingService";
+import DashboardService, { type TutorDashboardStats } from "@/lib/dashboardService";
+import { idVerificationService } from "@/lib/idVerificationService";
 import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
-import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { validateDocumentFile } from "@/constants/form";
 import toast from "react-hot-toast";
 import OnlineStatusToggle from "@/components/tutor/OnlineStatusToggle";
@@ -47,7 +40,6 @@ import OnlineStatusToggle from "@/components/tutor/OnlineStatusToggle";
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, updateProfile } = useAuth();
-  const { shouldShowTutorial } = useTutorial();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<TutorApplication | null>(null);
   const [idVerification, setIdVerification] = useState<any>(null);
@@ -55,53 +47,14 @@ const TutorDashboard: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dashboardStats, setDashboardStats] =
     useState<TutorDashboardStats | null>(null);
-  const [upcomingClasses, setUpcomingClasses] = useState<TutorClass[]>([]);
   const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
-  const [acceptingId, setAcceptingId] = useState<string | null>(null);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
-  const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
   const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
 
   // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
 
-  // Load subjects for display
-  useEffect(() => {
-    const loadSubjects = async () => {
-      try {
-        // Use API call instead of direct Supabase access
-        const response = await fetch('/api/subjects', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-            'Content-Type': 'application/json',
-          },
-        });
 
-        if (!response.ok) {
-          console.error("Error loading subjects:", response.statusText);
-          return;
-        }
-
-        const result = await response.json();
-        if (result.success && result.data) {
-          const subjectsMap: { [key: string]: string } = {};
-          result.data.forEach((subject: any) => {
-            subjectsMap[subject._id] = subject.displayName || subject.name;
-          });
-          setSubjects(subjectsMap);
-        }
-      } catch (error) {
-        console.error("Error loading subjects:", error);
-      }
-    };
-
-    loadSubjects();
-  }, []);
-
-  const getSubjectName = (subjectId: string) => {
-    return subjects[subjectId] || "Unknown Subject";
-  };
 
   // Audio notification setup
   useEffect(() => {
@@ -279,23 +232,11 @@ const TutorDashboard: React.FC = () => {
     }
 
     try {
-      // Use API call instead of direct database access
-      const response = await fetch('/api/tutors/applications', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        console.error("Error fetching tutor applications:", response.statusText);
-        return;
-      }
-
-      const result = await response.json();
-      if (result.success && result.data && result.data.length > 0) {
+      // Use apiClient for consistent URL handling
+      const result = await apiClient.get<any[]>('/api/tutors/applications');
+      if (result && result.length > 0) {
         // Get the most recent application
-        const mostRecentApplication = result.data[0];
+        const mostRecentApplication = result[0];
         setApplication(mostRecentApplication);
       } else {
         setApplication(null);
@@ -312,26 +253,8 @@ const TutorDashboard: React.FC = () => {
     if (!user || !profile) return;
 
     try {
-      // Use API call instead of direct Supabase access
-      const response = await fetch('/api/tutors/id-verification', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        console.error("Error fetching ID verification:", response.statusText);
-        setIdVerification(null);
-        return;
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setIdVerification(result.data);
-      } else {
-        setIdVerification(null);
-      }
+      const verification = await idVerificationService.getVerificationByUserId();
+      setIdVerification(verification);
     } catch (error) {
       console.error("Error checking ID verification:", error);
       setIdVerification(null);
@@ -342,13 +265,8 @@ const TutorDashboard: React.FC = () => {
     if (!profile) return;
 
     try {
-      const [stats, classes] = await Promise.all([
-        classSchedulingService.stats.getTutorStats(profile.id), // Use profile.id instead of user.id
-        classSchedulingService.classes.getUpcomingByTutorId(profile.id), // Use profile.id instead of user.id
-      ]);
-
+      const stats = await DashboardService.getTutorStats(profile.id);
       setDashboardStats(stats);
-      setUpcomingClasses(classes);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     }
@@ -396,36 +314,11 @@ const TutorDashboard: React.FC = () => {
     }
   };
 
-  const handleAcceptInstant = async (requestId: string) => {
-    try {
-      if (!profile?.id) return;
-      setAcceptingId(requestId);
-      const accepted = await instantSessionService.acceptRequest(
-        requestId,
-        profile.id
-      );
-      // Optimistically remove the card immediately after accept
-      setDismissedIds((prev) => new Set(prev).add(requestId));
-      setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
-      if (accepted.jitsi_meeting_url) {
-        window.open(accepted.jitsi_meeting_url, "_blank");
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setAcceptingId(null);
-    }
-  };
-
-  const handleRejectInstant = (requestId: string) => {
-    // Just remove from local state - no need to call service for local dismissal
-    setDismissedIds((prev) => new Set(prev).add(requestId));
-    setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
-  };
 
   const handleApplicationSuccess = () => {
     checkApplication(); // Refresh application status
   };
+
 
   const isApprovedTutor = application?.application_status === "approved";
   const isPendingTutor = application?.application_status === "pending";
@@ -539,6 +432,7 @@ const TutorDashboard: React.FC = () => {
                     Thank you for submitting your tutor application. Our team is
                     currently reviewing your qualifications and experience.
                   </p>
+
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
                     <h3 className="font-medium text-gray-900 mb-2">
@@ -911,11 +805,11 @@ const TutorDashboard: React.FC = () => {
             >
               {[
                 {
-                  name: "Total Classes",
-                  value: dashboardStats?.total_classes || 0,
+                  name: "Total Sessions",
+                  value: dashboardStats?.total_sessions || 0,
                   icon: VideoCameraIcon,
                   color: "from-green-600 to-green-700",
-                  description: "All time classes",
+                  description: "All time sessions",
                 },
                 {
                   name: "Students Taught",
@@ -925,18 +819,18 @@ const TutorDashboard: React.FC = () => {
                   description: "Unique students",
                 },
                 {
-                  name: "This Month",
-                  value: dashboardStats?.classes_this_month || 0,
+                  name: "Upcoming Sessions",
+                  value: dashboardStats?.upcoming_sessions || 0,
                   icon: CalendarDaysIcon,
                   color: "from-yellow-500 to-yellow-600",
-                  description: "Classes this month",
+                  description: "Sessions this month",
                 },
                 {
-                  name: "Earnings",
-                  value: `$${dashboardStats?.total_earnings || 0}`,
+                  name: "Monthly Earnings",
+                  value: `$${dashboardStats?.monthly_earnings || 0}`,
                   icon: CurrencyDollarIcon,
                   color: "from-green-700 to-green-800",
-                  description: "Total earnings",
+                  description: "This month's earnings",
                 },
               ].map((stat, index) => (
                 <motion.div
@@ -1018,7 +912,7 @@ const TutorDashboard: React.FC = () => {
                         description: "Build assessments for students",
                         icon: DocumentTextIcon,
                         color: "from-purple-500 to-purple-600",
-                        action: () => navigate("/quizzes"),
+                        action: () => navigate("/create-quiz"),
                         disabled: !isActiveTutor,
                       },
                       {
@@ -1029,7 +923,7 @@ const TutorDashboard: React.FC = () => {
                         action: () => navigate("/tutor/ratings"),
                         disabled: !isActiveTutor,
                       },
-                    ].map((action, index) => (
+                    ].map((action, _index) => (
                       <motion.div
                         key={action.title}
                         whileHover={{ scale: 1.02 }}

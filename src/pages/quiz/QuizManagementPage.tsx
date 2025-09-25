@@ -18,7 +18,6 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
 import type { Quiz, QuizStats } from "@/types/quiz";
 import toast from "react-hot-toast";
-import { getGradeLevelDisplayName } from "@/lib/gradeLevels";
 
 const QuizManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -80,9 +79,10 @@ const QuizManagementPage: React.FC = () => {
 
   const handleToggleActive = async (quiz: Quiz) => {
     try {
-      await quizService.quizzes.update(quiz.id, { is_active: !quiz.is_active });
+      // Use the toggle-publish endpoint for changing quiz visibility
+      await quizService.quizzes.togglePublish(quiz.id);
       setQuizzes((prev) =>
-        prev.map((q) => (q.id === quiz.id ? { ...q, is_active: !q.is_active } : q))
+        prev.map((q) => (q.id === quiz.id ? { ...q, isPublic: !q.isPublic } : q))
       );
       loadStats();
       toast.success("Quiz status updated successfully!");
@@ -330,7 +330,7 @@ const QuizManagementPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{quiz.subject}</div>
                         <div className="text-sm text-gray-500">
-                          {getGradeLevelDisplayName(quiz.grade_level)}
+                          {quiz.gradeLevelId?.displayName || "Not specified"}
                         </div>
                       </td>
 
@@ -348,18 +348,18 @@ const QuizManagementPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            quiz.is_active
+                            quiz.isPublic
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {quiz.is_active ? "Active" : "Inactive"}
+                          {quiz.isPublic ? "Active" : "Inactive"}
                         </span>
                       </td>
 
                       {/* Created */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(quiz.created_at).toLocaleDateString()}
+                        {new Date(quiz.createdAt).toLocaleDateString()}
                       </td>
 
                       {/* Actions */}
@@ -389,13 +389,13 @@ const QuizManagementPage: React.FC = () => {
                           <button
                             onClick={() => handleToggleActive(quiz)}
                             className={`p-1 rounded-md transition-colors ${
-                              quiz.is_active
+                              quiz.isPublic
                                 ? "text-red-600 hover:text-red-900 hover:bg-red-50"
                                 : "text-green-600 hover:text-green-900 hover:bg-green-50"
                             }`}
-                            title={quiz.is_active ? "Deactivate Quiz" : "Activate Quiz"}
+                            title={quiz.isPublic ? "Unpublish Quiz" : "Publish Quiz"}
                           >
-                            {quiz.is_active ? (
+                            {quiz.isPublic ? (
                               <XCircleIcon className="h-4 w-4" />
                             ) : (
                               <CheckCircleIcon className="h-4 w-4" />

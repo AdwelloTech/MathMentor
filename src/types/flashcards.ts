@@ -5,11 +5,13 @@ export interface FlashcardSet {
   subject: string;
   topic?: string;
   grade_level: string;
+  is_public?: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   tutor?: { id: string; full_name: string; email: string };
   cards?: Flashcard[];
+  flashcardCount?: number;
 }
 
 export interface Flashcard {
@@ -32,6 +34,7 @@ export interface CreateFlashcardSetData {
   subject: string;
   topic?: string;
   grade_level: string;
+  is_public?: boolean;
   is_active?: boolean;
   cards: CreateFlashcardData[];
 }
@@ -40,6 +43,7 @@ export interface UpdateFlashcardSetData {
   title?: string;
   subject?: string;
   topic?: string;
-  grade_level: string;
+  grade_level?: string;
+  is_public?: boolean;
   is_active?: boolean;
 }

@@ -31,15 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Helper function to parse experience string to number
-const parseExperience = (experience: string): number => {
-  if (experience === "0-1") return 1;
-  if (experience === "1-3") return 2;
-  if (experience === "3-5") return 4;
-  if (experience === "5-10") return 7;
-  if (experience === "10+") return 10;
-  return 0;
-};
 
 const RegisterPage: React.FC = () => {
   // Animation presets
@@ -95,7 +86,7 @@ const RegisterPage: React.FC = () => {
 
   const completeRegistration = async (
     data: RegisterFormData,
-    paymentIntentId?: string
+    _paymentIntentId?: string
   ) => {
     try {
       setIsLoading(true);

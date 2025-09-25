@@ -3,9 +3,7 @@ import { motion } from "framer-motion";
 import {
   IdentificationIcon,
   CameraIcon,
-  DocumentTextIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon,
   XCircleIcon,
   ArrowUpTrayIcon,
 } from "@heroicons/react/24/outline";
@@ -17,13 +15,11 @@ import toast from "react-hot-toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface IDVerificationFormProps {
-  userId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
-  userId,
   onSuccess,
   onCancel,
 }) => {
@@ -167,7 +163,7 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
         selfie_with_id: files.selfie_with_id,
       };
 
-      await idVerificationService.submitVerification(userId, submissionData);
+      await idVerificationService.submitVerification(submissionData);
 
       toast.success("ID verification submitted successfully!");
       onSuccess?.();

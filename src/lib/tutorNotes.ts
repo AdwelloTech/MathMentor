@@ -24,8 +24,8 @@
  * - Prevents entitlement bypass attacks
  */
 
-import { supabase } from "./supabase";
 import type { Database } from "@/types/database";
+import apiClient from "./apiClient";
 
 type TutorNote = Database["public"]["Tables"]["tutor_notes"]["Row"];
 export type TutorNoteWithDetails =
@@ -85,19 +85,42 @@ export async function searchTutorNotes(
   params: TutorNotesSearchParams = {}
 ): Promise<TutorNoteWithDetails[]> {
   try {
-    const { data, error } = await supabase.rpc("search_tutor_notes", {
-      search_term: params.searchTerm || "",
-      subject_filter: params.subjectFilter || null,
-      premium_only: params.premiumOnly || false,
-      tutor_id: params.tutorId || null,
-    });
+    // Use student endpoint which supports search and subject filtering
+    const queryParams = new URLSearchParams();
+    if (params.searchTerm) queryParams.append('q', params.searchTerm);
+    if (params.subjectFilter) queryParams.append('subjectId', params.subjectFilter);
 
-    if (error) {
-      console.error("Error searching tutor notes:", error);
-      throw error;
+    const response = await apiClient.get<{ success: boolean; data: any[] }>(
+      `/api/tutor-materials?${queryParams.toString()}`
+    );
+
+    if (!response.success) {
+      throw new Error('Failed to search tutor materials');
     }
 
-    return data || [];
+    // Transform the response data to match TutorNoteWithDetails format
+    return response.data.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      content: item.content,
+      file_url: item.file_url,
+      file_name: item.file_name,
+      file_size: item.file_size,
+      subject_id: item.subject_id,
+      subject_name: item.subject_name,
+      subject_display_name: item.subject_display_name,
+      subject_color: item.subject_color,
+      grade_level_id: item.grade_level_id,
+      grade_level_code: item.grade_level_code,
+      grade_level_display: item.grade_level_display,
+      created_by: item.created_by,
+      is_premium: item.is_premium,
+      view_count: item.view_count,
+      download_count: item.download_count,
+      tags: item.tags,
+      created_at: item.created_at,
+    }));
   } catch (error) {
     console.error("Error in searchTutorNotes:", error);
     throw error;
@@ -106,24 +129,50 @@ export async function searchTutorNotes(
 
 /**
  * Get tutor notes by tutor ID
+ * Note: Current backend doesn't support filtering by specific tutor ID from student endpoint
+ * For tutor's own materials, use getTutorMaterialsRest() instead
  */
 export async function getTutorNotesByTutorId(
   tutorId: string
 ): Promise<TutorNoteWithDetails[]> {
   try {
-    const { data, error } = await supabase.rpc("search_tutor_notes", {
-      search_term: "",
-      subject_filter: null,
-      premium_only: false,
-      tutor_id: tutorId,
-    });
+    // Note: Backend student endpoint doesn't currently support tutor filtering
+    // This will return all materials, not just those by the specified tutor
+    // For proper tutor filtering, backend needs to be updated
+    const response = await apiClient.get<{ success: boolean; data: any[] }>(
+      '/api/tutor-materials'
+    );
 
-    if (error) {
-      console.error("Error fetching tutor notes:", error);
-      throw error;
+    if (!response.success) {
+      throw new Error('Failed to fetch tutor materials');
     }
 
-    return data || [];
+    // Filter by tutor_id on frontend (temporary workaround)
+    const filteredData = response.data.filter(item => item.created_by === tutorId);
+
+    // Transform the response data to match TutorNoteWithDetails format
+    return filteredData.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      content: item.content,
+      file_url: item.file_url,
+      file_name: item.file_name,
+      file_size: item.file_size,
+      subject_id: item.subject_id,
+      subject_name: item.subject_name,
+      subject_display_name: item.subject_display_name,
+      subject_color: item.subject_color,
+      grade_level_id: item.grade_level_id,
+      grade_level_code: item.grade_level_code,
+      grade_level_display: item.grade_level_display,
+      created_by: item.created_by,
+      is_premium: item.is_premium,
+      view_count: item.view_count,
+      download_count: item.download_count,
+      tags: item.tags,
+      created_at: item.created_at,
+    }));
   } catch (error) {
     console.error("Error in getTutorNotesByTutorId:", error);
     throw error;
@@ -137,32 +186,16 @@ export async function getTutorNoteById(
   id: string
 ): Promise<TutorNoteWithDetails | null> {
   try {
-    const { data, error } = await supabase
-      .from("tutor_notes")
-      .select(
-        `
-        *,
-        note_subjects(
-          id,
-          name,
-          display_name,
-          color
-        ),
-        grade_levels(
-          id,
-          code,
-          display_name
-        )
-      `
-      )
-      .eq("id", id)
-      .maybeSingle();
+    const response = await apiClient.get<{ success: boolean; data: any }>(
+      `/api/tutor-materials/${id}`
+    );
 
-    if (error) {
-      console.error("Error fetching tutor note:", error);
-      throw error;
+    if (!response.success) {
+      console.error("Error fetching tutor note:", response);
+      return null;
     }
 
+    const data = response.data;
     if (!data) {
       return null;
     }
@@ -178,12 +211,12 @@ export async function getTutorNoteById(
       file_name: data.file_name,
       file_size: data.file_size,
       subject_id: data.subject_id,
-      subject_name: data.note_subjects?.name || null,
-      subject_display_name: data.note_subjects?.display_name || null,
-      subject_color: data.note_subjects?.color || null,
+      subject_name: data.subject_name,
+      subject_display_name: data.subject_display_name,
+      subject_color: data.subject_color,
       grade_level_id: data.grade_level_id,
-      grade_level_code: data.grade_levels?.code || null,
-      grade_level_display: data.grade_levels?.display_name || null,
+      grade_level_code: data.grade_level_code,
+      grade_level_display: data.grade_level_display,
       created_by: data.created_by,
       is_premium: data.is_premium,
       view_count: data.view_count,
@@ -220,55 +253,22 @@ export async function getTutorNoteSecureFile(noteId: string): Promise<{
   fileSize: number | null;
 }> {
   try {
-    // Fetch raw row fields, not the sanitized view.
-    // Note: file_path column doesn't exist yet during migration, only select existing columns
-    const { data, error } = await supabase
-      .from("tutor_notes")
-      .select("file_url, file_name, file_size")
-      .eq("id", noteId)
-      .single();
+    // Use backend API to get tutor material details
+    const material = await apiClient.get<any>(`/api/tutor-materials/${noteId}`);
 
-    if (error) {
-      console.error("Error fetching note file fields:", error);
-      return { fileUrl: null, fileName: null, fileSize: null };
-    }
-    if (!data?.file_name) {
+    if (!material?.file_name) {
       return { fileUrl: null, fileName: null, fileSize: null };
     }
 
-    // TEMPORARY: During migration, file_path doesn't exist yet
-    // The file path is stored directly in file_url field
-    let filePath = null;
+    // Construct full URL for the file
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const fileUrl = material.file_url ? `${baseURL}${material.file_url}` : null;
 
-    if (data.file_url) {
-      // Current: file path is stored directly in file_url during migration
-      // This should be the path like "userId/tutor-notes/filename.ext"
-      filePath = data.file_url;
-    }
-
-    if (filePath) {
-      const { data: signed, error: signErr } = await supabase.storage
-        .from("tutor-materials")
-        .createSignedUrl(filePath, 3600);
-      if (signErr) {
-        console.error("Error generating signed URL:", signErr);
-        return {
-          fileUrl: null,
-          fileName: data.file_name,
-          fileSize: data.file_size,
-        };
-      }
-      return {
-        fileUrl: signed.signedUrl,
-        fileName: data.file_name,
-        fileSize: data.file_size,
-      };
-    }
-
+    // Return the file info with full URL
     return {
-      fileUrl: null,
-      fileName: data.file_name,
-      fileSize: data.file_size,
+      fileUrl,
+      fileName: material.file_name,
+      fileSize: material.file_size,
     };
   } catch (error) {
     console.error("Error in getTutorNoteSecureFile:", error);
@@ -281,7 +281,7 @@ export async function getTutorNoteSecureFile(noteId: string): Promise<{
  */
 export async function createTutorNote(
   noteData: CreateTutorNoteData,
-  userId: string
+  _userId: string
 ): Promise<TutorNote> {
   try {
     // Validate required fields
@@ -289,34 +289,26 @@ export async function createTutorNote(
       throw new Error("Title is required");
     }
 
-    if (!userId) {
-      throw new Error("User ID is required");
+    // Use REST API for tutor material creation
+    const formData = new FormData();
+    formData.append('title', noteData.title.trim());
+    if (noteData.description) formData.append('description', noteData.description.trim());
+    if (noteData.content) formData.append('content', noteData.content.trim());
+    if (noteData.subjectId) formData.append('subjectId', noteData.subjectId);
+    if (noteData.gradeLevelId) formData.append('gradeLevelId', noteData.gradeLevelId);
+    formData.append('isPremium', noteData.isPremium.toString());
+    if (noteData.tags) formData.append('tags', JSON.stringify(noteData.tags));
+
+    const response = await apiClient.uploadFormData<{ success: boolean; data: any }>(
+      '/api/tutor-materials/tutor/create',
+      formData
+    );
+
+    if (!response.success) {
+      throw new Error('Failed to create tutor note');
     }
 
-    const { data, error } = await supabase
-      .from("tutor_notes")
-      .insert({
-        title: noteData.title.trim(),
-        description: noteData.description?.trim() || null,
-        content: noteData.content?.trim() || null,
-        subject_id: noteData.subjectId || null,
-        grade_level_id: noteData.gradeLevelId || null,
-        created_by: userId,
-        is_premium: noteData.isPremium,
-        is_active: true,
-        view_count: 0,
-        download_count: 0,
-        tags: noteData.tags || [],
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating tutor note:", error);
-      throw error;
-    }
-
-    return data;
+    return response.data;
   } catch (error) {
     console.error("Error in createTutorNote:", error);
     throw error;
@@ -331,34 +323,30 @@ export async function updateTutorNote(
   noteData: UpdateTutorNoteData
 ): Promise<TutorNote> {
   try {
-    const updateData: any = {};
+    // Use REST API for tutor material update
+    const formData = new FormData();
 
-    if (noteData.title !== undefined) updateData.title = noteData.title.trim();
+    if (noteData.title !== undefined) formData.append('title', noteData.title.trim());
     if (noteData.description !== undefined)
-      updateData.description = noteData.description?.trim() || null;
+      formData.append('description', noteData.description?.trim() || '');
     if (noteData.content !== undefined)
-      updateData.content = noteData.content?.trim() || null;
-    if (noteData.subjectId !== undefined)
-      updateData.subject_id = noteData.subjectId;
-    if (noteData.gradeLevelId !== undefined)
-      updateData.grade_level_id = noteData.gradeLevelId;
-    if (noteData.isPremium !== undefined)
-      updateData.is_premium = noteData.isPremium;
-    if (noteData.tags !== undefined) updateData.tags = noteData.tags;
+      formData.append('content', noteData.content?.trim() || '');
+    if (noteData.subjectId !== undefined) formData.append('subjectId', noteData.subjectId || '');
+    if (noteData.gradeLevelId !== undefined) formData.append('gradeLevelId', noteData.gradeLevelId || '');
+    if (noteData.isPremium !== undefined) formData.append('isPremium', noteData.isPremium.toString());
+    if (noteData.tags !== undefined) formData.append('tags', JSON.stringify(noteData.tags));
 
-    const { data, error } = await supabase
-      .from("tutor_notes")
-      .update(updateData)
-      .eq("id", id)
-      .select()
-      .single();
+    const response = await apiClient.uploadFormData<{ success: boolean; data: any }>(
+      `/api/tutor-materials/tutor/${id}`,
+      formData,
+      'PUT'
+    );
 
-    if (error) {
-      console.error("Error updating tutor note:", error);
-      throw error;
+    if (!response.success) {
+      throw new Error('Failed to update tutor note');
     }
 
-    return data;
+    return response.data;
   } catch (error) {
     console.error("Error in updateTutorNote:", error);
     throw error;
@@ -369,42 +357,13 @@ export async function updateTutorNote(
  * Delete a tutor note
  *
  * SECURITY MODEL:
- * - Fetches raw file_path and file_url directly from database
- * - Prefers file_path when present (future secure approach)
- * - Falls back to parsing legacy file_url for backward compatibility
- * - Ensures proper cleanup of associated storage files
+ * - Uses REST API which handles file cleanup on the backend
+ * - Backend ensures proper cleanup of associated storage files
  */
 export async function deleteTutorNote(id: string): Promise<void> {
   try {
-    // Fetch raw file_url; the public getter intentionally hides it
-    // Note: file_path column doesn't exist yet during migration
-    const { data: fileData, error: fetchErr } = await supabase
-      .from("tutor_notes")
-      .select("file_url")
-      .eq("id", id)
-      .single();
-
-    if (fetchErr) {
-      console.error("Error fetching file_url before delete:", fetchErr);
-    } else if (fileData?.file_url) {
-      // TEMPORARY: During migration, file path is stored directly in file_url
-      const { error: deleteFileError } = await supabase.storage
-        .from("tutor-materials")
-        .remove([fileData.file_url]);
-
-      if (deleteFileError) {
-        console.error("Error deleting file:", deleteFileError);
-        // Continue with note deletion even if file deletion fails
-      }
-    }
-
-    // Delete the note
-    const { error } = await supabase.from("tutor_notes").delete().eq("id", id);
-
-    if (error) {
-      console.error("Error deleting tutor note:", error);
-      throw error;
-    }
+    // Use REST API for tutor material deletion
+    await apiClient.delete(`/api/tutor-materials/tutor/${id}`);
   } catch (error) {
     console.error("Error in deleteTutorNote:", error);
     throw error;
@@ -414,8 +373,8 @@ export async function deleteTutorNote(id: string): Promise<void> {
 /**
  * Upload file for tutor note
  *
- * NOTE: Returns fileUrl as string | null to handle signed URL generation failures gracefully
- * The file is still uploaded and stored even if signed URL generation fails
+ * NOTE: This function is deprecated - file uploads should be handled through createTutorNote/updateTutorNote
+ * which accept FormData with files. This function is kept for backward compatibility.
  */
 export async function uploadTutorNoteFile(
   file: File,
@@ -427,69 +386,29 @@ export async function uploadTutorNoteFile(
       throw new Error("Invalid file: file is empty or undefined");
     }
 
-    // Get the current user ID for the folder structure
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error("User not authenticated");
+    // Use REST API to update the note with file
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.uploadFormData<{ success: boolean; data: any }>(
+      `/api/tutor-materials/tutor/${noteId}`,
+      formData,
+      'PUT'
+    );
+
+    if (!response.success) {
+      throw new Error('Failed to upload file');
     }
 
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${noteId}-${Date.now()}.${fileExt}`;
-    const filePath = `${user.id}/tutor-notes/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("tutor-materials")
-      .upload(filePath, file, {
-        contentType: file.type || "application/octet-stream",
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-    if (uploadError) {
-      console.error("Error uploading file:", uploadError);
-      throw uploadError;
-    }
-
-    // TEMPORARY: Store file_url until file_path migration is complete
-    // TODO: Replace with file_path after database migration
-    // For now, we'll store the file_path in file_url temporarily
-    // This maintains backward compatibility until the migration
-    const { error: updateError } = await supabase
-      .from("tutor_notes")
-      .update({
-        file_url: filePath, // TEMPORARY: Store path in file_url until migration
-        file_name: file.name,
-        file_size: file.size,
-      })
-      .eq("id", noteId);
-
-    if (updateError) {
-      console.error("Error updating note with file info:", updateError);
-      throw updateError;
-    }
-
-    // Generate a signed URL for immediate use (short-lived)
-    const { data: signedUrlData, error: signedUrlError } =
-      await supabase.storage
-        .from("tutor-materials")
-        .createSignedUrl(filePath, 3600); // 1-hour TTL
-
-    if (signedUrlError) {
-      console.error("Error generating signed URL:", signedUrlError);
-      // Still return success since file was uploaded and path stored
-      return {
-        fileUrl: null,
-        fileName: file.name,
-        fileSize: file.size,
-      };
-    }
+    // Get secure file URL
+    const fileUrl = response.data.file_url ?
+      `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${response.data.file_url}` :
+      null;
 
     return {
-      fileUrl: signedUrlData.signedUrl,
-      fileName: file.name,
-      fileSize: file.size,
+      fileUrl,
+      fileName: response.data.file_name || file.name,
+      fileSize: response.data.file_size || file.size,
     };
   } catch (error) {
     console.error("Error in uploadTutorNoteFile:", error);
@@ -504,14 +423,7 @@ export async function incrementTutorNoteViewCount(
   noteId: string
 ): Promise<void> {
   try {
-    const { error } = await supabase.rpc("increment_tutor_note_view_count", {
-      note_id: noteId,
-    });
-
-    if (error) {
-      console.error("Error incrementing tutor note view count:", error);
-      throw error;
-    }
+    await apiClient.post(`/api/tutor-materials/${noteId}/view`, {});
   } catch (error) {
     console.error("Error in incrementTutorNoteViewCount:", error);
     throw error;
@@ -521,42 +433,22 @@ export async function incrementTutorNoteViewCount(
 /**
  * Increment the view count for a tutor note (unique per user)
  * Only counts one view per user per note
- * Note: Falls back to regular view count if unique RPC doesn't exist
+ * Note: Falls back to regular view count since unique tracking isn't implemented yet
  */
 export async function incrementTutorNoteViewCountUnique(
   noteId: string,
-  userId: string
+  _userId: string
 ): Promise<void> {
   try {
-    // Try the unique view count RPC first
-    const { error } = await supabase.rpc(
-      "increment_tutor_note_view_count_unique",
-      {
-        note_id: noteId,
-        user_id: userId,
-      }
-    );
-
-    if (error) {
-      // If the unique RPC doesn't exist, fall back to regular view count
-      console.debug(
-        "Unique view count RPC not available, using regular view count:",
-        error.message
-      );
-      await incrementTutorNoteViewCount(noteId);
-    }
+    // For now, just use regular view count since unique tracking isn't implemented
+    // TODO: Implement unique view tracking in backend when needed
+    await incrementTutorNoteViewCount(noteId);
   } catch (error) {
     console.warn(
-      "Error with unique view count, falling back to regular view count:",
+      "Error incrementing view count:",
       error
     );
-    // Fall back to regular view count increment
-    try {
-      await incrementTutorNoteViewCount(noteId);
-    } catch (fallbackError) {
-      console.error("Error incrementing view count:", fallbackError);
-      // Don't throw error - view tracking failure shouldn't break functionality
-    }
+    // Don't throw error - view tracking failure shouldn't break functionality
   }
 }
 
@@ -567,17 +459,7 @@ export async function incrementTutorNoteDownloadCount(
   noteId: string
 ): Promise<void> {
   try {
-    const { error } = await supabase.rpc(
-      "increment_tutor_note_download_count",
-      {
-        note_id: noteId,
-      }
-    );
-
-    if (error) {
-      console.error("Error incrementing tutor note download count:", error);
-      throw error;
-    }
+    await apiClient.post(`/api/tutor-materials/${noteId}/download`, {});
   } catch (error) {
     console.error("Error in incrementTutorNoteDownloadCount:", error);
     throw error;
@@ -586,25 +468,20 @@ export async function incrementTutorNoteDownloadCount(
 
 /**
  * Generate a signed URL for secure file access
- * This replaces the insecure public URL approach
+ * This function is deprecated - use getTutorNoteSecureFile instead
+ * which gets the secure URL from the backend
  */
 export async function getTutorNoteFileUrl(
   filePath: string | null,
-  expiresIn: number = 3600
+  _expiresIn: number = 3600
 ): Promise<string | null> {
   if (!filePath) return null;
 
+  // For backward compatibility, construct URL from backend
+  // In practice, use getTutorNoteSecureFile() for proper secure access
   try {
-    const { data, error } = await supabase.storage
-      .from("tutor-materials")
-      .createSignedUrl(filePath, expiresIn);
-
-    if (error) {
-      console.error("Error generating signed URL:", error);
-      return null;
-    }
-
-    return data.signedUrl;
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    return `${baseURL}/api/files/${filePath}`;
   } catch (error) {
     console.error("Error in getTutorNoteFileUrl:", error);
     return null;
@@ -710,48 +587,162 @@ export async function resolveNoteSubjectIdFromSubject(subject: {
   display_name: string;
 }): Promise<string | null> {
   try {
-    // Try to find an existing note_subjects row by display_name first, then by name
-    let { data, error } = await supabase
-      .from("note_subjects")
-      .select("id")
-      .eq("display_name", subject.display_name)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (error && error.code !== "PGRST116") throw error;
-
-    if (!data) {
-      const byName = await supabase
-        .from("note_subjects")
-        .select("id")
-        .eq("name", subject.name)
-        .eq("is_active", true)
-        .maybeSingle();
-      if (byName.error && byName.error.code !== "PGRST116") throw byName.error;
-      data = byName.data as any;
-    }
-
-    if (data?.id) return data.id as string;
-
-    // If not found, create a new mapping row (safe default values)
-    const insert = await supabase
-      .from("note_subjects")
-      .insert({
-        name:
-          subject.name ||
-          subject.display_name.toLowerCase().replace(/\s+/g, "-"),
-        display_name: subject.display_name || subject.name,
-        color: "#999999",
-        is_active: true,
-        sort_order: 999,
-      })
-      .select("id")
-      .single();
-
-    if (insert.error) throw insert.error;
-    return insert.data?.id || null;
+    // For now, just return the provided ID since subject management
+    // should be handled through the backend admin interface
+    // TODO: Implement subject resolution through backend API when needed
+    return subject.id;
   } catch (e) {
     console.error("Error resolving note_subjects id from subject:", e);
     return null;
+  }
+}
+
+// REST API FUNCTIONS FOR TUTOR MATERIAL MANAGEMENT
+
+/**
+ * Get tutor materials for the authenticated tutor using REST API
+ */
+export async function getTutorMaterialsRest(): Promise<TutorNoteWithDetails[]> {
+  try {
+    const data = await apiClient.get<any[]>("/api/tutor-materials/tutor/list");
+    return data.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      content: item.content,
+      file_url: item.file_url,
+      file_name: item.file_name,
+      file_size: item.file_size,
+      subject_id: item.subject_id,
+      subject_name: item.subject_name,
+      subject_display_name: item.subject_display_name,
+      subject_color: item.subject_color,
+      grade_level_id: item.grade_level_id,
+      grade_level_code: null, // Not provided by REST API
+      grade_level_display: item.grade_level_display,
+      created_by: "", // Not provided by REST API
+      is_premium: item.is_premium,
+      view_count: item.view_count,
+      download_count: item.download_count,
+      tags: item.tags,
+      created_at: item.created_at,
+    }));
+  } catch (error) {
+    console.error("Error fetching tutor materials:", error);
+    throw error;
+  }
+}
+
+/**
+ * Search tutor materials using REST API
+ */
+export async function searchTutorMaterialsRest(searchTerm: string): Promise<TutorNoteWithDetails[]> {
+  try {
+    const data = await apiClient.post<any[]>("/api/tutor-materials/tutor/search", { searchTerm });
+    return data.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      content: item.content,
+      file_url: item.file_url,
+      file_name: item.file_name,
+      file_size: item.file_size,
+      subject_id: item.subject_id,
+      subject_name: item.subject_name,
+      subject_display_name: item.subject_display_name,
+      subject_color: item.subject_color,
+      grade_level_id: item.grade_level_id,
+      grade_level_code: null,
+      grade_level_display: item.grade_level_display,
+      created_by: "",
+      is_premium: item.is_premium,
+      view_count: item.view_count,
+      download_count: item.download_count,
+      tags: item.tags,
+      created_at: item.created_at,
+    }));
+  } catch (error) {
+    console.error("Error searching tutor materials:", error);
+    throw error;
+  }
+}
+
+/**
+ * Create tutor material using REST API
+ */
+export async function createTutorMaterialRest(formData: FormData): Promise<TutorNoteWithDetails> {
+  try {
+    const data = await apiClient.uploadFormData<any>("/api/tutor-materials/tutor/create", formData);
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      file_url: data.file_url,
+      file_name: data.file_name,
+      file_size: data.file_size,
+      subject_id: data.subject_id,
+      subject_name: data.subject_name,
+      subject_display_name: data.subject_display_name,
+      subject_color: data.subject_color,
+      grade_level_id: data.grade_level_id,
+      grade_level_code: null,
+      grade_level_display: data.grade_level_display,
+      created_by: "",
+      is_premium: data.is_premium,
+      view_count: data.view_count,
+      download_count: data.download_count,
+      tags: data.tags,
+      created_at: data.created_at,
+    };
+  } catch (error) {
+    console.error("Error creating tutor material:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update tutor material using REST API
+ */
+export async function updateTutorMaterialRest(materialId: string, formData: FormData): Promise<TutorNoteWithDetails> {
+  try {
+    const data = await apiClient.uploadFormData<any>(`/api/tutor-materials/tutor/${materialId}`, formData, 'PUT');
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      file_url: data.file_url,
+      file_name: data.file_name,
+      file_size: data.file_size,
+      subject_id: data.subject_id,
+      subject_name: data.subject_name,
+      subject_display_name: data.subject_display_name,
+      subject_color: data.subject_color,
+      grade_level_id: data.grade_level_id,
+      grade_level_code: null,
+      grade_level_display: data.grade_level_display,
+      created_by: "",
+      is_premium: data.is_premium,
+      view_count: data.view_count,
+      download_count: data.download_count,
+      tags: data.tags,
+      created_at: data.created_at,
+    };
+  } catch (error) {
+    console.error("Error updating tutor material:", error);
+    throw error;
+  }
+}
+
+/**
+ * Delete tutor material using REST API
+ */
+export async function deleteTutorMaterialRest(materialId: string): Promise<void> {
+  try {
+    await apiClient.delete(`/api/tutor-materials/tutor/${materialId}`);
+  } catch (error) {
+    console.error("Error deleting tutor material:", error);
+    throw error;
   }
 }

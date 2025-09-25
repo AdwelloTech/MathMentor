@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import apiClient from '@/lib/apiClient';
 
 interface TutorialStep {
   id: string;
@@ -182,28 +183,12 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
       }
 
       try {
-        // Use the new API instead of Supabase
-        const response = await fetch('/api/tutorial/status', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          console.error('Error checking tutorial status:', response.statusText);
-          // Default to showing tutorial for new users
+        // Use apiClient for consistent URL handling
+        const tutorialData = await apiClient.get<any>('/api/tutorial/status');
+        if (!tutorialData) {
           setShouldShowTutorial(true);
           return;
         }
-
-        const result = await response.json();
-        if (!result.success || !result.data) {
-          setShouldShowTutorial(true);
-          return;
-        }
-
-        const tutorialData = result.data;
 
         // Check if user has completed tutorial
         if (tutorialData.tutorialCompleted) {
@@ -274,18 +259,8 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
 
   const skipTutorial = async () => {
     try {
-      // Use the new API instead of Supabase
-      const response = await fetch('/api/tutorial/dismiss', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        console.error('Error dismissing tutorial:', response.statusText);
-      }
+      // Use apiClient for consistent URL handling
+      await apiClient.post('/api/tutorial/dismiss');
     } catch (error) {
       console.error('Error updating tutorial status:', error);
     }
@@ -296,18 +271,8 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
 
   const completeTutorial = async () => {
     try {
-      // Use the new API instead of Supabase
-      const response = await fetch('/api/tutorial/complete', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        console.error('Error completing tutorial:', response.statusText);
-      }
+      // Use apiClient for consistent URL handling
+      await apiClient.post('/api/tutorial/complete');
     } catch (error) {
       console.error('Error updating tutorial status:', error);
     }

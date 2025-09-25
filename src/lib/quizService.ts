@@ -37,7 +37,7 @@ export const quizService = {
     },
 
     getByTutorId: async (tutorId: string): Promise<Quiz[]> => {
-      const quizzes = await apiClient.get<Quiz[]>(`/api/quizzes/tutor/${tutorId}`);
+      const quizzes = await apiClient.get<Quiz[]>(`/api/quizzes?tutorId=${tutorId}`);
       return quizzes;
     },
 
@@ -56,6 +56,16 @@ export const quizService = {
     getAll: async (): Promise<Quiz[]> => {
       const quizzes = await apiClient.get<Quiz[]>('/api/quizzes');
       return quizzes;
+    },
+
+    getAttempts: async (quizId: string): Promise<any[]> => {
+      const attempts = await apiClient.get<any[]>(`/api/quizzes/${quizId}/attempts`);
+      return attempts;
+    },
+
+    togglePublish: async (quizId: string): Promise<Quiz> => {
+      const response = await apiClient.post<Quiz>(`/api/quizzes/${quizId}/toggle-publish`);
+      return response;
     },
   },
 
@@ -86,8 +96,35 @@ export const quizService = {
     },
 
     getByQuizId: async (quizId: string): Promise<Question[]> => {
-      const questions = await apiClient.get<Question[]>(`/api/quizzes/${quizId}/questions`);
-      return questions;
+      const questions = await apiClient.get<any[]>(`/api/quizzes/${quizId}/questions`);
+
+      // Transform backend camelCase format to frontend snake_case format
+      return questions.map((question: any) => ({
+        id: question._id?.toString(),
+        quiz_id: question.quizId?.toString(),
+        question_text: question.questionText,
+        question_type: question.questionType,
+        points: question.points,
+        answers: question.answers?.map((answer: any) => ({
+          id: answer._id?.toString(),
+          question_id: answer.questionId?.toString(),
+          answer_text: answer.answerText,
+          is_correct: answer.isCorrect,
+          explanation: answer.explanation,
+          answer_order: answer.order,
+        })),
+        explanation: question.explanation,
+        hint: question.hint,
+        difficulty: question.difficulty,
+        tags: question.tags,
+        question_order: question.order,
+        is_active: question.isActive,
+        is_ai_generated: question.isAiGenerated,
+        ai_status: question.aiStatus,
+        ai_metadata: question.aiMetadata,
+        created_at: question.createdAt,
+        updated_at: question.updatedAt,
+      }));
     },
 
     update: async (
@@ -137,9 +174,9 @@ export const quizService = {
 
   // Quiz attempts operations (Tutor/Admin - partially implemented)
   attempts: {
-    create: async (quizId: string, studentId: string): Promise<QuizAttempt> => {
+    create: async (quizId: string): Promise<QuizAttempt> => {
       // For now, create attempt via student quiz endpoint
-      return quizService.studentQuizzes.startQuizAttempt(quizId, studentId);
+      return quizService.studentQuizzes.startQuizAttempt(quizId);
     },
 
     getById: async (attemptId: string): Promise<QuizAttempt> => {
@@ -154,11 +191,12 @@ export const quizService = {
 
     // Update overall tutor feedback on an attempt
     saveTutorFeedback: async (
-      _attemptId: string,
-      _feedback: string
+      attemptId: string,
+      feedback: string
     ): Promise<void> => {
-      // This would need a backend endpoint for updating tutor feedback
-      throw new Error("Tutor feedback saving needs backend endpoint implementation");
+      await apiClient.post(`/api/quizzes/student/attempts/${attemptId}/feedback`, {
+        feedback,
+      });
     },
 
     getByStudentId: async (studentId: string): Promise<QuizAttempt[]> => {
@@ -219,16 +257,9 @@ export const quizService = {
 
   // Stats operations (Tutor/Admin - migrated to backend endpoints)
   stats: {
-    getTutorStats: async (_tutorId: string): Promise<QuizStats> => {
-      // This would need a backend endpoint for tutor stats
-      // For now, return mock stats
-      return {
-        total_quizzes: 5,
-        active_quizzes: 3,
-        total_attempts: 25,
-        average_score: 85,
-        total_students: 10,
-      };
+    getTutorStats: async (tutorId: string): Promise<QuizStats> => {
+      const stats = await apiClient.get<QuizStats>(`/api/quizzes/tutor/stats/${tutorId}`);
+      return stats;
     },
   },
 
@@ -257,21 +288,17 @@ export const quizService = {
     },
 
     // Start a quiz attempt
-    startQuizAttempt: async (
-      quizId: string,
-      studentId: string
-    ): Promise<QuizAttempt> => {
+    startQuizAttempt: async (quizId: string): Promise<QuizAttempt> => {
       const response = await apiClient.post<QuizAttempt>('/api/quizzes/student/attempts/start', {
         quizId,
-        studentId,
       });
       return response;
     },
 
     // Submit quiz answers and calculate score
     submitQuizAttempt: async (
-      _attemptId: string,
-      _answers: {
+      attemptId: string,
+      answers: {
         questionId: string;
         selectedAnswerId?: string;
         answerText?: string;
@@ -283,50 +310,178 @@ export const quizService = {
       correctAnswers: number;
       totalQuestions: number;
     }> => {
-      // This needs a backend endpoint for submitting quiz attempts
-      // For now, return mock data until backend implements this
-      return {
-        score: 8,
-        maxScore: 10,
-        percentage: 80,
-        correctAnswers: 8,
-        totalQuestions: 10,
-      };
+      const response = await apiClient.post<{
+        score: number;
+        maxScore: number;
+        percentage: number;
+        correctAnswers: number;
+        totalQuestions: number;
+      }>('/api/quizzes/student/attempts/submit', {
+        attemptId,
+        answers,
+      });
+      return response;
     },
 
     // Get student's quiz attempts
     getStudentAttempts: async (studentId: string): Promise<QuizAttempt[]> => {
-      const attempts = await apiClient.get<QuizAttempt[]>(`/api/quizzes/student/attempts/${studentId}`);
+      const attempts = await apiClient.get<QuizAttempt[]>(`/api/quizzes/students/${studentId}/attempts`);
       return attempts;
+    },
+
+    // Delete a quiz attempt
+    deleteQuizAttempt: async (attemptId: string): Promise<void> => {
+      await apiClient.delete(`/api/quizzes/students/attempts/${attemptId}`);
     },
 
     // Get attempt details with answers
     getAttemptDetails: async (
-      _attemptId: string
+      attemptId: string
     ): Promise<{
       attempt: QuizAttempt;
       studentAnswers: StudentAnswer[];
       questions: Question[];
     }> => {
-      // This needs a backend endpoint for getting attempt details
-      // For now, return mock data until backend implements this
+      // Get attempt data
+      const attempt = await apiClient.get<{
+        id: string;
+        quiz_id: string | {
+          _id: string;
+          title: string;
+          subject: string;
+          createdBy: {
+            firstName: string;
+            lastName: string;
+            fullName: string;
+          };
+        };
+        student_id: string;
+        status: string;
+        score?: number;
+        max_score?: number;
+        correct_answers?: number;
+        total_questions?: number;
+        started_at: string;
+        completed_at?: string;
+        tutor_feedback?: string;
+        created_at: string;
+      }>(`/api/quizzes/student/attempts/${attemptId}`);
+
+      // Transform backend format to frontend format
+      const transformedAttempt: QuizAttempt = {
+        id: attempt.id,
+        quiz_id: typeof attempt.quiz_id === 'object'
+          ? (attempt.quiz_id as any)._id?.toString() || (attempt.quiz_id as any).toString()
+          : attempt.quiz_id?.toString() || '',
+        student_id: attempt.student_id,
+        status: attempt.status as any,
+        score: attempt.score,
+        max_score: attempt.max_score,
+        correct_answers: attempt.correct_answers,
+        total_questions: attempt.total_questions,
+        started_at: attempt.started_at,
+        completed_at: attempt.completed_at,
+        tutor_feedback: attempt.tutor_feedback,
+        created_at: attempt.created_at,
+        quiz: typeof attempt.quiz_id === 'object' && attempt.quiz_id ? {
+          id: (attempt.quiz_id as any)._id?.toString() || '',
+          tutor_id: '',
+          title: (attempt.quiz_id as any).title || '',
+          description: '',
+          subject: (attempt.quiz_id as any).subject || '',
+          time_limit_minutes: 0,
+          total_questions: 0,
+          total_points: 0,
+          isPublic: false,
+          createdAt: '',
+          updatedAt: '',
+          tutor: (attempt.quiz_id as any).createdBy ? {
+            id: '',
+            full_name: (attempt.quiz_id as any).createdBy.fullName || '',
+            email: '',
+          } : undefined,
+        } : undefined,
+      };
+
+      // Get student answers with question data
+      const answersResponse = await apiClient.get<{
+        id: string;
+        attempt_id: string;
+        question_id: string;
+        selected_answer_id?: string;
+        answer_text?: string;
+        is_correct: boolean;
+        points_earned: number;
+        created_at: string;
+        updated_at: string;
+        question?: {
+          id: string;
+          question_text: string;
+          question_type: string;
+          points: number;
+          answers?: {
+            id: string;
+            answer_text: string;
+            is_correct: boolean;
+            explanation?: string;
+            answer_order: number;
+          }[];
+          explanation?: string;
+          hint?: string;
+          difficulty?: string;
+          tags?: string[];
+          question_order: number;
+          is_active: boolean;
+        };
+      }[]>(`/api/quizzes/student/attempts/${attemptId}/answers`);
+
+      // Transform student answers to frontend format
+      const studentAnswers: StudentAnswer[] = answersResponse.map(answer => ({
+        id: answer.id,
+        attempt_id: answer.attempt_id,
+        question_id: answer.question_id,
+        selected_answer_id: answer.selected_answer_id,
+        answer_text: answer.answer_text,
+        is_correct: answer.is_correct,
+        points_earned: answer.points_earned,
+        created_at: answer.created_at,
+        updated_at: answer.updated_at,
+      }));
+
+      // Extract unique questions from answers
+      const questionsMap = new Map<string, Question>();
+      answersResponse.forEach(answer => {
+        if (answer.question) {
+          questionsMap.set(answer.question.id, {
+            id: answer.question.id,
+            quiz_id: attempt.quiz_id.toString(),
+            question_text: answer.question.question_text,
+            question_type: answer.question.question_type as any,
+            points: answer.question.points,
+            answers: answer.question.answers?.map(a => ({
+              id: a.id,
+              question_id: answer.question!.id,
+              answer_text: a.answer_text,
+              is_correct: a.is_correct,
+              explanation: a.explanation,
+              answer_order: a.answer_order,
+              created_at: '',
+              updated_at: '',
+            })),
+            question_order: answer.question.question_order,
+            created_at: '',
+            is_ai_generated: false,
+            ai_status: 'approved',
+          });
+        }
+      });
+
+      const questions = Array.from(questionsMap.values()).sort((a, b) => (a.question_order || 0) - (b.question_order || 0));
+
       return {
-        attempt: {
-          id: _attemptId,
-          quiz_id: 'mock-quiz-id',
-          student_id: 'mock-student-id',
-          status: 'completed',
-          score: 8,
-          max_score: 10,
-          correct_answers: 8,
-          total_questions: 10,
-          started_at: new Date().toISOString(),
-          completed_at: new Date().toISOString(),
-          tutor_feedback: undefined,
-          created_at: new Date().toISOString(),
-        },
-        studentAnswers: [],
-        questions: [],
+        attempt: transformedAttempt,
+        studentAnswers,
+        questions,
       };
     },
   },

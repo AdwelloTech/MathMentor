@@ -74,7 +74,7 @@ export class FlashcardService {
     await Flashcard.insertMany(flashcards);
 
     // Return the complete set with flashcards
-    return await this.getSetById(flashcardSet._id.toString());
+    return await this.getSetById(flashcardSet._id.toString(), userId);
   }
 
   /**
@@ -105,6 +105,7 @@ export class FlashcardService {
       subject: setObj.subject,
       topic: setObj.topic,
       grade_level: setObj.gradeLevelId,
+      is_public: setObj.isPublic,
       is_active: setObj.isActive,
       created_at: setObj.createdAt,
       updated_at: setObj.updatedAt,
@@ -187,6 +188,7 @@ export class FlashcardService {
           subject: setObj.subject,
           topic: setObj.topic,
           grade_level: setObj.gradeLevelId,
+          is_public: setObj.isPublic,
           is_active: setObj.isActive,
           created_at: setObj.createdAt,
           updated_at: setObj.updatedAt,
@@ -511,6 +513,7 @@ export class FlashcardService {
           subject: setObj.subject,
           topic: setObj.topic,
           grade_level: setObj.gradeLevelId,
+          is_public: setObj.isPublic,
           is_active: setObj.isActive,
           created_at: setObj.createdAt,
           updated_at: setObj.updatedAt,

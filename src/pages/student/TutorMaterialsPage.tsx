@@ -3,16 +3,6 @@ import { AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  BookOpenIcon,
-  StarIcon,
-  DocumentTextIcon,
-  EyeIcon,
-  ArrowDownTrayIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
-import {
   Loader2,
   GraduationCap,
   BookOpen,
@@ -26,7 +16,6 @@ import {
   Download,
   TrendingUp,
 } from "lucide-react";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import StudentTutorMaterialCard from "@/components/student/StudentTutorMaterialCard";
 import StudentTutorMaterialViewer from "@/components/student/StudentTutorMaterialViewer";
 import {
@@ -88,9 +77,9 @@ const TutorMaterialsPage: React.FC = () => {
     try {
       setLoading(true);
       const [materialsData, subjectsData, premiumAccess] = await Promise.all([
-        getStudentTutorMaterials(user!.id),
+        getStudentTutorMaterials(),
         getNoteSubjects(),
-        checkStudentPremiumAccess(user!.id),
+        checkStudentPremiumAccess(),
       ]);
 
       setAllMaterials(materialsData);

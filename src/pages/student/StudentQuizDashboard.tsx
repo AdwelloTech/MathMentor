@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import {
   Filter,
@@ -31,9 +30,8 @@ import {
   Play,
   GraduationCap,
   X,
-  Calendar,
-  Plus,
-  Sparkles,
+  Award,
+  ArrowRightIcon,
 } from "lucide-react";
 
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -128,10 +126,7 @@ const StudentQuizDashboard: React.FC = () => {
       }
 
       // Start the quiz attempt
-      const attempt = await quizService.studentQuizzes.startQuizAttempt(
-        quizId,
-        user!.id
-      );
+      const attempt = await quizService.studentQuizzes.startQuizAttempt(quizId);
 
       // Navigate to the quiz taking page
       navigate(`/student/take-quiz/${attempt.id}`);
@@ -337,6 +332,35 @@ const StudentQuizDashboard: React.FC = () => {
           </Card>
         </motion.div>
 
+        {/* View Results Button */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mb-8"
+        >
+          <Card className="border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Award className="h-6 w-6 text-yellow-900" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-yellow-900">Quiz Results</h3>
+                    <p className="text-sm text-yellow-700">View your completed quiz attempts and scores</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => navigate("/student/quiz-results")}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                >
+                  View All Results
+                  <ArrowRightIcon className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* Quizzes List */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -370,7 +394,7 @@ const StudentQuizDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {quizzes.map((quiz, index) => (
                 <motion.div
-                  key={quiz.id}
+                  key={quiz.id || `quiz-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}

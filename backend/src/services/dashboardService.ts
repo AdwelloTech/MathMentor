@@ -196,11 +196,14 @@ export class DashboardService {
         })
         .map((booking: any) => {
           const classData = booking.classId as any;
+          const sessionDate = classData?.startDate ? new Date(classData.startDate) : null;
+          const dateString = sessionDate ? sessionDate.toISOString().split('T')[0] : null; // YYYY-MM-DD format
+
           return {
             id: booking._id,
             tutor_name: booking.teacherId?.fullName || 'Unknown Tutor',
             title: classData?.title || 'Untitled Class',
-            date: classData?.startDate,
+            date: dateString,
             start_time: classData?.schedule?.startTime,
             end_time: classData?.schedule?.endTime,
             class_type_name: 'Class',

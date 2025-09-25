@@ -6,10 +6,9 @@ import {
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import {
-  updateTutorNote,
+  updateTutorMaterialRest,
   incrementTutorNoteDownloadCount,
   getTutorNoteSecureFile,
-  type UpdateTutorNoteData,
 } from "@/lib/tutorNotes";
 import type { Database } from "@/types/database";
 import RichTextEditor from "@/components/notes/RichTextEditor";
@@ -53,6 +52,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
     content: "",
     subjectId: "",
     isPremium: false,
+    tags: [] as string[],
   });
 
   const hasFile = note.file_name && note.file_size;
@@ -86,6 +86,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
         content: note.content || "",
         subjectId: note.subject_id || "",
         isPremium: note.is_premium,
+        tags: note.tags || [],
       });
       // Reset secure file URL when note changes
       setSecureFileUrl(null);
@@ -116,15 +117,25 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
     setLoading(true);
 
     try {
-      const updateData: UpdateTutorNoteData = {
-        title: formData.title.trim(),
-        description: formData.description.trim() || undefined,
-        content: formData.content.trim(),
-        subjectId: formData.subjectId || undefined,
-        isPremium: formData.isPremium,
-      };
+      const submitFormData = new FormData();
+      submitFormData.append('title', formData.title.trim());
+      if (formData.description.trim()) {
+        submitFormData.append('description', formData.description.trim());
+      }
+      if (formData.content.trim()) {
+        submitFormData.append('content', formData.content.trim());
+      }
+      if (formData.subjectId && formData.subjectId.trim()) {
+        submitFormData.append('subjectId', formData.subjectId.trim());
+      }
+      submitFormData.append('isPremium', formData.isPremium.toString());
 
-      await updateTutorNote(note.id, updateData);
+      // Add tags if any
+      if (formData.tags && formData.tags.length > 0) {
+        submitFormData.append('tags', JSON.stringify(formData.tags));
+      }
+
+      await updateTutorMaterialRest(note.id, submitFormData);
 
       toast.success("Material updated successfully!");
       onNoteUpdated();

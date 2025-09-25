@@ -33,11 +33,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { getActiveProfileImage, getProfileImageUrl } from "@/lib/profileImages";
 import ProfileImageUpload from "@/components/ui/ProfileImageUpload";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { validateDocumentFile } from "@/constants/form";
+import apiClient from "@/lib/apiClient";
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
 
 interface TutorProfileFormData {
   email: string;
@@ -57,11 +62,11 @@ interface TutorProfileFormData {
   certifications: string[];
   languages: string[];
   cvFileName: string;
-  cvStoragePath?: string;
+  cvStoragePath?: string; // Now stores the URL instead of storage path
 }
 
 const TutorProfile: React.FC = () => {
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingCV, setIsUploadingCV] = useState(false);
@@ -92,52 +97,41 @@ const TutorProfile: React.FC = () => {
     certifications: profile?.certifications || [],
     languages: profile?.languages || [],
     cvFileName: profile?.cv_file_name || "",
-    cvStoragePath: profile?.cv_storage_path || "",
+    cvStoragePath: profile?.cv_url || "", // cv_url instead of cv_storage_path
   });
 
-  // Load fresh profile data + active profile image
+  // Load profile data from auth context
   useEffect(() => {
     const loadProfileData = async () => {
-      if (!user?.id) return;
+      if (!user?.id || !profile) return;
 
       try {
         setIsLoading(true);
 
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
+        // Profile data comes from auth context which uses the new backend
+        setFormData({
+          email: user.email || "",
+          firstName: profile.first_name || "",
+          lastName: profile.last_name || "",
+          phone: profile.phone || "",
+          address: profile.address || "",
+          dateOfBirth: profile.date_of_birth || "",
+          gender: profile.gender || undefined,
+          emergencyContact: profile.emergency_contact || "",
+          qualification: profile.qualification || "",
+          experienceYears: profile.experience_years || undefined,
+          specializations: profile.specializations || [],
+          hourlyRate: profile.hourly_rate || undefined,
+          availability: profile.availability || "",
+          bio: profile.bio || "",
+          certifications: profile.certifications || [],
+          languages: profile.languages || [],
+          cvFileName: profile.cv_file_name || "",
+          cvStoragePath: profile.cv_url || "", // cv_url instead of cv_storage_path
+        });
 
-        if (!profileError && profileData) {
-          setFormData({
-            email: user.email || "",
-            firstName: profileData.first_name || "",
-            lastName: profileData.last_name || "",
-            phone: profileData.phone || "",
-            address: profileData.address || "",
-            dateOfBirth: profileData.date_of_birth || "",
-            gender: profileData.gender || undefined,
-            emergencyContact: profileData.emergency_contact || "",
-            qualification: profileData.qualification || "",
-            experienceYears: profileData.experience_years || undefined,
-            specializations: profileData.specializations || [],
-            hourlyRate: profileData.hourly_rate || undefined,
-            availability: profileData.availability || "",
-            bio: profileData.bio || "",
-            certifications: profileData.certifications || [],
-            languages: profileData.languages || [],
-            cvFileName: profileData.cv_file_name || "",
-            cvStoragePath: profileData.cv_storage_path || "",
-          });
-        }
-
-        // Active profile image
-        const activeImage = await getActiveProfileImage(user.id);
-        const imageUrl = activeImage
-          ? getProfileImageUrl(activeImage.file_path)
-          : null;
-        setCurrentProfileImageUrl(imageUrl);
+        // Set profile image URL from profile data
+        setCurrentProfileImageUrl(profile.profile_image_url || null);
       } catch (err) {
         console.error("Error loading profile data:", err);
       } finally {
@@ -146,7 +140,7 @@ const TutorProfile: React.FC = () => {
     };
 
     loadProfileData();
-  }, [user?.id]);
+  }, [user?.id, profile]);
 
   // -----------------------------
   // Helpers
@@ -192,20 +186,13 @@ const TutorProfile: React.FC = () => {
 
   const handleProfileImageChange = async (imageUrl: string | null) => {
     setCurrentProfileImageUrl(imageUrl);
-    if (updateProfile) {
-      try {
-        // Only pass fields that exist on the updateProfile type to avoid ts(2353)
-        await updateProfile({
-          profile_image_url: imageUrl || undefined,
-        } as any);
-      } catch (err) {
-        console.error("Failed to update AuthContext:", err);
-      }
-    }
+    // The profile image URL will be updated when the auth context refreshes
+    // No need to manually call updateProfile as the ProfileImageUpload component
+    // handles the backend update and the auth context should reflect this
   };
 
   // -----------------------------
-  // CV upload (single, consistent version)
+  // CV upload using new backend API
   // -----------------------------
   const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -229,60 +216,51 @@ const TutorProfile: React.FC = () => {
     setCvUploadError(null);
 
     try {
-      const fileExt = file.name.split(".").pop();
-      const objectPath = `${user.id}/cv/${Date.now()}.${fileExt}`;
+      // Create FormData for multipart upload
+      const formDataUpload = new FormData();
+      formDataUpload.append('document', file);
+      formDataUpload.append('userId', user.id);
+      formDataUpload.append('entityType', 'user_profile');
+      formDataUpload.append('entityId', user.id);
+      formDataUpload.append('isPublic', 'false');
 
-      const { error: uploadError } = await supabase.storage
-        .from("cv-uploads")
-        .upload(objectPath, file, { cacheControl: "3600", upsert: false });
+      // Upload document via backend API
+      const result = await apiClient.post<ApiResponse<{ id: string; url: string; fileName: string }>>('/api/files/documents/upload', formDataUpload);
 
-      if (uploadError) throw uploadError;
-
-      // Save storage path + filename in DB (no public URL)
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          cv_file_name: file.name,
-          cv_storage_path: objectPath,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
-
-      if (updateError) throw updateError;
-
-      // Clean up old file (best-effort)
-      try {
-        const previousPath = formData.cvStoragePath;
-        if (previousPath && previousPath !== objectPath) {
-          const { error: removeErr } = await supabase.storage
-            .from("cv-uploads")
-            .remove([previousPath]);
-          if (removeErr)
-            console.warn("Failed to delete previous CV file:", removeErr);
-        }
-      } catch (cleanupErr) {
-        console.warn("Cleanup of previous CV failed:", cleanupErr);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to upload CV');
       }
 
-      // Update local form + (optionally) auth context
+      const documentData = result.data!; // We know result.data exists when success is true
+
+      // Update user profile with CV information
+      const profileResult = await apiClient.put<ApiResponse>('/api/auth/profile', {
+        cvFileName: file.name,
+        cvUrl: documentData.url,
+      });
+
+      if (!profileResult.success) {
+        throw new Error('Failed to update profile with CV information');
+      }
+
+      // Update local form data
       setFormData((prev) => ({
         ...prev,
         cvFileName: file.name,
-        cvStoragePath: objectPath,
+        cvStoragePath: documentData.url, // Store the URL instead of storage path
       }));
 
-      if (updateProfile) {
+      // Clean up old CV document if it exists (best effort)
+      if (formData.cvStoragePath && formData.cvFileName) {
         try {
-          // Only pass fields that your context type allows
-          await updateProfile({
-            cv_file_name: file.name,
-            cv_storage_path: objectPath,
-          } as any);
-        } catch (err) {
-          // Non-fatal if context type rejects; DB already has truth
-          console.warn("updateProfile for CV fields failed (non-fatal):", err);
+          // Find and delete the old document (we'd need the document ID for this)
+          // For now, we'll just update the profile and let the old document remain
+          // In a production system, you might want to track document IDs
+        } catch (cleanupErr) {
+          console.warn("Cleanup of previous CV failed:", cleanupErr);
         }
       }
+
     } catch (err: any) {
       console.error("CV upload error:", err);
       setCvUploadError(
@@ -297,48 +275,26 @@ const TutorProfile: React.FC = () => {
 
   const handleCVView = async () => {
     if (!formData.cvStoragePath) return;
-    const { data, error } = await supabase.storage
-      .from("cv-uploads")
-      .createSignedUrl(formData.cvStoragePath, 60 * 10); // 10 minutes
-    if (error || !data?.signedUrl) {
-      setCvUploadError("Failed to open CV. Please try again.");
-      return;
-    }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    // Since cvStoragePath now contains the URL directly, we can open it directly
+    window.open(formData.cvStoragePath, "_blank", "noopener,noreferrer");
   };
 
   const handleCVRemove = async () => {
-    if (!user?.id || !formData.cvStoragePath) return;
+    if (!user?.id) return;
     try {
-      // remove file from storage (best effort)
-      await supabase.storage
-        .from("cv-uploads")
-        .remove([formData.cvStoragePath]);
+      // Update user profile to clear CV information
+      const result = await apiClient.put<ApiResponse>('/api/auth/profile', {
+        cvFileName: null,
+        cvUrl: null,
+      });
 
-      // clear DB fields
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          cv_file_name: null,
-          cv_storage_path: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
-
-      if (updateError) throw updateError;
-
-      // clear local + (optional) context
-      setFormData((prev) => ({ ...prev, cvFileName: "", cvStoragePath: "" }));
-      if (updateProfile) {
-        try {
-          await updateProfile({
-            cv_file_name: undefined,
-            cv_storage_path: undefined,
-          } as any);
-        } catch {
-          /* ignore */
-        }
+      if (!result.success) {
+        throw new Error('Failed to remove CV from profile');
       }
+
+      // Clear local form data
+      setFormData((prev) => ({ ...prev, cvFileName: "", cvStoragePath: "" }));
+
     } catch (err) {
       console.error("Failed to remove CV:", err);
       setCvUploadError("Failed to remove CV. Please try again.");
@@ -357,62 +313,33 @@ const TutorProfile: React.FC = () => {
     try {
       if (!user?.id) throw new Error("User not authenticated");
 
+      // Start with basic fields only to debug
       const updateData = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-        phone: formData.phone || null,
-        address: formData.address || null,
-        date_of_birth: formData.dateOfBirth || null,
-        gender: formData.gender || null,
-        emergency_contact: formData.emergencyContact || null,
-        qualification: formData.qualification || null,
-        experience_years: formData.experienceYears ?? null,
-        specializations: formData.specializations || [],
-        hourly_rate: formData.hourlyRate ?? null,
-        availability: formData.availability || null,
-        bio: formData.bio || null,
-        certifications: formData.certifications || null,
-        languages: formData.languages || null,
-        cv_storage_path: formData.cvStoragePath || null,
-        cv_file_name: formData.cvFileName || null,
-        updated_at: new Date().toISOString(),
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone?.trim() || null,
+        // address: formData.address?.trim() || null,
+        // dateOfBirth: formData.dateOfBirth?.trim() || null,
+        // gender: formData.gender || null,
+        // emergencyContact: formData.emergencyContact?.trim() || null,
+        // qualification: formData.qualification?.trim() || null,
+        // experienceYears: formData.experienceYears ?? null,
+        // specializations: formData.specializations?.filter(s => s.trim()) || [],
+        // hourlyRate: formData.hourlyRate ?? null,
+        // availability: formData.availability?.trim() || null,
+        // bio: formData.bio?.trim() || null,
+        // certifications: formData.certifications?.filter(c => c.trim()) || [],
+        // languages: formData.languages?.filter(l => l.trim()) || [],
+        // cvFileName: formData.cvFileName?.trim() || null,
+        // cvUrl: formData.cvStoragePath?.trim() || null, // cvStoragePath now contains the URL
       };
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .update(updateData)
-        .eq("user_id", user.id)
-        .select()
-        .single();
+      // Update profile via backend API
+      const result = await apiClient.put<ApiResponse>('/api/auth/profile', updateData);
 
-      if (error) throw error;
-
-      // Update auth context with safe/known keys only to avoid ts(2353)
-      if (updateProfile) {
-        await updateProfile({
-          // These are likely declared in your context type:
-          // Adjust as needed, or keep the cast as any for extra fields.
-          first_name: updateData.first_name,
-          last_name: updateData.last_name,
-          full_name: updateData.full_name,
-          phone: updateData.phone ?? undefined,
-          address: updateData.address ?? undefined,
-          date_of_birth: updateData.date_of_birth ?? undefined,
-          gender: updateData.gender ?? undefined,
-          emergency_contact: updateData.emergency_contact ?? undefined,
-          qualification: updateData.qualification ?? undefined,
-          experience_years: updateData.experience_years ?? undefined,
-          specializations: updateData.specializations ?? undefined,
-          hourly_rate: updateData.hourly_rate ?? undefined,
-          availability: updateData.availability ?? undefined,
-          bio: updateData.bio ?? undefined,
-          certifications: updateData.certifications ?? undefined,
-          languages: updateData.languages ?? undefined,
-          // If your type doesn't include these, they won't compile without a cast:
-          cv_storage_path: updateData.cv_storage_path ?? undefined,
-          cv_file_name: updateData.cv_file_name ?? undefined,
-        } as any);
+      if (!result.success) {
+        console.error('Profile update failed:', result.error);
+        throw new Error(result.error || 'Failed to update profile');
       }
 
       setSaveStatus("success");

@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import type { ProfileImage, ProfileImageUpload, ProfileImageUploadResponse } from '@/types/auth';
+import type { ProfileImage, ProfileImageUploadResponse } from '@/types/auth';
 
 // Constants
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -62,11 +62,13 @@ export const uploadProfileImage = async (
 
     // Create FormData for multipart upload
     const formData = new FormData();
-    formData.append('profileImage', file);
+    formData.append('image', file);
+    formData.append('userId', userId);
+    formData.append('profileId', profileId);
 
     // Upload via backend API
     const response = await apiClient.post<ProfileImageUploadResponse>(
-      '/api/profile-images/upload',
+      '/api/files/profile-images/upload',
       formData
     );
 
@@ -82,9 +84,9 @@ export const uploadProfileImage = async (
 /**
  * Get active profile image for current user
  */
-export const getActiveProfileImage = async (userId: string): Promise<ProfileImage | null> => {
+export const getActiveProfileImage = async (): Promise<ProfileImage | null> => {
   try {
-    const response = await apiClient.get<{ success: boolean; data: ProfileImage | null }>('/api/profile-images/active');
+    const response = await apiClient.get<{ success: boolean; data: ProfileImage | null }>('/api/files/profile-images/active');
     return response.success ? response.data : null;
   } catch (error: any) {
     console.error('Failed to fetch active profile image:', error);
@@ -95,9 +97,9 @@ export const getActiveProfileImage = async (userId: string): Promise<ProfileImag
 /**
  * Get all profile images for current user
  */
-export const getUserProfileImages = async (userId: string): Promise<ProfileImage[]> => {
+export const getUserProfileImages = async (): Promise<ProfileImage[]> => {
   try {
-    const response = await apiClient.get<{ success: boolean; data: ProfileImage[] }>('/api/profile-images');
+    const response = await apiClient.get<{ success: boolean; data: ProfileImage[] }>('/api/files/profile-images');
     return response.success ? response.data : [];
   } catch (error: any) {
     console.error('Failed to fetch user profile images:', error);
@@ -112,7 +114,7 @@ export const activateProfileImage = async (imageId: string): Promise<void> => {
   try {
     console.log('Activating profile image:', imageId);
 
-    await apiClient.put(`/api/profile-images/${imageId}/activate`);
+    await apiClient.post('/api/files/profile-images/activate', { imageId });
 
     console.log('Profile image activated successfully');
   } catch (error: any) {
@@ -128,7 +130,7 @@ export const deleteProfileImage = async (imageId: string): Promise<void> => {
   try {
     console.log('Deleting profile image:', imageId);
 
-    await apiClient.delete(`/api/profile-images/${imageId}`);
+    await apiClient.delete(`/api/files/profile-images/${imageId}`);
 
     console.log('Profile image deleted successfully');
   } catch (error: any) {

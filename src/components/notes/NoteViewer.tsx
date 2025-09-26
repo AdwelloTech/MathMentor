@@ -4,7 +4,6 @@ import {
   XMarkIcon,
   EyeIcon,
   ClockIcon,
-  AcademicCapIcon,
 } from "@heroicons/react/24/outline";
 import type { Database } from "@/types/database";
 import {

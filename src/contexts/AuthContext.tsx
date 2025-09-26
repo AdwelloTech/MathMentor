@@ -10,7 +10,6 @@ import toast from "react-hot-toast";
 import AuthService from "@/lib/authService";
 import apiClient, { ApiClientError } from "@/lib/apiClient";
 import {
-  getUserPermissions,
   canAccessFeature,
   hasRole,
   hasPackage,
@@ -38,10 +37,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  // Internal permissions state - used for permission calculations but not exposed in context
-  const [permissions, setPermissions] = useState<FeaturePermissions | null>(
-    null
-  );
 
   // Use refs to track state and prevent race conditions
   const isInitialized = useRef(false);
@@ -130,7 +125,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (mounted.current) {
       setUser(null);
       setProfile(null);
-      setPermissions(null);
       setLoading(false);
     }
     isProcessingAuth.current = false;
@@ -174,11 +168,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      // Get permissions
-      const userPermissions = getUserPermissions(
-        userData.profile.role as UserRole,
-        userData.profile.package as StudentPackage
-      );
+      // Permissions calculation removed - not currently used
 
       console.log(
         "Setting user state:",
@@ -190,7 +180,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Set all auth state
       setUser(userData);
       setProfile(userData.profile);
-      setPermissions(userPermissions);
 
       // Show welcome message for returning users, not new registrations
       if (showWelcome && userData.last_sign_in_at) {
@@ -331,14 +320,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setProfile(updatedProfile);
 
-      // Update permissions if role or package changed
-      if (updates.role || updates.package) {
-        const newPermissions = getUserPermissions(
-          (updates.role || profile?.role) as UserRole,
-          (updates.package || profile?.package) as StudentPackage
-        );
-        setPermissions(newPermissions);
-      }
+      // Permission update removed - not currently used
 
       // Profile updated silently - no toast needed
       return updatedProfile;

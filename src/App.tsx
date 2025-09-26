@@ -72,15 +72,6 @@ function App() {
   // Check if user is fully authenticated (both user and profile exist)
   const isUserAuthenticated = user && profile;
 
-  // List of public routes that don't require authentication
-  const publicRoutes = [
-    "/login",
-    "/admin/login",
-    "/register",
-    "/forgot-password",
-    "/reset-password",
-  ];
-
   // Show loading spinner while checking authentication
   if (loading || adminLoading) {
     return (

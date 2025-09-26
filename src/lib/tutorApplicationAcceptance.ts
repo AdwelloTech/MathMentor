@@ -50,8 +50,6 @@ export async function acceptTutorApplication(userId: string): Promise<Acceptance
     const application: TutorApplication = response.data;
     console.log('Accept application - application:', application);
     console.log('Accept application - status:', application.application_status);
-    console.log('Accept application - application keys:', Object.keys(application));
-    console.log('Accept application - has status field:', application.hasOwnProperty('application_status'));
 
     // Check if application is already approved
     if (application.application_status === 'approved') {
@@ -63,8 +61,7 @@ export async function acceptTutorApplication(userId: string): Promise<Acceptance
     }
 
     // Check if application is pending or under review (submitted but not reviewed)
-    // Also handle cases where status might be undefined (legacy applications)
-    if (application.application_status === 'pending' || application.application_status === 'under_review' || application.application_status === undefined) {
+    if (application.application_status === 'pending' || application.application_status === 'under_review') {
       // Automatically approve the application
       const now = new Date().toISOString();
       const updateData = {
@@ -186,7 +183,7 @@ export async function checkTutorDashboardAccess(userId: string): Promise<AccessC
       };
     }
 
-    if (application.application_status === 'pending' || application.application_status === 'under_review' || application.application_status === undefined) {
+    if (application.application_status === 'pending' || application.application_status === 'under_review') {
       // TEMPORARILY COMMENTED OUT: Auto-accept pending or under_review applications for immediate access
       // const result = await acceptTutorApplication(userId);
       // if (result.success) {
@@ -200,8 +197,8 @@ export async function checkTutorDashboardAccess(userId: string): Promise<AccessC
       // Return pending status without auto-approval
       return {
         hasAccess: false,
-        applicationStatus: application.application_status || 'pending',
-        message: `Tutor application status: ${application.application_status || 'pending'}`
+        applicationStatus: application.application_status,
+        message: `Tutor application status: ${application.application_status}`
       };
     }
 

@@ -73,11 +73,18 @@ class AuthService {
       // Add role-specific fields
       ...(data.role === 'student' && { package: data.package }),
       ...(data.role === 'tutor' && {
-        subjects: data.subjects || [],
+        subjects: Array.isArray(data.subjects) ? data.subjects : (data.subjects ? [data.subjects] : []),
         experience: data.experience,
         qualification: data.qualification,
       }),
     };
+
+    console.log('AuthService.register - Sending data:', {
+      ...registrationData,
+      password: '[REDACTED]',
+      confirmPassword: '[REDACTED]'
+    });
+    console.log('AuthService.register - subjects specifically:', registrationData.subjects, 'type:', typeof registrationData.subjects, 'isArray:', Array.isArray(registrationData.subjects));
 
     const result = await apiClient.post<AuthTokens>('/api/auth/register', registrationData, {
       skipAuth: true,

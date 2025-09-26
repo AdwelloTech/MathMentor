@@ -4,7 +4,6 @@ import {
   BookOpenIcon,
   EyeIcon,
   ClockIcon,
-  AcademicCapIcon,
   PencilIcon,
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +18,6 @@ const NoteCard: React.FC<NoteCardComponentProps> = ({
   id,
   title,
   description,
-  subjectName,
   subjectDisplayName,
   subjectColor,
   gradeLevelDisplay,

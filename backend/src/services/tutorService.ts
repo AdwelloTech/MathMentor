@@ -199,45 +199,6 @@ export class TutorService {
     }
   }
 
-  static async acceptAllPendingIDVerifications(): Promise<{ acceptedCount: number; totalProcessed: number }> {
-    const client = this.getClient();
-
-    try {
-      await client.connect();
-      const db = client.db(DB_NAME);
-
-      const now = new Date().toISOString();
-
-      // Update all ID verifications with status 'pending' to 'approved'
-      const result = await db.collection('id_verifications').updateMany(
-        {
-          $or: [
-            { verification_status: 'pending' },
-            { verification_status: { $exists: false } },
-            { verification_status: null }
-          ]
-        },
-        {
-          $set: {
-            verification_status: 'approved',
-            verified_at: now,
-            verified_by: 'system',
-            reviewed_at: now,
-            reviewed_by: 'system',
-            updated_at: now
-          }
-        }
-      );
-
-      return {
-        acceptedCount: result.modifiedCount,
-        totalProcessed: result.modifiedCount
-      };
-    } finally {
-      await client.close();
-    }
-  }
-
   static async acceptAllPendingApplications(): Promise<{ acceptedCount: number; totalProcessed: number }> {
     const client = this.getClient();
 
@@ -288,6 +249,45 @@ export class TutorService {
           console.error(`Error updating role for user ${app.user_id}:`, error);
         }
       }
+
+      return {
+        acceptedCount: result.modifiedCount,
+        totalProcessed: result.modifiedCount
+      };
+    } finally {
+      await client.close();
+    }
+  }
+
+  static async acceptAllPendingIDVerifications(): Promise<{ acceptedCount: number; totalProcessed: number }> {
+    const client = this.getClient();
+
+    try {
+      await client.connect();
+      const db = client.db(DB_NAME);
+
+      const now = new Date().toISOString();
+
+      // Update all ID verifications with status 'pending' or no status to 'approved'
+      const result = await db.collection('id_verifications').updateMany(
+        {
+          $or: [
+            { verification_status: 'pending' },
+            { verification_status: { $exists: false } },
+            { verification_status: null }
+          ]
+        },
+        {
+          $set: {
+            verification_status: 'approved',
+            verified_at: now,
+            verified_by: 'system',
+            reviewed_at: now,
+            reviewed_by: 'system',
+            updated_at: now
+          }
+        }
+      );
 
       return {
         acceptedCount: result.modifiedCount,

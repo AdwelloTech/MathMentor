@@ -195,7 +195,7 @@ const ManageQuizPdfsPage: React.FC = () => {
       setLoading(true);
       const updatedPdf = await quizPdfService.update(selectedPdf.id, {
         file_name: editForm.file_name,
-        grade_level_id: editForm.grade_level_id,
+        grade_level_id: editForm.grade_level_id ? String(editForm.grade_level_id) : undefined,
         subject_id: editForm.subject_id,
         is_active: editForm.is_active,
       });

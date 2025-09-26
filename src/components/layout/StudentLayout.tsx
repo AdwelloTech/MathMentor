@@ -1,22 +1,13 @@
 import React, { useEffect, useRef } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { Outlet, useLocation } from "react-router-dom";
 import {
   StudentBackgroundProvider,
   useStudentBackground,
 } from "@/contexts/StudentBackgroundContext";
-import {
-  BookOpenIcon,
-  CalendarDaysIcon,
-  DocumentTextIcon,
-  ChatBubbleLeftRightIcon,
-  ArrowLeftIcon,
-} from "@heroicons/react/24/outline";
 import StudentDashboard from "@/pages/dashboards/StudentDashboard";
 
 // Inner component that uses the context
 const StudentLayoutContent: React.FC = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const { backgroundClass } = useStudentBackground();
   const appliedClassRef = useRef<string | null>(null);

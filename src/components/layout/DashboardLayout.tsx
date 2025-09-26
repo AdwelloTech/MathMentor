@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Bars3Icon,
@@ -22,26 +22,20 @@ import { idVerificationService } from "@/lib/idVerificationService";
 import apiClient from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorApplication, setTutorApplication] =
     useState<TutorApplication | null>(null);
   const [idVerification, setIdVerification] = useState<any>(null);
-  const [loadingApplication, setLoadingApplication] = useState(false);
   const { user, profile, signOut } = useAuth();
   const { isAdminLoggedIn, logoutAdmin } = useAdmin();
   const navigate = useNavigate();
-  const location = useLocation();
   const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
   const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
-
-  // Hide the global header on all student pages
-  const isStudentDashboardRoute = location.pathname.startsWith("/student");
 
   // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
@@ -206,7 +200,6 @@ const DashboardLayout: React.FC = () => {
   const checkTutorApplication = async () => {
     if (!user) return;
 
-    setLoadingApplication(true);
     try {
       // Use apiClient instead of direct fetch for consistent URL handling
       const result = await apiClient.get<TutorApplication[]>('/api/tutors/applications');
@@ -220,8 +213,6 @@ const DashboardLayout: React.FC = () => {
       }
     } catch (error) {
       console.error("Error checking tutor application:", error);
-    } finally {
-      setLoadingApplication(false);
     }
   };
 
@@ -236,10 +227,6 @@ const DashboardLayout: React.FC = () => {
       setIdVerification(null);
     }
   };
-
-  const isTutorApproved = tutorApplication?.application_status === "approved";
-  const isTutorPending = tutorApplication?.application_status === "pending";
-  const isTutorRejected = tutorApplication?.application_status === "rejected";
 
   const handleSignOut = async () => {
     if (isAdminLoggedIn) {
@@ -345,9 +332,6 @@ const DashboardLayout: React.FC = () => {
         setSidebarOpen={setSidebarOpen}
         tutorApplication={tutorApplication}
         idVerification={idVerification}
-        loadingApplication={loadingApplication}
-        checkTutorApplication={checkTutorApplication}
-        checkIDVerification={checkIDVerification}
         onSignOut={handleSignOut}
       />
 
@@ -422,7 +406,7 @@ const DashboardLayout: React.FC = () => {
               <CardContent className="pt-0">
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {instantRequests
-                    .filter((req, index) => !dismissedIds.has(req.id))
+                    .filter((req, _index) => !dismissedIds.has(req.id))
                     .map((req, index) => (
                       <motion.div
                         key={req.id}

@@ -1,8 +1,5 @@
-import React from "react";
 import { motion } from "framer-motion";
-import { UserIcon } from "@heroicons/react/24/outline";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 
 const ProfileHeader = () => {
   return (

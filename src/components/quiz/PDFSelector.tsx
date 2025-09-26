@@ -14,10 +14,8 @@ import {
 } from "@/components/ui/select";
 import { quizPdfService } from "@/lib/quizPdfService";
 import { subjectsService } from "@/lib/subjects";
-import { fetchGradeLevels } from "@/lib/gradeLevels";
 import type { QuizPdf } from "@/types/quizPdf";
 import type { Subject } from "@/types/subject";
-import type { GradeLevel } from "@/types/database";
 import { FileText, BookOpen, GraduationCap, CheckCircle } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import toast from "react-hot-toast";
@@ -31,7 +29,6 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
   onPDFSelect,
   selectedPDF,
 }) => {
-  const [gradeLevels, setGradeLevels] = useState<GradeLevel[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [availablePDFs, setAvailablePDFs] = useState<QuizPdf[]>([]);
   const [loading, setLoading] = useState(false);
@@ -52,15 +49,11 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
 
   const loadGradeLevelsAndSubjects = async () => {
     try {
-      const [gradeLevelsData, subjectsData] = await Promise.all([
-        fetchGradeLevels(),
-        subjectsService.listActive(),
-      ]);
-      setGradeLevels(gradeLevelsData);
+      const subjectsData = await subjectsService.listActive();
       setSubjects(subjectsData);
     } catch (error) {
-      console.error("Error loading grade levels and subjects:", error);
-      toast.error("Failed to load grade levels and subjects");
+      console.error("Error loading subjects:", error);
+      toast.error("Failed to load subjects");
     }
   };
 

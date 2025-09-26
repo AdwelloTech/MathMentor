@@ -128,7 +128,7 @@ const StudentProfile: React.FC = () => {
 
         // Get the active profile image from backend API
         try {
-          const activeImage = await getActiveProfileImage(user.id);
+          const activeImage = await getActiveProfileImage();
           if (activeImage) {
             setCurrentProfileImageUrl(activeImage.url);
           } else if (fullProfile.avatar_url) {

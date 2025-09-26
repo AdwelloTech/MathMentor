@@ -10,9 +10,8 @@ import {
 } from '@stripe/react-stripe-js';
 import { CreditCardIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
-import stripePromise, { PACKAGE_PRICES, PACKAGE_PRICING_DISPLAY, createPaymentIntent } from '@/lib/stripe';
+import stripePromise, { PACKAGE_PRICING_DISPLAY } from '@/lib/stripe';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import type { StudentPackage } from '@/types/auth';
 
 interface PaymentFormProps {
   packageType: 'silver' | 'gold';

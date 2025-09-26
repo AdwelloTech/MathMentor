@@ -14,7 +14,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { classSchedulingService } from "@/lib/classSchedulingService";
 import { subjectsService } from "@/lib/subjects";
-import { useGradeLevels } from "@/lib/gradeLevels";
 import { GradeSelect } from "@/components/ui/GradeSelect";
 import type {
   ClassType,
@@ -45,8 +44,6 @@ const ClassSchedulingPage: React.FC = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [subjects, setSubjects] = useState<Subject[]>([]);
 
-  // Grade levels hook
-  const { gradeLevels } = useGradeLevels();
 
   // Check if tutor is active
   const isActiveTutor = profile?.is_active !== false; // Default to true if not set

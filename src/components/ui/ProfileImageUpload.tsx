@@ -2,23 +2,19 @@ import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PhotoIcon,
-  TrashIcon,
   CheckIcon,
-  XMarkIcon,
-  ArrowUpTrayIcon
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { UserCircleIcon } from '@heroicons/react/24/solid';
 import LoadingSpinner from './LoadingSpinner';
 import {
   uploadProfileImage,
   activateProfileImage,
-  deleteProfileImage,
   validateImageFile,
   createImagePreview,
-  revokeImagePreview,
-  getProfileImageUrl
+  revokeImagePreview
 } from '@/lib/profileImages';
-import type { ProfileImage, ProfileImageUploadResponse } from '@/types/auth';
+import type { ProfileImageUploadResponse } from '@/types/auth';
 
 interface ProfileImageUploadProps {
   userId: string;
@@ -106,7 +102,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
 
       // Update parent component
       if (onImageChange) {
-        onImageChange(uploadResult.public_url);
+        onImageChange(uploadResult.url);
       }
 
       setSuccess('Profile image updated successfully!');

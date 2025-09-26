@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 import {
   AdminAuthService,
   AdminLoginResponse,
-  AdminSession as AdminSessionType,
 } from "@/lib/adminAuth";
 
 interface AdminSession {

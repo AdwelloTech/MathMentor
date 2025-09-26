@@ -220,11 +220,11 @@ export const sessionRatingService = {
 
     // Calculate statistics manually since RPC might not be available
     const totalReviews = data.length;
-    const totalRating = data.reduce((sum, item) => sum + item.rating, 0);
+    const totalRating = data.reduce((sum: number, item: any) => sum + item.rating, 0);
     const averageRating = totalRating / totalReviews;
 
     const ratingDistribution = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
-    data.forEach((item) => {
+    data.forEach((item: any) => {
       ratingDistribution[item.rating as keyof typeof ratingDistribution]++;
     });
 
@@ -258,11 +258,11 @@ export const sessionRatingService = {
       console.debug("🔍 hasStudentRated result:", {
         data,
         error,
-        errorCode: error?.code,
+        errorCode: (error as any)?.code,
       });
     }
 
-    if (error && error.code !== "PGRST116") {
+    if (error && (error as any).code !== "PGRST116") {
       console.error("Error checking if student rated:", error.message);
       throw new Error(`Failed to check rating: ${error.message}`);
     }

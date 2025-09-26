@@ -94,25 +94,6 @@ router.get('/applications', authenticate, async (req, res) => {
   }
 });
 
-// Accept all pending ID verifications (development/testing endpoint - no auth required)
-router.post('/id-verification/accept-all', async (req, res) => {
-  try {
-    const result = await TutorService.acceptAllPendingIDVerifications();
-
-    res.json({
-      success: true,
-      message: `Accepted ${result.acceptedCount} ID verifications`,
-      data: result
-    });
-  } catch (error: any) {
-    console.error('Error accepting all ID verifications:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to accept ID verifications'
-    });
-  }
-});
-
 // Accept all pending tutor applications (development/testing endpoint - no auth required)
 router.post('/applications/accept-all', async (req, res) => {
   try {
@@ -128,6 +109,25 @@ router.post('/applications/accept-all', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to accept applications'
+    });
+  }
+});
+
+// Accept all pending ID verifications (development/testing endpoint - no auth required)
+router.post('/id-verification/accept-all', async (req, res) => {
+  try {
+    const result = await TutorService.acceptAllPendingIDVerifications();
+
+    res.json({
+      success: true,
+      message: `Accepted ${result.acceptedCount} ID verifications`,
+      data: result
+    });
+  } catch (error: any) {
+    console.error('Error accepting all ID verifications:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to accept ID verifications'
     });
   }
 });

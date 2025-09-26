@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Quiz } from "@/types/quiz";
+import type { Quiz, Question } from "@/types/quiz";
 
 export interface AdminQuiz extends Quiz {
   tutor: {
@@ -42,7 +42,7 @@ export class AdminQuizService {
       }
 
       // Get tutor information separately to avoid foreign key issues
-      const tutorIds = [...new Set(data.map((quiz) => quiz.tutor_id))].filter(
+      const tutorIds = [...new Set(data.map((quiz: any) => quiz.tutor_id))].filter(
         Boolean
       );
 
@@ -56,7 +56,7 @@ export class AdminQuizService {
         if (tutorError) {
           console.error("Error fetching tutors:", tutorError);
         } else {
-          tutors?.forEach((tutor) => {
+          tutors?.forEach((tutor: any) => {
             tutorMap.set(tutor.id, tutor);
           });
         }
@@ -64,7 +64,7 @@ export class AdminQuizService {
 
       // Get quiz attempt statistics for each quiz
       const quizzesWithStats = await Promise.all(
-        data.map(async (quiz) => {
+        data.map(async (quiz: any) => {
           // Get attempt statistics
           const { data: attempts, error: attemptsError } = await supabase
             .from("quiz_attempts")
@@ -80,7 +80,7 @@ export class AdminQuizService {
           const avgScore =
             totalAttempts > 0
               ? attempts.reduce(
-                  (sum, attempt) => sum + (attempt.score || 0),
+                  (sum, attempt: any) => sum + (attempt.score || 0),
                   0
                 ) / totalAttempts
               : 0;
@@ -93,7 +93,7 @@ export class AdminQuizService {
           };
 
           return {
-            ...quiz,
+            ...(quiz as any),
             tutor,
             total_attempts: totalAttempts,
             avg_score: avgScore,
@@ -123,12 +123,12 @@ export class AdminQuizService {
       if (quizzesError) throw quizzesError;
 
       const total = quizzes?.length || 0;
-      const active = quizzes?.filter((q) => q.is_active).length || 0;
+      const active = quizzes?.filter((q: any) => q.is_active).length || 0;
       const inactive = total - active;
 
       // Count by subject
       const bySubject: Record<string, number> = {};
-      quizzes?.forEach((quiz) => {
+      quizzes?.forEach((quiz: any) => {
         bySubject[quiz.subject] = (bySubject[quiz.subject] || 0) + 1;
       });
 
@@ -173,7 +173,7 @@ export class AdminQuizService {
 
       // 2. Delete student answers for these attempts
       if (attemptIds && attemptIds.length > 0) {
-        const attemptIdList = attemptIds.map((a) => a.id);
+        const attemptIdList = attemptIds.map((a: any) => a.id);
         const { error: studentAnswersError } = await supabase
           .from("student_answers")
           .delete()
@@ -325,11 +325,11 @@ export class AdminQuizService {
       }
 
       // Also check if there are ANY questions in the quiz_questions table
-      const totalQuestionsResult = await supabase
+      const { count: totalQuestionsCount } = await supabase
         .from("quiz_questions")
         .select("*", { count: "exact", head: true });
 
-      console.log("Total questions in database:", totalQuestionsResult.count);
+      console.log("Total questions in database:", totalQuestionsCount || 0);
 
       // Get answers for each question if questions exist
       let questionsWithAnswers: Question[] = [];

@@ -12,8 +12,6 @@ import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 import {
   CheckCircle,
   Crown,
-  Star,
-  CreditCard,
   ArrowUpCircle,
   Sparkles,
   Users,

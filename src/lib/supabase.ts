@@ -20,7 +20,8 @@ const createQueryBuilder = () => {
     }),
     delete: (..._args: any[]) => qb,
     data: [],
-    error: new Error('Supabase removed - use backend API endpoints instead')
+    error: new Error('Supabase removed - use backend API endpoints instead'),
+    count: 0
   };
   return qb;
 };

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { TutorialOverlay, TutorialPrompt } from "@/components/tutorial";
 import apiClient from "@/lib/apiClient";
 import {
   DocumentArrowUpIcon,
@@ -28,9 +27,10 @@ import {
   instantSessionService,
   type InstantRequest,
 } from "@/lib/instantSessionService";
-import DashboardService, { type TutorDashboardStats } from "@/lib/dashboardService";
 import { idVerificationService } from "@/lib/idVerificationService";
+import DashboardService from "@/lib/dashboardService";
 import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
+import type { TutorDashboardStats } from "@/lib/dashboardService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateDocumentFile } from "@/constants/form";
@@ -265,7 +265,10 @@ const TutorDashboard: React.FC = () => {
     if (!profile) return;
 
     try {
-      const stats = await DashboardService.getTutorStats(profile.id);
+      const [stats] = await Promise.all([
+        DashboardService.getTutorStats(profile.id), // Use profile.id instead of user.id
+      ]);
+
       setDashboardStats(stats);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
@@ -805,7 +808,7 @@ const TutorDashboard: React.FC = () => {
             >
               {[
                 {
-                  name: "Total Sessions",
+                  name: "Total Classes",
                   value: dashboardStats?.total_sessions || 0,
                   icon: VideoCameraIcon,
                   color: "from-green-600 to-green-700",
@@ -819,25 +822,25 @@ const TutorDashboard: React.FC = () => {
                   description: "Unique students",
                 },
                 {
-                  name: "Upcoming Sessions",
+                  name: "This Month",
                   value: dashboardStats?.upcoming_sessions || 0,
                   icon: CalendarDaysIcon,
                   color: "from-yellow-500 to-yellow-600",
-                  description: "Sessions this month",
+                  description: "Upcoming sessions",
                 },
                 {
-                  name: "Monthly Earnings",
+                  name: "Earnings",
                   value: `$${dashboardStats?.monthly_earnings || 0}`,
                   icon: CurrencyDollarIcon,
                   color: "from-green-700 to-green-800",
-                  description: "This month's earnings",
+                  description: "Monthly earnings",
                 },
-              ].map((stat, index) => (
+              ].map((stat) => (
                 <motion.div
                   key={stat.name}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: 0.1 }}
                 >
                   <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
                     <CardHeader className="pb-2">
@@ -923,7 +926,7 @@ const TutorDashboard: React.FC = () => {
                         action: () => navigate("/tutor/ratings"),
                         disabled: !isActiveTutor,
                       },
-                    ].map((action, _index) => (
+                    ].map((action) => (
                       <motion.div
                         key={action.title}
                         whileHover={{ scale: 1.02 }}
@@ -962,10 +965,6 @@ const TutorDashboard: React.FC = () => {
             </motion.div>
           </div>
         </motion.div>
-        
-                    {/* Tutorial Components */}
-            <TutorialPrompt />
-            <TutorialOverlay />
       </div>
     );
   }

@@ -230,7 +230,6 @@ const ManageTutorApplicationsPage: React.FC = () => {
       if (actionType === "approve") {
         success = await AdminTutorApplicationService.approveApplication(
           selectedApplication.id,
-          adminSession.user.id,
           adminNotes || undefined
         );
 
@@ -248,7 +247,6 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
         success = await AdminTutorApplicationService.rejectApplication(
           selectedApplication.id,
-          adminSession.user.id,
           rejectionReason,
           adminNotes || undefined
         );

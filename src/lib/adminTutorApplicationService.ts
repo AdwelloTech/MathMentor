@@ -1,5 +1,4 @@
 import { supabase } from "./supabase";
-import { supabase as adminSupabase } from "./supabase";
 
 export interface TutorApplication {
   id: string;
@@ -48,7 +47,7 @@ export class AdminTutorApplicationService {
       console.log("Fetching all tutor applications...");
 
       // First, let's test if we can access the table at all
-      const { data: testData, error: testError } = await supabase
+      const { error: testError } = await supabase
         .from("tutor_applications")
         .select("id")
         .limit(1);
@@ -172,20 +171,20 @@ export class AdminTutorApplicationService {
 
       const total = applications?.length || 0;
       const pending =
-        applications?.filter((app) => app.application_status === "pending")
+        applications?.filter((app: any) => app.application_status === "pending")
           .length || 0;
       const approved =
-        applications?.filter((app) => app.application_status === "approved")
+        applications?.filter((app: any) => app.application_status === "approved")
           .length || 0;
       const rejected =
-        applications?.filter((app) => app.application_status === "rejected")
+        applications?.filter((app: any) => app.application_status === "rejected")
           .length || 0;
 
       // Recent applications (last 7 days)
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
       const recentApplications =
-        applications?.filter((app) => new Date(app.created_at) >= oneWeekAgo)
+        applications?.filter((app: any) => new Date(app.created_at) >= oneWeekAgo)
           .length || 0;
 
       return {
@@ -210,7 +209,6 @@ export class AdminTutorApplicationService {
   // Approve an application
   static async approveApplication(
     applicationId: string,
-    adminId: string,
     adminNotes?: string
   ): Promise<boolean> {
     try {
@@ -220,11 +218,10 @@ export class AdminTutorApplicationService {
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("tutor_applications")
         .update(updateData)
-        .eq("id", applicationId)
-        .select();
+        .eq("id", applicationId);
 
       if (error) {
         console.error("Error approving application:", error);
@@ -242,7 +239,6 @@ export class AdminTutorApplicationService {
   // Reject an application
   static async rejectApplication(
     applicationId: string,
-    adminId: string,
     rejectionReason: string,
     adminNotes?: string
   ): Promise<boolean> {
@@ -254,11 +250,10 @@ export class AdminTutorApplicationService {
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("tutor_applications")
         .update(updateData)
-        .eq("id", applicationId)
-        .select();
+        .eq("id", applicationId);
 
       if (error) {
         console.error("Error rejecting application:", error);

@@ -32,7 +32,6 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
 }) => {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [jitsiApi, setJitsiApi] = useState<any>(null);
   const [isJitsiLoaded, setIsJitsiLoaded] = useState(false);
   const [showEmbedded, setShowEmbedded] = useState(false);
   const jitsiContainerRef = useRef<HTMLDivElement>(null);
@@ -169,7 +168,6 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
       api.addEventListener("ready", () => {
         console.log("Jitsi Meet API is ready");
         setLoading(false);
-        setJitsiApi(api);
       });
 
       api.addEventListener("participantLeft", (participant: any) => {
@@ -179,14 +177,12 @@ const JitsiMeetingRoom: React.FC<JitsiMeetingRoomProps> = ({
       api.addEventListener("videoConferenceLeft", () => {
         console.log("User left the conference");
         api.dispose();
-        setJitsiApi(null);
         setShowEmbedded(false);
       });
 
       api.addEventListener("readyToClose", () => {
         console.log("Ready to close");
         api.dispose();
-        setJitsiApi(null);
         setShowEmbedded(false);
       });
     } catch (error) {

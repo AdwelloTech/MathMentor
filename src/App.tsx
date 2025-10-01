@@ -2,7 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import { useAdmin } from "./contexts/AdminContext";
-import LoadingSpinner from "./components/ui/LoadingSpinner";
+import GameLoadingAnimation from "./components/ui/GameLoadingAnimation";
 import LoginPage from "./pages/auth/LoginPage";
 import AdminLoginPage from "./pages/auth/AdminLoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
@@ -76,7 +76,7 @@ function App() {
   if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }
@@ -345,7 +345,7 @@ function DashboardRoute() {
   if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }
@@ -363,7 +363,7 @@ function DashboardRoute() {
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }
@@ -422,7 +422,7 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }
@@ -439,7 +439,7 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }

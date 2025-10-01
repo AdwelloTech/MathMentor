@@ -47,7 +47,6 @@ const gradeLevelSchema = new Schema<IGradeLevel>(
 );
 
 // Indexes
-gradeLevelSchema.index({ code: 1 }, { unique: true });
 gradeLevelSchema.index({ category: 1, sortOrder: 1 });
 gradeLevelSchema.index({ isActive: 1 });
 

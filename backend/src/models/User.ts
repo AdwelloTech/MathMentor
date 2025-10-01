@@ -176,12 +176,8 @@ const userSchema = new Schema<IUser>(
 );
 
 // Indexes for performance
-userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
-userSchema.index({ studentId: 1 }, { sparse: true });
-userSchema.index({ employeeId: 1 }, { sparse: true });
-userSchema.index({ userId: 1 }, { sparse: true });
 
 // Virtual for age calculation
 userSchema.virtual('age').get(function(this: IUser) {

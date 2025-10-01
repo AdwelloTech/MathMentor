@@ -9,11 +9,12 @@ http://72.60.20.140:5001/
 
 This endpoint automatically approves all tutor applications that are currently pending.
 
-```bash
+**Command:**
+```
 curl -X POST http://72.60.20.140:5001/api/tutors/applications/accept-all
 ```
 
-**Response:**
+**Expected Response:**
 ```json
 {
   "success": true,
@@ -29,11 +30,12 @@ curl -X POST http://72.60.20.140:5001/api/tutors/applications/accept-all
 
 This endpoint automatically approves all ID verification submissions that are currently pending.
 
-```bash
+**Command:**
+```
 curl -X POST http://72.60.20.140:5001/api/tutors/id-verification/accept-all
 ```
 
-**Response:**
+**Expected Response:**
 ```json
 {
   "success": true,

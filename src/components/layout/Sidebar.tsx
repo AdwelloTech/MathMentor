@@ -622,7 +622,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </motion.button>
                 </div>
 
-                <div className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 px-6 pb-4 shadow-2xl relative overflow-hidden">
+              <div className="flex grow flex-col glass-panel-dark px-6 pb-4 relative overflow-hidden">
                   {/* Subtle background pattern */}
                   <div className="absolute inset-0 opacity-20">
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-200/10 via-transparent to-yellow-200/10" />
@@ -644,7 +644,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Collapsible sidebar for desktop */}
       <div id="sidebar-navigation" className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col">
         <motion.div
-          className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 shadow-xl relative overflow-hidden"
+          className="flex grow flex-col glass-panel-dark shadow-xl relative overflow-hidden"
           animate={{
             width: isHovered ? 288 : 80, // 288px = 72 * 4 (lg:w-72), 80px for collapsed
           }}

@@ -1,3 +1,5 @@
+import apiClient from "@/lib/apiClient";
+
 export interface GenerateAIRequest {
   subject: string;
   gradeLevel?: string;
@@ -22,6 +24,11 @@ export interface GeneratedAIQuestion {
   is_ai_generated: boolean;
   ai_status: "pending" | "approved" | "discarded";
   ai_metadata?: Record<string, any>;
+}
+
+export interface AIFlashcard {
+  front_text: string;
+  back_text: string;
 }
 
 // Flexible signature: supports either an object or positional params
@@ -50,19 +57,7 @@ export async function generateAIQuestions(
           }
         : argsOrSubject;
 
-    const response = await fetch("/api/ai/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to generate questions");
-    }
-
-    const data = await response.json();
+    const data = await apiClient.post<{ questions: GeneratedAIQuestion[] }>("/api/ai/generate", payload);
     return data.questions;
   } catch (error) {
     console.error("Error generating AI questions:", error);
@@ -111,19 +106,7 @@ export async function generateAIFlashcards(
       pdfsData: payload.pdfs,
     });
 
-    const response = await fetch("/api/ai/flashcards", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to generate flashcards");
-    }
-
-    const data = await response.json();
+    const data = await apiClient.post<{ cards: AIFlashcard[] }>("/api/ai/flashcards", payload);
     return data.cards;
   } catch (error) {
     console.error("Error generating AI flashcards:", error);
@@ -168,16 +151,39 @@ export async function extractTextFromPdf(files: File | File[]): Promise<{
     console.log("📄 Form key:", key, "value type:", typeof value);
   }
 
-  const res = await fetch("/api/ai/pdf/extract-text", {
+  // Custom implementation for file uploads since ApiClient doesn't handle FormData
+  const headers: Record<string, string> = {};
+
+  // Add authorization header if token exists
+  if (apiClient.isAuthenticated()) {
+    // We need to access the private accessToken, but since we can't, we'll need to get it from localStorage
+    try {
+      const tokens = localStorage.getItem('mathmentor_tokens');
+      if (tokens) {
+        const parsed = JSON.parse(tokens);
+        headers['Authorization'] = `Bearer ${parsed.accessToken}`;
+      }
+    } catch (error) {
+      console.warn('Failed to get auth token for PDF upload:', error);
+    }
+  }
+
+  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const res = await fetch(`${baseURL}/api/ai/pdf/extract-text`, {
     method: "POST",
+    headers,
     body: form,
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({} as any));
     console.error("📄 Text extraction failed:", err);
     throw new Error(err?.error || "Failed to extract text from PDFs");
   }
-  return res.json();
+
+  const responseData = await res.json();
+  // The backend returns { success: true, data: { pdfs: [...], totalFiles: number } }
+  return responseData.data;
 }
 
 // Upload PDFs and get base64 for AI processing (legacy function)
@@ -217,14 +223,37 @@ export async function uploadPdfForAI(files: File | File[]): Promise<{
     console.log("📄 Form key:", key, "value type:", typeof value);
   }
 
-  const res = await fetch("/api/ai/pdf/upload", {
+  // Custom implementation for file uploads since ApiClient doesn't handle FormData
+  const headers: Record<string, string> = {};
+
+  // Add authorization header if token exists
+  if (apiClient.isAuthenticated()) {
+    // We need to access the private accessToken, but since we can't, we'll need to get it from localStorage
+    try {
+      const tokens = localStorage.getItem('mathmentor_tokens');
+      if (tokens) {
+        const parsed = JSON.parse(tokens);
+        headers['Authorization'] = `Bearer ${parsed.accessToken}`;
+      }
+    } catch (error) {
+      console.warn('Failed to get auth token for PDF upload:', error);
+    }
+  }
+
+  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const res = await fetch(`${baseURL}/api/ai/pdf/upload`, {
     method: "POST",
+    headers,
     body: form,
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({} as any));
     console.error("📄 Upload failed:", err);
     throw new Error(err?.error || "Failed to upload PDFs");
   }
-  return res.json();
+
+  const responseData = await res.json();
+  // The backend returns { success: true, data: { pdfs: [...], totalFiles: number } }
+  return responseData.data;
 }

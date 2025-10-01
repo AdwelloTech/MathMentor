@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
@@ -6,13 +6,9 @@ import React, {
   ReactNode,
   useRef,
 } from "react";
-import {
-  User as SupabaseUser,
-  Session,
-  AuthError,
-} from "@supabase/supabase-js";
 import toast from "react-hot-toast";
-import { auth, db } from "@/lib/supabase";
+import AuthService from "@/lib/authService";
+import apiClient, { ApiClientError } from "@/lib/apiClient";
 import {
   getUserPermissions,
   canAccessFeature,
@@ -26,6 +22,7 @@ import type {
   StudentPackage,
   AuthContextType,
   FeaturePermissions,
+  RegisterFormData,
 } from "@/types/auth";
 
 // Create the context
@@ -41,6 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Internal permissions state - used for permission calculations but not exposed in context
   const [permissions, setPermissions] = useState<FeaturePermissions | null>(
     null
   );
@@ -67,67 +65,56 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         console.log("Initializing auth...");
 
-        // Get initial session
-        const session = await auth.getSession();
+        // Check if user is authenticated via API client
+        if (apiClient.isAuthenticated()) {
+          console.log("Found existing authentication tokens");
 
-        if (!session) {
-          console.log("No session data available");
-          safeSetLoading(false);
-          return;
-        }
+          try {
+            // Try to get current user profile
+            const backendUser = await AuthService.getCurrentUser();
+            console.log("Retrieved user profile for:", backendUser.email);
 
-        if (session?.user) {
-          console.log("Found existing session for:", session.user.email);
+            // For now, we'll need to get the full profile from a separate endpoint
+            // This might need adjustment based on your backend implementation
+            const fullProfile = await AuthService.getCurrentUser(); // Adjust this as needed
 
-          // Only handle auth state change if user is confirmed
-          if (session.user.email_confirmed_at) {
-            // Keep loading true until auth state is fully set
-            console.log("Manually handling existing session");
-            await handleAuthStateChange(session.user, false);
-            // Don't set loading to false here - handleAuthStateChange will do it
-          } else {
-            console.log("User not confirmed, clearing session");
-            await auth.signOut();
-            safeSetLoading(false);
+            // Transform and set user data
+            const userData = AuthService.transformUserData(backendUser, fullProfile);
+            await handleAuthStateChange(userData, false);
+          } catch (error) {
+            console.error("Failed to get user profile:", error);
+            // Clear invalid tokens
+            apiClient.clearTokens();
+            clearAuthState();
           }
         } else {
-          console.log("No existing session found");
-          safeSetLoading(false);
+          console.log("No authentication tokens found");
+          clearAuthState();
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
-        safeSetLoading(false);
+        clearAuthState();
       } finally {
         isInitialized.current = true;
-        // Don't set loading to false here - it will be set by handleAuthStateChange
       }
     };
 
     initializeAuth();
 
-    // Listen for auth changes - only handle logout
-    const {
-      data: { subscription },
-    } = auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change:", event, session?.user?.email);
-
-      // Only handle logout - ignore all other events to prevent loading spinners
-      if (event === "SIGNED_OUT") {
-        console.log("Handling sign out");
+    // Listen for storage changes (token updates from other tabs)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'mathmentor_tokens' && !event.newValue) {
+        // Tokens were cleared in another tab
+        console.log("Tokens cleared in another tab, signing out");
         clearAuthState();
-        return;
       }
+    };
 
-      // Ignore ALL other events to prevent tab switching issues
-      console.log("Ignoring auth event:", event);
-    });
-
-    // Tab visibility and window focus event handlers removed
-    // These were causing unnecessary auth refreshes and loading states when switching tabs
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
       mounted.current = false;
-      subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -148,14 +135,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Handle auth state changes with better error handling
   const handleAuthStateChange = async (
-    supabaseUser: SupabaseUser,
+    userData: User,
     showWelcome: boolean = false
   ) => {
     const now = Date.now();
 
     // Aggressive duplicate prevention: skip if same user processed within last 2 seconds
     if (
-      lastProcessedUserId.current === supabaseUser.id &&
+      lastProcessedUserId.current === userData.id &&
       now - lastProcessedAt.current < 2000
     ) {
       console.log("Duplicate auth event within 2 seconds, skipping...");
@@ -169,31 +156,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // Update tracking vars
-    lastProcessedUserId.current = supabaseUser.id;
+    lastProcessedUserId.current = userData.id;
     lastProcessedAt.current = now;
     isProcessingAuth.current = true;
 
     try {
-      console.log("Handling auth state change for user:", supabaseUser.email);
-
-      // Skip if user is not confirmed
-      if (!supabaseUser.email_confirmed_at) {
-        console.log("User email not confirmed yet");
-        clearAuthState();
-        return;
-      }
-
-      // Get user profile with improved retry logic
-      const userProfile = await fetchUserProfileWithRetry(supabaseUser.id);
-
-      if (!userProfile) {
-        console.error("Profile not found for confirmed user:", supabaseUser.id);
-        toast.error(
-          "Account setup incomplete. Please contact support or try registering again."
-        );
-        clearAuthState();
-        return;
-      }
+      console.log("Handling auth state change for user:", userData.email);
 
       // Only proceed if component is still mounted
       if (!mounted.current) {
@@ -201,46 +169,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      // Create user object
-      const userData: User = {
-        id: supabaseUser.id,
-        email: supabaseUser.email!,
-        created_at: supabaseUser.created_at,
-        updated_at: supabaseUser.updated_at || supabaseUser.created_at,
-        email_confirmed_at: supabaseUser.email_confirmed_at,
-        last_sign_in_at: supabaseUser.last_sign_in_at,
-        role: userProfile.role as UserRole,
-        profile: userProfile,
-      };
-
       // Get permissions
       const userPermissions = getUserPermissions(
-        userProfile.role as UserRole,
-        userProfile.package as StudentPackage
+        userData.profile.role as UserRole,
+        userData.profile.package as StudentPackage
       );
 
       console.log(
         "Setting user state:",
         userData.email,
-        userProfile.role,
-        userProfile.package
+        userData.profile.role,
+        userData.profile.package
       );
 
       // Set all auth state
       setUser(userData);
-      setProfile(userProfile);
+      setProfile(userData.profile);
       setPermissions(userPermissions);
 
-      // Update last login (non-blocking)
-      updateLastLogin(supabaseUser.id);
-
       // Show welcome message for returning users, not new registrations
-      if (showWelcome && supabaseUser.last_sign_in_at) {
-        toast.success(`Welcome back, ${userProfile.full_name}!`);
-      } else if (!supabaseUser.last_sign_in_at) {
+      if (showWelcome && userData.last_sign_in_at) {
+        toast.success(`Welcome back, ${userData.profile.full_name}!`);
+      } else if (!userData.last_sign_in_at) {
         console.log(
-          "New user registration completed for:",
-          userProfile.full_name
+          "New user login completed for:",
+          userData.profile.full_name
         );
       }
     } catch (error: any) {
@@ -255,86 +208,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Fetch user profile with retry logic
-  const fetchUserProfileWithRetry = async (
-    userId: string,
-    maxRetries: number = 5
-  ): Promise<UserProfile | null> => {
-    let retries = maxRetries;
-
-    console.log("Fetching user profile...");
-
-    while (retries > 0) {
-      try {
-        const userProfile = await db.profiles.getById(userId);
-        if (userProfile) {
-          console.log("Profile found:", userProfile.full_name);
-          return userProfile;
-        }
-
-        // If no profile found, reduce retries more aggressively
-        retries--;
-
-        if (retries === 0) {
-          console.error("Profile not found after all retries");
-          return null;
-        }
-
-        // Progressive delay
-        const delay = (maxRetries - retries) * 1000; // 1s, 2s, 3s, 4s, 5s
-        console.log(
-          `Profile not found, retrying in ${delay}ms... (${retries} retries left)`
-        );
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      } catch (error: any) {
-        console.log(
-          `Profile fetch attempt ${maxRetries - retries + 1} failed:`,
-          error.message
-        );
-        retries--;
-
-        if (retries === 0) {
-          console.error("Failed to fetch profile after all retries");
-          throw error;
-        }
-
-        // Progressive delay for errors
-        const delay = (maxRetries - retries) * 800;
-        console.log(`Retrying in ${delay}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
-
-    return null;
-  };
-
-  // Update last login (non-blocking)
-  const updateLastLogin = async (userId: string) => {
-    try {
-      await db.profiles.update(userId, {
-        last_login: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.warn("Failed to update last login:", error);
-    }
-  };
-
   // Handle auth errors with specific messages
-  const handleAuthError = (error: any) => {
-    if (error.message?.includes("relation") || error.message?.includes("500")) {
-      toast.error("Database connection issue. Please refresh the page.");
-    } else if (
-      error.message?.includes("profile") ||
-      error.message?.includes("not found")
-    ) {
-      toast.error("Profile loading failed. Please try logging in again.");
-    } else if (
-      error.message?.includes("network") ||
-      error.message?.includes("fetch")
-    ) {
+  const handleAuthError = (error: ApiClientError) => {
+    if (error.status === 500) {
+      toast.error("Server error. Please try again later.");
+    } else if (error.status === 401) {
+      toast.error("Authentication failed. Please check your credentials.");
+    } else if (error.status === 403) {
+      toast.error("Access denied. Please contact support.");
+    } else if (error.status === 404) {
+      toast.error("Resource not found.");
+    } else if (error.status >= 400 && error.status < 500) {
+      toast.error(error.message || "Request failed. Please try again.");
+    } else if (error.message?.includes("network") || error.message?.includes("fetch")) {
       toast.error("Network error. Please check your connection and try again.");
     } else {
-      toast.error("Authentication error. Please try refreshing the page.");
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -344,33 +233,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(true);
       console.log("Attempting sign in for:", email);
 
-      const result = await auth.signIn(email, password);
+      const result = await AuthService.login({ email, password });
 
-      if (result?.user) {
-        console.log(
-          "Sign in result:",
-          result.user.email,
-          "confirmed:",
-          !!result.user.email_confirmed_at
-        );
+      console.log("Sign in successful for:", result.user.email);
 
-        // Check if email is confirmed
-        if (!result.user.email_confirmed_at) {
-          toast.error(
-            "Please verify your email before signing in. Check your inbox for a confirmation email."
-          );
-          await auth.signOut();
-          return;
-        }
+      // Transform backend user data to frontend format
+      // Create a complete BackendUser object from the result
+      const backendUser: any = {
+        ...result.user,
+        createdAt: new Date().toISOString(), // Use current time as fallback
+        lastLogin: new Date().toISOString(),
+      };
+      const userData = AuthService.transformUserData(backendUser, backendUser);
 
-        // Manually handle auth state since we disabled the listener
-        console.log("Sign in successful, manually handling auth state...");
-        await handleAuthStateChange(result.user, true); // true = show welcome message
-      }
+      // Handle auth state change
+      await handleAuthStateChange(userData, true); // true = show welcome message
     } catch (error: any) {
       console.error("Sign in error:", error);
-      const errorMessage = getAuthErrorMessage(error);
-      toast.error(errorMessage);
+      handleAuthError(error);
       setLoading(false);
       throw error;
     }
@@ -389,45 +269,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userData.package
       );
 
-      // Sign up the user with proper metadata
-      const result = await auth.signUp(email, password, {
+      // Create registration data object
+      const registrationData: RegisterFormData = {
+        email,
+        password,
+        confirmPassword: userData.confirmPassword || password, // Assuming confirmPassword is provided
+        firstName: userData.first_name || userData.firstName,
+        lastName: userData.last_name || userData.lastName,
         role: userData.role,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        full_name: `${userData.first_name} ${userData.last_name}`,
-        package: userData.package || "free",
         phone: userData.phone,
-        payment_intent_id: userData.payment_intent_id, // Include payment metadata
-      });
+        package: userData.package,
+        subjects: userData.subjects,
+        experience: userData.experience,
+        qualification: userData.qualification,
+        agreesToTerms: userData.agreesToTerms || true,
+      };
 
-      console.log(
-        "Registration result:",
-        result?.user?.email,
-        "confirmed:",
-        !!result?.user?.email_confirmed_at
+      // Register the user
+      const result = await AuthService.register(registrationData);
+
+      console.log("Registration successful for:", result.user.email);
+
+      // Show success message
+      toast.success(
+        "Registration successful! Please check your email to verify your account before signing in."
       );
 
-      if (result?.user) {
-        // Check if user needs email confirmation
-        if (result.user.email_confirmed_at) {
-          console.log("User email auto-confirmed");
-          toast.success("Registration successful! Redirecting to dashboard...");
-        } else {
-          console.log("User needs email confirmation");
-          toast.success(
-            "Registration successful! Please check your email to verify your account before signing in."
-          );
-        }
-      } else {
-        console.log("No user returned from registration");
-        toast.success(
-          "Registration successful! Please check your email to verify your account before signing in."
-        );
-      }
+      // Note: Backend handles auto-confirmation, so we don't need to check email_confirmed_at
     } catch (error: any) {
       console.error("Sign up error:", error);
-      const errorMessage = getAuthErrorMessage(error);
-      toast.error(errorMessage);
+      handleAuthError(error);
       throw error;
     } finally {
       setLoading(false);
@@ -437,10 +308,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign out function
   const signOut = async () => {
     try {
-      // Always attempt to sign out, but catch any session-related errors
-      await auth.signOut();
+      await AuthService.logout();
     } catch (error: any) {
-      console.warn("Sign out API call failed (this is often normal):", error);
+      console.warn("Sign out API call failed:", error);
       // Continue with local cleanup regardless of API call result
     }
 
@@ -454,14 +324,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!user) throw new Error("No user logged in");
 
     try {
-      const updatedProfile = await db.profiles.update(user.id, {
-        ...updates,
-        full_name:
-          updates.first_name && updates.last_name
-            ? `${updates.first_name} ${updates.last_name}`
-            : profile?.full_name,
-        updated_at: new Date().toISOString(),
-      });
+      const updatedProfile = await AuthService.updateProfile(updates);
 
       setProfile(updatedProfile);
 
@@ -478,19 +341,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return updatedProfile;
     } catch (error: any) {
       console.error("Update profile error:", error);
-      toast.error("Error updating profile");
+      handleAuthError(error);
       throw error;
     }
+  };
+
+  // Update package function (convenience method for package updates)
+  const updatePackage = async (newPackage: StudentPackage) => {
+    return updateProfile({ package: newPackage });
   };
 
   // Reset password function
   const resetPassword = async (email: string) => {
     try {
-      await auth.resetPassword(email);
+      await AuthService.resetPassword(email);
       toast.success("Password reset email sent");
     } catch (error: any) {
       console.error("Reset password error:", error);
-      toast.error("Error sending reset email");
+      handleAuthError(error);
       throw error;
     }
   };
@@ -498,11 +366,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Update password function
   const updatePassword = async (password: string) => {
     try {
-      await auth.updatePassword(password);
+      // For password updates, we assume this is coming from a reset flow
+      // where current password is not required
+      await AuthService.updatePassword("", password);
       toast.success("Password updated successfully");
     } catch (error: any) {
       console.error("Update password error:", error);
-      toast.error("Error updating password");
+      handleAuthError(error);
       throw error;
     }
   };
@@ -535,6 +405,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signUp,
     signOut,
     updateProfile,
+    updatePackage,
     resetPassword,
     updatePassword,
     hasRole: hasRoleAccess,
@@ -554,32 +425,6 @@ export function useAuth() {
   return context;
 }
 
-// Helper function to get user-friendly error messages
-function getAuthErrorMessage(error: any): string {
-  if (error?.message) {
-    switch (error.message) {
-      case "Invalid login credentials":
-        return "Invalid email or password. Please check your credentials and try again.";
-      case "Email not confirmed":
-        return "Please check your email and click the confirmation link before signing in.";
-      case "User not found":
-        return "No account found with this email address.";
-      case "Invalid email":
-        return "Please enter a valid email address.";
-      case "Password should be at least 6 characters":
-        return "Password must be at least 6 characters long.";
-      case "User already registered":
-        return "An account with this email already exists.";
-      case "Too many requests":
-        return "Too many attempts. Please wait a few minutes before trying again.";
-      case "Network error":
-        return "Network connection error. Please check your internet connection.";
-      default:
-        return error.message;
-    }
-  }
-  return "An unexpected error occurred. Please try again.";
-}
 
 // Export types for use in other components
 export type { AuthContextType, User, UserProfile, UserRole, StudentPackage };

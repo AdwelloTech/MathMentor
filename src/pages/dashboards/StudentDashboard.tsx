@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { classSchedulingService } from "../../lib/classSchedulingService";
+import dashboardService from "../../lib/dashboardService";
 import { quizService } from "../../lib/quizService";
 import { packagePricingService } from "../../lib/packagePricing";
 import { flashcards } from "../../lib/flashcards";
@@ -45,7 +45,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { StudentDashboardStats } from "@/types/classScheduling";
+import type { StudentDashboardStats } from "@/lib/dashboardService";
 import type { Quiz } from "@/types/quiz";
 import type { FlashcardSet } from "@/types/flashcards";
 
@@ -108,10 +108,10 @@ const StudentDashboard: React.FC = () => {
         studyMaterials,
         packageInfo,
       ] = await Promise.allSettled([
-        classSchedulingService.stats.getStudentStats(profile.user_id),
+        dashboardService.getStudentStats(profile.user_id),
         loadUpcomingSessions(),
         loadRecentQuizzes(),
-        flashcards.student.listAvailable(),
+        flashcards.student.listAvailable(profile.user_id),
         loadStudyMaterials(),
         packagePricingService.getCurrentStudentPackage(profile.user_id),
       ]);
@@ -148,35 +148,17 @@ const StudentDashboard: React.FC = () => {
   const loadUpcomingSessions = async () => {
     if (!profile?.user_id) return [];
     try {
-      const allBookings = await classSchedulingService.bookings.getByStudentId(
-        profile.user_id,
-        { booking_status: "confirmed" }
-      );
+      const sessions = await dashboardService.getStudentUpcomingSessions(profile.user_id);
 
-      const now = new Date();
-      const futureBookings = allBookings.filter((booking: any) => {
-        const date = booking.class?.date;
-        const time = booking.class?.start_time;
-        if (!date || !time) return false;
-        const sessionDateTime = new Date(`${date}T${time}`);
-        return sessionDateTime > now;
-      });
-
-      return futureBookings.map((booking: any) => ({
-        id: booking.id,
-        tutor: booking.class?.tutor?.full_name || booking.tutor_name,
-        subject: booking.class?.title,
-        time: formatUpcomingTime(
-          booking.class?.date,
-          booking.class?.start_time
-        ),
-        duration: getDuration(
-          booking.class?.start_time,
-          booking.class?.end_time
-        ),
-        type: booking.class?.class_type?.name || booking.class_type,
-        date: booking.class?.date,
-        startTime: booking.class?.start_time,
+      return sessions.map((session: any) => ({
+        id: session.id,
+        tutor: session.tutor_name,
+        subject: session.title,
+        time: formatUpcomingTime(session.date, session.start_time),
+        duration: getDuration(session.start_time, session.end_time),
+        type: session.class_type_name,
+        date: session.date,
+        startTime: session.start_time,
       }));
     } catch (error) {
       console.error("Error loading upcoming sessions:", error);

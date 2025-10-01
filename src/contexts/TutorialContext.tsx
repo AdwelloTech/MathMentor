@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { db } from '@/lib/supabase';
 
 interface TutorialStep {
   id: string;
@@ -183,31 +182,40 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
       }
 
       try {
-        // Check user profile for tutorial status and account creation date
-        const { data: tutorialData, error } = await db
-          .from('profiles')
-          .select('tutorial_completed, created_at, tutorial_dismissed_count, tutorial_last_shown')
-          .eq('user_id', profile.user_id)
-          .single();
+        // Use the new API instead of Supabase
+        const response = await fetch('/api/tutorial/status', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-        if (error) {
-          console.error('Error checking tutorial status:', error);
+        if (!response.ok) {
+          console.error('Error checking tutorial status:', response.statusText);
           // Default to showing tutorial for new users
           setShouldShowTutorial(true);
           return;
         }
 
+        const result = await response.json();
+        if (!result.success || !result.data) {
+          setShouldShowTutorial(true);
+          return;
+        }
+
+        const tutorialData = result.data;
+
         // Check if user has completed tutorial
-        if (tutorialData?.tutorial_completed) {
+        if (tutorialData.tutorialCompleted) {
           setShouldShowTutorial(false);
           return;
         }
 
         // For existing users who haven't completed tutorial, show it less aggressively
-        if (tutorialData?.created_at) {
-          const accountAge = Date.now() - new Date(tutorialData.created_at).getTime();
+        if (tutorialData.createdAt) {
+          const accountAge = Date.now() - new Date(tutorialData.createdAt).getTime();
           const daysSinceCreation = accountAge / (1000 * 60 * 60 * 24);
-          
+
           // Show tutorial for:
           // 1. New accounts (less than 7 days old) - always show
           // 2. Older accounts (more than 7 days) - show based on dismissal count and last shown date
@@ -215,9 +223,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
             setShouldShowTutorial(true);
           } else {
             // For older accounts, be more selective
-            const dismissCount = tutorialData?.tutorial_dismissed_count || 0;
-            const lastShown = tutorialData?.tutorial_last_shown;
-            
+            const dismissCount = tutorialData.tutorialDismissedCount || 0;
+            const lastShown = tutorialData.tutorialLastShown;
+
             // Show tutorial if:
             // - User has dismissed it less than 3 times, OR
             // - It's been more than 30 days since last shown
@@ -266,44 +274,44 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
 
   const skipTutorial = async () => {
     try {
-      if (profile?.user_id) {
-        // Get current dismiss count and increment it
-        const { data: currentData } = await db
-          .from('profiles')
-          .select('tutorial_dismissed_count')
-          .eq('user_id', profile.user_id)
-          .single();
-        
-        const currentDismissCount = currentData?.tutorial_dismissed_count || 0;
-        
-        await db
-          .from('profiles')
-          .update({ 
-            tutorial_dismissed_count: currentDismissCount + 1,
-            tutorial_last_shown: new Date().toISOString()
-          })
-          .eq('user_id', profile.user_id);
+      // Use the new API instead of Supabase
+      const response = await fetch('/api/tutorial/dismiss', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error('Error dismissing tutorial:', response.statusText);
       }
     } catch (error) {
       console.error('Error updating tutorial status:', error);
     }
-    
+
     setIsTutorialActive(false);
     setShouldShowTutorial(false);
   };
 
   const completeTutorial = async () => {
     try {
-      if (profile?.user_id) {
-        await db
-          .from('profiles')
-          .update({ tutorial_completed: true })
-          .eq('user_id', profile.user_id);
+      // Use the new API instead of Supabase
+      const response = await fetch('/api/tutorial/complete', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error('Error completing tutorial:', response.statusText);
       }
     } catch (error) {
       console.error('Error updating tutorial status:', error);
     }
-    
+
     setIsTutorialActive(false);
     setShouldShowTutorial(false);
   };

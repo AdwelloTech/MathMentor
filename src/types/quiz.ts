@@ -90,10 +90,13 @@ export interface CreateQuizData {
   title: string;
   description?: string;
   subject: string;
-  grade_level?: string;
-  time_limit_minutes: number;
-  total_questions: number;
-  total_points: number;
+  gradeLevelId?: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  questionType: 'multiple_choice' | 'true_false' | 'mixed';
+  timeLimit?: number;
+  totalQuestions: number;
+  isPublic?: boolean;
+  instructions?: string;
   questions: CreateQuestionData[];
 }
 

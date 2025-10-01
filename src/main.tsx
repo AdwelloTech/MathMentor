@@ -16,7 +16,7 @@ const root = ReactDOM.createRoot(
 // Render app
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_relativeSplatPath: true }}>
       <AuthProvider>
         <AdminProvider>
           <TutorialProvider>

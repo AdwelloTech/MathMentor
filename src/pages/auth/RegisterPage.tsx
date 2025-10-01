@@ -76,13 +76,6 @@ const RegisterPage: React.FC = () => {
   const watchedPackage = watch("package");
 
   const onSubmit = async (data: RegisterFormData) => {
-    if (data.password !== data.confirmPassword) {
-      setError("confirmPassword", {
-        message: "Passwords do not match",
-      });
-      return;
-    }
-
     // Check if payment is required for the selected package
     const requiresPayment =
       data.role === "student" &&
@@ -107,37 +100,27 @@ const RegisterPage: React.FC = () => {
     try {
       setIsLoading(true);
 
-      // Create user profile data
-      const profileData = {
-        first_name: data.firstName,
-        last_name: data.lastName,
+      // Create registration data matching backend schema
+      const registrationData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
         role: data.role,
         phone: data.phone,
-        package: data.role === "student" ? data.package : undefined,
+        // Student-specific fields
+        ...(data.role === "student" && { package: data.package }),
         // Tutor-specific fields
-        subjects:
-          data.role === "tutor" && data.subjects
-            ? data.subjects.split(",").map((s) => s.trim())
-            : undefined,
-        experience_years:
-          data.role === "tutor" && data.experience
-            ? parseExperience(data.experience)
-            : undefined,
-        qualification: data.role === "tutor" ? data.qualification : undefined,
-        profile_completed: data.role === "tutor" ? false : undefined, // Tutors need to complete profile with CV
+        ...(data.role === "tutor" && {
+          subjects: data.subjects ? data.subjects.split(",").map((s) => s.trim()).filter(Boolean) : [],
+          experience: data.experience,
+          qualification: data.qualification,
+        }),
       };
 
-      // Add payment metadata if available
-      const metadata = paymentIntentId
-        ? {
-            ...profileData,
-            payment_intent_id: paymentIntentId,
-          }
-        : profileData;
+      console.log("Starting registration with data:", registrationData);
 
-      console.log("Starting registration with metadata:", metadata);
-
-      await signUp(data.email, data.password, metadata);
+      await signUp(data.email, data.password, registrationData);
 
       // Give a brief moment for the user to be created before redirecting
       setTimeout(() => {
@@ -816,8 +799,12 @@ const RegisterPage: React.FC = () => {
                   {...register("password", {
                     required: "Password is required",
                     minLength: {
-                      value: 6,
-                      message: "Password must be at least 6 characters",
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
+                    pattern: {
+                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                      message: "Password must contain at least one uppercase letter, one lowercase letter, and one number",
                     },
                   })}
                   type={showPassword ? "text" : "password"}
@@ -854,6 +841,12 @@ const RegisterPage: React.FC = () => {
                 <Input
                   {...register("confirmPassword", {
                     required: "Please confirm your password",
+                    validate: (value) => {
+                      if (value !== watch("password")) {
+                        return "Passwords do not match";
+                      }
+                      return true;
+                    },
                   })}
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirmPassword"

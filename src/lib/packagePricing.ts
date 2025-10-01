@@ -1,80 +1,56 @@
-import { supabase } from "./supabase";
-import type { Database } from "../types/database";
+import apiClient from "./apiClient";
 
-type PackagePricing = Database["public"]["Tables"]["package_pricing"]["Row"];
+interface PackagePricing {
+  id: string;
+  package_type: string;
+  display_name: string;
+  description: string;
+  price_monthly: number;
+  features: string[];
+  session_limit: number;
+  is_active: boolean;
+}
 
 export const packagePricingService = {
   // Get all active packages
   async getAll(): Promise<PackagePricing[]> {
-    const { data, error } = await supabase
-      .from("package_pricing")
-      .select("*")
-      .eq("is_active", true)
-      .order("price_monthly", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching packages:", error);
-      throw error;
-    }
-
-    return data || [];
+    const packages = await apiClient.get<PackagePricing[]>('/api/packages');
+    return packages;
   },
 
   // Get a specific package by type
   async getByType(packageType: string): Promise<PackagePricing | null> {
-    const { data, error } = await supabase
-      .from("package_pricing")
-      .select("*")
-      .eq("package_type", packageType)
-      .eq("is_active", true)
-      .single();
-
-    if (error) {
+    try {
+      const packageData = await apiClient.get<PackagePricing>(`/api/packages/${packageType}`);
+      return packageData;
+    } catch (error) {
       console.error("Error fetching package:", error);
-      throw error;
+      return null;
     }
-
-    return data;
   },
 
   // Get current student's package
   async getCurrentStudentPackage(
     studentId: string
   ): Promise<PackagePricing | null> {
-    // First get the student's profile to see their current package
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("package")
-      .eq("user_id", studentId)
-      .single();
-
-    if (profileError) {
-      console.error("Error fetching student profile:", profileError);
-      throw profileError;
+    try {
+      const packageData = await apiClient.get<PackagePricing>(`/api/packages/student/${studentId}`);
+      return packageData;
+    } catch (error) {
+      console.error("Error fetching student package:", error);
+      return null;
     }
-
-    if (!profile?.package) {
-      return null; // Student has no package assigned
-    }
-
-    // Get the package details
-    return this.getByType(profile.package);
   },
 
   // Update student's package
   async updateStudentPackage(
     studentId: string,
     packageType: string
-  ): Promise<void> {
-    const { error } = await supabase
-      .from("profiles")
-      .update({ package: packageType })
-      .eq("user_id", studentId);
-
-    if (error) {
-      console.error("Error updating student package:", error);
-      throw error;
-    }
+  ): Promise<PackagePricing> {
+    const response = await apiClient.put<PackagePricing>(`/api/packages/student/${studentId}`, {
+      packageType
+    });
+    return response;
   },
 
   // Format price for display (convert cents to dollars)

@@ -10,8 +10,9 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { quizService } from "@/lib/quizService";
 import { generateAIQuestions } from "@/lib/ai";
-import type { CreateQuestionData } from "@/types/quiz";
+import type { CreateQuestionData, CreateQuizData } from "@/types/quiz";
 import type { QuizPdf } from "@/types/quizPdf";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -275,6 +276,75 @@ const StudentAIGenerateQuizPage: React.FC = () => {
     });
   };
 
+  const handleSaveQuiz = async () => {
+    if (!user) {
+      toast.error("You must be logged in to save quizzes");
+      return;
+    }
+
+    if (questions.length === 0) {
+      toast.error("Please generate some questions before saving");
+      return;
+    }
+
+    if (!quizData.title.trim()) {
+      toast.error("Please enter a quiz title");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const totalPoints = questions.reduce((sum, q) => sum + (q.points || 10), 0);
+
+      // Step 1: Create the quiz with basic metadata
+      const createQuizData: CreateQuizData = {
+        title: quizData.title,
+        description: quizData.description || `AI-generated quiz from ${selectedPDF?.file_name || 'PDF'}`,
+        subject: selectedPDF?.subject?.name || "general",
+        gradeLevelId: selectedPDF?.grade_level?.id,
+        difficulty: "medium", // Default difficulty for AI-generated quizzes
+        questionType: questions.some(q => q.question_type === "multiple_choice") ? "mixed" : "true_false",
+        timeLimit: quizData.time_limit_minutes,
+        totalQuestions: questions.length,
+        isPublic: false, // Student-created quizzes are private by default
+        instructions: "This quiz was generated using AI from uploaded PDF content.",
+        questions: [], // Empty array since questions are created separately
+      };
+
+      const quiz = await quizService.quizzes.create(user.id, createQuizData);
+      console.log('Created quiz:', quiz);
+
+      if (!quiz || !quiz.id) {
+        throw new Error('Quiz creation failed - no quiz ID returned');
+      }
+
+      // Step 2: Create questions for the quiz
+      for (const question of questions) {
+        await quizService.questions.create(quiz.id, {
+          question_text: question.question_text,
+          question_type: question.question_type,
+          points: question.points || 10,
+          question_order: questions.indexOf(question) + 1,
+          answers: question.answers.map((a, i) => ({
+            answer_text: a.answer_text,
+            is_correct: a.is_correct,
+            answer_order: i + 1,
+          })),
+          is_ai_generated: true,
+          ai_status: "approved",
+        });
+      }
+
+      toast.success("Quiz saved successfully! You can now access it from your quiz dashboard.");
+      navigate('/student/quizzes');
+    } catch (error) {
+      console.error("Error saving quiz:", error);
+      toast.error("Failed to save quiz. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -285,13 +355,13 @@ const StudentAIGenerateQuizPage: React.FC = () => {
       setScore(0);
       setTotalPossible(0);
       setIsSubmitted(false);
-      
+
       // Go back to step 1 to allow generating new questions
       setCurrentStep(1);
-      
+
       // Scroll to top for better UX
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      
+
       toast.success('Quiz has been reset. You can now generate new questions.');
     } catch (error) {
       console.error("Error resetting quiz:", error);
@@ -706,53 +776,81 @@ const StudentAIGenerateQuizPage: React.FC = () => {
               )}
 
               {/* Navigation */}
-              <div className="flex justify-between mt-8">
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentStep(1);
-                  }}
-                  variant="outline"
-                  className="border-green-300 text-green-700 hover:bg-green-50 relative z-50"
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                  Back to Setup
-                </Button>
-                {!isSubmitted ? (
+              <div className="flex flex-col gap-4 mt-8">
+                <div className="flex justify-between items-center">
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSubmitQuiz();
+                      setCurrentStep(1);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 relative z-50"
+                    variant="outline"
+                    className="border-green-300 text-green-700 hover:bg-green-50 relative z-50"
                     style={{ pointerEvents: 'auto' }}
                   >
-                    Submit Quiz
+                    <ArrowLeftIcon className="w-5 h-5 mr-2" />
+                    Back to Setup
                   </Button>
-                ) : (
-                  <div className="text-xl font-bold text-green-700">
-                    Score: {score} / {totalPossible}
-                  </div>
-                )}
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSubmit(e as any);
-                  }}
-                  disabled={!validateStep2() || loading}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 relative z-50"
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  {loading ? (
-                    <>
-                      <LoadingSpinner className="w-4 h-4 mr-2" />
-                      Generating Quiz...
-                    </>
+
+                  {!isSubmitted ? (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSubmitQuiz();
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 relative z-50"
+                      style={{ pointerEvents: 'auto' }}
+                    >
+                      Submit Quiz
+                    </Button>
                   ) : (
-                    "Generate New Quiz"
+                    <div className="text-xl font-bold text-green-700">
+                      Score: {score} / {totalPossible}
+                    </div>
                   )}
-                </Button>
+
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveQuiz();
+                      }}
+                      disabled={loading || questions.length === 0}
+                      variant="outline"
+                      className="border-purple-300 text-purple-700 hover:bg-purple-50 relative z-50"
+                      style={{ pointerEvents: 'auto' }}
+                    >
+                      {loading ? (
+                        <>
+                          <LoadingSpinner className="w-4 h-4 mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <CheckIcon className="w-5 h-5 mr-2" />
+                          Save Quiz
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSubmit(e as any);
+                      }}
+                      disabled={!validateStep2() || loading}
+                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 relative z-50"
+                      style={{ pointerEvents: 'auto' }}
+                    >
+                      {loading ? (
+                        <>
+                          <LoadingSpinner className="w-4 h-4 mr-2" />
+                          Generating Quiz...
+                        </>
+                      ) : (
+                        "Generate New Quiz"
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}

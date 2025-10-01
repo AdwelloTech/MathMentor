@@ -927,7 +927,6 @@ const TutorDashboard: React.FC = () => {
                         disabled: !isActiveTutor,
                       },
                     ].map((action) => (
-                    ].map((action) => (
                       <motion.div
                         key={action.title}
                         whileHover={{ scale: 1.02 }}

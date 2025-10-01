@@ -4,9 +4,9 @@ import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { UserPlusIcon } from "@heroicons/react/24/solid";
-import { Facebook, Instagram, Youtube, Linkedin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import GameLoadingAnimation from "@/components/ui/GameLoadingAnimation";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import {
   getRoleDisplayName,
   getPackageDisplayName,
@@ -16,13 +16,11 @@ import { PACKAGE_PRICING_DISPLAY } from "@/lib/stripe";
 import PaymentForm from "@/components/payment/PaymentForm";
 import type { RegisterFormData, UserRole, StudentPackage } from "@/types/auth";
 
-// shadcn/ui components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-// removed card container to make layout fullscreen
 import {
   Select,
   SelectContent,
@@ -158,7 +156,6 @@ const RegisterPage: React.FC = () => {
   // Available packages for students
   const availablePackages: StudentPackage[] = ["free", "silver", "gold"];
 
-  // Show payment form if payment is required
   if (
     showPayment &&
     pendingRegistration &&
@@ -166,17 +163,17 @@ const RegisterPage: React.FC = () => {
     ["silver", "gold"].includes(pendingRegistration.package)
   ) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#32a852] via-white to-[#16a34a] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-4xl w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               Complete Your Registration
             </h2>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               You're almost done! Please complete the payment for your{" "}
               {pendingRegistration.package} package.
             </p>
@@ -195,240 +192,245 @@ const RegisterPage: React.FC = () => {
   }
 
   return (
-    <div className="h-screen w-screen grid grid-cols-1 lg:grid-cols-2 relative">
-      {/* Left Column - Visual Panel */}
+    <div className="h-screen w-screen grid grid-cols-1 lg:grid-cols-2 relative bg-background text-foreground">
+      <div className="absolute top-6 right-6 z-50">
+        <ThemeToggle className="text-foreground hover:bg-muted shadow-lg" />
+      </div>
+
       <motion.div
         initial={{ x: -24, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative hidden lg:flex items-center justify-center overflow-hidden"
+        className="relative hidden lg:flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/90 via-primary to-primary/80"
       >
-        {/* Decorative rounded gradient card with content inside */}
-        <div className="absolute inset-10 rounded-3xl bg-gradient-to-br from-[#1f6d37] via-[#1c5d30] to-[#144d23] overflow-visible">
-          {/* Subtle circles */}
+        <div className="absolute inset-0 overflow-visible">
           <div className="absolute -left-10 -bottom-24 h-[38rem] w-[38rem] rounded-full border-2 border-white/10" />
           <div className="absolute left-10 top-16 h-[28rem] w-[28rem] rounded-full border-2 border-white/10" />
-          {/* Math Symbols Background */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+
           <svg
-            className="absolute inset-0 w-full h-full opacity-20"
+            className="absolute inset-0 w-full h-full opacity-40"
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
           >
-            {/* Plus symbol */}
             <text
               x="15"
               y="25"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.8)"
               fontSize="8"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               +
             </text>
             <text
               x="85"
               y="35"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.7)"
               fontSize="6"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               +
             </text>
             <text
               x="25"
               y="75"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.75)"
               fontSize="7"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               +
             </text>
 
-            {/* Minus symbol */}
             <text
               x="75"
               y="20"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.7)"
               fontSize="5"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               −
             </text>
             <text
               x="10"
               y="60"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.75)"
               fontSize="6"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               −
             </text>
 
-            {/* Multiplication symbol */}
             <text
               x="90"
               y="70"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.8)"
               fontSize="7"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               ×
             </text>
             <text
               x="35"
               y="45"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.7)"
               fontSize="5"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               ×
             </text>
 
-            {/* Division symbol */}
             <text
               x="65"
               y="85"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.75)"
               fontSize="6"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               ÷
             </text>
             <text
               x="5"
               y="40"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.7)"
               fontSize="4"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               ÷
             </text>
 
-            {/* Equals symbol */}
             <text
               x="80"
               y="50"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.75)"
               fontSize="5"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               =
             </text>
             <text
               x="20"
               y="85"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.8)"
               fontSize="6"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               =
             </text>
 
-            {/* Pi symbol */}
             <text
               x="95"
               y="15"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.7)"
               fontSize="4"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               π
             </text>
             <text
               x="45"
               y="80"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.75)"
               fontSize="5"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               π
             </text>
 
-            {/* Square root symbol */}
             <text
               x="70"
               y="25"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.8)"
               fontSize="6"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               √
             </text>
             <text
               x="15"
               y="90"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.75)"
               fontSize="5"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               √
             </text>
 
-            {/* Infinity symbol */}
             <text
               x="50"
               y="15"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.7)"
               fontSize="4"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               ∞
             </text>
             <text
               x="30"
               y="95"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.75)"
               fontSize="5"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               ∞
             </text>
 
-            {/* Degree symbol */}
             <text
               x="85"
               y="90"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.7)"
               fontSize="3"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               °
             </text>
             <text
               x="55"
               y="65"
-              fill="#fbbf24"
+              fill="rgba(255, 255, 255, 0.75)"
               fontSize="4"
               fontFamily="Arial, sans-serif"
+              fontWeight="bold"
             >
               °
             </text>
           </svg>
 
-          {/* Content wrapper */}
-          <div className="relative z-10 h-full w-full flex flex-col items-center text-center text-white px-8 pt-12 md:pt-16">
+          <div className="relative z-10 h-full w-full flex flex-col items-center justify-center text-center px-10 pt-0">
             <motion.h1
-              className="text-4xl font-bold leading-tight mb-3"
+              className="text-5xl md:text-6xl font-extrabold leading-tight mb-4 text-white drop-shadow-lg tracking-wide"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
             >
-              Master Math. Unlock Your Potential.
+              Join MathMentor
             </motion.h1>
             <motion.p
-              className="text-white/90 max-w-[640px] mb-8"
+              className="text-white/90 max-w-[640px] mb-12 text-base md:text-xl font-medium"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
             >
-              Learn from expert tutors, practice with interactive tools, and
-              achieve top results in your GCSE, A-Levels, and beyond — all in
-              one place.
+              Start your learning journey with expert tutors and achieve academic excellence
             </motion.p>
-
-            {/* Popped-out image at the bottom of the card */}
             <motion.img
-              src={"src/assets/student-register.png"}
-              alt="Student"
+              src={"/src/assets/student-register.png"}
+              alt="Registration Illustration"
               className="pointer-events-none absolute -translate-x-1/2 bottom-[-42px] w-[88%] max-w-[680px] object-contain drop-shadow-2xl"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -438,34 +440,29 @@ const RegisterPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Right Column - Registration Form */}
       <motion.div
         initial={{ x: 24, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-white max-w-full flex flex-col justify-center items-center p-6 md:p-10 relative"
+        className="bg-background max-w-full flex flex-col justify-center items-center p-6 md:p-10 relative border-l border-border"
       >
-        {/* Brand header */}
-
-        {/* Form Header */}
         <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Sign up to Math Mentor
+          <h2 className="text-4xl font-bold text-foreground mb-4 tracking-tight">
+            Create Your Account
           </h2>
+          <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto rounded-full" />
         </div>
 
-        {/* Registration Form */}
         <motion.form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6 w-full max-w-md"
+          className="space-y-6 w-full max-w-md bg-card border border-border rounded-2xl p-8 shadow-xl"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {/* Personal Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <motion.div className="space-y-2" variants={fadeInUp}>
-              <Label htmlFor="firstName">Name</Label>
+              <Label htmlFor="firstName" className="text-card-foreground font-medium">Name</Label>
               <Input
                 {...register("firstName", {
                   required: "First name is required",
@@ -476,21 +473,21 @@ const RegisterPage: React.FC = () => {
                 })}
                 id="firstName"
                 placeholder="Enter your name"
-                className={
+                className={`bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                   errors.firstName
                     ? "border-red-500 focus-visible:ring-red-500"
                     : ""
-                }
+                }`}
               />
               {errors.firstName && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive font-medium">
                   {errors.firstName.message}
                 </p>
               )}
             </motion.div>
 
             <motion.div className="space-y-2" variants={fadeInUp}>
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName" className="text-card-foreground font-medium">Last Name</Label>
               <Input
                 {...register("lastName", {
                   required: "Last name is required",
@@ -501,23 +498,22 @@ const RegisterPage: React.FC = () => {
                 })}
                 id="lastName"
                 placeholder="Enter your last name"
-                className={
+                className={`bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                   errors.lastName
                     ? "border-red-500 focus-visible:ring-red-500"
                     : ""
-                }
+                }`}
               />
               {errors.lastName && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive font-medium">
                   {errors.lastName.message}
                 </p>
               )}
             </motion.div>
           </div>
 
-          {/* Email */}
           <motion.div className="space-y-2" variants={fadeInUp}>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-card-foreground font-medium">Email Address</Label>
             <Input
               {...register("email", {
                 required: "Email is required",
@@ -529,18 +525,17 @@ const RegisterPage: React.FC = () => {
               type="email"
               id="email"
               placeholder="Enter your email"
-              className={
+              className={`bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                 errors.email ? "border-red-500 focus-visible:ring-red-500" : ""
-              }
+              }`}
             />
             {errors.email && (
-              <p className="text-sm text-red-600">{errors.email.message}</p>
+              <p className="text-sm text-destructive font-medium">{errors.email.message}</p>
             )}
           </motion.div>
 
-          {/* Phone */}
           <motion.div className="space-y-2" variants={fadeInUp}>
-            <Label htmlFor="phone">Phone Number (Optional)</Label>
+            <Label htmlFor="phone" className="text-card-foreground font-medium">Phone Number (Optional)</Label>
             <Input
               {...register("phone", {
                 pattern: {
@@ -551,26 +546,25 @@ const RegisterPage: React.FC = () => {
               type="tel"
               id="phone"
               placeholder="Enter your phone number"
-              className={
+              className={`bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                 errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""
-              }
+              }`}
             />
             {errors.phone && (
-              <p className="text-sm text-red-600">{errors.phone.message}</p>
+              <p className="text-sm text-destructive font-medium">{errors.phone.message}</p>
             )}
           </motion.div>
 
-          {/* Role Selection */}
           <motion.div className="space-y-2" variants={fadeInUp}>
-            <Label htmlFor="role">I am a</Label>
+            <Label htmlFor="role" className="text-card-foreground font-medium">I am a</Label>
             <Select
               value={watchedRole}
               onValueChange={(value) => setValue("role", value as UserRole)}
             >
               <SelectTrigger
-                className={
+                className={`bg-input border-border text-foreground ${
                   errors.role ? "border-red-500 focus-visible:ring-red-500" : ""
-                }
+                }`}
               >
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
@@ -583,11 +577,10 @@ const RegisterPage: React.FC = () => {
               </SelectContent>
             </Select>
             {errors.role && (
-              <p className="text-sm text-red-600">{errors.role.message}</p>
+              <p className="text-sm text-destructive font-medium">{errors.role.message}</p>
             )}
           </motion.div>
 
-          {/* Package Selection (for students only) */}
           {watchedRole === "student" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -595,16 +588,16 @@ const RegisterPage: React.FC = () => {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              <Label>Select Package</Label>
+              <Label className="text-card-foreground font-medium">Select Package</Label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {availablePackages.map((pkg) => (
                   <label
                     key={pkg}
                     className={`relative flex flex-col p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                       watchedPackage === pkg
-                        ? "border-[#32a852] bg-green-50 shadow-lg"
-                        : "border-gray-200 hover:border-gray-300 hover:shadow-md"
-                    } ${pkg === "gold" ? "ring-2 ring-yellow-400" : ""}`}
+                        ? "border-primary bg-primary/10 shadow-lg"
+                        : "border-border hover:border-muted-foreground hover:shadow-md"
+                    } ${pkg === "gold" ? "ring-2 ring-accent" : ""}`}
                   >
                     <input
                       {...register("package", {
@@ -618,10 +611,9 @@ const RegisterPage: React.FC = () => {
                       className="sr-only"
                     />
 
-                    {/* Popular badge for Gold */}
                     {pkg === "gold" && (
                       <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <span className="bg-yellow-400 text-yellow-900 text-xs font-semibold px-3 py-1 rounded-full">
+                        <span className="bg-accent text-accent-foreground text-xs font-semibold px-3 py-1 rounded-full">
                           Most Popular
                         </span>
                       </div>
@@ -629,18 +621,18 @@ const RegisterPage: React.FC = () => {
 
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <span className="font-bold text-gray-900 text-lg">
+                        <span className="font-bold text-card-foreground text-lg">
                           {getPackageDisplayName(pkg)}
                         </span>
-                        <div className="text-2xl font-bold text-[#32a852] mt-1">
+                        <div className="text-2xl font-bold text-primary mt-1">
                           {PACKAGE_PRICING_DISPLAY[pkg]}
                         </div>
                       </div>
                       <span
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                           watchedPackage === pkg
-                            ? "border-[#32a852] bg-[#32a852]"
-                            : "border-gray-300"
+                            ? "border-primary bg-primary"
+                            : "border-muted-foreground"
                         }`}
                       >
                         {watchedPackage === pkg && (
@@ -649,10 +641,10 @@ const RegisterPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="text-sm text-gray-600 space-y-2 flex-grow">
+                    <div className="text-sm text-muted-foreground space-y-2 flex-grow">
                       {getPackageFeatures(pkg).map((feature, index) => (
                         <div key={index} className="flex items-start">
-                          <span className="text-green-500 mr-2 mt-0.5 text-xs">
+                          <span className="text-primary mr-2 mt-0.5 text-xs">
                             ✓
                           </span>
                           <span className="flex-1">{feature}</span>
@@ -660,11 +652,10 @@ const RegisterPage: React.FC = () => {
                       ))}
                     </div>
 
-                    {/* Payment indicator for paid packages */}
                     {pkg !== "free" && (
-                      <div className="mt-4 pt-3 border-t border-gray-200">
-                        <div className="flex items-center text-xs text-gray-500">
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <span className="bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
                             Secure Payment Required
                           </span>
                         </div>
@@ -674,12 +665,11 @@ const RegisterPage: React.FC = () => {
                 ))}
               </div>
               {errors.package && (
-                <p className="text-sm text-red-600">{errors.package.message}</p>
+                <p className="text-sm text-destructive font-medium">{errors.package.message}</p>
               )}
             </motion.div>
           )}
 
-          {/* Tutor-specific fields */}
           {watchedRole === "tutor" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -687,11 +677,11 @@ const RegisterPage: React.FC = () => {
               transition={{ duration: 0.3 }}
               className="space-y-6"
             >
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+              <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-accent-foreground mb-2">
                   Tutor Information
                 </h3>
-                <p className="text-sm text-blue-700">
+                <p className="text-sm text-muted-foreground">
                   After registration, you'll need to complete your profile and
                   upload your CV to start tutoring.
                 </p>
@@ -699,7 +689,7 @@ const RegisterPage: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="subjects">Subjects You Can Teach</Label>
+                  <Label htmlFor="subjects" className="text-card-foreground font-medium">Subjects You Can Teach</Label>
                   <Textarea
                     {...register("subjects", {
                       required:
@@ -710,31 +700,31 @@ const RegisterPage: React.FC = () => {
                     id="subjects"
                     rows={3}
                     placeholder="e.g., Mathematics, Physics, Chemistry..."
-                    className={
+                    className={`bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                       errors.subjects
                         ? "border-red-500 focus-visible:ring-red-500"
                         : ""
-                    }
+                    }`}
                   />
                   {errors.subjects && (
-                    <p className="text-sm text-red-600">
+                    <p className="text-sm text-destructive font-medium">
                       {errors.subjects.message}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="experience">Years of Experience</Label>
+                  <Label htmlFor="experience" className="text-card-foreground font-medium">Years of Experience</Label>
                   <Select
                     value={watch("experience")}
                     onValueChange={(value) => setValue("experience", value)}
                   >
                     <SelectTrigger
-                      className={
+                      className={`bg-input border-border text-foreground ${
                         errors.experience
                           ? "border-red-500 focus-visible:ring-red-500"
                           : ""
-                      }
+                      }`}
                     >
                       <SelectValue placeholder="Select experience" />
                     </SelectTrigger>
@@ -747,7 +737,7 @@ const RegisterPage: React.FC = () => {
                     </SelectContent>
                   </Select>
                   {errors.experience && (
-                    <p className="text-sm text-red-600">
+                    <p className="text-sm text-destructive font-medium">
                       {errors.experience.message}
                     </p>
                   )}
@@ -755,7 +745,7 @@ const RegisterPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="qualification">Highest Qualification</Label>
+                <Label htmlFor="qualification" className="text-card-foreground font-medium">Highest Qualification</Label>
                 <Input
                   {...register("qualification", {
                     required:
@@ -766,14 +756,14 @@ const RegisterPage: React.FC = () => {
                   type="text"
                   id="qualification"
                   placeholder="e.g., Bachelor's in Mathematics, Master's in Physics..."
-                  className={
+                  className={`bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                     errors.qualification
                       ? "border-red-500 focus-visible:ring-red-500"
                       : ""
-                  }
+                  }`}
                 />
                 {errors.qualification && (
-                  <p className="text-sm text-red-600">
+                  <p className="text-sm text-destructive font-medium">
                     {errors.qualification.message}
                   </p>
                 )}
@@ -781,10 +771,9 @@ const RegisterPage: React.FC = () => {
             </motion.div>
           )}
 
-          {/* Password Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <motion.div className="space-y-2" variants={fadeInUp}>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-card-foreground font-medium">Password</Label>
               <div className="relative">
                 <Input
                   {...register("password", {
@@ -801,7 +790,7 @@ const RegisterPage: React.FC = () => {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="Enter your password"
-                  className={`pr-10 ${
+                  className={`pr-10 bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                     errors.password
                       ? "border-red-500 focus-visible:ring-red-500"
                       : ""
@@ -813,21 +802,21 @@ const RegisterPage: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    <EyeSlashIcon className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                    <EyeIcon className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
                   )}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive font-medium">
                   {errors.password.message}
                 </p>
               )}
             </motion.div>
 
             <motion.div className="space-y-2" variants={fadeInUp}>
-              <Label htmlFor="confirmPassword">Retype Password</Label>
+              <Label htmlFor="confirmPassword" className="text-card-foreground font-medium">Confirm Password</Label>
               <div className="relative">
                 <Input
                   {...register("confirmPassword", {
@@ -842,7 +831,7 @@ const RegisterPage: React.FC = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirmPassword"
                   placeholder="Confirm your password"
-                  className={`pr-10 ${
+                  className={`pr-10 bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                     errors.confirmPassword
                       ? "border-red-500 focus-visible:ring-red-500"
                       : ""
@@ -854,21 +843,20 @@ const RegisterPage: React.FC = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    <EyeSlashIcon className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                    <EyeIcon className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
                   )}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive font-medium">
                   {errors.confirmPassword.message}
                 </p>
               )}
             </motion.div>
           </div>
 
-          {/* Terms and Conditions */}
           <motion.div className="space-y-2" variants={fadeInUp}>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -878,80 +866,57 @@ const RegisterPage: React.FC = () => {
                   setValue("agreesToTerms", checked as boolean)
                 }
               />
-              <Label htmlFor="agreesToTerms" className="text-sm font-normal">
-                I accepted all terms & conditions.
+              <Label htmlFor="agreesToTerms" className="text-sm font-normal text-card-foreground">
+                I accept all terms and conditions
               </Label>
             </div>
             {errors.agreesToTerms && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-destructive font-medium">
                 {errors.agreesToTerms.message}
               </p>
             )}
           </motion.div>
 
-          {/* Error Message */}
           {errors.root && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg"
             >
-              <p className="text-sm text-red-600">{errors.root.message}</p>
+              <p className="text-sm text-destructive font-medium">{errors.root.message}</p>
             </motion.div>
           )}
 
-          {/* OAuth divider */}
-
-          {/* Google CTA (UI only) */}
-
-          {/* Submit Button */}
           <motion.div variants={fadeInUp}>
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
               size="lg"
             >
               {isLoading ? (
-                <LoadingSpinner size="sm" />
+                <GameLoadingAnimation size="sm" />
               ) : (
                 <>
-                  <UserPlusIcon className="h-5 w-5" />
-                  Sign up
+                  <UserPlusIcon className="h-5 w-5 mr-2" />
+                  Create Account
                 </>
               )}
             </Button>
           </motion.div>
 
-          {/* Login Link */}
           <motion.div className="text-center" variants={fadeInUp}>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground font-medium">
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="text-[#32a852] hover:text-[#16a34a] font-medium"
+                className="text-primary hover:text-primary/80 font-semibold transition-colors"
               >
                 Sign in
               </Link>
             </p>
           </motion.div>
         </motion.form>
-
-        {/* Social icons footer */}
-        <div className="hidden lg:flex gap-3 items-center text-gray-500 absolute bottom-6 right-6">
-          <a href="#" aria-label="Facebook" className="hover:text-[#32a852]">
-            <Facebook className="h-5 w-5" />
-          </a>
-          <a href="#" aria-label="Instagram" className="hover:text-[#32a852]">
-            <Instagram className="h-5 w-5" />
-          </a>
-          <a href="#" aria-label="YouTube" className="hover:text-[#32a852]">
-            <Youtube className="h-5 w-5" />
-          </a>
-          <a href="#" aria-label="LinkedIn" className="hover:text-[#32a852]">
-            <Linkedin className="h-5 w-5" />
-          </a>
-        </div>
       </motion.div>
     </div>
   );

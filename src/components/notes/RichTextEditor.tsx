@@ -38,14 +38,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, [value]);
 
   return (
-    <div className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+    <div className="bg-slate-600/50 border border-slate-600 rounded-lg overflow-hidden shadow-sm">
       {/* Simple Text Editor */}
       <textarea
         ref={editorRef}
         defaultValue={stripHtml(value)}
         onChange={handleInput}
         placeholder={placeholder}
-        className="w-full px-4 py-3 min-h-[300px] focus:outline-none resize-none text-sm leading-relaxed"
+        className="w-full px-4 py-3 min-h-[300px] focus:outline-none resize-none text-sm leading-relaxed text-slate-200 placeholder-slate-400 bg-transparent"
         style={{ minHeight: `${rows * 1.5}rem` }}
         rows={rows}
       />

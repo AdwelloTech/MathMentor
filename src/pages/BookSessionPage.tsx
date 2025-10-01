@@ -41,6 +41,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 
 const BookSessionPage: React.FC = () => {
   const { user } = useAuth();
@@ -240,28 +241,30 @@ const BookSessionPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-green-900 mx-auto mb-4" />
-          <p className="text-green-800 font-medium">Loading sessions...</p>
+      <StudentPageWrapper backgroundClass="bg-background">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-primary font-medium">Loading sessions...</p>
+          </div>
         </div>
-      </div>
+      </StudentPageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      <div className="max-w-full mx-auto">
+    <StudentPageWrapper backgroundClass="bg-background">
+      <div className="max-w-7xl mx-auto p-4 md:p-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl md:text-4xl font-bold text-green-900 mb-3">
+          <h1 className="text-4xl font-bold text-foreground mb-3">
             Book a Session
           </h1>
-          <p className="text-lg text-gray-700">
+          <p className="text-lg text-muted-foreground">
             Find and book upcoming sessions with our expert tutors
           </p>
         </motion.div>
@@ -272,9 +275,9 @@ const BookSessionPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <Card className="border-green-200 bg-white">
+          <Card className="border-border bg-card">
             <CardHeader className="pb-4">
-              <CardTitle className="text-green-900 flex items-center gap-2">
+              <CardTitle className="text-foreground flex items-center gap-2">
                 <Filter className="w-5 h-5" />
                 Filters
               </CardTitle>
@@ -283,17 +286,11 @@ const BookSessionPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Session Type Filter */}
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="session-type"
-                    className="text-gray-900 font-medium"
-                  >
+                  <Label htmlFor="session-type" className="text-foreground font-medium">
                     Session Type
                   </Label>
                   <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger
-                      id="session-type"
-                      className="border-green-900/60 focus:border-green-900 focus:ring-green-900"
-                    >
+                    <SelectTrigger id="session-type" className="border-border focus:border-primary focus:ring-primary">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>
@@ -306,10 +303,9 @@ const BookSessionPage: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
                 {/* Date Filter */}
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="text-gray-900 font-medium">
+                  <Label htmlFor="date" className="text-foreground font-medium">
                     Date
                   </Label>
                   <Input
@@ -317,16 +313,12 @@ const BookSessionPage: React.FC = () => {
                     type="date"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
-                    className="border-green-900/60 focus:border-green-900 focus:ring-green-900"
+                    className="border-border focus:border-primary focus:ring-primary"
                   />
                 </div>
-
                 {/* Subject Filter */}
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="subject"
-                    className="text-gray-900 font-medium"
-                  >
+                  <Label htmlFor="subject" className="text-foreground font-medium">
                     Subject
                   </Label>
                   <Input
@@ -335,34 +327,29 @@ const BookSessionPage: React.FC = () => {
                     placeholder="e.g., Math, Physics"
                     value={filterSubject}
                     onChange={(e) => setFilterSubject(e.target.value)}
-                    className="border-green-900/60 focus:border-green-900 focus:ring-green-900"
+                    className="border-border focus:border-primary focus:ring-primary"
                   />
                 </div>
-
                 {/* Search */}
                 <div className="space-y-2">
-                  <Label htmlFor="search" className="text-gray-900 font-medium">
+                  <Label htmlFor="search" className="text-foreground font-medium">
                     Search
                   </Label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-900" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-foreground" />
                     <Input
                       id="search"
                       type="text"
                       placeholder="Search sessions or tutors..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 border-green-900/60 focus:border-green-900 focus:ring-green-900"
+                      className="pl-10 border-border focus:border-primary focus:ring-primary"
                     />
                   </div>
                 </div>
               </div>
-
               {/* Clear Filters */}
-              {(filterType !== "all" ||
-                filterDate ||
-                filterSubject ||
-                searchTerm) && (
+              {(filterType !== "all" || filterDate || filterSubject || searchTerm) && (
                 <div className="mt-6">
                   <Button
                     variant="outline"
@@ -372,7 +359,7 @@ const BookSessionPage: React.FC = () => {
                       setFilterSubject("");
                       setSearchTerm("");
                     }}
-                    className="border-green-900/60 text-gray-700 hover:bg-gray-50 hover:text-gray-800"
+                    className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Clear all filters
@@ -390,8 +377,8 @@ const BookSessionPage: React.FC = () => {
             animate={{ opacity: 1 }}
             className="mb-6"
           >
-            <Alert className="border-red-200 bg-red-50">
-              <AlertDescription className="text-red-800">
+            <Alert className="border-destructive/20 bg-destructive/10">
+              <AlertDescription className="text-destructive">
                 {error}
               </AlertDescription>
             </Alert>
@@ -404,8 +391,6 @@ const BookSessionPage: React.FC = () => {
             const session = sessionResult.class;
             const tutor = sessionResult.tutor;
             const isBooking = bookingLoading === session._id;
-
-            // ... existing code ...
             return (
               <motion.div
                 key={session._id}
@@ -413,104 +398,97 @@ const BookSessionPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="h-full flex flex-col border-green-900/60  transition-all duration-200 hover:shadow-lg bg-white">
+                <Card className="h-full flex flex-col border-border transition-all duration-200 hover:shadow-lg bg-card">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between mb-3">
                       <Badge
                         variant="secondary"
-                        className="bg-green-900 hover:bg-green-900 text-white flex items-center gap-1"
+                        className="bg-primary hover:bg-primary text-primary-foreground flex items-center gap-1"
                       >
                         {getClassTypeName('class')}
                       </Badge>
                       <div className="text-right">
                         <Badge
                           variant="outline"
-                          className="border-yellow-400 border-2 text-black  text-lg font-bold px-3 py-1"
+                          className="border-yellow-400 border-2 text-yellow-700 text-lg font-bold px-3 py-1"
                         >
                           <DollarSign className="w-4 h-4 mr-1" />
                           {session.price}
                         </Badge>
                       </div>
                     </div>
-
                     {/* Title & Subject */}
-                    <h3 className="text-lg font-semibold text-gray-900 mt-2">
+                    <h3 className="text-lg font-semibold text-foreground mt-2">
                       {session.title}
                     </h3>
                     {session.subjectId_populated && (
                       <div className="mt-1">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                           {session.subjectId_populated.displayName}
                         </span>
                       </div>
                     )}
                     {session.description && (
-                      <CardDescription className="text-gray-700 line-clamp-2">
+                      <CardDescription className="text-muted-foreground line-clamp-2">
                         {session.description}
                       </CardDescription>
                     )}
                   </CardHeader>
-
                   <CardContent className="flex-1 space-y-4">
                     {/* Tutor Info */}
                     <div className="flex items-center gap-3 p-3 rounded-lg">
                       <Avatar className="w-12 h-12">
-                        <AvatarFallback className=" text-gray-900 font-semibold">
+                        <AvatarFallback className="text-foreground font-semibold">
                           {tutor.full_name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-foreground">
                           {tutor.full_name}
                         </p>
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm text-gray-700 font-medium">
+                          <span className="text-sm text-muted-foreground font-medium">
                             {(
                               tutorRatings[tutor.id]?.avg ?? tutor.rating ?? 0
                             ).toFixed(1)}
                           </span>
-                          <span className="text-sm text-gray-600">
-                            (
-                            {tutorRatings[tutor.id]?.count ?? tutor.total_reviews ?? 0} reviews)
+                          <span className="text-sm text-muted-foreground">
+                            ({tutorRatings[tutor.id]?.count ?? tutor.total_reviews ?? 0} reviews)
                           </span>
                         </div>
                       </div>
                     </div>
-
                     {/* Session Details */}
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <CalendarDays className="w-4 h-4 text-gray-600" />
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <CalendarDays className="w-4 h-4 text-muted-foreground" />
                         <span className="font-medium">
                           {formatDate(session.startDate)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <Clock className="w-4 h-4 text-gray-600" />
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
                         <span className="font-medium">
-                          {formatTime(session.schedule.startTime)} -{" "}
-                          {formatTime(session.schedule.endTime)}
+                          {formatTime(session.schedule.startTime)} - {formatTime(session.schedule.endTime)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <Users className="w-4 h-4 text-gray-600" />
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <Users className="w-4 h-4 text-muted-foreground" />
                         <span className="font-medium">
-                          {sessionResult.available_slots} of{" "}
-                          {session.capacity} spots available
+                          {sessionResult.available_slots} of {session.capacity} spots available
                         </span>
                       </div>
                     </div>
                   </CardContent>
-
                   <CardFooter>
                     <Button
                       onClick={() => handleBookSession(sessionResult)}
                       disabled={isBooking || !sessionResult.is_bookable}
                       className={`w-full font-semibold ${
                         sessionResult.is_bookable
-                          ? "bg-green-900 hover:bg-green-800 text-white"
-                          : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                          ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                          : "bg-muted text-muted-foreground cursor-not-allowed"
                       }`}
                     >
                       {isBooking ? (
@@ -533,7 +511,6 @@ const BookSessionPage: React.FC = () => {
             );
           })}
         </div>
-
         {/* No Sessions Message */}
         {filteredSessions.length === 0 && !loading && (
           <motion.div
@@ -541,46 +518,47 @@ const BookSessionPage: React.FC = () => {
             animate={{ opacity: 1 }}
             className="text-center py-16"
           >
-            <div className="max-w-md mx-auto">
-              <BookOpen className="w-20 h-20 text-green-300 mx-auto mb-6" />
-              <h3 className="text-2xl font-semibold text-green-900 mb-3">
-                No sessions found
-              </h3>
-              <p className="text-green-700 text-lg">
-                Try adjusting your filters or check back later for new sessions.
-              </p>
-            </div>
+            <Card className="max-w-md mx-auto">
+              <CardContent className="p-8">
+                <BookOpen className="w-20 h-20 text-primary/30 mx-auto mb-6" />
+                <h3 className="text-2xl font-bold text-foreground mb-3">
+                  No sessions found
+                </h3>
+                <p className="text-muted-foreground text-lg">
+                  Try adjusting your filters or check back later for new sessions.
+                </p>
+              </CardContent>
+            </Card>
           </motion.div>
         )}
+        {/* Payment Modal */}
+        <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
+            {selectedSession && (
+              <>
+                <DialogTitle className="sr-only">
+                  Complete Payment for {selectedSession.class.title}
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Complete your payment to book a session with {selectedSession.tutor.full_name} on {selectedSession.class.startDate} at {selectedSession.class.schedule.startTime}
+                </DialogDescription>
+                <SessionPaymentForm
+                  sessionTitle={selectedSession.class.title}
+                  tutorName={selectedSession.tutor.full_name}
+                  sessionDate={selectedSession.class.startDate}
+                  sessionTime={selectedSession.class.schedule.startTime}
+                  amount={selectedSession.class.price || 0}
+                  customerEmail={user?.email || ""}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentError={handlePaymentError}
+                  onCancel={handlePaymentCancel}
+                />
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Payment Modal */}
-      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
-          {selectedSession && (
-            <>
-              <DialogTitle className="sr-only">
-                Complete Payment for {selectedSession.class.title}
-              </DialogTitle>
-              <DialogDescription className="sr-only">
-                Complete your payment to book a session with {selectedSession.tutor.full_name} on {selectedSession.class.startDate} at {selectedSession.class.schedule.startTime}
-              </DialogDescription>
-              <SessionPaymentForm
-                sessionTitle={selectedSession.class.title}
-                tutorName={selectedSession.tutor.full_name}
-                sessionDate={selectedSession.class.startDate}
-                sessionTime={selectedSession.class.schedule.startTime}
-                amount={selectedSession.class.price || 0}
-                customerEmail={user?.email || ""}
-                onPaymentSuccess={handlePaymentSuccess}
-                onPaymentError={handlePaymentError}
-                onCancel={handlePaymentCancel}
-              />
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+    </StudentPageWrapper>
   );
 };
 

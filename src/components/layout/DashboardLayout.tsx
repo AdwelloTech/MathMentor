@@ -323,7 +323,7 @@ const DashboardLayout: React.FC = () => {
     <div
       className={
         isAdminLoggedIn
-          ? "min-h-screen bg-[#D5FFC5]"
+          ? "min-h-screen bg-background"
           : getRoleContainerClass(profile?.role)
       }
     >

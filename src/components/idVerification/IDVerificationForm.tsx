@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   IdentificationIcon,
   CameraIcon,
@@ -23,6 +24,7 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
+  const { theme } = useTheme();
   const [formData, setFormData] = useState<Partial<IDVerificationFormData>>({
     id_type: "national_id",
     id_number: "",
@@ -185,35 +187,35 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border-0"
+      className={`max-w-4xl mx-auto ${theme === 'dark' ? 'bg-[#0F172A]' : 'bg-white'} rounded-2xl shadow-2xl border-0 transition-colors duration-200`}
     >
-      <div className="p-8 border-b-2 border-gray-100">
+      <div className={`p-8 border-b-2 ${theme === 'dark' ? 'border-[#334155]' : 'border-gray-100'} transition-colors duration-200`}>
         <div className="flex items-center space-x-4">
-          <div className="p-3 bg-green-900 rounded-2xl shadow-lg">
-            <IdentificationIcon className="h-8 w-8 text-yellow-400" />
+          <div className={`p-3 ${theme === 'dark' ? 'bg-[#10B981]' : 'bg-green-900'} rounded-2xl shadow-lg transition-colors duration-200`}>
+            <IdentificationIcon className={`h-8 w-8 ${theme === 'dark' ? 'text-[#D1FAE5]' : 'text-yellow-400'} transition-colors duration-200`} />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-green-900">
+            <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-[#F1F5F9]' : 'text-green-900'} transition-colors duration-200`}>
               ID Verification
             </h2>
-            <p className="text-base text-slate-600 mt-2">
+            <p className={`text-base ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-slate-600'} mt-2 transition-colors duration-200`}>
               Please provide your identification documents for verification
             </p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 space-y-8">
+      <form onSubmit={handleSubmit} className={`p-8 space-y-8 ${theme === 'dark' ? 'bg-[#0F172A]' : 'bg-white'} transition-colors duration-200`}>
         {/* ID Type and Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-base font-semibold text-gray-700 mb-3">
+            <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
               ID Type *
             </label>
             <select
               value={formData.id_type || ""}
               onChange={(e) => handleInputChange("id_type", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200"
+              className={`w-full px-4 py-3 border-2 ${theme === 'dark' ? 'border-[#334155] bg-[#1E293B] text-[#F1F5F9]' : 'border-gray-200 bg-white text-gray-900'} rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200`}
             >
               <option value="national_id">National ID</option>
               <option value="passport">Passport</option>
@@ -224,20 +226,20 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
           </div>
 
           <div>
-            <label className="block text-base font-semibold text-gray-700 mb-3">
+            <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
               ID Number *
             </label>
             <input
               type="text"
               value={formData.id_number || ""}
               onChange={(e) => handleInputChange("id_number", e.target.value)}
-              className={`w-full px-4 py-3 border-2 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200 ${
-                errors.id_number ? "border-red-500" : "border-gray-200"
+              className={`w-full px-4 py-3 border-2 ${theme === 'dark' ? 'border-[#334155] bg-[#1E293B] text-[#F1F5F9] placeholder-[#94A3B8]' : 'border-gray-200 bg-white text-gray-900 placeholder-[#6B7280]'} rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200 ${
+                errors.id_number ? "border-red-500" : ""
               }`}
               placeholder="Enter your ID number"
             />
             {errors.id_number && (
-              <p className="mt-2 text-sm text-red-600 font-medium">
+              <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'} font-medium transition-colors duration-200`}>
                 {errors.id_number}
               </p>
             )}
@@ -246,27 +248,27 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-base font-semibold text-gray-700 mb-3">
+            <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
               Full Name *
             </label>
             <input
               type="text"
               value={formData.full_name || ""}
               onChange={(e) => handleInputChange("full_name", e.target.value)}
-              className={`w-full px-4 py-3 border-2 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200 ${
-                errors.full_name ? "border-red-500" : "border-gray-200"
+              className={`w-full px-4 py-3 border-2 ${theme === 'dark' ? 'border-[#334155] bg-[#1E293B] text-[#F1F5F9] placeholder-[#94A3B8]' : 'border-gray-200 bg-white text-gray-900 placeholder-[#6B7280]'} rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200 ${
+                errors.full_name ? "border-red-500" : ""
               }`}
               placeholder="Enter your full name"
             />
             {errors.full_name && (
-              <p className="mt-2 text-sm text-red-600 font-medium">
+              <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'} font-medium transition-colors duration-200`}>
                 {errors.full_name}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-base font-semibold text-gray-700 mb-3">
+            <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
               Date of Birth
             </label>
             <input
@@ -275,33 +277,33 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
               onChange={(e) =>
                 handleInputChange("date_of_birth", e.target.value)
               }
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200"
+              className={`w-full px-4 py-3 border-2 ${theme === 'dark' ? 'border-[#334155] bg-[#1E293B] text-[#F1F5F9]' : 'border-gray-200 bg-white text-gray-900'} rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200`}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-base font-semibold text-gray-700 mb-3">
+            <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
               Expiry Date
             </label>
             <input
               type="date"
               value={formData.expiry_date || ""}
               onChange={(e) => handleInputChange("expiry_date", e.target.value)}
-              className={`w-full px-4 py-3 border-2 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200 ${
-                errors.expiry_date ? "border-red-500" : "border-gray-200"
+              className={`w-full px-4 py-3 border-2 ${theme === 'dark' ? 'border-[#334155] bg-[#1E293B] text-[#F1F5F9]' : 'border-gray-200 bg-white text-gray-900'} rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200 ${
+                errors.expiry_date ? "border-red-500" : ""
               }`}
             />
             {errors.expiry_date && (
-              <p className="mt-2 text-sm text-red-600 font-medium">
+              <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'} font-medium transition-colors duration-200`}>
                 {errors.expiry_date}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-base font-semibold text-gray-700 mb-3">
+            <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
               Issuing Country
             </label>
             <input
@@ -310,14 +312,14 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
               onChange={(e) =>
                 handleInputChange("issuing_country", e.target.value)
               }
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200"
+              className={`w-full px-4 py-3 border-2 ${theme === 'dark' ? 'border-[#334155] bg-[#1E293B] text-[#F1F5F9] placeholder-[#94A3B8]' : 'border-gray-200 bg-white text-gray-900 placeholder-[#6B7280]'} rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200`}
               placeholder="e.g., Sri Lanka"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-base font-semibold text-gray-700 mb-3">
+          <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
             Issuing Authority
           </label>
           <input
@@ -326,23 +328,23 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
             onChange={(e) =>
               handleInputChange("issuing_authority", e.target.value)
             }
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200"
+            className={`w-full px-4 py-3 border-2 ${theme === 'dark' ? 'border-[#334155] bg-[#1E293B] text-[#F1F5F9] placeholder-[#94A3B8]' : 'border-gray-200 bg-white text-gray-900 placeholder-[#6B7280]'} rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm hover:border-gray-300 transition-colors duration-200`}
             placeholder="e.g., Department of Registration of Persons"
           />
         </div>
 
         {/* Image Upload Section */}
         <div className="space-y-8">
-          <div className="border-t-2 border-gray-100 pt-8">
-            <h3 className="text-2xl font-bold text-green-900 mb-6">
+          <div className={`border-t-2 ${theme === 'dark' ? 'border-[#334155]' : 'border-gray-100'} pt-8 transition-colors duration-200`}>
+            <h3 className={`text-2xl font-bold ${theme === 'dark' ? 'text-[#F1F5F9]' : 'text-green-900'} mb-6 transition-colors duration-200`}>
               Upload Documents
             </h3>
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 mb-8 shadow-lg">
+            <div className={`${theme === 'dark' ? 'bg-[rgba(16,185,129,0.08)] border-[rgba(16,185,129,0.2)]' : 'bg-blue-50 border-blue-200'} border-2 rounded-2xl p-6 mb-8 shadow-lg transition-colors duration-200`}>
               <div className="flex items-start space-x-4">
-                <div className="p-2 bg-blue-600 rounded-2xl shadow-lg">
-                  <ExclamationTriangleIcon className="h-6 w-6 text-white mt-0.5" />
+                <div className={`p-2 ${theme === 'dark' ? 'bg-[#10B981]' : 'bg-blue-600'} rounded-2xl shadow-lg transition-colors duration-200`}>
+                  <ExclamationTriangleIcon className={`h-6 w-6 ${theme === 'dark' ? 'text-[#D1FAE5]' : 'text-white'} mt-0.5 transition-colors duration-200`} />
                 </div>
-                <div className="text-base text-blue-800">
+                <div className={`text-base ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-blue-800'} transition-colors duration-200`}>
                   <p className="font-bold mb-3">Important:</p>
                   <ul className="space-y-2">
                     <li>• All images must be clear and legible</li>
@@ -360,7 +362,7 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Front Image */}
             <div>
-              <label className="block text-base font-semibold text-gray-700 mb-3">
+              <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
                 Front Image *
               </label>
               <div className="space-y-4">
@@ -409,7 +411,7 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
 
             {/* Back Image */}
             <div>
-              <label className="block text-base font-semibold text-gray-700 mb-3">
+              <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
                 Back Image *
               </label>
               <div className="space-y-4">
@@ -458,7 +460,7 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
 
             {/* Selfie with ID */}
             <div>
-              <label className="block text-base font-semibold text-gray-700 mb-3">
+              <label className={`block text-base font-semibold ${theme === 'dark' ? 'text-[#CBD5E1]' : 'text-gray-700'} mb-3 transition-colors duration-200`}>
                 Selfie with ID *
               </label>
               <div className="space-y-4">
@@ -513,12 +515,12 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
         </div>
 
         {/* Submit Buttons */}
-        <div className="flex items-center justify-end space-x-6 pt-8 border-t-2 border-gray-100">
+        <div className={`flex items-center justify-end space-x-6 pt-8 border-t-2 ${theme === 'dark' ? 'border-[#334155]' : 'border-gray-100'} transition-colors duration-200`}>
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-8 py-3 border-2 border-gray-300 rounded-2xl text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+              className={`px-8 py-3 border-2 ${theme === 'dark' ? 'border-[#475569] bg-[#1E293B] text-[#F1F5F9] hover:bg-[#334155]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'} rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-500 shadow-lg hover:shadow-xl transition-all duration-200 font-medium`}
             >
               Cancel
             </button>
@@ -526,11 +528,11 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="px-8 py-3 bg-green-900 text-white rounded-2xl hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+            className={`px-8 py-3 ${theme === 'dark' ? 'bg-[#10B981] hover:bg-[#059669]' : 'bg-green-900 hover:bg-green-800'} text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-200 font-medium`}
           >
             {loading ? (
               <>
-                <LoadingSpinner size="sm" />
+                <LoadingSpinner size="sm" className={theme === 'dark' ? 'text-[#D1FAE5]' : ''} />
                 <span>Submitting...</span>
               </>
             ) : (

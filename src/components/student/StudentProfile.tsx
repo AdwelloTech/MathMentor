@@ -154,10 +154,10 @@ const StudentProfile: React.FC = () => {
 
   // Update profile image URL when profile changes
   useEffect(() => {
-    if (profile?.profile_image_url && !currentProfileImageUrl) {
+    if (profile?.profile_image_url !== undefined) {
       setCurrentProfileImageUrl(profile.profile_image_url);
     }
-  }, [profile?.profile_image_url, currentProfileImageUrl]);
+  }, [profile?.profile_image_url]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -195,30 +195,22 @@ const StudentProfile: React.FC = () => {
   };
 
   // Handle profile image change
-  const handleProfileImageChange = async (imageUrl: string | null) => {
-    setCurrentProfileImageUrl(imageUrl);
-
-    // Update the AuthContext profile data with the new image URL
-    if (updateProfile && profile) {
-      try {
-        // Build raw updates object (may contain undefined values)
-        const rawUpdates = {
-          // Keep null to explicitly clear the image in AuthContext as well
-          profile_image_url: imageUrl,
-        };
-
-        // Remove undefined keys so Dexie.update leaves them untouched
-        const updates = Object.fromEntries(
-          Object.entries(rawUpdates).filter(([, v]) => v !== undefined)
-        );
-
-        if (Object.keys(updates).length > 0) {
-          await updateProfile(updates);
-          console.log("AuthContext updated with new profile image URL");
+  const handleProfileImageChange = async () => {
+    // Reload the profile data to get the updated avatar URL
+    try {
+      const freshProfile = await AuthService.getCurrentUser();
+      if (freshProfile?.avatar_url) {
+        setCurrentProfileImageUrl(freshProfile.avatar_url);
+        // Also update AuthContext
+        if (updateProfile) {
+          await updateProfile({ avatar_url: freshProfile.avatar_url });
         }
-      } catch (error) {
-        console.error("Failed to update AuthContext:", error);
+      } else {
+        setCurrentProfileImageUrl(null);
       }
+    } catch (error) {
+      console.error("Failed to reload profile after image change:", error);
+      setCurrentProfileImageUrl(null);
     }
   };
 
@@ -359,23 +351,23 @@ const StudentProfile: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="shadow-lg border-0 bg-white rounded-2xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white pb-8">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-yellow-400 rounded-xl">
-                <UserIcon className="h-6 w-6 text-emerald-900" />
+        <Card className="shadow-lg border border-border bg-card rounded-2xl overflow-hidden">
+            <CardHeader className="bg-primary text-primary-foreground pb-8">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-secondary rounded-xl">
+                  <UserIcon className="h-6 w-6 text-secondary-foreground" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-semibold text-primary-foreground">
+                    Student Profile
+                  </CardTitle>
+                  <CardDescription className="text-primary-foreground/80 mt-1">
+                    View and update your personal information and learning
+                    preferences.
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-xl font-semibold text-white">
-                  Student Profile
-                </CardTitle>
-                <CardDescription className="text-emerald-100 mt-1">
-                  View and update your personal information and learning
-                  preferences.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
+            </CardHeader>
 
           <CardContent className="p-8 space-y-8">
             {/* Profile Image Section */}
@@ -386,16 +378,17 @@ const StudentProfile: React.FC = () => {
               className="text-center"
             >
               <div className="flex items-center mb-6">
-                <div className="p-2 bg-yellow-400/10 rounded-xl mr-3">
-                  <PhotoIcon className="h-5 w-5 text-emerald-900" />
+                <div className="p-2 bg-secondary/50 rounded-xl mr-3">
+                  <PhotoIcon className="h-5 w-5 text-secondary-foreground" />
                 </div>
-                <h3 className="text-xl font-medium text-slate-900">
+                <h3 className="text-xl font-medium text-card-foreground">
                   Profile Photo
                 </h3>
               </div>
               <div className="flex justify-center">
                 {user?.id && profile?.id && (
                   <ProfileImageUpload
+                    key={currentProfileImageUrl || 'no-image'}
                     userId={user.id}
                     profileId={profile.id}
                     currentImageUrl={currentProfileImageUrl || undefined}
@@ -410,10 +403,10 @@ const StudentProfile: React.FC = () => {
               {/* Basic Information */}
               <div className="space-y-6">
                 <div className="flex items-center mb-6">
-                  <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
-                    <UserIcon className="h-5 w-5 text-emerald-900" />
+                  <div className="p-2 bg-primary/10 rounded-xl mr-3">
+                    <UserIcon className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-medium text-slate-900">
+                  <h3 className="text-xl font-medium text-card-foreground">
                     Basic Information
                   </h3>
                 </div>
@@ -422,7 +415,7 @@ const StudentProfile: React.FC = () => {
                   <div className="space-y-2">
                     <Label
                       htmlFor="firstName"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       First Name
                     </Label>
@@ -435,14 +428,14 @@ const StudentProfile: React.FC = () => {
                       required
                       maxLength={50}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label
                       htmlFor="lastName"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Last Name
                     </Label>
@@ -455,14 +448,14 @@ const StudentProfile: React.FC = () => {
                       required
                       maxLength={50}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label
                       htmlFor="email"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Email Address
                     </Label>
@@ -473,9 +466,9 @@ const StudentProfile: React.FC = () => {
                       value={formData.email}
                       disabled
                       readOnly
-                      className="h-12 rounded-2xl bg-slate-50 cursor-not-allowed border-slate-200"
+                      className="h-12 rounded-2xl bg-muted cursor-not-allowed border-border text-muted-foreground"
                     />
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Email address cannot be changed here. Contact support if
                       needed.
                     </p>
@@ -484,7 +477,7 @@ const StudentProfile: React.FC = () => {
                   <div className="space-y-2">
                     <Label
                       htmlFor="age"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Age
                     </Label>
@@ -497,26 +490,26 @@ const StudentProfile: React.FC = () => {
                       placeholder="Enter your age"
                       min="5"
                       max="100"
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label
                       htmlFor="gradeLevelId"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Current Grade
                     </Label>
                     {gradeLevelsLoading ? (
-                      <div className="h-12 rounded-2xl border border-slate-200 flex items-center px-4">
+                      <div className="h-12 rounded-2xl border border-border flex items-center px-4 bg-muted">
                         <LoadingSpinner size="sm" />
-                        <span className="ml-2 text-slate-500">
+                        <span className="ml-2 text-muted-foreground">
                           Loading grade levels...
                         </span>
                       </div>
                     ) : gradeLevelsError ? (
-                      <div className="h-12 rounded-2xl bg-red-50 border border-red-200 flex items-center px-4 text-red-600">
+                      <div className="h-12 rounded-2xl bg-destructive/10 border border-destructive/30 flex items-center px-4 text-destructive">
                         Error loading grade levels
                       </div>
                     ) : (
@@ -526,7 +519,7 @@ const StudentProfile: React.FC = () => {
                           handleSelectChange("gradeLevelId", value)
                         }
                       >
-                        <SelectTrigger className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900">
+                        <SelectTrigger className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground">
                           <SelectValue placeholder="Select your current grade" />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl">
@@ -559,7 +552,7 @@ const StudentProfile: React.FC = () => {
                   <div className="space-y-2">
                     <Label
                       htmlFor="academicSet"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Academic Set
                     </Label>
@@ -569,7 +562,7 @@ const StudentProfile: React.FC = () => {
                         handleSelectChange("academicSet", value)
                       }
                     >
-                      <SelectTrigger className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900">
+                      <SelectTrigger className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground">
                         <SelectValue placeholder="Select your academic set" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
@@ -586,10 +579,10 @@ const StudentProfile: React.FC = () => {
                   <div className="space-y-2 md:col-span-2">
                     <Label
                       htmlFor="schoolName"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       School Name{" "}
-                      <Badge variant="secondary" className="ml-2 bg-slate-100">
+                      <Badge variant="secondary" className="ml-2 bg-muted">
                         Optional
                       </Badge>
                     </Label>
@@ -601,7 +594,7 @@ const StudentProfile: React.FC = () => {
                       placeholder="Enter your school name"
                       maxLength={100}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
                 </div>
@@ -612,10 +605,10 @@ const StudentProfile: React.FC = () => {
               {/* Contact Information */}
               <div className="space-y-6">
                 <div className="flex items-center mb-6">
-                  <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
-                    <EnvelopeIcon className="h-5 w-5 text-emerald-900" />
+                  <div className="p-2 bg-primary/10 rounded-xl mr-3">
+                    <EnvelopeIcon className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-medium text-slate-900">
+                  <h3 className="text-xl font-medium text-card-foreground">
                     Contact Information
                   </h3>
                 </div>
@@ -624,7 +617,7 @@ const StudentProfile: React.FC = () => {
                   <div className="space-y-2">
                     <Label
                       htmlFor="phone"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Phone Number
                     </Label>
@@ -637,14 +630,14 @@ const StudentProfile: React.FC = () => {
                       placeholder="Enter your phone number"
                       maxLength={20}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label
                       htmlFor="emergencyContact"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Emergency Contact
                     </Label>
@@ -657,14 +650,14 @@ const StudentProfile: React.FC = () => {
                       placeholder="Emergency contact number"
                       maxLength={20}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label
                       htmlFor="city"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       City
                     </Label>
@@ -676,14 +669,14 @@ const StudentProfile: React.FC = () => {
                       placeholder="Enter your city"
                       maxLength={50}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label
                       htmlFor="postcode"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Postcode
                     </Label>
@@ -695,17 +688,17 @@ const StudentProfile: React.FC = () => {
                       placeholder="Enter your postcode"
                       maxLength={20}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
                     <Label
                       htmlFor="address"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Full Address{" "}
-                      <Badge variant="secondary" className="ml-2 bg-slate-100">
+                      <Badge variant="secondary" className="ml-2 bg-muted">
                         Optional
                       </Badge>
                     </Label>
@@ -717,14 +710,14 @@ const StudentProfile: React.FC = () => {
                       placeholder="Enter your full address (optional)"
                       maxLength={200}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label
                       htmlFor="gender"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Gender
                     </Label>
@@ -734,7 +727,7 @@ const StudentProfile: React.FC = () => {
                         handleSelectChange("gender", value)
                       }
                     >
-                      <SelectTrigger className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900">
+                      <SelectTrigger className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground">
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
@@ -752,10 +745,10 @@ const StudentProfile: React.FC = () => {
               {/* Parent Contact Information */}
               <div className="space-y-6">
                 <div className="flex items-center mb-6">
-                  <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
-                    <UserIcon className="h-5 w-5 text-emerald-900" />
+                  <div className="p-2 bg-primary/10 rounded-xl mr-3">
+                    <UserIcon className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-medium text-slate-900">
+                  <h3 className="text-xl font-medium text-card-foreground">
                     Parent/Guardian Contact Information
                   </h3>
                 </div>
@@ -764,7 +757,7 @@ const StudentProfile: React.FC = () => {
                   <div className="space-y-2">
                     <Label
                       htmlFor="parentName"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Parent/Guardian Name
                     </Label>
@@ -776,14 +769,14 @@ const StudentProfile: React.FC = () => {
                       placeholder="Enter parent/guardian name"
                       maxLength={100}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label
                       htmlFor="parentPhone"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Parent/Guardian Phone
                     </Label>
@@ -796,14 +789,14 @@ const StudentProfile: React.FC = () => {
                       placeholder="Enter parent/guardian phone number"
                       maxLength={20}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
                     <Label
                       htmlFor="parentEmail"
-                      className="text-base font-medium text-slate-700"
+                      className="text-base font-medium text-card-foreground"
                     >
                       Parent/Guardian Email
                     </Label>
@@ -816,7 +809,7 @@ const StudentProfile: React.FC = () => {
                       placeholder="Enter parent/guardian email address"
                       maxLength={100}
                       showCharCount
-                      className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                      className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                     />
                   </div>
                 </div>
@@ -827,16 +820,16 @@ const StudentProfile: React.FC = () => {
               {/* Learning Needs */}
               <div className="space-y-6">
                 <div className="flex items-center mb-6">
-                  <div className="p-2 bg-red-50 rounded-xl mr-3">
-                    <HeartIcon className="h-5 w-5 text-red-500" />
+                  <div className="p-2 bg-destructive/10 rounded-xl mr-3">
+                    <HeartIcon className="h-5 w-5 text-destructive" />
                   </div>
-                  <h3 className="text-xl font-medium text-slate-900">
+                  <h3 className="text-xl font-medium text-card-foreground">
                     Learning Preferences & Special Needs
                   </h3>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-start space-x-3 p-4 bg-slate-50 rounded-2xl">
+                  <div className="flex items-start space-x-3 p-4 bg-secondary rounded-2xl">
                     <Checkbox
                       id="hasLearningDisabilities"
                       checked={formData.hasLearningDisabilities}
@@ -849,16 +842,16 @@ const StudentProfile: React.FC = () => {
                             : {}),
                         }));
                       }}
-                      className="mt-1 data-[state=checked]:bg-emerald-900 data-[state=checked]:border-emerald-900"
+                      className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                     <div className="flex-1">
                       <Label
                         htmlFor="hasLearningDisabilities"
-                        className="text-base font-medium text-slate-900 cursor-pointer"
+                        className="text-base font-medium text-card-foreground cursor-pointer"
                       >
                         I have learning disabilities or special needs
                       </Label>
-                      <p className="text-sm text-slate-500 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         Check this box if you have any learning challenges that
                         we should be aware of
                       </p>
@@ -875,7 +868,7 @@ const StudentProfile: React.FC = () => {
                     >
                       <Label
                         htmlFor="learningNeedsDescription"
-                        className="text-base font-medium text-slate-700"
+                        className="text-base font-medium text-card-foreground"
                       >
                         Describe Your Learning Needs
                       </Label>
@@ -888,9 +881,9 @@ const StudentProfile: React.FC = () => {
                         placeholder="Please describe your specific learning challenges, accommodations needed, or any other information that would help us provide better support..."
                         maxLength={500}
                         showCharCount
-                        className="resize-none rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                        className="resize-none rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                       />
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-muted-foreground">
                         This information will help us provide personalized
                         learning support and accommodations.
                       </p>
@@ -905,9 +898,9 @@ const StudentProfile: React.FC = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                 >
-                  <Alert className="border-emerald-200 bg-emerald-50 rounded-2xl">
-                    <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
-                    <AlertDescription className="text-emerald-700">
+                  <Alert className="border-primary/30 bg-primary/10 rounded-2xl">
+                    <CheckCircleIcon className="h-5 w-5 text-primary" />
+                    <AlertDescription className="text-primary">
                       Profile updated successfully!
                     </AlertDescription>
                   </Alert>
@@ -919,9 +912,9 @@ const StudentProfile: React.FC = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                 >
-                  <Alert className="border-red-200 bg-red-50 rounded-2xl">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
-                    <AlertDescription className="text-red-700">
+                  <Alert className="border-destructive/30 bg-destructive/10 rounded-2xl">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-destructive" />
+                    <AlertDescription className="text-destructive">
                       {errorMessage}
                     </AlertDescription>
                   </Alert>
@@ -933,7 +926,7 @@ const StudentProfile: React.FC = () => {
                 <Button
                   type="submit"
                   disabled={isSaving || gradeLevelsLoading}
-                  className="min-w-[140px] h-12 bg-emerald-900 hover:bg-emerald-800 text-white rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="min-w-[140px] h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   {isSaving ? (
                     <>

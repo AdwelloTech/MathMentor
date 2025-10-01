@@ -352,7 +352,7 @@ const TutorDashboard: React.FC = () => {
   // Show application form for new tutors
   if (!application) {
     return (
-      <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+      <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
 
@@ -379,10 +379,10 @@ const TutorDashboard: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-2xl mx-auto"
               >
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                <h1 className="text-3xl font-bold text-foreground mb-4">
                   Complete Your Tutor Application
                 </h1>
-                <p className="text-lg text-gray-600 mb-8">
+                <p className="text-lg text-secondary-foreground mb-8">
                   Please provide your details and qualifications to start
                   tutoring with us.
                 </p>
@@ -400,7 +400,7 @@ const TutorDashboard: React.FC = () => {
     application.application_status === ("pending" as TutorApplicationStatus)
   ) {
     return (
-      <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+      <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
 
@@ -427,40 +427,39 @@ const TutorDashboard: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-2xl mx-auto"
               >
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 p-8">
-                  <ClockIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-                  <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                <Card className="shadow-lg border-border p-8">
+                  <ClockIcon className="h-16 w-16 text-primary mx-auto mb-4" />
+                  <h1 className="text-2xl font-bold text-foreground mb-2">
                     Application Under Review
                   </h1>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     Thank you for submitting your tutor application. Our team is
                     currently reviewing your qualifications and experience.
                   </p>
 
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
-                    <h3 className="font-medium text-gray-900 mb-2">
+                  <div className="bg-card border border-border rounded-lg p-4 mb-6 text-left">
+                    <h3 className="font-medium text-card-foreground mb-2">
                       Application Details:
                     </h3>
-                    <div className="space-y-1 text-sm text-gray-600">
+                    <div className="space-y-1 text-sm text-muted-foreground">
                       <p>
-                        <span className="font-medium">Submitted:</span>{" "}
+                        <span className="font-medium text-card-foreground">Submitted:</span>{" "}
                         {new Date(
                           application.submitted_at
                         ).toLocaleDateString()}
                       </p>
                       <p>
-                        <span className="font-medium">Subjects:</span>{" "}
+                        <span className="font-medium text-card-foreground">Subjects:</span>{" "}
                         {application.subjects.join(", ")}
                       </p>
                       <p>
-                        <span className="font-medium">CV:</span>{" "}
+                        <span className="font-medium text-card-foreground">CV:</span>{" "}
                         {application.cv_file_name}
                       </p>
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-sm text-gray-600 mb-6">
+                  <div className="space-y-2 text-sm text-muted-foreground mb-6">
                     <p>Review typically takes 2-3 business days.</p>
                     <p>
                       We'll notify you via email once your application has been
@@ -557,10 +556,10 @@ const TutorDashboard: React.FC = () => {
     return (
       <div className="space-y-8">
         <div className="border-b border-gray-200 pb-5">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             Welcome, {profile?.full_name}
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Tutor Dashboard - Manage your tutoring profile and sessions.
           </p>
         </div>
@@ -569,15 +568,15 @@ const TutorDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-green-50 border border-green-200 rounded-lg p-4"
+          className="bg-success/10 border border-success/20 rounded-lg p-4"
         >
           <div className="flex items-start">
-            <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
+            <CheckCircleIcon className="h-5 w-5 text-success mt-0.5 mr-3" />
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-green-800">
+              <h3 className="text-sm font-medium text-success">
                 Application Approved!
               </h3>
-              <p className="mt-1 text-sm text-green-700">
+              <p className="mt-1 text-sm text-success/80">
                 Congratulations! Your tutor application has been approved. To
                 complete your setup and access all tutor features, please
                 complete your ID verification.
@@ -587,29 +586,29 @@ const TutorDashboard: React.FC = () => {
         </motion.div>
 
         {/* ID Verification Status */}
-        <div className="bg-white border border-green-200 rounded-lg p-6">
-          <h3 className="font-medium text-gray-900 mb-4">Next Steps:</h3>
-          <div className="space-y-3 text-sm text-gray-600">
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h3 className="font-medium text-card-foreground mb-4">Next Steps:</h3>
+          <div className="space-y-3 text-sm text-muted-foreground">
             {!hasIDVerification && (
               <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
                 <span>Submit ID verification documents</span>
               </div>
             )}
             {isIDVerificationPending && (
               <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
                 <span>ID verification under review</span>
               </div>
             )}
             {isIDVerificationRejected && (
               <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-destructive rounded-full"></div>
                 <span>ID verification rejected - please resubmit</span>
               </div>
             )}
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <div className="w-2 h-2 bg-success rounded-full"></div>
               <span>
                 Access full tutor features once ID verification is approved
               </span>
@@ -620,7 +619,7 @@ const TutorDashboard: React.FC = () => {
             {!hasIDVerification && (
               <button
                 onClick={() => navigate("/id-verification")}
-                className="btn btn-primary w-full"
+                className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-lg shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200"
               >
                 <IdentificationIcon className="h-5 w-5 mr-2" />
                 Complete ID Verification
@@ -629,7 +628,7 @@ const TutorDashboard: React.FC = () => {
             {isIDVerificationRejected && (
               <button
                 onClick={() => navigate("/id-verification")}
-                className="btn btn-primary w-full"
+                className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-lg shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200"
               >
                 <IdentificationIcon className="h-5 w-5 mr-2" />
                 Resubmit ID Verification
@@ -637,7 +636,7 @@ const TutorDashboard: React.FC = () => {
             )}
             <button
               onClick={() => navigate("/profile")}
-              className="btn btn-secondary w-full"
+              className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-secondary-foreground bg-secondary border border-border rounded-lg shadow-sm hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors duration-200"
             >
               View Profile
             </button>
@@ -645,14 +644,14 @@ const TutorDashboard: React.FC = () => {
         </div>
 
         {/* Note: Dashboard data and upcoming classes are only available after ID verification is completed */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
           <div className="flex items-start">
-            <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+            <ClockIcon className="h-5 w-5 text-primary mt-0.5 mr-3" />
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-blue-800">
+              <h3 className="text-sm font-medium text-primary">
                 Complete ID Verification to Access Dashboard
               </h3>
-              <p className="mt-1 text-sm text-blue-700">
+              <p className="mt-1 text-sm text-primary/80">
                 Once your ID verification is approved, you'll have access to
                 your full tutor dashboard including upcoming classes, earnings,
                 and student information.
@@ -667,18 +666,18 @@ const TutorDashboard: React.FC = () => {
   // If approved, show the main tutor dashboard
   if (areTutorFeaturesEnabled) {
     return (
-      <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+      <div className="min-h-screen bg-slate-800 relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 -my-10 px-4 sm:px-6 lg:px-8 py-10">
         {/* Animated background elements */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.05),transparent_50%)]"></div>
 
         {/* Floating decorative elements */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/15 to-yellow-400/15 rounded-full blur-3xl animate-pulse"></div>
         <div
-          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/15 to-green-400/15 rounded-full blur-2xl animate-pulse"
           style={{ animationDelay: "1s" }}
         ></div>
         <div
-          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/10 to-yellow-300/10 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "2s" }}
         ></div>
 
@@ -691,10 +690,10 @@ const TutorDashboard: React.FC = () => {
           <div id="tutor-welcome" className="flex justify-between items-start mb-6">
             {/* Dashboard Title and Welcome Message - Left Side */}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold text-green-400 mb-2">
                 Tutor Dashboard
               </h1>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-slate-300">
                 Welcome back, {profile?.full_name}! Manage your tutoring
                 sessions and students.
               </p>
@@ -706,7 +705,7 @@ const TutorDashboard: React.FC = () => {
                 id="schedule-class-button"
                 onClick={() => navigate("/schedule-class")}
                 disabled={!isActiveTutor}
-                className="bg-[#16803D] hover:bg-[#0F5A2A] text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                className="bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <PlusIcon className="w-5 h-5 mr-2" />
                 Schedule Class
@@ -715,10 +714,10 @@ const TutorDashboard: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
-                className="px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 shadow-sm"
+                className="px-4 py-2 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 shadow-sm"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
                   <span>Approved</span>
                 </div>
               </motion.div>
@@ -759,15 +758,15 @@ const TutorDashboard: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm"
+                className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 shadow-sm"
               >
                 <div className="flex items-start">
-                  <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 mr-3" />
+                  <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 mr-3" />
                   <div className="flex-1">
-                    <h3 className="text-sm font-medium text-green-800">
+                    <h3 className="text-sm font-medium text-green-300">
                       Setup Complete!
                     </h3>
-                    <p className="text-sm text-green-700 mt-1">
+                    <p className="text-sm text-green-200 mt-1">
                       Your tutor application and ID verification have been
                       approved. You can now schedule classes and start teaching!
                     </p>
@@ -781,15 +780,15 @@ const TutorDashboard: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm"
+                className="bg-blue-500/20 border border-blue-500/30 rounded-xl p-4 shadow-sm"
               >
                 <div className="flex items-start">
-                  <ClockIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+                  <ClockIcon className="h-5 w-5 text-blue-400 mt-0.5 mr-3" />
                   <div className="flex-1">
-                    <h3 className="text-sm font-medium text-blue-800">
+                    <h3 className="text-sm font-medium text-blue-300">
                       You are currently offline
                     </h3>
-                    <p className="text-sm text-blue-700 mt-1">
+                    <p className="text-sm text-blue-200 mt-1">
                       Toggle the online switch above to start receiving instant
                       session requests from students.
                     </p>
@@ -805,7 +804,7 @@ const TutorDashboard: React.FC = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-center"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             >
               {[
                 {
@@ -843,29 +842,27 @@ const TutorDashboard: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start space-x-3">
-                        <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                  <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group bg-slate-700/50 border-slate-600">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-green-600 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
                           <stat.icon className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                          <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg font-bold text-slate-200 text-left">
                             {stat.name}
                           </CardTitle>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="pl-0">
-                        <div className="flex items-start space-x-2">
-                          <div className="text-3xl font-bold text-gray-900 ml-3">
-                            {stat.value}
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-3 px-6">
-                            {stat.description}
-                          </p>
+                    <CardContent className="pt-0 pb-6">
+                      <div className="space-y-1">
+                        <div className="text-3xl font-bold text-slate-200 text-left">
+                          {stat.value}
                         </div>
+                        <p className="text-sm text-slate-400 text-left">
+                          {stat.description}
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
@@ -883,10 +880,10 @@ const TutorDashboard: React.FC = () => {
               transition={{ delay: 0.4 }}
               className="mb-16"
             >
-              <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+              <Card className="bg-slate-700/50 border-slate-600">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                  <CardTitle className="flex items-center space-x-2 text-slate-200">
+                    <div className="bg-green-600 w-8 h-8 rounded-lg flex items-center justify-center">
                       <LightBulbIcon className="w-4 h-4 text-white" />
                     </div>
                     <span>Quick Actions</span>
@@ -934,7 +931,7 @@ const TutorDashboard: React.FC = () => {
                         whileTap={{ scale: 0.98 }}
                       >
                         <Card
-                          className={`cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50 border-0 ${
+                          className={`cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group bg-slate-700/50 border-slate-600 ${
                             action.disabled
                               ? "opacity-50 cursor-not-allowed"
                               : ""
@@ -943,17 +940,17 @@ const TutorDashboard: React.FC = () => {
                         >
                           <CardContent className="p-6 text-center">
                             <div
-                              className={`bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg`}
+                              className={`bg-green-600 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg`}
                             >
                               <action.icon className="w-6 h-6 text-white" />
                             </div>
-                            <h3 className="font-semibold text-gray-900 mb-2">
+                            <h3 className="font-semibold text-slate-200 mb-2">
                               {action.title}
                             </h3>
-                            <p className="text-sm text-gray-600 mb-4">
+                            <p className="text-sm text-slate-400 mb-4">
                               {action.description}
                             </p>
-                            <div className="bg-yellow-300 text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-all duration-200 shadow-md hover:shadow-lg">
+                            <div className="bg-yellow-400 text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-300 transition-all duration-200 shadow-md hover:shadow-lg">
                               {action.disabled ? "Unavailable" : "Get Started"}
                             </div>
                           </CardContent>
@@ -973,7 +970,7 @@ const TutorDashboard: React.FC = () => {
   // If pending, show pending status
   if (isPendingTutor) {
     return (
-      <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+      <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
 

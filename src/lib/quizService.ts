@@ -318,7 +318,7 @@ export const quizService = {
         totalQuestions: number;
       }>('/api/quizzes/student/attempts/submit', {
         attemptId,
-        answers,
+        answers
       });
       return response;
     },

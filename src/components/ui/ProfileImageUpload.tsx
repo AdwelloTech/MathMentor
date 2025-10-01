@@ -160,7 +160,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       <div className="flex flex-col items-center space-y-4">
         <div className="relative">
           {/* Image Preview/Current */}
-          <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg">
+          <div className="w-32 h-32 rounded-full overflow-hidden bg-secondary border-4 border-background shadow-lg">
             {previewUrl ? (
               <img
                 src={previewUrl}
@@ -174,7 +174,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                 <UserCircleIcon className="w-24 h-24" />
               </div>
             )}
@@ -184,7 +184,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
           {currentImageUrl && !previewUrl && (
             <button
               onClick={handleRemoveCurrentImage}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-md"
+              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors shadow-md"
               title="Remove current image"
             >
               <XMarkIcon className="w-4 h-4" />
@@ -212,8 +212,8 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
               className="flex flex-col items-center space-y-3"
             >
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm font-medium text-card-foreground">{selectedFile.name}</p>
+                <p className="text-xs text-muted-foreground">
                   {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                 </p>
               </div>
@@ -222,7 +222,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
                 <button
                   onClick={handleUpload}
                   disabled={isUploading}
-                  className="btn btn-sm btn-primary"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isUploading ? (
                     <>
@@ -239,7 +239,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
                 <button
                   onClick={handleCancel}
                   disabled={isUploading}
-                  className="btn btn-sm btn-secondary"
+                  className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-medium text-sm hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <XMarkIcon className="w-4 h-4 mr-1" />
                   Cancel
@@ -253,7 +253,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               onClick={triggerFileInput}
-              className="btn btn-outline flex items-center space-x-2"
+              className="px-4 py-2 border border-border bg-background text-foreground rounded-lg font-medium text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center space-x-2"
             >
               <PhotoIcon className="w-4 h-4" />
               <span>Choose Photo</span>
@@ -269,9 +269,9 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
-            className="bg-red-50 border border-red-200 rounded-lg p-3"
+            className="bg-destructive/10 border border-destructive/30 rounded-lg p-3"
           >
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="text-sm text-destructive">{error}</p>
           </motion.div>
         )}
 
@@ -280,19 +280,19 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
-            className="bg-green-50 border border-green-200 rounded-lg p-3"
+            className="bg-primary/10 border border-primary/30 rounded-lg p-3"
           >
-            <p className="text-sm text-green-600">{success}</p>
+            <p className="text-sm text-primary">{success}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Upload Guidelines */}
       <div className="text-center">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Maximum file size: 5MB
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Supported formats: JPEG, PNG, WebP, GIF
         </p>
       </div>

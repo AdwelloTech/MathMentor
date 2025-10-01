@@ -2,7 +2,7 @@
 export const getRoleBackground = (role?: string) => {
   switch (role) {
     case "tutor":
-      return "bg-[#D5FFC5]"; // Green background for tutors
+      return "bg-background"; // Theme-aware background for tutors
     case "student":
       return ""; // No background for students (inner wrapper handles it)
     case "admin":
@@ -12,9 +12,9 @@ export const getRoleBackground = (role?: string) => {
     case "hr":
     case "finance":
     case "support":
-      return "bg-[#D5FFC5]"; // Green background for other roles
+      return "bg-background"; // Theme-aware background for other roles
     default:
-      return "bg-gray-50"; // Default fallback
+      return "bg-background"; // Default fallback
   }
 };
 
@@ -26,7 +26,7 @@ export const getRoleContainerClass = (role?: string) => {
 };
 
 export const getStudentContentWrapperClass = () => {
-  return "min-h-screen bg-gray-50"; // Student pages get background on inner wrapper
+  return "min-h-screen bg-background"; // Student pages get background on inner wrapper
 };
 
 export const getTutorContentWrapperClass = () => {
@@ -36,7 +36,7 @@ export const getTutorContentWrapperClass = () => {
 // Student page background management utilities
 export const getStudentPageBackgroundClass = (customBg?: string) => {
   // If a custom background is provided, use it; otherwise use default
-  const backgroundClass = customBg || "bg-gray-50";
+  const backgroundClass = customBg || "bg-background";
   return `min-h-screen ${backgroundClass}`;
 };
 
@@ -107,5 +107,5 @@ export const extractBackgroundColor = (className: string): string => {
     }
   }
 
-  return "bg-gray-50"; // Default fallback
+  return "bg-background"; // Default fallback
 };

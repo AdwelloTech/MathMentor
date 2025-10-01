@@ -152,7 +152,7 @@ const ManageStudentsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
 

@@ -67,21 +67,21 @@ const ClassSchedulingPage: React.FC = () => {
   if (!isActiveTutor) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <div className="max-w-md w-full bg-slate-700/50 rounded-lg shadow-lg p-8 text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
             <XMarkIcon className="h-6 w-6 text-red-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-slate-200 mb-2">
             Account Temporarily Inactive
           </h3>
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-slate-300 mb-6">
             Your tutor account has been temporarily deactivated by the admin.
             You cannot schedule new classes at this time. Please contact support
             for more information.
           </p>
           <button
             onClick={() => window.history.back()}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
           >
             Go Back
           </button>
@@ -428,7 +428,7 @@ const ClassSchedulingPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+    <div className="min-h-screen bg-slate-800 relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 -my-10 px-4 sm:px-6 lg:px-8 py-10">
       {/* Animated background elements */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
 
@@ -443,17 +443,17 @@ const ClassSchedulingPage: React.FC = () => {
         style={{ animationDelay: "2s" }}
       ></div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 space-y-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pb-16 space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl font-bold text-green-400 mb-4">
             Schedule Your Classes
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-300 max-w-2xl mx-auto">
             Choose your class type, select a date and time, and start teaching!
           </p>
         </motion.div>
@@ -473,39 +473,39 @@ const ClassSchedulingPage: React.FC = () => {
               transition={{ delay: index * 0.1 }}
               whileHover={{ scale: 1.02, y: -5 }}
               whileTap={{ scale: 0.98 }}
-              className={`cursor-pointer p-6 bg-white rounded-xl shadow-[0_2px_2px_0_#16803D] border-0 transition-all hover:shadow-xl hover:-translate-y-1 duration-300 ${
+              className={`cursor-pointer p-6 bg-slate-700/50 rounded-xl border-slate-600 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300 ${
                 selectedClassType?.id === classType.id
-                  ? "ring-2 ring-[#16803D] ring-offset-2"
+                  ? "ring-2 ring-green-500 ring-offset-2"
                   : ""
               }`}
               onClick={() => handleClassTypeSelect(classType)}
             >
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2 text-[#16803D]">
-                  <div className="bg-[#16803D] w-10 h-10 rounded-lg flex items-center justify-center">
+                <div className="flex items-center space-x-2 text-green-400">
+                  <div className="bg-green-600 w-10 h-10 rounded-lg flex items-center justify-center">
                     <div className="text-white">
                       {getClassTypeIcon(classType.name)}
                     </div>
                   </div>
                 </div>
                 {selectedClassType?.id === classType.id && (
-                  <div className="bg-[#16803D] w-6 h-6 rounded-full flex items-center justify-center">
+                  <div className="bg-green-600 w-6 h-6 rounded-full flex items-center justify-center">
                     <CheckIcon className="h-4 w-4 text-white" />
                   </div>
                 )}
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-slate-200 mb-2">
                   {classType.name}
                 </h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-slate-400 mb-4">
 z                  {classType.description || "No description available"}
                 </p>
 
-                <div className="space-y-3 text-sm text-gray-600">
+                <div className="space-y-3 text-sm text-slate-400">
                   <div className="flex items-center space-x-2">
-                    <div className="bg-green-100 w-6 h-6 rounded-md flex items-center justify-center">
-                      <ClockIcon className="h-3 w-3 text-[#16803D]" />
+                    <div className="bg-green-600/20 w-6 h-6 rounded-md flex items-center justify-center">
+                      <ClockIcon className="h-3 w-3 text-green-400" />
                     </div>
                     <span className="font-medium">
                       {classType.duration_minutes} minutes
@@ -513,8 +513,8 @@ z                  {classType.description || "No description available"}
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <div className="bg-yellow-100 w-6 h-6 rounded-md flex items-center justify-center">
-                      <UserGroupIcon className="h-3 w-3 text-yellow-600" />
+                    <div className="bg-yellow-500/20 w-6 h-6 rounded-md flex items-center justify-center">
+                      <UserGroupIcon className="h-3 w-3 text-yellow-400" />
                     </div>
                     <span className="font-medium">
                       Max {classType.max_students || 1} student
@@ -522,8 +522,8 @@ z                  {classType.description || "No description available"}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="bg-blue-100 w-6 h-6 rounded-md flex items-center justify-center">
-                      <CurrencyDollarIcon className="h-3 w-3 text-blue-600" />
+                    <div className="bg-blue-500/20 w-6 h-6 rounded-md flex items-center justify-center">
+                      <CurrencyDollarIcon className="h-3 w-3 text-blue-400" />
                     </div>
                     <span className="font-medium">
                       ${classType.price_per_session || 0}/session
@@ -540,10 +540,10 @@ z                  {classType.description || "No description available"}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-[0_2px_2px_0_#16803D] border-0 p-6"
+            className="bg-slate-700/50 rounded-xl border-slate-600 shadow-lg p-6"
           >
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center space-x-2">
-              <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+            <h2 className="text-xl font-semibold text-slate-200 mb-6 flex items-center space-x-2">
+              <div className="bg-green-600 w-8 h-8 rounded-lg flex items-center justify-center">
                 <CalendarDaysIcon className="w-4 h-4 text-white" />
               </div>
               <span>Select Date and Time for {selectedClassType?.name}</span>
@@ -552,18 +552,18 @@ z                  {classType.description || "No description available"}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Calendar */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <h3 className="text-lg font-medium text-slate-200 mb-4">
                   Select Date
                 </h3>
                 <div className="flex items-center justify-between mb-4">
                   <button
                     onClick={goToPreviousMonth}
-                    className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 text-slate-300 hover:text-gray-800 hover:bg-slate-600/50 rounded-lg transition-colors"
                     title="Previous Month"
                   >
                     &lt;
                   </button>
-                  <span className="text-lg font-semibold text-gray-900">
+                  <span className="text-lg font-semibold text-slate-200">
                     {new Date(currentYear, currentMonth, 1).toLocaleDateString(
                       "en-US",
                       { month: "long", year: "numeric" }
@@ -571,7 +571,7 @@ z                  {classType.description || "No description available"}
                   </span>
                   <button
                     onClick={goToNextMonth}
-                    className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 text-slate-300 hover:text-gray-800 hover:bg-slate-600/50 rounded-lg transition-colors"
                     title="Next Month"
                   >
                     &gt;
@@ -583,7 +583,7 @@ z                  {classType.description || "No description available"}
                     (day) => (
                       <div
                         key={day}
-                        className="p-2 text-center text-sm font-medium text-gray-500"
+                        className="p-2 text-center text-sm font-medium text-slate-400"
                       >
                         {day}
                       </div>
@@ -597,14 +597,14 @@ z                  {classType.description || "No description available"}
                       whileTap={{ scale: day.isDisabled ? 1 : 0.95 }}
                       className={`p-2 text-center rounded-lg transition-all ${
                         day.isToday
-                          ? "bg-[#16803D] text-white font-semibold"
+                          ? "bg-green-600 text-white font-semibold"
                           : day.isSelected
-                          ? "bg-[#199421] text-white ring-2 ring-[#16803D] ring-offset-2"
+                          ? "bg-green-600 text-white ring-2 ring-green-500 ring-offset-2"
                           : day.hasClasses
                           ? "bg-green-100 text-green-700 hover:bg-green-200"
                           : day.isCurrentMonth
-                          ? "bg-gray-50 hover:bg-gray-100 text-gray-700"
-                          : "bg-gray-100 text-gray-400"
+                          ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
+                          : "bg-slate-600/50 text-slate-400"
                       } ${
                         day.isDisabled
                           ? "opacity-50 cursor-not-allowed"
@@ -627,7 +627,7 @@ z                  {classType.description || "No description available"}
               {/* Time Selection */}
               {showTimeSelection && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  <h3 className="text-lg font-medium text-slate-200 mb-4">
                     Select Time
                   </h3>
                   <div className="max-h-80 overflow-y-auto">
@@ -651,10 +651,10 @@ z                  {classType.description || "No description available"}
                                 whileTap={{ scale: 0.95 }}
                                 className={`p-2 text-center rounded-lg transition-all text-xs ${
                                   slot.isSelected
-                                    ? "bg-[#16803D] text-white ring-2 ring-[#199421] ring-offset-1"
+                                    ? "bg-green-600 text-white ring-2 ring-green-500 ring-offset-2 ring-offset-slate-800"
                                     : slot.isAvailable
-                                    ? "bg-gray-50 hover:bg-gray-100 text-gray-700 hover:bg-[#16803D] hover:text-black"
-                                    : "bg-red-50 text-red-500 cursor-not-allowed"
+                                    ? "bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white"
+                                    : "bg-slate-800/50 text-slate-500 cursor-not-allowed"
                                 } ${
                                   slot.isDisabled
                                     ? "opacity-50 cursor-not-allowed"
@@ -701,7 +701,7 @@ z                  {classType.description || "No description available"}
                 <button
                   onClick={() => setShowClassForm(true)}
                   disabled={loading}
-                  className="bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white px-8 py-3 rounded-xl font-semibold shadow-[0_2px_2px_0_#16803D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-green-600 text-white px-8 py-3 rounded-xl font-semibold shadow-[0_2px_2px_0_#16803D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <div className="flex items-center space-x-2">
@@ -723,11 +723,11 @@ z                  {classType.description || "No description available"}
 
       {/* Class Creation Form Modal */}
       {showClassForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg p-6 w-full max-w-md mx-4"
+            className="bg-slate-700/50 rounded-lg border-slate-600 p-6 w-full max-w-md mx-4"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -735,7 +735,7 @@ z                  {classType.description || "No description available"}
               </h3>
               <button
                 onClick={() => setShowClassForm(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-slate-400 hover:text-slate-300"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
@@ -743,7 +743,7 @@ z                  {classType.description || "No description available"}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Subject
                 </label>
                 <select
@@ -754,7 +754,7 @@ z                  {classType.description || "No description available"}
                       subject_id: e.target.value || undefined,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-slate-700/50"
                 >
                   <option value="" disabled>
                     Select subject
@@ -767,7 +767,7 @@ z                  {classType.description || "No description available"}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Grade Level
                 </label>
                 <GradeSelect
@@ -784,7 +784,7 @@ z                  {classType.description || "No description available"}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Class Title
                 </label>
                 <input
@@ -793,13 +793,13 @@ z                  {classType.description || "No description available"}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, title: e.target.value }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Enter class title"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Description (Optional)
                 </label>
                 <textarea
@@ -810,7 +810,7 @@ z                  {classType.description || "No description available"}
                       description: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   rows={3}
                   placeholder="Enter class description"
                 />
@@ -818,7 +818,7 @@ z                  {classType.description || "No description available"}
 
               {selectedClassType && (selectedClassType.max_students || 1) > 1 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Max Students
                   </label>
                   <input
@@ -832,13 +832,13 @@ z                  {classType.description || "No description available"}
                         max_students: parseInt(e.target.value),
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Price per Session ($)
                 </label>
                 <input
@@ -852,7 +852,7 @@ z                  {classType.description || "No description available"}
                       price_per_session: parseFloat(e.target.value),
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
 
@@ -860,13 +860,13 @@ z                  {classType.description || "No description available"}
                 <button
                   onClick={handleCreateClass}
                   disabled={loading || !formData.title || !formData.subject_id || !formData.grade_level_id}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Creating..." : "Create Class"}
                 </button>
                 <button
                   onClick={() => setShowClassForm(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="flex-1 bg-gray-300 text-slate-300 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
                   Cancel
                 </button>

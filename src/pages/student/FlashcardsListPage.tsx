@@ -15,15 +15,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, User, GraduationCap } from "lucide-react";
+import {
+  BookOpenIcon,
+  UserIcon,
+  AcademicCapIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
 import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 import { flashcards } from "@/lib/flashcards";
 import type { FlashcardSet } from "@/types/flashcards";
-
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { subjectsService } from "@/lib/subjects";
 import type { Subject } from "@/types/subject";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FlashcardsListPage: React.FC = () => {
   const { profile } = useAuth();
@@ -72,11 +78,35 @@ const FlashcardsListPage: React.FC = () => {
 
   if (loading) {
     return (
-      <StudentPageWrapper backgroundClass="bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-900 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">Loading flashcard sets...</p>
+      <StudentPageWrapper backgroundClass="bg-background">
+        <div className="min-h-screen p-6">
+          <div className="max-w-7xl mx-auto space-y-8">
+            {/* Header Skeleton */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-5 w-80" />
+              </div>
+              <div className="flex gap-3">
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-10 w-24" />
+              </div>
+            </div>
+            {/* Flashcard Sets Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="border-border bg-card shadow-lg">
+                  <CardHeader>
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-5 w-1/2" />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </StudentPageWrapper>
@@ -84,21 +114,23 @@ const FlashcardsListPage: React.FC = () => {
   }
 
   return (
-    <StudentPageWrapper backgroundClass="bg-gradient-to-br from-slate-50 to-slate-100">
+    <StudentPageWrapper backgroundClass="bg-background" className="text-foreground">
       <div className="min-h-screen p-6">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Error Display */}
           {error && (
-            <Card className="border-2 border-red-200 bg-red-50">
+            <Card className="border-destructive bg-destructive/10">
               <CardContent className="p-4">
-                <div className="flex items-center gap-3 text-red-800">
+                <div className="flex items-center gap-3 text-destructive">
+                  <ExclamationTriangleIcon className="h-5 w-5" />
                   <span className="text-sm font-medium">{error}</span>
                   <Button
                     onClick={load}
-                    variant="outline"
+                    variant="destructive"
                     size="sm"
-                    className="ml-auto border-red-300 text-red-700 hover:bg-red-100"
+                    className="ml-auto"
                   >
+                    <ArrowPathIcon className="h-4 w-4 mr-2" />
                     Retry
                   </Button>
                 </div>
@@ -110,14 +142,14 @@ const FlashcardsListPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-900 rounded-2xl shadow-lg">
-                  <GraduationCap className="h-6 w-6 text-white" />
+                <div className="p-2 bg-primary/10 rounded-lg shadow-sm">
+                  <AcademicCapIcon className="h-6 w-6 text-primary" />
                 </div>
-                <h1 className="text-3xl font-bold text-green-900">
-                  Flash Cards
+                <h1 className="text-3xl font-bold text-foreground">
+                  Flashcard Sets
                 </h1>
               </div>
-              <p className="text-base text-slate-600">
+              <p className="text-base text-muted-foreground">
                 Master your subjects with interactive study cards
               </p>
             </div>
@@ -130,7 +162,7 @@ const FlashcardsListPage: React.FC = () => {
                   setSubject(value === "all" ? "" : value)
                 }
               >
-                <SelectTrigger className="w-64">
+                <SelectTrigger className="w-64 bg-input border-border text-foreground focus:ring-primary">
                   <SelectValue placeholder="Filter by subject" />
                 </SelectTrigger>
                 <SelectContent>
@@ -142,7 +174,8 @@ const FlashcardsListPage: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={load} variant="secondary" className="border">
+              <Button onClick={load} variant="outline" className="font-semibold">
+                <ArrowPathIcon className="h-4 w-4 mr-2" />
                 Refresh
               </Button>
             </div>
@@ -153,51 +186,51 @@ const FlashcardsListPage: React.FC = () => {
             {sets.map((set) => (
               <Card
                 key={set.id}
-                className="group hover:shadow-2xl transition-all duration-300 border-2 border-green-900/60 backdrop-blur-sm hover:-translate-y-1 rounded-2xl overflow-hidden"
+                className="group hover:shadow-xl transition-all duration-300 border-border bg-card hover:-translate-y-1 rounded-2xl overflow-hidden flex flex-col"
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-2 flex-1">
-                      <CardTitle className="text-xl font-bold text-green-900 leading-tight">
+                      <CardTitle className="text-xl font-bold text-card-foreground leading-tight">
                         {set.title}
                       </CardTitle>
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge
                           variant="secondary"
-                          className="bg-yellow-300 text-black border-2 border-black/40 hover:bg-yellow-400 rounded-md px-3 py-1"
+                          className="font-semibold"
                         >
                           {set.subject}
                         </Badge>
                         {set.topic && (
                           <Badge
                             variant="outline"
-                            className="border-yellow-400 text-black rounded-xl px-3 py-1"
+                            className="font-medium"
                           >
                             {set.topic}
                           </Badge>
                         )}
                       </div>
                     </div>
-                    <div className="p-2 bg-gradient-to-br from-green-900 to-green-800 rounded-xl shadow-lg text-white">
-                      <BookOpen className="h-5 w-5 text-yellow-400" />
+                    <div className="p-2 bg-primary/10 rounded-xl shadow-sm text-primary">
+                      <BookOpenIcon className="h-5 w-5" />
                     </div>
                   </div>
                 </CardHeader>
 
-                <CardContent className="pt-0 space-y-4">
-                  <CardDescription className="flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-slate-600" />
-                    <span className="text-slate-700">
+                <CardContent className="pt-0 space-y-4 flex-1 flex flex-col justify-end">
+                  <CardDescription className="flex items-center gap-2 text-base text-muted-foreground">
+                    <UserIcon className="h-4 w-4" />
+                    <span className="font-medium">
                       By {set.tutor?.full_name || "Unknown Tutor"}
                     </span>
                   </CardDescription>
 
                   <Button
                     onClick={() => navigate(`/student/flashcards/${set.id}`)}
-                    className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all"
                   >
                     Start Studying
-                    <GraduationCap className="ml-2 h-4 w-4" />
+                    <AcademicCapIcon className="ml-2 h-4 w-4" />
                   </Button>
                 </CardContent>
               </Card>
@@ -206,16 +239,16 @@ const FlashcardsListPage: React.FC = () => {
 
           {/* Empty State */}
           {sets.length === 0 && !loading && (
-            <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl">
+            <Card className="border-border bg-card shadow-lg rounded-2xl">
               <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="p-4 bg-slate-100 rounded-2xl">
-                  <BookOpen className="h-12 w-12 text-slate-400" />
+                <div className="p-4 bg-secondary rounded-2xl">
+                  <BookOpenIcon className="h-12 w-12 text-muted-foreground" />
                 </div>
                 <div className="text-center space-y-2">
-                  <h3 className="text-xl font-semibold text-slate-700">
+                  <h3 className="text-xl font-semibold text-card-foreground">
                     No flashcard sets found
                   </h3>
-                  <p className="text-base text-slate-500">
+                  <p className="text-base text-muted-foreground">
                     {subject
                       ? `No flashcards available for ${
                           subjects.find((sj) => sj.name === subject)
@@ -227,7 +260,7 @@ const FlashcardsListPage: React.FC = () => {
                     <Button
                       onClick={() => setSubject("")}
                       variant="outline"
-                      className="mt-4 border-2 border-slate-300 text-slate-700 hover:bg-slate-50"
+                      className="mt-4 font-semibold"
                     >
                       View All Subjects
                     </Button>

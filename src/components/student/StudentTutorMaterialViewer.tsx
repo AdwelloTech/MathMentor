@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X,
-  FileText,
-  Download,
-  Eye,
-  BookOpen,
-} from "lucide-react";
+  XMarkIcon,
+  DocumentTextIcon,
+  ArrowDownTrayIcon,
+  EyeIcon,
+  BookOpenIcon,
+} from "@heroicons/react/24/outline";
 import DOMPurify from "dompurify";
 import {
   formatFileSize,
@@ -126,18 +126,18 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-10"
           >
-            <div className="bg-gray-200 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden border border-green-900/10">
+            <div className="bg-background rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden border border-border">
               {/* Header */}
-              <div className="relative bg-gradient-to-r from-green-900 to-green-800 text-white p-6">
+              <div className="relative bg-gradient-to-r from-primary to-primary/90 text-primary-foreground p-6">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-4">
                     <div>
-                      <h2 className="text-2xl font-bold text-white mb-1">
+                      <h2 className="text-2xl font-bold text-primary-foreground mb-1">
                         {material.title || "Untitled Material"}
                       </h2>
                       <div className="flex flex-col items-start space-x-3">
                         {material.is_premium && (
-                          <Badge className="bg-gradient-to-r from-green-600 to-green-500 text-white border-0 text-xs font-bold hover:from-green-500 hover:to-green-600">
+                          <Badge variant="secondary" className="font-semibold">
                             PREMIUM
                           </Badge>
                         )}
@@ -149,9 +149,9 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                     disabled={loading}
                     variant="ghost"
                     size="sm"
-                    className="text-white hover:bg-white/20 hover:text-white h-10 w-10 p-0"
+                    className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground h-10 w-10 p-0 rounded-full"
                   >
-                    <X className="h-5 w-5" />
+                    <XMarkIcon className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
@@ -163,15 +163,15 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Description Card */}
                     {material.description && (
-                      <Card className="lg:col-span-2 border-green-900/60 border-2 shadow-sm">
+                      <Card className="lg:col-span-2 border-border bg-card shadow-sm">
                         <CardHeader className="pb-3">
-                          <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
-                            <BookOpen className="h-5 w-5" />
+                          <h3 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
+                            <BookOpenIcon className="h-5 w-5" />
                             Description
                           </h3>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-slate-700 leading-relaxed">
+                          <p className="text-muted-foreground leading-relaxed">
                             {material.description}
                           </p>
                         </CardContent>
@@ -179,35 +179,35 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                     )}
 
                     {/* Info Card */}
-                    <Card className=" border-green-900/60 border-2 shadow-sm">
+                    <Card className="border-border bg-card shadow-sm">
                       <CardHeader className="pb-3">
-                        <h3 className="text-lg font-semibold text-green-900">
+                        <h3 className="text-lg font-semibold text-card-foreground">
                           Material Info
                         </h3>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {/* Stats */}
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                          <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
                             <div className="flex items-center gap-2">
-                              <Eye className="h-4 w-4 text-black" />
-                              <span className="text-sm font-semibold text-black">
+                              <EyeIcon className="h-4 w-4 text-secondary-foreground" />
+                              <span className="text-sm font-semibold text-secondary-foreground">
                                 Views
                               </span>
                             </div>
-                            <span className="text-sm font-bold text-black">
+                            <span className="text-sm font-bold text-secondary-foreground">
                               {material.view_count}
                             </span>
                           </div>
                           {hasFile && (
-                            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                            <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
                               <div className="flex items-center gap-2">
-                                <Download className="h-4 w-4 text-black" />
-                                <span className="text-sm font-semibold text-black">
+                                <ArrowDownTrayIcon className="h-4 w-4 text-secondary-foreground" />
+                                <span className="text-sm font-semibold text-secondary-foreground">
                                   Downloads
                                 </span>
                               </div>
-                              <span className="text-sm font-bold text-black">
+                              <span className="text-sm font-bold text-secondary-foreground">
                                 {material.download_count}
                               </span>
                             </div>
@@ -221,24 +221,24 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
 
                   {/* File Info Card */}
                   {hasFile && (
-                    <Card className="border-green-900/60 border-2 shadow-sm">
+                    <Card className="border-border bg-card shadow-sm">
                       <CardHeader className="pb-3">
-                        <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
-                          <FileText className="h-5 w-5" />
+                        <h3 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
+                          <DocumentTextIcon className="h-5 w-5" />
                           Attached File
                         </h3>
                       </CardHeader>
                       <CardContent>
-                        <div className="flex items-center justify-between p-4  rounded-xl border border-green-900">
+                        <div className="flex items-center justify-between p-4 bg-secondary rounded-xl border border-border">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-green-900">
-                              <FileText className="h-5 w-5 text-white" />
+                            <div className="p-2 rounded-lg bg-primary/10">
+                              <DocumentTextIcon className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                              <p className="font-semibold text-black truncate">
+                              <p className="font-semibold text-card-foreground truncate">
                                 {material.file_name}
                               </p>
-                              <p className="text-xs text-gray-700 font-medium">
+                              <p className="text-xs text-muted-foreground font-medium">
                                 {formatFileSize(material.file_size)}
                               </p>
                             </div>
@@ -249,9 +249,9 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                                 onClick={handleViewFile}
                                 disabled={loading}
                                 size="sm"
-                                className="bg-green-900 hover:bg-green-900 text-white"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                               >
-                                <Eye className="h-4 w-4 mr-1" />
+                                <EyeIcon className="h-4 w-4 mr-1" />
                                 View File
                               </Button>
                             )}
@@ -260,9 +260,9 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                                 onClick={handleDownload}
                                 disabled={loading}
                                 size="sm"
-                                className="bg-green-900 hover:bg-green-900  text-white"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                               >
-                                <Download className="h-4 w-4 mr-1" />
+                                <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
                                 Download
                               </Button>
                             )}
@@ -276,19 +276,19 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                 {/* PDF Viewer */}
                 {isPdfFile && (
                   <div className="px-6 pb-6">
-                    <Card className="border-green-900/60 border-2 shadow-sm">
+                    <Card className="border-border bg-card shadow-sm">
                       <CardHeader className="pb-3">
-                        <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
-                          <FileText className="h-5 w-5" />
+                        <h3 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
+                          <DocumentTextIcon className="h-5 w-5" />
                           PDF Document
                         </h3>
                       </CardHeader>
                       <CardContent>
-                        <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
+                        <div className="bg-secondary rounded-xl p-4 border border-border">
                           <iframe
                             src={secureFileUrl || material.file_url || ""}
                             title={`PDF: ${material.file_name || "document"}`}
-                            className="w-full h-[700px] border border-slate-300 rounded-lg shadow-inner"
+                            className="w-full h-[700px] border border-border rounded-lg shadow-inner"
                             style={{ minHeight: "700px" }}
                           />
                         </div>
@@ -300,16 +300,16 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                 {/* Content */}
                 {hasContent && (
                   <div className="px-6 pb-6">
-                    <Card className="border-green-900/60 border-2 shadow-sm">
+                    <Card className="border-border bg-card shadow-sm">
                       <CardHeader className="pb-3">
-                        <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
-                          <BookOpen className="h-5 w-5" />
+                        <h3 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
+                          <BookOpenIcon className="h-5 w-5" />
                           Content
                         </h3>
                       </CardHeader>
                       <CardContent>
                         <div
-                          className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
+                          className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed"
                           dangerouslySetInnerHTML={{
                             __html: DOMPurify.sanitize(material.content || ""),
                           }}
@@ -322,15 +322,15 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                 {/* No Content Message */}
                 {!hasContent && !hasFile && (
                   <div className="px-6 pb-6">
-                    <Card className="border-green-900/10 shadow-sm">
+                    <Card className="border-border bg-card shadow-sm">
                       <CardContent className="text-center py-12">
-                        <div className="p-4 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                          <FileText className="h-10 w-10 text-slate-400" />
+                        <div className="p-4 rounded-full bg-secondary w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                          <DocumentTextIcon className="h-10 w-10 text-muted-foreground" />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                        <h3 className="text-lg font-semibold text-card-foreground mb-2">
                           No content available
                         </h3>
-                        <p className="text-slate-600 max-w-md mx-auto">
+                        <p className="text-muted-foreground max-w-md mx-auto">
                           This material doesn't have any text content or
                           attached files yet.
                         </p>

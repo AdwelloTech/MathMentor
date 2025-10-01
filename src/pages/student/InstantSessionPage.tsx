@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { instantSessionService } from "../../lib/instantSessionService";
 import { useAuth } from "../../contexts/AuthContext";
-import { STUDENT_INSTANT_SESSION_BACKGROUND } from "../../utils/roleStyles";
 import StudentPageWrapper from "../../components/ui/StudentPageWrapper";
 import {
   ClockIcon,
@@ -282,81 +281,67 @@ export default function InstantSessionPage() {
   };
 
   return (
-    <StudentPageWrapper backgroundClass={STUDENT_INSTANT_SESSION_BACKGROUND}>
-      <div className="relative overflow-hidden">
+    <StudentPageWrapper backgroundClass="bg-background">
+      <div className="relative overflow-hidden min-h-screen">
         {/* Animated background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
 
         {/* Floating decorative elements */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-primary/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
         <div
-          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-primary/10 rounded-full blur-2xl animate-pulse"
           style={{ animationDelay: "1s" }}
         ></div>
         <div
-          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-primary/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "2s" }}
         ></div>
 
         <div className="max-w-2xl mx-auto relative z-10">
           {/* Header Section */}
           <div className="text-center mb-8 pt-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-primary to-primary/80 rounded-full mb-4">
               <SparklesIcon className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Instant Session
-            </h1>
-            <p className="text-lg text-gray-600 flex items-center justify-center gap-2">
+            <h1 className="text-4xl font-bold text-foreground mb-2">Instant Session</h1>
+            <p className="text-lg text-muted-foreground flex items-center justify-center gap-2">
               <ClockIcon className="w-5 h-5" />
               <span>15 minutes • Get tutoring help immediately</span>
             </p>
           </div>
 
           {/* Main Card */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
             {/* Status-based content */}
             {status === "idle" && (
               <div className="p-8">
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-4">
-                    <AcademicCapIcon className="w-6 h-6 text-green-600" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
+                    <AcademicCapIcon className="w-6 h-6 text-primary" />
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                    Need tutoring help?
-                  </h2>
-                  <p className="text-gray-600">
-                    Select your subject and connect with a tutor instantly
-                  </p>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Need tutoring help?</h2>
+                  <p className="text-muted-foreground">Select your subject and connect with a tutor instantly</p>
                 </div>
-
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Choose your subject
-                    </label>
+                    <label className="block text-sm font-medium text-foreground mb-3">Choose your subject</label>
                     <Select value={subjectId} onValueChange={setSubjectId}>
-                      <SelectTrigger className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200 text-lg bg-white hover:border-gray-300 focus:outline-none focus:shadow-lg h-auto">
+                      <SelectTrigger className="w-full p-4 border-2 border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-lg bg-card hover:border-muted focus:outline-none focus:shadow-lg h-auto">
                         <SelectValue placeholder="Select a subject" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
+                      <SelectContent className="bg-card border-2 border-border rounded-xl shadow-lg">
                         {subjects.map((subject) => (
-                          <SelectItem
-                            key={subject.id}
-                            value={subject.id}
-                            className="py-3 px-4 text-lg hover:bg-green-50 focus:bg-green-50 cursor-pointer"
-                          >
+                          <SelectItem key={subject.id} value={subject.id} className="py-3 px-4 text-lg hover:bg-primary/5 focus:bg-primary/5 cursor-pointer">
                             {subject.display_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-
                   <button
                     onClick={handleRequest}
                     disabled={!subjectId}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2"
+                    className="w-full bg-primary text-primary-foreground py-4 px-6 rounded-xl font-semibold text-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2"
                   >
                     <UserGroupIcon className="w-5 h-5" />
                     Request Tutor Now
@@ -364,7 +349,6 @@ export default function InstantSessionPage() {
                 </div>
               </div>
             )}
-
             {status === "waiting" && (
               <div className="p-8 text-center">
                 <div className="animate-pulse">
@@ -372,83 +356,52 @@ export default function InstantSessionPage() {
                     <ClockIcon className="w-8 h-8 text-yellow-600" />
                   </div>
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Finding your tutor...
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  We're searching for available tutors in{" "}
-                  {getSubjectName(subjectId)}
-                </p>
-
+                <h2 className="text-xl font-semibold text-foreground mb-2">Finding your tutor...</h2>
+                <p className="text-muted-foreground mb-6">We're searching for available tutors in {getSubjectName(subjectId)}</p>
                 <div className="flex items-center justify-center space-x-2 mb-6">
-                  <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-2 h-2 bg-green-600 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 bg-green-600 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                 </div>
-
                 <button
                   onClick={handleCancel}
                   disabled={cancelling}
-                  className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors duration-200 flex items-center gap-2 mx-auto"
+                  className="bg-destructive text-destructive-foreground px-6 py-2 rounded-lg hover:bg-destructive/80 disabled:opacity-50 transition-colors duration-200 flex items-center gap-2 mx-auto"
                 >
                   <XCircleIcon className="w-4 h-4" />
                   {cancelling ? "Cancelling..." : "Cancel Request"}
                 </button>
               </div>
             )}
-
             {status === "accepted" && (
               <div className="p-8 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-6">
-                  <CheckCircleIcon className="w-8 h-8 text-green-600" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
+                  <CheckCircleIcon className="w-8 h-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Tutor Found! 🎉
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  A tutor has accepted your request
-                </p>
-
+                <h2 className="text-xl font-semibold text-foreground mb-2">Tutor Found!</h2>
+                <p className="text-muted-foreground mb-6">A tutor has accepted your request</p>
                 {timeLeft !== null && (
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-200">
+                  <div className="bg-primary/5 rounded-xl p-4 mb-6 border border-primary/20">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <ClockIcon className="w-5 h-5 text-gray-600" />
-                      <span className="text-sm font-medium text-gray-700">
-                        Time remaining
-                      </span>
+                      <ClockIcon className="w-5 h-5 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">Time remaining</span>
                     </div>
-                    <div
-                      className={`text-2xl font-bold ${
-                        timeLeft < 5 * 60 * 1000
-                          ? "text-red-600"
-                          : "text-green-600"
-                      }`}
-                    >
-                      {formatTime(timeLeft)}
-                    </div>
+                    <div className={`text-2xl font-bold ${timeLeft < 5 * 60 * 1000 ? "text-destructive" : "text-primary"}`}>{formatTime(timeLeft)}</div>
                   </div>
                 )}
-
                 <div className="space-y-3">
                   {jitsiUrl && timeLeft && timeLeft > 0 && (
                     <button
                       onClick={handleJoin}
-                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2"
+                      className="w-full bg-primary text-primary-foreground py-4 px-6 rounded-xl font-semibold text-lg hover:bg-primary/90 transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2"
                     >
                       <PlayIcon className="w-5 h-5" />
                       Join Session Now
                     </button>
                   )}
-
                   <button
                     onClick={resetSession}
-                    className="w-full bg-red-500 text-white py-3 px-6 rounded-xl font-semibold text-lg hover:bg-red-600 transition-all duration-200 flex items-center justify-center gap-2"
+                    className="w-full bg-destructive text-destructive-foreground py-3 px-6 rounded-xl font-semibold text-lg hover:bg-destructive/80 transition-all duration-200 flex items-center justify-center gap-2"
                   >
                     <XCircleIcon className="w-5 h-5" />
                     End Session
@@ -456,85 +409,65 @@ export default function InstantSessionPage() {
                 </div>
               </div>
             )}
-
             {status === "expired" && (
               <div className="p-8 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-6">
-                  <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-destructive/10 rounded-full mb-6">
+                  <ExclamationTriangleIcon className="w-8 h-8 text-destructive" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Session Expired
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  The 15-minute time limit has passed
-                </p>
+                <h2 className="text-xl font-semibold text-foreground mb-2">Session Expired</h2>
+                <p className="text-muted-foreground mb-6">The 15-minute time limit has passed</p>
                 <button
                   onClick={resetSession}
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200"
+                  className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors duration-200"
                 >
                   Request New Session
                 </button>
               </div>
             )}
-
             {status === "cancelled" && (
               <div className="p-8 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-6">
-                  <XCircleIcon className="w-8 h-8 text-gray-600" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-muted rounded-full mb-6">
+                  <XCircleIcon className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Request Cancelled
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Your instant session request has been cancelled
-                </p>
+                <h2 className="text-xl font-semibold text-foreground mb-2">Request Cancelled</h2>
+                <p className="text-muted-foreground mb-6">Your instant session request has been cancelled</p>
                 <button
                   onClick={resetSession}
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200"
+                  className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors duration-200"
                 >
                   Try Again
                 </button>
               </div>
             )}
           </div>
-
           {/* Info Cards */}
           <div className="grid md:grid-cols-3 gap-4 mt-8 mb-16">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <ClockIcon className="w-4 h-4 text-green-600" />
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <ClockIcon className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="font-semibold text-gray-900">Quick Sessions</h3>
+                <h3 className="font-semibold text-foreground">Quick Sessions</h3>
               </div>
-              <p className="text-sm text-gray-600">
-                Get tutoring help in just 15 minutes with our instant service
-              </p>
+              <p className="text-sm text-muted-foreground">Get tutoring help in just 15 minutes with our instant service</p>
             </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <UserGroupIcon className="w-4 h-4 text-emerald-600" />
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <UserGroupIcon className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="font-semibold text-gray-900">Expert Tutors</h3>
+                <h3 className="font-semibold text-foreground">Expert Tutors</h3>
               </div>
-              <p className="text-sm text-gray-600">
-                Connect with qualified tutors who are ready to help immediately
-              </p>
+              <p className="text-sm text-muted-foreground">Connect with qualified tutors who are ready to help immediately</p>
             </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <SparklesIcon className="w-4 h-4 text-green-600" />
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <SparklesIcon className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="font-semibold text-gray-900">Instant Connect</h3>
+                <h3 className="font-semibold text-foreground">Instant Connect</h3>
               </div>
-              <p className="text-sm text-gray-600">
-                No waiting - get matched with a tutor and start learning right
-                away
-              </p>
+              <p className="text-sm text-muted-foreground">No waiting - get matched with a tutor and start learning right away</p>
             </div>
           </div>
         </div>

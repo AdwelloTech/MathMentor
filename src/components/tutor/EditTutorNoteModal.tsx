@@ -173,16 +173,16 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-slate-700 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900">
+              <div className="flex items-center justify-between p-6 border-b border-slate-600">
+                <h2 className="text-2xl font-bold text-slate-200">
                   Edit Study Material
                 </h2>
                 <button
                   onClick={handleClose}
                   disabled={loading}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                  className="p-2 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-600 transition-colors duration-200"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
@@ -191,21 +191,21 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
               {/* Content */}
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {/* Material Type Indicator */}
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-slate-800/50 rounded-lg p-4">
                   <div className="flex items-center space-x-2">
                     {hasFile ? (
-                      <DocumentArrowUpIcon className="h-5 w-5 text-blue-600" />
+                      <DocumentArrowUpIcon className="h-5 w-5 text-blue-400" />
                     ) : (
-                      <DocumentTextIcon className="h-5 w-5 text-green-600" />
+                      <DocumentTextIcon className="h-5 w-5 text-green-400" />
                     )}
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-slate-200">
                       {hasFile ? "File Upload" : "Text Note"}
                     </span>
                   </div>
                   {hasFile && (
                     <div className="flex items-center justify-between mt-1">
                       <div className="flex items-center space-x-1">
-                        <span className="text-sm text-gray-600">File: </span>
+                        <span className="text-sm text-slate-400">File: </span>
                         <button
                           type="button"
                           onClick={async () => {
@@ -222,13 +222,13 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                               }
                             }
                           }}
-                          className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium text-sm"
+                          className="text-blue-400 hover:text-blue-300 hover:underline cursor-pointer font-medium text-sm"
                           title="Click to view file"
                           disabled={loadingFile}
                         >
                           {loadingFile ? "Loading..." : note.file_name}
                         </button>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-slate-400">
                           ({(note.file_size || 0) / 1024 / 1024} MB)
                         </span>
                       </div>
@@ -249,7 +249,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                               }
                             }
                           }}
-                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors duration-200 text-xs font-medium"
+                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 px-2 py-1 rounded-md transition-colors duration-200 text-xs font-medium"
                           title="Click to view file"
                           disabled={loadingFile}
                         >
@@ -306,7 +306,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                               }
                             }
                           }}
-                          className="text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded-md transition-colors duration-200 text-xs font-medium"
+                          className="text-green-400 hover:text-green-300 hover:bg-green-500/20 px-2 py-1 rounded-md transition-colors duration-200 text-xs font-medium"
                           title="Download file"
                           disabled={loadingFile}
                         >
@@ -321,7 +321,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                 <div>
                   <label
                     htmlFor="title"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-sm font-medium text-slate-200 mb-2"
                   >
                     Material Title *
                   </label>
@@ -332,7 +332,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full"
+                    className="w-full border-slate-600 bg-slate-600/50 text-slate-200 placeholder-slate-400 focus:ring-green-500 focus:border-green-500"
                     placeholder="Enter the title of your study material"
                     required
                     maxLength={NOTE_TITLE_MAX_LENGTH}
@@ -344,7 +344,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                 <div>
                   <label
                     htmlFor="description"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-sm font-medium text-slate-200 mb-2"
                   >
                     Description
                   </label>
@@ -355,7 +355,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                     value={formData.description}
                     onChange={handleInputChange}
                     maxLength={DESCRIPTION_MAX_LENGTH}
-                    className="w-full"
+                    className="w-full border-slate-600 bg-slate-600/50 text-slate-200 placeholder-slate-400 focus:ring-green-500 focus:border-green-500"
                     rows={4}
                     showCharCount
                   />
@@ -365,7 +365,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                 <div>
                   <label
                     htmlFor="subject"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-sm font-medium text-slate-200 mb-2"
                   >
                     Subject
                   </label>
@@ -375,7 +375,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, subjectId: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-600/50 text-slate-200 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="">Select a subject (optional)</option>
                     {subjects.map((subject) => (
@@ -388,7 +388,7 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
 
                 {/* Content */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-200 mb-2">
                     Content
                   </label>
                   <RichTextEditor
@@ -413,29 +413,29 @@ const EditTutorNoteModal: React.FC<EditTutorNoteModalProps> = ({
                   />
                   <label
                     htmlFor="isPremium"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-medium text-slate-200"
                   >
                     Mark as Premium Material
                   </label>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-400">
                     (Only accessible to premium package students)
                   </span>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-end space-x-4 pt-6 border-t border-slate-600">
                   <button
                     type="button"
                     onClick={handleClose}
                     disabled={loading}
-                    className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
+                    className="px-6 py-3 text-slate-300 bg-slate-600 hover:bg-slate-500 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 flex items-center space-x-2"
+                    className="px-6 py-3 bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white rounded-lg font-medium hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 flex items-center space-x-2"
                   >
                     {loading ? (
                       <>

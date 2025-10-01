@@ -61,15 +61,15 @@ const TutorManageClassesPage: React.FC = () => {
   // If tutor is inactive, show error message
   if (!isActiveTutor) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-700/50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
             <X className="h-6 w-6 text-red-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-slate-200 mb-2">
             Account Temporarily Inactive
           </h3>
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-slate-400 mb-6">
             Your tutor account has been temporarily deactivated by the admin.
             You cannot manage classes at this time. Please contact support for
             more information.
@@ -301,7 +301,7 @@ const TutorManageClassesPage: React.FC = () => {
       case "cancelled":
         return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-600/50 text-slate-200";
     }
   };
 
@@ -314,7 +314,7 @@ const TutorManageClassesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+    <div className="min-h-screen bg-slate-800 relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 -my-10 px-4 sm:px-6 lg:px-8 py-10">
       {/* Animated background elements */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
 
@@ -329,16 +329,16 @@ const TutorManageClassesPage: React.FC = () => {
         style={{ animationDelay: "2s" }}
       ></div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pb-16">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 text-center"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl font-bold text-green-400 mb-4">
             Manage Classes
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-300 max-w-2xl mx-auto">
             View, edit, and manage your scheduled classes
           </p>
         </motion.div>
@@ -347,13 +347,13 @@ const TutorManageClassesPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-8 mb-8"
+          className="bg-slate-700/50 rounded-xl border border-slate-600 shadow-lg p-8 mb-8"
         >
           <div className="flex items-center space-x-3 mb-6">
-            <div className="bg-[#16803D] w-10 h-10 rounded-xl flex items-center justify-center">
+            <div className="bg-green-600 w-10 h-10 rounded-xl flex items-center justify-center">
               <Filter className="h-5 w-5 text-white" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-slate-200">
               Filters & Search
             </h2>
           </div>
@@ -362,12 +362,12 @@ const TutorManageClassesPage: React.FC = () => {
             <div className="space-y-2">
               <Label
                 htmlFor="class-type"
-                className="text-sm font-bold text-gray-700"
+                className="text-sm font-bold text-slate-300"
               >
                 Class Type
               </Label>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-full h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20">
+                <SelectTrigger className="w-full h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20">
                   <SelectValue placeholder="All Class Types" />
                 </SelectTrigger>
                 <SelectContent>
@@ -384,7 +384,7 @@ const TutorManageClassesPage: React.FC = () => {
             <div className="space-y-2">
               <Label
                 htmlFor="date-filter"
-                className="text-sm font-bold text-gray-700"
+                className="text-sm font-bold text-slate-300"
               >
                 Date
               </Label>
@@ -393,14 +393,14 @@ const TutorManageClassesPage: React.FC = () => {
                 type="date"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
-                className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20"
+                className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20"
               />
             </div>
 
             <div className="space-y-2">
               <Label
                 htmlFor="search"
-                className="text-sm font-bold text-gray-700"
+                className="text-sm font-bold text-slate-300"
               >
                 Search
               </Label>
@@ -412,7 +412,7 @@ const TutorManageClassesPage: React.FC = () => {
                   placeholder="Search classes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-12 pl-10 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20"
+                  className="w-full h-12 pl-10 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20"
                 />
               </div>
             </div>
@@ -451,15 +451,15 @@ const TutorManageClassesPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 p-12 text-center"
+            className="bg-slate-700/50 rounded-xl border border-slate-600 shadow-lg p-12 text-center"
           >
-            <div className="bg-[#16803D] w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="bg-green-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
               <CalendarDays className="w-10 h-10 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            <h3 className="text-2xl font-bold text-slate-200 mb-3">
               No classes found
             </h3>
-            <p className="text-lg text-gray-600 max-w-md mx-auto">
+            <p className="text-lg text-slate-400 max-w-md mx-auto">
               {classes.length === 0
                 ? "You haven't scheduled any classes yet."
                 : "No classes match your current filters."}
@@ -481,22 +481,22 @@ const TutorManageClassesPage: React.FC = () => {
                 whileHover={{ scale: 1.02, y: -5 }}
                 className="group cursor-pointer transition-all duration-300"
               >
-                <div className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 overflow-hidden hover:shadow-xl h-full min-h-[280px]">
-                  <div className="p-6 h-full flex flex-col">
+                <div className="bg-slate-700/50 rounded-xl border border-slate-600 overflow-hidden hover:shadow-lg hover:border-green-500 h-full min-h-[280px]">
+                  <div className="p-6 h-full flex flex-col bg-slate-800/80">
                     <div className="flex justify-between items-start mb-4 flex-grow">
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">
+                        <h3 className="text-lg font-bold text-slate-200 mb-2">
                           {classItem.title}
                         </h3>
                         <div className="flex items-center space-x-2">
-                          <div className="bg-[#16803D] w-6 h-6 rounded-lg flex items-center justify-center">
+                          <div className="bg-green-600 w-6 h-6 rounded-lg flex items-center justify-center">
                             <CalendarDays className="w-3 h-3 text-white" />
                           </div>
-                          <p className="text-sm font-medium text-gray-700">
+                          <p className="text-sm font-medium text-slate-300">
                             {getClassTypeName(classItem.class_type_id, classItem)}
                           </p>
                         </div>
-                        <p className="mt-2 text-sm text-gray-700">
+                        <p className="mt-2 text-sm text-slate-400">
                           <span className="font-medium">Subject:</span> {classItem.subject?.display_name || classItem.subject?.name || "No subject"}
                         </p>
                       </div>
@@ -510,37 +510,37 @@ const TutorManageClassesPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-3 mb-6">
-                      <div className="flex items-center text-sm text-gray-700">
-                        <div className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center mr-3">
-                          <CalendarDays className="w-3 h-3 text-gray-600" />
+                      <div className="flex items-center text-sm text-slate-400">
+                        <div className="bg-slate-600/50 w-6 h-6 rounded-full flex items-center justify-center mr-3">
+                          <CalendarDays className="w-3 h-3 text-slate-400" />
                         </div>
                         <span className="font-medium">
                           {formatDate(classItem.date)}
                         </span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-700">
-                        <div className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center mr-3">
-                          <Clock className="w-3 h-3 text-gray-600" />
+                      <div className="flex items-center text-sm text-slate-400">
+                        <div className="bg-slate-600/50 w-6 h-6 rounded-full flex items-center justify-center mr-3">
+                          <Clock className="w-3 h-3 text-slate-400" />
                         </div>
                         <span className="font-medium">
                           {formatTime(classItem.start_time)} -{" "}
                           {formatTime(classItem.end_time)}
                         </span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-700">
-                        <div className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center mr-3">
-                          <Users className="w-3 h-3 text-gray-600" />
+                      <div className="flex items-center text-sm text-slate-400">
+                        <div className="bg-slate-600/50 w-6 h-6 rounded-full flex items-center justify-center mr-3">
+                          <Users className="w-3 h-3 text-slate-400" />
                         </div>
                         <span className="font-medium">
                           {classItem.current_students}/{classItem.max_students}{" "}
                           students
                         </span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-700">
-                        <div className="bg-gray-100 w-6 h-6 rounded-full flex items-center justify-center mr-3">
-                          <DollarSign className="w-3 h-3 text-gray-600" />
+                      <div className="flex items-center text-sm text-slate-400">
+                        <div className="bg-slate-600/50 w-6 h-6 rounded-full flex items-center justify-center mr-3">
+                          <DollarSign className="w-3 h-3 text-slate-400" />
                         </div>
-                        <span className="font-bold text-[#16803D]">
+                        <span className="font-bold text-green-400">
                           ${classItem.price_per_session}
                         </span>
                       </div>
@@ -554,7 +554,7 @@ const TutorManageClassesPage: React.FC = () => {
                         }}
                         variant="ghost"
                         size="sm"
-                        className="h-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50 group-hover:scale-105 transition-all duration-200"
+                        className="h-9 text-blue-600 hover:text-blue-700 hover:bg-blue-700/20 group-hover:scale-105 transition-all duration-200"
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         View
@@ -563,7 +563,7 @@ const TutorManageClassesPage: React.FC = () => {
                         onClick={() => setEditingClass(classItem)}
                         variant="ghost"
                         size="sm"
-                        className="h-9 text-green-600 hover:text-green-700 hover:bg-green-50 group-hover:scale-105 transition-all duration-200"
+                        className="h-9 text-green-600 hover:text-green-700 hover:bg-green-700/20 group-hover:scale-105 transition-all duration-200"
                       >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
@@ -578,7 +578,7 @@ const TutorManageClassesPage: React.FC = () => {
                         }}
                         variant="ghost"
                         size="sm"
-                        className="h-9 text-purple-600 hover:text-purple-700 hover:bg-purple-50 group-hover:scale-105 transition-all duration-200"
+                        className="h-9 text-purple-600 hover:text-purple-700 hover:bg-purple-700/20 group-hover:scale-105 transition-all duration-200"
                       >
                         <Users className="w-4 h-4 mr-1" />
                         Requests
@@ -587,7 +587,7 @@ const TutorManageClassesPage: React.FC = () => {
                         onClick={() => handleDeleteClass(classItem.id)}
                         variant="ghost"
                         size="sm"
-                        className="h-9 text-red-600 hover:text-red-700 hover:bg-red-50 group-hover:scale-105 transition-all duration-200"
+                        className="h-9 text-red-600 hover:text-red-700 hover:bg-red-700/20 group-hover:scale-105 transition-all duration-200"
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
                         Delete
@@ -606,19 +606,19 @@ const TutorManageClassesPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             >
               <div className="p-8">
                 <div className="flex justify-between items-start mb-8">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center">
+                    <div className="bg-green-600 w-12 h-12 rounded-xl flex items-center justify-center">
                       <CalendarDays className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      <h2 className="text-2xl font-bold text-slate-200 mb-2">
                         {selectedClass.title}
                       </h2>
-                      <p className="text-gray-600">
+                      <p className="text-slate-400">
                         {selectedClass.description || "No description"}
                       </p>
                     </div>
@@ -627,7 +627,7 @@ const TutorManageClassesPage: React.FC = () => {
                     onClick={() => setShowDetails(false)}
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-slate-400 hover:bg-slate-600/50"
                   >
                     <X className="w-5 h-5" />
                   </Button>
@@ -636,43 +636,43 @@ const TutorManageClassesPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                      <h3 className="text-sm font-medium text-slate-400 mb-1">
                         Class Type
                       </h3>
-                      <p className="text-gray-900">
+                      <p className="text-slate-200">
                         {getClassTypeName(selectedClass.class_type_id, selectedClass)}
                       </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                      <h3 className="text-sm font-medium text-slate-400 mb-1">
                         Subject
                       </h3>
-                      <p className="text-gray-900">
+                      <p className="text-slate-200">
                         {selectedClass.subject?.display_name || selectedClass.subject?.name || "No subject"}
                       </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                      <h3 className="text-sm font-medium text-slate-400 mb-1">
                         Date
                       </h3>
-                      <p className="text-gray-900">
+                      <p className="text-slate-200">
                         {formatDate(selectedClass.date)}
                       </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                      <h3 className="text-sm font-medium text-slate-400 mb-1">
                         Time
                       </h3>
-                      <p className="text-gray-900">
+                      <p className="text-slate-200">
                         {formatTime(selectedClass.start_time)} -{" "}
                         {formatTime(selectedClass.end_time)}
                       </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                      <h3 className="text-sm font-medium text-slate-400 mb-1">
                         Duration
                       </h3>
-                      <p className="text-gray-900">
+                      <p className="text-slate-200">
                         {selectedClass.duration_minutes} minutes
                       </p>
                     </div>
@@ -680,24 +680,24 @@ const TutorManageClassesPage: React.FC = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                      <h3 className="text-sm font-medium text-slate-400 mb-1">
                         Price
                       </h3>
-                      <p className="text-gray-900">
+                      <p className="text-slate-200">
                         ${selectedClass.price_per_session}
                       </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                      <h3 className="text-sm font-medium text-slate-400 mb-1">
                         Capacity
                       </h3>
-                      <p className="text-gray-900">
+                      <p className="text-slate-200">
                         {selectedClass.current_students}/
                         {selectedClass.max_students} students
                       </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                      <h3 className="text-sm font-medium text-slate-400 mb-1">
                         Status
                       </h3>
                       <span
@@ -710,7 +710,7 @@ const TutorManageClassesPage: React.FC = () => {
                     </div>
                     {selectedClass.jitsi_meeting_url && (
                       <div>
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        <h3 className="text-sm font-medium text-slate-400 mb-1">
                           Jitsi Meeting Link
                         </h3>
                         <a
@@ -732,7 +732,7 @@ const TutorManageClassesPage: React.FC = () => {
                       setEditingClass(selectedClass);
                       setShowDetails(false);
                     }}
-                    className="px-6 py-3 bg-gradient-to-r from-[#16803D] to-green-600 text-white hover:from-[#0F5A2A] hover:to-green-700 focus:ring-2 focus:ring-[#16803D] font-bold transition-all duration-200 shadow-lg hover:shadow-xl"
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-700 focus:ring-2 focus:ring-green-500 font-bold transition-all duration-200 shadow-lg hover:shadow-lg hover:border-green-500"
                   >
                     Edit Class
                   </Button>
@@ -755,7 +755,7 @@ const TutorManageClassesPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             >
               <EditClassForm
                 classItem={editingClass}
@@ -773,7 +773,7 @@ const TutorManageClassesPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             >
               <div className="p-8">
                 <div className="flex justify-between items-start mb-8">
@@ -782,10 +782,10 @@ const TutorManageClassesPage: React.FC = () => {
                       <Users className="h-6 w-6 text-purple-600" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-gray-900">
+                      <h3 className="text-2xl font-bold text-slate-200">
                         Booking Requests
                       </h3>
-                      <p className="text-gray-600 mt-1">
+                      <p className="text-slate-400 mt-1">
                         {selectedClass.title}
                       </p>
                     </div>
@@ -796,7 +796,7 @@ const TutorManageClassesPage: React.FC = () => {
                       setSelectedClass(null);
                       setBookingRequests([]);
                     }}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-gray-400 hover:text-slate-400 transition-colors"
                   >
                     <X className="h-6 w-6" />
                   </button>
@@ -809,10 +809,10 @@ const TutorManageClassesPage: React.FC = () => {
                 ) : bookingRequests.length === 0 ? (
                   <div className="text-center py-12">
                     <Users className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                    <h4 className="text-xl font-semibold text-gray-900 mb-3">
+                    <h4 className="text-xl font-semibold text-slate-200 mb-3">
                       No pending requests
                     </h4>
-                    <p className="text-gray-600">
+                    <p className="text-slate-400">
                       There are currently no booking requests for this class.
                     </p>
                   </div>
@@ -821,7 +821,7 @@ const TutorManageClassesPage: React.FC = () => {
                     {bookingRequests.map((request) => (
                       <div
                         key={request.id}
-                        className="bg-gray-50 rounded-lg p-6 border border-gray-200"
+                        className="bg-slate-700/50 rounded-lg p-6 border border-gray-200"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -830,10 +830,10 @@ const TutorManageClassesPage: React.FC = () => {
                                 <UserCheck className="w-5 h-5 text-purple-600" />
                               </div>
                               <div>
-                                <h4 className="font-semibold text-gray-900">
+                                <h4 className="font-semibold text-slate-200">
                                   {request.student?.full_name || 'Student'}
                                 </h4>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-slate-400">
                                   {request.student?.email || ''}
                                 </p>
                               </div>
@@ -844,25 +844,25 @@ const TutorManageClassesPage: React.FC = () => {
 
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                               <div>
-                                <span className="font-medium text-gray-700">Booked on:</span>
-                                <p className="text-gray-900">
+                                <span className="font-medium text-slate-300">Booked on:</span>
+                                <p className="text-slate-200">
                                   {new Date(request.created_at).toLocaleDateString()}
                                 </p>
                               </div>
                               <div>
-                                <span className="font-medium text-gray-700">Amount:</span>
-                                <p className="text-gray-900">${request.payment_amount}</p>
+                                <span className="font-medium text-slate-300">Amount:</span>
+                                <p className="text-slate-200">${request.payment_amount}</p>
                               </div>
                               <div>
-                                <span className="font-medium text-gray-700">Status:</span>
+                                <span className="font-medium text-slate-300">Status:</span>
                                 <p className="text-yellow-600 font-medium capitalize">
                                   {request.booking_status}
                                 </p>
                               </div>
                               {request.notes && (
                                 <div className="col-span-2 md:col-span-4">
-                                  <span className="font-medium text-gray-700">Notes:</span>
-                                  <p className="text-gray-900 mt-1">{request.notes}</p>
+                                  <span className="font-medium text-slate-300">Notes:</span>
+                                  <p className="text-slate-200 mt-1">{request.notes}</p>
                                 </div>
                               )}
                             </div>
@@ -1049,16 +1049,16 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center space-x-3">
-          <div className="bg-[#16803D] w-10 h-10 rounded-xl flex items-center justify-center">
+          <div className="bg-green-600 w-10 h-10 rounded-xl flex items-center justify-center">
             <Edit className="h-5 w-5 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Edit Class</h2>
+          <h2 className="text-2xl font-bold text-slate-200">Edit Class</h2>
         </div>
         <Button
           onClick={onCancel}
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+          className="h-8 w-8 p-0 text-gray-400 hover:text-slate-400 hover:bg-slate-600/50"
         >
           <X className="w-5 h-5" />
         </Button>
@@ -1067,7 +1067,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-bold text-gray-900">
+            <Label htmlFor="title" className="text-sm font-bold text-slate-200">
               Title
             </Label>
             <Input
@@ -1077,7 +1077,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
+              className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all"
               required
             />
           </div>
@@ -1085,7 +1085,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           <div className="space-y-2">
             <Label
               htmlFor="class-type"
-              className="text-sm font-bold text-gray-900"
+              className="text-sm font-bold text-slate-200"
             >
               Class Type
             </Label>
@@ -1095,7 +1095,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
                 setFormData({ ...formData, class_type_id: value })
               }
             >
-              <SelectTrigger className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20">
+              <SelectTrigger className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20">
                 <SelectValue placeholder="Select class type" />
               </SelectTrigger>
               <SelectContent>
@@ -1111,7 +1111,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           <div className="space-y-2">
             <Label
               htmlFor="subject"
-              className="text-sm font-bold text-gray-900"
+              className="text-sm font-bold text-slate-200"
             >
               Subject
             </Label>
@@ -1121,7 +1121,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
                 setFormData({ ...formData, subject_id: value })
               }
             >
-              <SelectTrigger className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20">
+              <SelectTrigger className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20">
                 <SelectValue placeholder="Select subject (optional)" />
               </SelectTrigger>
               <SelectContent>
@@ -1136,7 +1136,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="date" className="text-sm font-bold text-gray-900">
+            <Label htmlFor="date" className="text-sm font-bold text-slate-200">
               Date
             </Label>
             <Input
@@ -1146,7 +1146,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, date: e.target.value })
               }
-              className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
+              className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all"
               required
             />
           </div>
@@ -1154,7 +1154,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           <div className="space-y-2">
             <Label
               htmlFor="start-time"
-              className="text-sm font-bold text-gray-900"
+              className="text-sm font-bold text-slate-200"
             >
               Start Time
             </Label>
@@ -1166,7 +1166,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, start_time: e.target.value })
               }
-              className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
+              className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all"
               required
             />
           </div>
@@ -1174,7 +1174,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           <div className="space-y-2">
             <Label
               htmlFor="end-time"
-              className="text-sm font-bold text-gray-900"
+              className="text-sm font-bold text-slate-200"
             >
               End Time
             </Label>
@@ -1186,7 +1186,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, end_time: e.target.value })
               }
-              className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
+              className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all"
               required
             />
           </div>
@@ -1194,7 +1194,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           <div className="space-y-2">
             <Label
               htmlFor="max-students"
-              className="text-sm font-bold text-gray-900"
+              className="text-sm font-bold text-slate-200"
             >
               Max Students
             </Label>
@@ -1219,14 +1219,14 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
                   });
                 }
               }}
-              className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
+              className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all"
               required
               min="1"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="price" className="text-sm font-bold text-gray-900">
+            <Label htmlFor="price" className="text-sm font-bold text-slate-200">
               Price per Session
             </Label>
             <Input
@@ -1251,14 +1251,14 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
                   });
                 }
               }}
-              className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all"
+              className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all"
               required
               min="0"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status" className="text-sm font-bold text-gray-900">
+            <Label htmlFor="status" className="text-sm font-bold text-slate-200">
               Status
             </Label>
             <Select
@@ -1274,7 +1274,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
                 })
               }
             >
-              <SelectTrigger className="h-12 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20">
+              <SelectTrigger className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -1290,7 +1290,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
         <div className="space-y-2">
           <Label
             htmlFor="description"
-            className="text-sm font-bold text-gray-900"
+            className="text-sm font-bold text-slate-200"
           >
             Description
           </Label>
@@ -1301,7 +1301,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
               setFormData({ ...formData, description: e.target.value })
             }
             rows={3}
-            className="h-24 border-2 border-gray-200 rounded-lg focus:border-[#16803D] focus:ring-2 focus:ring-[#16803D] focus:ring-opacity-20 transition-all resize-none"
+            className="h-24 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all resize-none"
             /* required */
           />
         </div>
@@ -1317,7 +1317,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           </Button>
           <Button
             type="submit"
-            className="px-6 py-3 bg-gradient-to-r from-[#16803D] to-green-600 text-white hover:from-[#0F5A2A] hover:to-green-700 focus:ring-2 focus:ring-[#16803D] font-bold transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-700 focus:ring-2 focus:ring-green-500 font-bold transition-all duration-200 shadow-lg hover:shadow-lg hover:border-green-500"
           >
             Save Changes
           </Button>

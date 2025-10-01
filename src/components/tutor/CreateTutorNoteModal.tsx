@@ -247,10 +247,10 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-slate-700 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900">
+              <div className="flex items-center justify-between p-6 border-b border-slate-600">
+                <h2 className="text-2xl font-bold text-slate-200">
                   Create New Study Material
                 </h2>
                 <Button
@@ -258,7 +258,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                   disabled={loading || uploadingFile}
                   variant="ghost"
                   size="sm"
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                  className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-600"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </Button>
@@ -270,7 +270,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                 <div className="space-y-2">
                   <Label
                     htmlFor="title"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-medium text-slate-200"
                   >
                     Material Title *
                   </Label>
@@ -281,7 +281,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full"
+                    className="w-full border-slate-600 bg-slate-600/50 text-slate-200 placeholder-slate-400 focus:ring-green-500 focus:border-green-500"
                     placeholder="Enter the title of your study material"
                     required
                     maxLength={NOTE_TITLE_MAX_LENGTH}
@@ -293,7 +293,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                 <div className="space-y-2">
                   <Label
                     htmlFor="description"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-medium text-slate-200"
                   >
                     Description
                   </Label>
@@ -304,7 +304,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                     value={formData.description}
                     onChange={handleInputChange}
                     maxLength={DESCRIPTION_MAX_LENGTH}
-                    className="w-full"
+                    className="w-full border-slate-600 bg-slate-600/50 text-slate-200 placeholder-slate-400 focus:ring-green-500 focus:border-green-500"
                     rows={4}
                   />
                 </div>
@@ -313,7 +313,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                 <div className="space-y-2">
                   <Label
                     htmlFor="subject"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-medium text-slate-200"
                   >
                     Subject *
                   </Label>
@@ -323,7 +323,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                       setFormData({ ...formData, subjectId: value })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="border-slate-600 bg-slate-600/50 text-slate-200 focus:ring-green-500 focus:border-green-500">
                       <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
                     <SelectContent>
@@ -338,7 +338,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
 
                 {/* Content */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-slate-200">
                     Content
                   </Label>
                   <RichTextEditor
@@ -352,14 +352,14 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
 
                 {/* File Upload */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-slate-200">
                     Upload File
                   </Label>
                   <div
                     className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
                       isDragOver
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-300 hover:border-gray-400"
+                        ? "border-blue-400 bg-blue-500/20"
+                        : "border-slate-600 hover:border-slate-500 bg-slate-700/30"
                     }`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -378,12 +378,12 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                     >
                       <DocumentArrowUpIcon
                         className={`h-12 w-12 mb-4 transition-colors duration-200 ${
-                          isDragOver ? "text-blue-500" : "text-gray-400"
+                          isDragOver ? "text-blue-400" : "text-slate-400"
                         }`}
                       />
                       <span
                         className={`text-lg font-medium mb-2 transition-colors duration-200 ${
-                          isDragOver ? "text-blue-700" : "text-gray-700"
+                          isDragOver ? "text-blue-300" : "text-slate-200"
                         }`}
                       >
                         {selectedFile
@@ -392,18 +392,18 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                           ? "Drop your file here"
                           : "Click to select a file or drag and drop"}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-slate-400">
                         PDF, Word, text, or image files up to 10MB
                       </span>
                     </label>
                   </div>
                   {selectedFile && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="mt-3 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <DocumentArrowUpIcon className="h-4 w-4 text-green-600" />
+                          <DocumentArrowUpIcon className="h-4 w-4 text-green-400" />
                           <div className="flex items-center space-x-1">
-                            <span className="text-sm text-green-700">
+                            <span className="text-sm text-green-300">
                               File:{" "}
                             </span>
                             <button
@@ -419,12 +419,12 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                                   1000
                                 );
                               }}
-                              className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium text-sm"
+                              className="text-blue-400 hover:text-blue-300 hover:underline cursor-pointer font-medium text-sm"
                               title="Click to view file"
                             >
                               {selectedFile.name}
                             </button>
-                            <span className="text-sm text-green-700">
+                            <span className="text-sm text-green-300">
                               ({(selectedFile.size / 1024 / 1024).toFixed(2)}{" "}
                               MB)
                             </span>
@@ -445,7 +445,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                                 1000
                               );
                             }}
-                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
                             title="Click to view file"
                           >
                             View File
@@ -496,23 +496,23 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
                   />
                   <Label
                     htmlFor="isPremium"
-                    className="text-sm font-medium text-gray-700 cursor-pointer"
+                    className="text-sm font-medium text-slate-200 cursor-pointer"
                   >
                     Mark as Premium Material
                   </Label>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-400">
                     (Only accessible to premium package students)
                   </span>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-end space-x-4 pt-6 border-t border-slate-600">
                   <Button
                     type="button"
                     onClick={handleClose}
                     disabled={loading || uploadingFile}
                     variant="outline"
-                    className="px-6 py-3"
+                    className="px-6 py-3 border-slate-600 text-slate-300 hover:bg-slate-700"
                   >
                     Cancel
                   </Button>

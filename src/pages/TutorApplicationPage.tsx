@@ -10,11 +10,10 @@ import toast from "react-hot-toast";
 import {
   CheckCircleIcon,
   ClockIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
   AcademicCapIcon,
 } from "@heroicons/react/24/outline";
 import type { TutorApplication } from "@/types/auth";
+import ApplicationStatusView from "@/components/tutor/application/ApplicationStatusView";
 
 const TutorApplicationPage: React.FC = () => {
   const { user, profile } = useAuth();
@@ -89,12 +88,12 @@ const TutorApplicationPage: React.FC = () => {
   if (profile?.role === "tutor") {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-8">
-          <AcademicCapIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-8">
+          <AcademicCapIcon className="h-16 w-16 text-primary mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             You're Already a Tutor!
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-secondary-foreground mb-6">
             You already have tutor access in your account. You can manage your
             tutoring activities from your dashboard.
           </p>
@@ -127,25 +126,25 @@ const TutorApplicationPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-green-50 border border-green-200 rounded-lg p-8"
+            className="bg-success/10 border border-success/20 rounded-lg p-8"
           >
-            <CheckCircleIcon className="h-16 w-16 text-green-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <CheckCircleIcon className="h-16 w-16 text-success mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-foreground mb-2">
               Application Submitted Successfully!
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-secondary-foreground mb-6">
               Thank you for your interest in becoming a tutor with MathMentor.
               Your application has been received and is currently under review.
             </p>
 
-            <div className="bg-white border border-green-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center text-sm text-gray-600">
+            <div className="bg-card border border-border rounded-lg p-4 mb-6">
+              <div className="flex items-center text-sm text-secondary-foreground">
                 <ClockIcon className="h-5 w-5 mr-2" />
                 <span>Review typically takes 2-3 business days</span>
               </div>
             </div>
 
-            <div className="space-y-2 text-sm text-gray-600 mb-6">
+            <div className="space-y-2 text-sm text-secondary-foreground mb-6">
               <p>
                 We'll notify you via email when your application has been
                 reviewed.
@@ -170,12 +169,12 @@ const TutorApplicationPage: React.FC = () => {
     return (
       <div>
         <div className="max-w-2xl mx-auto text-center py-12">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-8">
-            <CheckCircleIcon className="h-16 w-16 text-green-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="bg-success/10 border border-success/20 rounded-lg p-8">
+            <CheckCircleIcon className="h-16 w-16 text-success mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-foreground mb-2">
               Application Approved!
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-secondary-foreground mb-6">
               Congratulations! Your tutor application has been approved. Your
               account should now have tutor privileges.
             </p>
@@ -188,83 +187,13 @@ const TutorApplicationPage: React.FC = () => {
     );
   }
 
-  // Show status for rejected applications
-  if (existingApplication?.application_status === "rejected") {
+  // Show status for rejected or under_review applications
+  if (existingApplication && (existingApplication.application_status === "rejected" || existingApplication.application_status === "under_review")) {
     return (
-      <div>
-        <div className="max-w-2xl mx-auto text-center py-12">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-8">
-            <XCircleIcon className="h-16 w-16 text-red-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Application Not Approved
-            </h1>
-            <p className="text-gray-600 mb-4">
-              Unfortunately, your tutor application was not approved at this
-              time.
-            </p>
-
-            {existingApplication.rejection_reason && (
-              <div className="bg-white border border-red-200 rounded-lg p-4 mb-4 text-left">
-                <h3 className="font-medium text-gray-900 mb-2">Reason:</h3>
-                <p className="text-gray-700 text-sm">
-                  {existingApplication.rejection_reason}
-                </p>
-              </div>
-            )}
-
-            {existingApplication.admin_notes && (
-              <div className="bg-white border border-red-200 rounded-lg p-4 mb-6 text-left">
-                <h3 className="font-medium text-gray-900 mb-2">
-                  Additional Notes:
-                </h3>
-                <p className="text-gray-700 text-sm">
-                  {existingApplication.admin_notes}
-                </p>
-              </div>
-            )}
-
-            <p className="text-sm text-gray-600 mb-6">
-              You're welcome to apply again in the future once you've addressed
-              the feedback provided.
-            </p>
-
-            <button onClick={handleGoToDashboard} className="btn btn-secondary">
-              Return to Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show status for under_review applications
-  if (existingApplication?.application_status === "under_review") {
-    return (
-      <div>
-        <div className="max-w-2xl mx-auto text-center py-12">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8">
-            <ExclamationTriangleIcon className="h-16 w-16 text-yellow-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Application Under Review
-            </h1>
-            <p className="text-gray-600 mb-6">
-              Your application is currently being reviewed by our team. We may
-              contact you if we need additional information.
-            </p>
-
-            <div className="bg-white border border-yellow-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center text-sm text-gray-600">
-                <ClockIcon className="h-5 w-5 mr-2" />
-                <span>Review in progress - please check back soon</span>
-              </div>
-            </div>
-
-            <button onClick={handleGoToDashboard} className="btn btn-secondary">
-              Return to Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
+      <ApplicationStatusView 
+        application={existingApplication} 
+        onGoToDashboard={handleGoToDashboard}
+      />
     );
   }
 

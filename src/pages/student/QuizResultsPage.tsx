@@ -27,6 +27,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 
 const QuizResultsPage: React.FC = () => {
   const { user } = useAuth();
@@ -143,14 +144,16 @@ const QuizResultsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner />
-      </div>
+      <StudentPageWrapper backgroundClass="bg-background">
+        <div className="flex items-center justify-center min-h-screen">
+          <LoadingSpinner />
+        </div>
+      </StudentPageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <StudentPageWrapper backgroundClass="bg-background" className="text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <motion.div
@@ -165,17 +168,16 @@ const QuizResultsPage: React.FC = () => {
                   onClick={() => navigate("/student/quizzes")}
                   variant="ghost"
                   size="sm"
-                  className="text-green-700 hover:text-green-900 hover:bg-green-100"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Quizzes
                 </Button>
               )}
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-green-900 mb-3">
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
                   Quiz Results
                 </h1>
-                <p className="text-lg text-gray-700">
+                <p className="text-lg text-muted-foreground">
                   Review your quiz attempts and performance
                 </p>
               </div>
@@ -192,19 +194,19 @@ const QuizResultsPage: React.FC = () => {
             className="space-y-6"
           >
             {attempts.length === 0 ? (
-              <Card className="border-green-200 bg-white">
+              <Card className="border-border bg-card">
                 <CardContent className="p-12 text-center">
-                  <BarChart3 className="h-20 w-20 text-green-300 mx-auto mb-6" />
-                  <CardTitle className="text-2xl text-green-900 mb-3">
+                  <BarChart3 className="h-20 w-20 text-muted-foreground/50 mx-auto mb-6" />
+                  <CardTitle className="text-2xl text-card-foreground mb-3">
                     No quiz attempts yet
                   </CardTitle>
-                  <CardDescription className="text-green-700 text-lg mb-6">
+                  <CardDescription className="text-muted-foreground text-lg mb-6">
                     You haven't taken any quizzes yet. Start by taking a quiz
                     from your available quizzes.
                   </CardDescription>
                   <Button
                     onClick={() => navigate("/student/quizzes")}
-                    className="bg-green-900 hover:bg-green-800 text-white font-semibold px-8 py-3"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3"
                   >
                     <BookOpen className="h-5 w-5 mr-2" />
                     Take a Quiz
@@ -227,14 +229,14 @@ const QuizResultsPage: React.FC = () => {
                       transition={{ delay: index * 0.1 }}
                     >
                       <Card
-                        className="border-green-200 bg-white hover:shadow-lg transition-all duration-200 h-full flex flex-col cursor-pointer"
+                        className="border-border bg-card hover:shadow-lg transition-all duration-200 h-full flex flex-col cursor-pointer"
                         onClick={() => loadAttemptDetails(attempt.id)}
                       >
                         <CardHeader className="pb-4">
-                          <CardTitle className="text-green-900 text-xl line-clamp-2 mb-2">
+                          <CardTitle className="text-card-foreground text-xl line-clamp-2 mb-2">
                             {attempt.quiz?.title || "Untitled Quiz"}
                           </CardTitle>
-                          <CardDescription className="text-green-700">
+                          <CardDescription className="text-muted-foreground">
                             by {attempt.quiz?.tutor?.full_name}
                           </CardDescription>
                         </CardHeader>
@@ -255,7 +257,7 @@ const QuizResultsPage: React.FC = () => {
                                 {attempt.correct_answers || 0}/
                                 {attempt.total_questions || 0}
                               </div>
-                              <div className="text-sm text-gray-700 mt-1 font-medium">
+                              <div className="text-sm text-muted-foreground mt-1 font-medium">
                                 Questions Correct
                               </div>
                               <div
@@ -270,14 +272,14 @@ const QuizResultsPage: React.FC = () => {
 
                           {/* Attempt Details */}
                           <div className="space-y-3">
-                            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                              <Calendar className="h-4 w-4 text-green-600" />
-                              <span className="text-sm text-green-800 font-medium">
+                            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm text-foreground font-medium">
                                 {formatDate(attempt.created_at)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-green-700">
-                              <Clock className="h-4 w-4 text-green-600" />
+                            <div className="flex items-center gap-3 text-muted-foreground">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
                               <span className="text-sm font-medium">
                                 {attempt.completed_at
                                   ? (() => {
@@ -309,8 +311,8 @@ const QuizResultsPage: React.FC = () => {
                                   : "In progress"}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-green-700">
-                              <GraduationCap className="h-4 w-4 text-green-600" />
+                            <div className="flex items-center gap-3 text-muted-foreground">
+                              <GraduationCap className="h-4 w-4 text-muted-foreground" />
                               <span className="text-sm font-medium">
                                 {attempt.quiz?.subject}
                               </span>
@@ -324,7 +326,7 @@ const QuizResultsPage: React.FC = () => {
                                 e.stopPropagation();
                                 loadAttemptDetails(attempt.id);
                               }}
-                              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                             >
                               <BarChart3 className="h-4 w-4 mr-2" />
                               View Details
@@ -338,7 +340,7 @@ const QuizResultsPage: React.FC = () => {
                                   deleteAttempt(attempt.id, attempt.quiz?.title || "Untitled Quiz");
                                 }}
                                 variant="outline"
-                                className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                                className="w-full"
                               >
                                 <TrashIcon className="h-4 w-4 mr-2" />
                                 Delete Attempt
@@ -371,34 +373,33 @@ const QuizResultsPage: React.FC = () => {
               }}
               variant="ghost"
               size="sm"
-              className="text-gray-700 hover:text-green-900 hover:bg-green-100"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {attemptId ? "Back to Quizzes" : "Back to Results"}
             </Button>
 
             {/* Quiz Summary */}
-            <Card className="border-green-200 bg-white">
+            <Card className="border-border bg-card">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-green-900 mb-2">
+                    <h2 className="text-2xl font-bold text-foreground mb-2">
                       {selectedAttempt?.attempt.quiz?.title}
                     </h2>
-                    <p className="text-gray-700">
+                    <p className="text-muted-foreground">
                       by {selectedAttempt?.attempt.quiz?.tutor?.full_name}
                     </p>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-green-600">
+                    <div className="text-3xl font-bold text-primary">
                       {selectedAttempt?.attempt.correct_answers || 0}/
                       {selectedAttempt?.attempt.total_questions || 0}
                     </div>
-                    <div className="text-sm text-gray-700 mb-1">
+                    <div className="text-sm text-muted-foreground mb-1">
                       Questions Correct
                     </div>
-                    <div className="text-lg text-gray-700">
+                    <div className="text-lg text-muted-foreground">
                       {selectedAttempt?.attempt.max_score &&
                       selectedAttempt?.attempt.score
                         ? Math.round(
@@ -412,7 +413,7 @@ const QuizResultsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>
@@ -438,15 +439,15 @@ const QuizResultsPage: React.FC = () => {
 
             {/* Tutor Feedback */}
             {selectedAttempt?.attempt?.tutor_feedback && (
-              <Card className="border-green-200 bg-white">
+              <Card className="border-border bg-card">
                 <CardHeader>
-                  <CardTitle className="text-green-900 flex items-center gap-2">
+                  <CardTitle className="text-card-foreground flex items-center gap-2">
                     <Award className="h-5 w-5" />
                     Tutor Feedback
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 whitespace-pre-line">
+                  <p className="text-muted-foreground whitespace-pre-line">
                     {selectedAttempt.attempt.tutor_feedback}
                   </p>
                 </CardContent>
@@ -455,7 +456,7 @@ const QuizResultsPage: React.FC = () => {
 
             {/* Question-by-Question Review */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-green-900 flex items-center gap-2">
+              <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <Target className="h-5 w-5" />
                 Question Review
               </h3>
@@ -476,14 +477,14 @@ const QuizResultsPage: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <Card className="border-green-900/60 border-2 bg-white">
+                    <Card className="border-border bg-card">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between mb-4">
-                          <h4 className="text-lg font-medium text-black">
+                          <h4 className="text-lg font-medium text-foreground">
                             Question {index + 1}
                           </h4>
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-700">
+                            <span className="text-sm text-muted-foreground">
                               {studentAnswer?.points_earned || 0}/
                               {question.points} points
                             </span>
@@ -502,7 +503,7 @@ const QuizResultsPage: React.FC = () => {
                           </div>
                         </div>
 
-                        <p className="text-gray-700 mb-4">
+                        <p className="text-muted-foreground mb-4">
                           {question.question_text}
                         </p>
 
@@ -514,15 +515,15 @@ const QuizResultsPage: React.FC = () => {
                                 studentAnswer?.selected_answer_id === answer.id;
                               const isCorrectAnswer = answer.is_correct;
 
-                              let bgColor = "bg-gray-50";
-                              let borderColor = "border-gray-200";
+                              let bgColor = "bg-muted/50";
+                              let borderColor = "border-border";
 
                               if (isCorrectAnswer) {
-                                bgColor = "bg-green-50";
-                                borderColor = "border-green-200";
+                                bgColor = "bg-green-500/10";
+                                borderColor = "border-green-500/20";
                               } else if (isSelected && !isCorrectAnswer) {
-                                bgColor = "bg-red-50";
-                                borderColor = "border-red-200";
+                                bgColor = "bg-red-500/10";
+                                borderColor = "border-red-500/20";
                               }
 
                               return (
@@ -536,11 +537,11 @@ const QuizResultsPage: React.FC = () => {
                                   {isSelected && !isCorrectAnswer && (
                                     <XCircle className="h-4 w-4 text-red-600 mr-2" />
                                   )}
-                                  <span className="text-gray-700">
+                                  <span className="text-foreground">
                                     {answer.answer_text}
                                   </span>
                                   {isSelected && (
-                                    <span className="ml-auto text-sm font-medium text-blue-600">
+                                    <span className="ml-auto text-sm font-medium text-primary">
                                       Your answer
                                     </span>
                                   )}
@@ -556,20 +557,20 @@ const QuizResultsPage: React.FC = () => {
                         ) : (
                           /* Short Answer */
                           <div className="space-y-3">
-                            <div className="p-3 bg-gray-50 rounded-lg border">
-                              <div className="text-sm font-medium text-green-700 mb-1">
+                            <div className="p-3 bg-muted/50 rounded-lg border">
+                              <div className="text-sm font-medium text-muted-foreground mb-1">
                                 Your answer:
                               </div>
-                              <div className="text-green-900">
+                              <div className="text-foreground">
                                 {studentAnswer?.answer_text ||
                                   "No answer provided"}
                               </div>
                             </div>
-                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                              <div className="text-sm font-medium text-green-700 mb-1">
+                            <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                              <div className="text-sm font-medium text-green-600 mb-1">
                                 Correct answer:
                               </div>
-                              <div className="text-green-900">
+                              <div className="text-green-600">
                                 {correctAnswer?.answer_text ||
                                   "Manual grading required"}
                               </div>
@@ -585,7 +586,7 @@ const QuizResultsPage: React.FC = () => {
           </motion.div>
         )}
       </div>
-    </div>
+    </StudentPageWrapper>
   );
 };
 

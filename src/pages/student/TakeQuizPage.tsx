@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   BookOpen,
   Target,
+  Clock as ClockIcon,
 } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +16,7 @@ import type { Quiz, QuizAttempt } from "@/types/quiz";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 
 interface StudentAnswer {
   questionId: string;
@@ -52,8 +54,17 @@ const TakeQuizPage: React.FC = () => {
     if (timeRemaining > 0 && !showResults) {
       const timer = setInterval(() => {
         setTimeRemaining((prev) => {
+          // Show warning when 5 minutes remaining
+          if (prev === 300) {
+            toast("⚠️ 5 minutes remaining!", { icon: "⚠️" });
+          }
+          // Show warning when 1 minute remaining
+          if (prev === 60) {
+            toast("⚠️ 1 minute remaining!", { icon: "⚠️" });
+          }
           if (prev <= 1) {
             // Auto-submit when time runs out
+            toast.error("Time's up! Submitting your quiz...");
             handleSubmitQuiz();
             return 0;
           }
@@ -64,6 +75,13 @@ const TakeQuizPage: React.FC = () => {
       return () => clearInterval(timer);
     }
   }, [timeRemaining, showResults]);
+
+  // Format remaining time for display
+  const formatTimeRemaining = () => {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   const loadQuizData = async () => {
     try {
@@ -141,10 +159,12 @@ const TakeQuizPage: React.FC = () => {
     try {
       setSubmitting(true);
 
-      // Filter out unanswered questions
-      const submittedAnswers = answers.filter(
-        (answer) => answer.selectedAnswerId || answer.answerText
-      );
+      // Include all answers, keeping original structure
+      const submittedAnswers = answers.map(answer => ({
+        questionId: answer.questionId,
+        selectedAnswerId: answer.selectedAnswerId,
+        answerText: answer.answerText || undefined
+      }));
 
       const results = await quizService.studentQuizzes.submitQuizAttempt(
         attemptId!,
@@ -159,7 +179,18 @@ const TakeQuizPage: React.FC = () => {
       );
     } catch (error) {
       console.error("Error submitting quiz:", error);
-      toast.error("Failed to submit quiz");
+      
+      // More descriptive error message
+      if (error instanceof Error) {
+        if (error.message.includes("not found") || error.message.includes("access denied")) {
+          toast.error("Quiz session has expired or is no longer valid. Please start a new quiz attempt.");
+          navigate("/student/quizzes");
+        } else {
+          toast.error(`Failed to submit quiz: ${error.message}`);
+        }
+      } else {
+        toast.error("Failed to submit quiz. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -182,35 +213,39 @@ const TakeQuizPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner />
-      </div>
+      <StudentPageWrapper backgroundClass="bg-background">
+        <div className="flex items-center justify-center min-h-screen">
+          <LoadingSpinner />
+        </div>
+      </StudentPageWrapper>
     );
   }
 
   if (!quiz || !attempt) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-green-50">
-        <Card className="border-green-200 bg-white max-w-md">
-          <CardContent className="p-8 text-center">
-            <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <CardTitle className="text-xl text-green-900 mb-2">
-              Quiz Not Found
-            </CardTitle>
-            <p className="text-green-700 mb-6">
-              The quiz you're looking for doesn't exist or you don't have access
-              to it.
-            </p>
-            <Button
-              onClick={() => navigate("/student/quizzes")}
-              className="bg-green-900 hover:bg-green-800 text-white"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Quizzes
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <StudentPageWrapper backgroundClass="bg-background">
+        <div className="flex items-center justify-center min-h-screen">
+          <Card className="border-border bg-card max-w-md">
+            <CardContent className="p-8 text-center">
+              <AlertTriangle className="h-16 w-16 text-destructive mx-auto mb-4" />
+              <CardTitle className="text-xl text-card-foreground mb-2">
+                Quiz Not Found
+              </CardTitle>
+              <p className="text-muted-foreground mb-6">
+                The quiz you're looking for doesn't exist or you don't have
+                access to it.
+              </p>
+              <Button
+                onClick={() => navigate("/student/quizzes")}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Quizzes
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </StudentPageWrapper>
     );
   }
 
@@ -218,20 +253,24 @@ const TakeQuizPage: React.FC = () => {
   const totalQuestions = quiz.questions?.length || 0;
 
   return (
-    <div className="min-h-screen">
+    <StudentPageWrapper backgroundClass="bg-background" className="text-foreground">
       {/* Header */}
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!showResults ? (
           <div className="space-y-6">
             {/* Question Navigation */}
-            <Card className="border-green-200 bg-white">
+            <Card className="border-border bg-card">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-green-900 flex items-center gap-2">
+                  <CardTitle className="text-card-foreground flex items-center gap-2">
                     <BookOpen className="h-5 w-5" />
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </CardTitle>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <ClockIcon className="h-5 w-5" />
+                    Time Remaining: {formatTimeRemaining()}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -245,10 +284,10 @@ const TakeQuizPage: React.FC = () => {
                       size="sm"
                       className={`transition-all duration-200 ${
                         index === currentQuestionIndex
-                          ? "bg-green-900 text-white border-green-900 hover:bg-green-800"
+                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
                           : isQuestionAnswered(index)
-                          ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
-                          : "bg-white text-green-700 border-green-200 hover:bg-green-50"
+                          ? "bg-primary/10 text-primary-foreground border-primary/20 hover:bg-primary/20"
+                          : "bg-card text-foreground border-border hover:bg-muted"
                       }`}
                     >
                       {index + 1}
@@ -266,10 +305,10 @@ const TakeQuizPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="border-green-200 bg-white">
+                <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-6">
-                      <h3 className="text-lg font-medium text-green-900 mb-6">
+                      <h3 className="text-lg font-medium text-card-foreground mb-6">
                         {currentQuestion.question_text}
                       </h3>
 
@@ -279,7 +318,7 @@ const TakeQuizPage: React.FC = () => {
                           {currentQuestion.answers?.map((answer) => (
                             <label
                               key={answer.id}
-                              className="flex items-center p-4 border border-green-200 rounded-lg hover:bg-green-50 cursor-pointer transition-colors"
+                              className="flex items-center p-4 border border-border rounded-lg hover:bg-muted cursor-pointer transition-colors"
                             >
                               <input
                                 type="radio"
@@ -295,9 +334,9 @@ const TakeQuizPage: React.FC = () => {
                                     answer.id
                                   )
                                 }
-                                className="h-4 w-4 text-green-600 focus:ring-green-500"
+                                className="h-4 w-4 text-primary focus:ring-primary"
                               />
-                              <span className="ml-3 text-green-900">
+                              <span className="ml-3 text-foreground">
                                 {answer.answer_text}
                               </span>
                             </label>
@@ -316,7 +355,7 @@ const TakeQuizPage: React.FC = () => {
                             )
                           }
                           placeholder="Type your answer here..."
-                          className="w-full border-green-200 focus:border-green-900 focus:ring-green-900"
+                          className="w-full"
                           rows={4}
                         />
                       )}
@@ -332,7 +371,6 @@ const TakeQuizPage: React.FC = () => {
                 onClick={handlePreviousQuestion}
                 disabled={currentQuestionIndex === 0}
                 variant="outline"
-                className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 border-green-900/60 "
               >
                 Previous
               </Button>
@@ -341,7 +379,7 @@ const TakeQuizPage: React.FC = () => {
                 {currentQuestionIndex < totalQuestions - 1 ? (
                   <Button
                     onClick={handleNextQuestion}
-                    className="bg-green-900 hover:bg-green-800 text-white"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
                     Next
                   </Button>
@@ -349,7 +387,7 @@ const TakeQuizPage: React.FC = () => {
                   <Button
                     onClick={handleSubmitQuiz}
                     disabled={submitting}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-green-900 font-semibold"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                   >
                     {submitting ? (
                       <LoadingSpinner size="sm" />
@@ -370,27 +408,27 @@ const TakeQuizPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card className="border-green-900/60 border-2 bg-white max-w-2xl mx-auto justify-center items-center flex flex-col">
+            <Card className="border-border bg-card max-w-2xl mx-auto justify-center items-center flex flex-col">
               <CardContent className="p-8">
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-green-900 mb-2">
+                  <h2 className="text-2xl font-bold text-card-foreground mb-2">
                     Quiz Completed!
                   </h2>
-                  <p className="text-gray-700">Here are your results</p>
+                  <p className="text-muted-foreground">Here are your results</p>
                 </div>
 
                 {results && (
                   <div className="text-center mb-8">
-                    <div className="text-4xl font-bold text-green-600 mb-2">
+                    <div className="text-4xl font-bold text-primary mb-2">
                       {results.correctAnswers}/{results.totalQuestions}
                     </div>
-                    <div className="text-sm text-gray-700 mb-2">
+                    <div className="text-sm text-muted-foreground mb-2">
                       Questions Correct
                     </div>
-                    <div className="text-xl text-gray-700 mb-4">
+                    <div className="text-xl text-muted-foreground mb-4">
                       {results.percentage}%
                     </div>
-                    <div className="text-sm text-gray-700">
+                    <div className="text-sm text-muted-foreground">
                       {results.percentage >= 80
                         ? "Excellent!"
                         : results.percentage >= 60
@@ -405,7 +443,7 @@ const TakeQuizPage: React.FC = () => {
                 <div className="flex justify-center space-x-4">
                   <Button
                     onClick={() => navigate("/student/quizzes")}
-                    className="bg-green-900 hover:bg-green-800 text-white"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
                     <BookOpen className="h-4 w-4 mr-2" />
                     Back to Quizzes
@@ -415,7 +453,6 @@ const TakeQuizPage: React.FC = () => {
                       navigate(`/student/quiz-results/${attemptId}`)
                     }
                     variant="outline"
-                    className="border-green-900 text-gray-700 hover:bg-gray-300"
                   >
                     <Target className="h-4 w-4 mr-2" />
                     View Results
@@ -426,7 +463,7 @@ const TakeQuizPage: React.FC = () => {
           </motion.div>
         )}
       </div>
-    </div>
+    </StudentPageWrapper>
   );
 };
 

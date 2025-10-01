@@ -12,13 +12,6 @@ import {
   DocumentArrowUpIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -367,25 +360,25 @@ const TutorProfile: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="shadow-lg border-0 bg-white rounded-2xl overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white pb-8">
+      <div className="bg-slate-700 rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white pb-8 p-6">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-yellow-400 rounded-xl">
-              <AcademicCapIcon className="h-6 w-6 text-emerald-900" />
+            <div className="p-2 bg-white/20 rounded-xl">
+              <AcademicCapIcon className="h-6 w-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-white">
                 Tutor Profile
-              </CardTitle>
-              <CardDescription className="text-emerald-100 mt-1">
+              </h2>
+              <p className="text-green-100 mt-1">
                 View and update your professional information and
                 qualifications.
-              </CardDescription>
+              </p>
             </div>
           </div>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-8 space-y-8">
+        <div className="p-8 space-y-8">
           {/* Profile Image */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -394,10 +387,10 @@ const TutorProfile: React.FC = () => {
             className="text-center"
           >
             <div className="flex items-center mb-6">
-              <div className="p-2 bg-yellow-400/10 rounded-xl mr-3">
-                <PhotoIcon className="h-5 w-5 text-emerald-900" />
+              <div className="p-2 bg-green-500/20 rounded-xl mr-3">
+                <PhotoIcon className="h-5 w-5 text-green-400" />
               </div>
-              <h3 className="text-xl font-medium text-slate-900">
+              <h3 className="text-xl font-medium text-slate-200">
                 Profile Photo
               </h3>
             </div>
@@ -421,10 +414,10 @@ const TutorProfile: React.FC = () => {
             {/* Basic Information */}
             <div className="space-y-6">
               <div className="flex items-center mb-6">
-                <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
-                  <UserIcon className="h-5 w-5 text-emerald-900" />
+                <div className="p-2 bg-green-500/20 rounded-xl mr-3">
+                  <UserIcon className="h-5 w-5 text-green-400" />
                 </div>
-                <h3 className="text-xl font-medium text-slate-900">
+                <h3 className="text-xl font-medium text-slate-200">
                   Basic Information
                 </h3>
               </div>
@@ -433,7 +426,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="firstName"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     First Name
                   </Label>
@@ -453,7 +446,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="lastName"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     Last Name
                   </Label>
@@ -473,7 +466,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="email"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     Email Address
                   </Label>
@@ -484,9 +477,9 @@ const TutorProfile: React.FC = () => {
                     value={formData.email}
                     disabled
                     readOnly
-                    className="h-12 rounded-2xl bg-slate-50 cursor-not-allowed border-slate-200"
+                    className="h-12 rounded-2xl bg-slate-600/50 cursor-not-allowed border-slate-600 text-slate-400"
                   />
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-400">
                     Email address cannot be changed here. Contact support if
                     needed.
                   </p>
@@ -495,7 +488,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="phone"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     Phone Number
                   </Label>
@@ -514,7 +507,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="gender"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     Gender
                   </Label>
@@ -527,7 +520,7 @@ const TutorProfile: React.FC = () => {
                       )
                     }
                   >
-                    <SelectTrigger className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900">
+                    <SelectTrigger className="h-12 rounded-2xl border-slate-600 bg-slate-600/50 text-slate-200 focus:border-green-500 focus:ring-green-500">
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
@@ -541,7 +534,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2 md:col-span-2">
                   <Label
                     htmlFor="address"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     Address
                   </Label>
@@ -560,7 +553,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2 md:col-span-2">
                   <Label
                     htmlFor="emergencyContact"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     <span className="inline-flex items-center">
                       <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-1" />
@@ -586,10 +579,10 @@ const TutorProfile: React.FC = () => {
             {/* Professional Information */}
             <div className="space-y-6">
               <div className="flex items-center mb-6">
-                <div className="p-2 bg-emerald-900/10 rounded-xl mr-3">
-                  <AcademicCapIcon className="h-5 w-5 text-emerald-900" />
+                <div className="p-2 bg-green-500/20 rounded-xl mr-3">
+                  <AcademicCapIcon className="h-5 w-5 text-green-400" />
                 </div>
-                <h3 className="text-xl font-medium text-slate-900">
+                <h3 className="text-xl font-medium text-slate-200">
                   Professional Information
                 </h3>
               </div>
@@ -598,7 +591,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="qualification"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     Qualification
                   </Label>
@@ -617,7 +610,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2">
                   <Label
                     htmlFor="experienceYears"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     Years of Experience
                   </Label>
@@ -636,14 +629,14 @@ const TutorProfile: React.FC = () => {
                     placeholder="Enter years of experience"
                     min={0}
                     max={50}
-                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    className="h-12 rounded-2xl border-slate-600 bg-slate-600/50 text-slate-200 focus:border-green-500 focus:ring-green-500"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label
                     htmlFor="hourlyRate"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     Hourly Rate ($)
                   </Label>
@@ -662,14 +655,14 @@ const TutorProfile: React.FC = () => {
                     placeholder="Enter your hourly rate"
                     min={0}
                     step="0.01"
-                    className="h-12 rounded-2xl border-slate-200 focus:border-emerald-900 focus:ring-emerald-900"
+                    className="h-12 rounded-2xl border-slate-600 bg-slate-600/50 text-slate-200 focus:border-green-500 focus:ring-green-500"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label
                     htmlFor="availability"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     Availability
                   </Label>
@@ -688,7 +681,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2 md:col-span-2">
                   <Label
                     htmlFor="specializations"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     <span className="inline-flex items-center">
                       <AcademicCapIcon className="h-4 w-4 text-gray-500 mr-1" />
@@ -707,7 +700,7 @@ const TutorProfile: React.FC = () => {
                     maxLength={300}
                     showCharCount
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-slate-400">
                     Separate multiple specializations with commas
                   </p>
                 </div>
@@ -715,7 +708,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2 md:col-span-2">
                   <Label
                     htmlFor="certifications"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     <span className="inline-flex items-center">
                       <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-1" />
@@ -734,7 +727,7 @@ const TutorProfile: React.FC = () => {
                     maxLength={300}
                     showCharCount
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-slate-400">
                     Separate multiple certifications with commas
                   </p>
                 </div>
@@ -742,7 +735,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2 md:col-span-2">
                   <Label
                     htmlFor="languages"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     <span className="inline-flex items-center">
                       <GlobeAltIcon className="h-4 w-4 text-gray-500 mr-1" />
@@ -761,7 +754,7 @@ const TutorProfile: React.FC = () => {
                     maxLength={200}
                     showCharCount
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-slate-400">
                     Separate multiple languages with commas
                   </p>
                 </div>
@@ -769,7 +762,7 @@ const TutorProfile: React.FC = () => {
                 <div className="space-y-2 md:col-span-2">
                   <Label
                     htmlFor="bio"
-                    className="text-base font-medium text-slate-700"
+                    className="text-base font-medium text-slate-200"
                   >
                     <span className="inline-flex items-center">
                       <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-1" />
@@ -792,9 +785,9 @@ const TutorProfile: React.FC = () => {
             </div>
 
             {/* CV Upload */}
-            <div className="border-t border-gray-200 pt-6 space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                <DocumentTextIcon className="h-5 w-5 text-green-500 inline mr-2" />
+            <div className="border-t border-slate-600 pt-6 space-y-4">
+              <h3 className="text-lg font-medium text-slate-200">
+                <DocumentTextIcon className="h-5 w-5 text-green-400 inline mr-2" />
                 CV Upload
               </h3>
 
@@ -802,22 +795,22 @@ const TutorProfile: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-green-50 border border-green-200 rounded-lg"
+                  className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <CheckCircleIcon className="h-6 w-6 text-green-600 mr-3" />
                       <div>
-                        <h4 className="text-sm font-medium text-green-800">
+                        <h4 className="text-sm font-medium text-green-300">
                           CV Uploaded Successfully
                         </h4>
-                        <p className="text-sm text-green-700 mt-1">
+                        <p className="text-sm text-green-400 mt-1">
                           File: {formData.cvFileName}
                         </p>
                         <button
                           type="button"
                           onClick={handleCVView}
-                          className="text-sm text-green-600 hover:text-green-800 underline mt-1 inline-block"
+                          className="text-sm text-green-400 hover:text-green-300 underline mt-1 inline-block"
                         >
                           View CV
                         </button>
@@ -826,7 +819,7 @@ const TutorProfile: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleCVRemove}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-red-400 hover:text-red-300"
                       title="Remove CV"
                     >
                       <XCircleIcon className="h-5 w-5" />
@@ -834,9 +827,9 @@ const TutorProfile: React.FC = () => {
                   </div>
                 </motion.div>
               ) : (
-                <div className="p-6 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 text-center">
+                <div className="p-6 bg-slate-700/30 rounded-xl border-2 border-dashed border-slate-600 text-center">
                   <DocumentArrowUpIcon className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                  <p className="text-slate-600 mb-4">
+                  <p className="text-slate-300 mb-4">
                     Upload your CV/Resume (PDF/DOC/DOCX format, max 5MB)
                   </p>
 
@@ -850,7 +843,7 @@ const TutorProfile: React.FC = () => {
                   />
                   <Label
                     htmlFor="cv-upload"
-                    className="cursor-pointer inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
+                    className="cursor-pointer inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white rounded-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
                     {isUploadingCV ? "Uploading..." : "Choose File"}
                   </Label>
@@ -867,7 +860,7 @@ const TutorProfile: React.FC = () => {
 
             {/* Save status */}
             {saveStatus === "success" && (
-              <Alert className="border-green-2 00 bg-green-50 text-green-800">
+              <Alert className="border-green-500/30 bg-green-500/20 text-green-300">
                 <CheckCircleIcon className="h-4 w-4" />
                 <AlertDescription>
                   Profile updated successfully!
@@ -887,7 +880,7 @@ const TutorProfile: React.FC = () => {
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-semibold hover:bg-emerald-700 transition-all duration-200 disabled:opacity-50 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                className="px-8 py-3 bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white rounded-2xl font-semibold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 flex items-center space-x-2"
               >
                 {isSaving ? (
                   <>
@@ -900,8 +893,8 @@ const TutorProfile: React.FC = () => {
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </motion.div>
   );
 };

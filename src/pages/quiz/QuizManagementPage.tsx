@@ -101,32 +101,32 @@ const QuizManagementPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#D5FFC5] relative overflow-hidden">
+    <div className="min-h-screen bg-slate-800 relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 -my-10 px-4 sm:px-6 lg:px-8 py-10">
       {/* Animated background elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.05),transparent_50%)]"></div>
 
       {/* Floating decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/15 to-yellow-400/15 rounded-full blur-3xl animate-pulse"></div>
       <div
-        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/15 to-green-400/15 rounded-full blur-2xl animate-pulse"
         style={{ animationDelay: "1s" }}
       ></div>
       <div
-        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/10 to-yellow-300/10 rounded-full blur-3xl animate-pulse"
         style={{ animationDelay: "2s" }}
       ></div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 space-y-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pb-16 space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl font-bold text-green-400 mb-4">
             Quiz Management
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-300 max-w-2xl mx-auto">
             Create and manage quizzes with up to 40 questions for your students
           </p>
         </motion.div>
@@ -159,17 +159,17 @@ const QuizManagementPage: React.FC = () => {
           >
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
-              className="bg-white p-6 rounded-xl shadow-[0_2px_2px_0_#16803D] border-0 transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
+              className="bg-slate-700/50 p-6 rounded-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
             >
               <div className="flex items-center">
-                <div className="bg-blue-100 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
-                  <DocumentTextIcon className="h-6 w-6 text-blue-600" />
+                <div className="bg-green-100 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                  <DocumentTextIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">
+                  <p className="text-sm font-medium text-slate-400">
                     Total Quizzes
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-slate-200">
                     {stats.total_quizzes}
                   </p>
                 </div>
@@ -178,17 +178,17 @@ const QuizManagementPage: React.FC = () => {
 
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
-              className="bg-white p-6 rounded-xl shadow-[0_2px_2px_0_#16803D] border-0 transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
+              className="bg-slate-700/50 p-6 rounded-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
             >
               <div className="flex items-center">
                 <div className="bg-green-100 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
                   <CheckCircleIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">
+                  <p className="text-sm font-medium text-slate-400">
                     Active Quizzes
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-slate-200">
                     {stats.active_quizzes}
                   </p>
                 </div>
@@ -197,17 +197,17 @@ const QuizManagementPage: React.FC = () => {
 
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
-              className="bg-white p-6 rounded-xl shadow-[0_2px_2px_0_#16803D] border-0 transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
+              className="bg-slate-700/50 p-6 rounded-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
             >
               <div className="flex items-center">
-                <div className="bg-purple-100 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
-                  <AcademicCapIcon className="h-6 w-6 text-purple-600" />
+                <div className="bg-green-100 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                  <AcademicCapIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">
+                  <p className="text-sm font-medium text-slate-400">
                     Total Attempts
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-slate-200">
                     {stats.total_attempts}
                   </p>
                 </div>
@@ -216,15 +216,15 @@ const QuizManagementPage: React.FC = () => {
 
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
-              className="bg-white p-6 rounded-xl shadow-[0_2px_2px_0_#16803D] border-0 transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
+              className="bg-slate-700/50 p-6 rounded-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
             >
               <div className="flex items-center">
-                <div className="bg-yellow-100 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
-                  <ChartBarIcon className="h-6 w-6 text-yellow-600" />
+                <div className="bg-green-100 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                  <ChartBarIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Avg Score</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-slate-400">Avg Score</p>
+                  <p className="text-2xl font-bold text-slate-200">
                     {stats.average_score}%
                   </p>
                 </div>
@@ -233,15 +233,15 @@ const QuizManagementPage: React.FC = () => {
 
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
-              className="bg-white p-6 rounded-xl shadow-[0_2px_2px_0_#16803D] border-0 transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
+              className="bg-slate-700/50 p-6 rounded-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
             >
               <div className="flex items-center">
-                <div className="bg-indigo-100 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
-                  <UserGroupIcon className="h-6 w-6 text-indigo-600" />
+                <div className="bg-green-100 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                  <UserGroupIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Students</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-slate-400">Students</p>
+                  <p className="text-2xl font-bold text-slate-200">
                     {stats.total_students}
                   </p>
                 </div>
@@ -255,11 +255,11 @@ const QuizManagementPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-xl shadow-[0_2px_2px_0_#16803D] border-0"
+          className="bg-slate-700/50 rounded-xl shadow-lg"
         >
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
-              <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+          <div className="p-6 border-b border-slate-600">
+            <h2 className="text-xl font-semibold text-slate-200 flex items-center space-x-2">
+              <div className="bg-green-600 w-8 h-8 rounded-lg flex items-center justify-center">
                 <DocumentTextIcon className="w-4 h-4 text-white" />
               </div>
               <span>Your Quizzes</span>
@@ -268,13 +268,13 @@ const QuizManagementPage: React.FC = () => {
 
           {quizzes.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <DocumentTextIcon className="h-8 w-8 text-gray-400" />
+              <div className="bg-slate-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <DocumentTextIcon className="h-8 w-8 text-slate-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-slate-200 mb-2">
                 No quizzes yet
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-slate-400 mb-6">
                 Create your first quiz to start assessing your students'
                 knowledge.
               </p>
@@ -288,39 +288,39 @@ const QuizManagementPage: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-slate-600/50">
+                <thead className="bg-slate-800/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Quiz Details
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Subject & Grade
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Questions & Time
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-600/50">
                   {quizzes.map((quiz) => (
-                    <tr key={quiz.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={quiz.id} className="hover:bg-slate-600/30 transition-colors">
                       {/* Quiz Details */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-slate-200">
                             {quiz.title}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-slate-400">
                             {quiz.description || "No description"}
                           </div>
                         </div>
@@ -328,18 +328,18 @@ const QuizManagementPage: React.FC = () => {
 
                       {/* Subject & Grade */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{quiz.subject}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-slate-200">{quiz.subject}</div>
+                        <div className="text-sm text-slate-400">
                           {quiz.gradeLevelId?.displayName || "Not specified"}
                         </div>
                       </td>
 
                       {/* Questions & Time */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-slate-200">
                           {quiz.total_questions} questions • {quiz.total_points} points
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-slate-400">
                           {quiz.time_limit_minutes} minutes
                         </div>
                       </td>
@@ -358,7 +358,7 @@ const QuizManagementPage: React.FC = () => {
                       </td>
 
                       {/* Created */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                         {new Date(quiz.createdAt).toLocaleDateString()}
                       </td>
 

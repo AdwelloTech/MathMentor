@@ -46,6 +46,20 @@ export interface QuizFilters {
 }
 
 export class QuizService {
+  // Helper function to check if a quiz attempt has expired
+  private static async isAttemptExpired(attempt: any): Promise<boolean> {
+    if (!attempt || !attempt.started_at) return false;
+
+    // Get the quiz to check time limit
+    const quiz = await Quiz.findById(attempt.quiz_id);
+    if (!quiz || !quiz.timeLimit) return false;
+
+    const startTime = new Date(attempt.started_at).getTime();
+    const timeLimit = quiz.timeLimit * 60 * 1000; // Convert minutes to milliseconds
+    const now = new Date().getTime();
+
+    return now - startTime > timeLimit;
+  }
   // Create a new quiz
   static async createQuiz(userId: string, quizData: CreateQuizData): Promise<IQuiz> {
     // Check if user is a tutor to automatically make quiz public
@@ -388,13 +402,31 @@ export class QuizService {
           student_id: new mongoose.Types.ObjectId(studentId)
         })
         .sort({ created_at: -1 })
-        .select('status')
         .lean();
 
+        // Check if attempt has expired
+        let isExpired = false;
+        let status = latestAttempt?.status || null;
+        
+        if (latestAttempt && status === 'in_progress') {
+          isExpired = await this.isAttemptExpired(latestAttempt);
+          if (isExpired) {
+            // Update attempt status to expired
+            await QuizAttempt.updateOne(
+              { _id: latestAttempt._id },
+              { status: 'expired' }
+            );
+            status = 'expired';
+          }
+        }
+
+        const quizObj = quiz.toObject();
         return {
-          ...quiz.toObject(),
-          attempt_status: latestAttempt?.status || null,
-          attempt_id: latestAttempt?._id || null
+          ...quizObj,
+          id: quizObj.id || quizObj._id.toString(),
+          attempt_status: status,
+          attempt_id: latestAttempt?._id || null,
+          attempt_expired: isExpired
         };
       })
     );
@@ -571,6 +603,16 @@ export class QuizService {
       throw new Error('Attempt not found or access denied');
     }
 
+    // Check if attempt has expired
+    if (attempt.status === 'in_progress' && await this.isAttemptExpired(attempt)) {
+      // Update attempt status to expired
+      await QuizAttempt.updateOne(
+        { _id: attempt._id },
+        { status: 'expired' }
+      );
+      attempt.status = 'expired';
+    }
+
     return attempt;
   }
 
@@ -594,19 +636,31 @@ export class QuizService {
     const { QuizAttempt, StudentAnswer } = await import('../models/Quiz');
     const { QuestionService } = await import('./questionService');
 
-    // Get the attempt
+    // Get the attempt - check for both in_progress and expired status
     const attempt = await QuizAttempt.findOne({
       _id: new mongoose.Types.ObjectId(attemptId),
       student_id: new mongoose.Types.ObjectId(studentId),
-      status: 'in_progress'
+      status: { $in: ['in_progress', 'expired'] }
     });
 
     if (!attempt) {
       throw new Error('Quiz attempt not found or already completed');
     }
 
-    // Get all questions for this quiz
-    const questions = await QuestionService.getQuestionsByQuiz(attempt.quiz_id.toString());
+    // Check if attempt has expired (or was already marked as expired)
+    if (attempt.status === 'expired' || await this.isAttemptExpired(attempt)) {
+      // Update attempt status to expired if not already
+      if (attempt.status !== 'expired') {
+        await QuizAttempt.updateOne(
+          { _id: attempt._id },
+          { status: 'expired' }
+        );
+      }
+      throw new Error('Quiz attempt has expired');
+    }
+
+    // Get all questions for this quiz (pass studentId for access check)
+    const questions = await QuestionService.getQuestionsByQuiz(attempt.quiz_id.toString(), studentId);
 
     let totalScore = 0;
     let maxScore = 0;

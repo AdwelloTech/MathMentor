@@ -60,23 +60,23 @@ const DeleteTutorNoteModal: React.FC<DeleteTutorNoteModalProps> = ({
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: "spring", duration: 0.3 }}
-          className="relative bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden"
+          className="relative bg-slate-700 rounded-xl shadow-xl max-w-md w-full overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-6 border-b border-slate-600">
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-slate-200">
                 Delete Study Material
               </h3>
             </div>
             <button
               onClick={onClose}
               disabled={isDeleting}
-              className="text-gray-400 hover:text-gray-600 transition-colors duration-200 disabled:opacity-50"
+              className="text-slate-400 hover:text-slate-200 transition-colors duration-200 disabled:opacity-50"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
@@ -84,11 +84,11 @@ const DeleteTutorNoteModal: React.FC<DeleteTutorNoteModalProps> = ({
 
           {/* Content */}
           <div className="p-6">
-            <p className="text-gray-600 mb-4">
+            <p className="text-slate-300 mb-4">
               Are you sure you want to delete{" "}
-              <span className="font-semibold text-gray-900">"{title}"</span>?
+              <span className="font-semibold text-slate-200">"{title}"</span>?
             </p>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-slate-400 mb-6">
               This action cannot be undone. The material and any associated
               files will be permanently removed.
             </p>
@@ -98,7 +98,7 @@ const DeleteTutorNoteModal: React.FC<DeleteTutorNoteModalProps> = ({
               <button
                 onClick={onClose}
                 disabled={isDeleting}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-600 border border-slate-500 rounded-lg hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 Cancel
               </button>

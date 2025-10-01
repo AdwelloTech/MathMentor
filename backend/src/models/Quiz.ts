@@ -157,7 +157,7 @@ export interface IQuizAttempt extends Document {
   _id: mongoose.Types.ObjectId;
   quiz_id: mongoose.Types.ObjectId;
   student_id: mongoose.Types.ObjectId;
-  status: 'in_progress' | 'completed' | 'abandoned';
+  status: 'in_progress' | 'completed' | 'abandoned' | 'expired';
   score?: number;
   max_score?: number;
   correct_answers?: number;
@@ -183,7 +183,7 @@ const quizAttemptSchema = new Schema<IQuizAttempt>(
     },
     status: {
       type: String,
-      enum: ['in_progress', 'completed', 'abandoned'],
+      enum: ['in_progress', 'completed', 'abandoned', 'expired'],
       default: 'in_progress',
       required: true,
     },

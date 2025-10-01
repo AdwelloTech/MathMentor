@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface TutorPageWrapperProps {
   children: React.ReactNode;
@@ -19,6 +20,8 @@ const TutorPageWrapper: React.FC<TutorPageWrapperProps> = ({
   backgroundClass = "bg-gradient-to-br from-slate-50 to-slate-100",
   className = "",
 }) => {
+  const { theme } = useTheme();
+
   useEffect(() => {
     // Set the background class on the body element for seamless appearance
     // Split backgroundClass on whitespace to handle multiple classes
@@ -41,7 +44,11 @@ const TutorPageWrapper: React.FC<TutorPageWrapperProps> = ({
     };
   }, [backgroundClass]);
 
-  return <div className={`min-h-screen ${backgroundClass} ${className}`}>{children}</div>;
+  return (
+    <div className={`min-h-screen ${backgroundClass} ${className} transition-colors duration-200`}>
+      {children}
+    </div>
+  );
 };
 
 export default TutorPageWrapper;

@@ -2,13 +2,13 @@ import React, { useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
-  Star,
-  FileText,
-  Upload,
-  Lock,
-  User,
-  Calendar,
-} from "lucide-react";
+  StarIcon,
+  DocumentTextIcon,
+  ArrowUpTrayIcon,
+  LockClosedIcon,
+  UserIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
 import {
   formatStudentTutorMaterialDate,
   type StudentTutorMaterialCardProps,
@@ -78,58 +78,52 @@ const StudentTutorMaterialCard: React.FC<
 
   return (
     <Card
-      className={`group  transition-all duration-300 hover:shadow-xl hover:shadow-green-900/10 border-0 shadow-lg h-[245px] w-[400px] flex flex-col overflow-hidden ${
+      className={`group transition-all duration-300 hover:shadow-xl border-border bg-card hover:-translate-y-1 rounded-2xl overflow-hidden flex flex-col h-full ${
         !hasAccess ? "opacity-75" : ""
-      } ${isPremium ? "ring-2 ring-yellow-400/20" : ""}`}
+      } ${
+        isPremium ? "ring-2 ring-primary/30" : ""
+      } cursor-pointer`}
       onClick={handleView}
     >
       {/* Premium Indicator */}
       {isPremium && (
-        <div className="absolute top-0 right-0 w-0 h-0 border-l-[40px] border-l-transparent border-t-[40px] border-t-yellow-400 z-10">
-          <Star className="absolute -top-8 -right-7 h-4 w-4 text-green-900 transform rotate-45" />
+        <div className="absolute top-0 right-0 w-0 h-0 border-l-[40px] border-l-transparent border-t-[40px] border-t-primary z-10">
+          <StarIcon className="absolute -top-8 -right-7 h-4 w-4 text-primary-foreground transform rotate-45" />
         </div>
       )}
 
       <CardHeader className="pb-3 relative">
         <div className="flex items-start gap-3 mb-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-green-900 to-green-800 shadow-lg shrink-0">
+          <div className="p-3 rounded-xl bg-primary/10 shadow-sm shrink-0">
             {hasFile ? (
-              <Upload className="h-5 w-5 text-white" />
+              <ArrowUpTrayIcon className="h-5 w-5 text-primary" />
             ) : (
-              <FileText className="h-5 w-5 text-white" />
+              <DocumentTextIcon className="h-5 w-5 text-primary" />
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-green-900 line-clamp-2 leading-tight mb-1">
+            <h3 className="text-xl font-bold text-card-foreground line-clamp-2 leading-tight mb-1">
               {title || "Untitled Material"}
             </h3>
             {isPremium && (
-              <Badge className="bg-gradient-to-r from-green-600 to-green-500 text-white border-0 text-xs font-bold">
+              <Badge variant="secondary" className="font-semibold">
                 PREMIUM
               </Badge>
             )}
           </div>
         </div>
-
-        {/*{(description || !title) && (
-          <p className="text-slate-600 text-sm line-clamp-3 leading-relaxed">
-            {description
-              ? truncateStudentTutorMaterialText(description, 120)
-              : "No description provided"}
-          </p>
-        )} */}
       </CardHeader>
 
-      <CardContent className="flex-1 space-y-4">
+      <CardContent className="flex-1 flex flex-col justify-end space-y-4">
         {/* Tutor Name */}
         {tutorName && (
-          <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg">
-            <div className="p-2 rounded-lg bg-white shadow-sm">
-              <User className="h-4 w-4 text-green-900" />
+          <div className="flex items-center gap-2 p-3 bg-secondary rounded-lg">
+            <div className="p-2 rounded-lg bg-background shadow-sm">
+              <UserIcon className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Instructor</p>
-              <p className="text-sm text-green-900 font-semibold">
+              <p className="text-xs text-muted-foreground font-medium">Instructor</p>
+              <p className="text-sm text-card-foreground font-semibold">
                 {tutorName}
               </p>
             </div>
@@ -138,8 +132,8 @@ const StudentTutorMaterialCard: React.FC<
 
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
-            <Calendar className="h-3 w-3 text-slate-400" />
-            <span className="text-xs text-slate-500 font-medium">
+            <CalendarIcon className="h-3 w-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground font-medium">
               {formatStudentTutorMaterialDate(createdAt)}
             </span>
           </div>
@@ -152,9 +146,9 @@ const StudentTutorMaterialCard: React.FC<
                   e.stopPropagation();
                   navigate("/student/packages");
                 }}
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-green-900 text-xs font-bold shadow-lg border-0"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shadow-lg"
               >
-                <Lock className="h-3 w-3 mr-1" />
+                <LockClosedIcon className="h-3 w-3 mr-1" />
                 Upgrade
               </Button>
             ) : (
@@ -165,7 +159,8 @@ const StudentTutorMaterialCard: React.FC<
                     e.stopPropagation();
                     handleView();
                   }}
-                  className="bg-gradient-to-r from-green-900 to-green-800 hover:from-green-800 hover:to-green-700 text-white text-xs font-semibold shadow-lg"
+                  variant="outline"
+                  className="font-semibold text-xs"
                 >
                   View
                 </Button>
@@ -174,31 +169,6 @@ const StudentTutorMaterialCard: React.FC<
           </div>
         </div>
       </CardContent>
-
-      {/*<CardFooter className="pt-4 border-t border-slate-100 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm">
-        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1 rounded bg-green-100">
-                <Eye className="h-3 w-3 text-green-700" />
-              </div>
-              <span className="text-xs font-semibold text-green-700">
-                {viewCount} views
-              </span>
-            </div>
-            {hasFile && (
-              <div className="flex items-center gap-2">
-                <div className="p-1 rounded bg-green-100">
-                  <Download className="h-3 w-3 text-green-700" />
-                </div>
-                <span className="text-xs font-semibold text-green-700">
-                  {downloadCount} downloads
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardFooter> */}
     </Card>
   );
 };

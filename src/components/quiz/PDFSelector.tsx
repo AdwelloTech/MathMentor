@@ -91,9 +91,9 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
   return (
     <div className="space-y-6">
       {/* Grade and Subject Selection */}
-      <Card className="bg-white/80 backdrop-blur-sm border-2 border-green-200">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-800">
+          <CardTitle className="flex items-center gap-2 text-card-foreground">
             <GraduationCap className="w-5 h-5" />
             Select Grade & Subject
           </CardTitle>
@@ -103,7 +103,7 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
             <div className="space-y-2">
               <Label
                 htmlFor="grade-select"
-                className="text-green-700 font-medium"
+                className="text-card-foreground font-medium"
               >
                 Grade Level
               </Label>
@@ -117,7 +117,7 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
             <div className="space-y-2">
               <Label
                 htmlFor="subject-select"
-                className="text-green-700 font-medium"
+                className="text-card-foreground font-medium"
               >
                 Subject
               </Label>
@@ -151,13 +151,13 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
 
       {/* Available PDFs */}
       {selectedGrade && selectedSubject && (
-        <Card className="bg-white/80 backdrop-blur-sm border-2 border-green-200">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
+            <CardTitle className="flex items-center gap-2 text-card-foreground">
               <FileText className="w-5 h-5" />
               Available PDFs for Context
             </CardTitle>
-            <p className="text-sm text-green-600">
+            <p className="text-sm text-muted-foreground">
               Select a PDF to use as AI context for quiz generation
             </p>
           </CardHeader>
@@ -173,23 +173,23 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
                     key={pdf.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+                    className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
                       selectedPDF?.id === pdf.id
-                        ? "border-green-500 bg-green-50"
-                        : "border-gray-200 bg-white hover:border-green-300"
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-background hover:border-primary/50"
                     }`}
                     onClick={() => handlePDFSelect(pdf)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <FileText className="w-5 h-5 text-green-600" />
+                        <div className="p-2 bg-muted rounded-lg">
+                          <FileText className="w-5 h-5 text-muted-foreground" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">
+                          <h4 className="font-medium text-foreground">
                             {pdf.file_name}
                           </h4>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <BookOpen className="w-4 h-4" />
                             {formatFileSize(pdf.file_size)}
                           </div>
@@ -197,7 +197,7 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
                       </div>
                       <div className="flex items-center gap-2">
                         {selectedPDF?.id === pdf.id && (
-                          <CheckCircle className="w-5 h-5 text-green-600" />
+                          <CheckCircle className="w-5 h-5 text-primary" />
                         )}
                         <Badge variant="secondary" className="text-xs">
                           {formatFileSize(pdf.file_size)}
@@ -208,9 +208,9 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-lg font-medium">No PDFs Available</p>
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-muted" />
+                <p className="text-lg font-medium text-foreground">No PDFs Available</p>
                 <p className="text-sm">
                   No PDFs have been uploaded for this grade and subject
                   combination.
@@ -223,23 +223,23 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
 
       {/* Selected PDF Summary */}
       {selectedPDF && (
-        <Card className="bg-green-50/80 backdrop-blur-sm border-2 border-green-300">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
+            <CardTitle className="flex items-center gap-2 text-card-foreground">
               <CheckCircle className="w-5 h-5" />
               Selected PDF Context
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <FileText className="w-5 h-5 text-green-600" />
+            <div className="flex items-center gap-3 p-3 bg-background rounded-lg border border-border">
+              <div className="p-2 bg-muted rounded-lg">
+                <FileText className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <h4 className="font-medium text-gray-900">
+                <h4 className="font-medium text-foreground">
                   {selectedPDF.file_name}
                 </h4>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   This PDF will be used as context for AI quiz generation
                 </p>
               </div>
@@ -247,7 +247,7 @@ const PDFSelector: React.FC<PDFSelectorProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onPDFSelect(null as any)}
-                className="text-red-600 border-red-300 hover:bg-red-50"
+                className="text-destructive border-destructive hover:bg-destructive/10"
               >
                 Clear
               </Button>

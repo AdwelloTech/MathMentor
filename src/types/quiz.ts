@@ -20,13 +20,14 @@ export interface Quiz {
   };
   questions?: Question[];
   // Attempt status fields (added for student dashboard)
-  attempt_status?: "in_progress" | "completed" | "abandoned" | null;
+  attempt_status?: "in_progress" | "completed" | "abandoned" | "expired" | null;
   attempt_score?: number | null;
   attempt_max_score?: number | null;
   attempt_correct_answers?: number | null;
   attempt_total_questions?: number | null;
   attempt_id?: string | null;
   attempt_tutor_feedback?: string | null;
+  attempt_expired?: boolean;
 }
 
 export interface Question {

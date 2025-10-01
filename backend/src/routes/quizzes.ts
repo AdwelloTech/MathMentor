@@ -588,7 +588,7 @@ router.post('/student/attempts/start', authenticate, authorize('student'), async
 
     // Verify the student can access this quiz
     const quiz = await QuizService.getAvailableQuizzesForStudent(studentId);
-    const hasAccess = quiz.some(q => q.id === quizId);
+    const hasAccess = quiz.some(q => (q.id || q._id?.toString()) === quizId || q._id === quizId);
 
     if (!hasAccess) {
       return res.status(403).json({
@@ -615,8 +615,14 @@ router.post('/student/attempts/start', authenticate, authorize('student'), async
 
 // Submit quiz attempt with answers
 router.post('/student/attempts/submit', authenticate, authorize('student'), async (req, res) => {
+  const { attemptId, answers } = req.body;
+  
   try {
-    const { attemptId, answers } = req.body;
+    console.log('Submit quiz attempt:', {
+      attemptId,
+      userId: req.user!.id,
+      answersCount: answers?.length
+    });
 
     if (!attemptId || !answers || !Array.isArray(answers)) {
       return res.status(400).json({
@@ -636,6 +642,12 @@ router.post('/student/attempts/submit', authenticate, authorize('student'), asyn
       data: results,
     });
   } catch (error: any) {
+    console.error('Quiz submission error:', {
+      attemptId,
+      userId: req.user!.id,
+      error: error.message,
+      stack: error.stack
+    });
     res.status(400).json({
       success: false,
       error: error.message,

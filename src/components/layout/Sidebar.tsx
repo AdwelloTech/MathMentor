@@ -244,7 +244,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <img
               src={logoUrl}
               alt="IEMS Logo"
-              className="h-8 w-8 text-green-600 text-center mx-auto"
+              className="h-8 w-8 text-primary text-center mx-auto"
             />
           </div>
         </div>
@@ -257,94 +257,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     const isDisabled = item.disabled;
     const active = isActive(item.href);
 
-    // Context-aware color logic
-    const getItemColor = (item: any) => {
-      // Priority-based colors
-      const highPriorityItems = ["Dashboard", "Profile", "Settings"];
-      const isHighPriority = highPriorityItems.includes(item.name);
-
-      // Role-based colors
-      const isStudentItem =
-        profile?.role === "student" &&
-        [
-          "Book a Session",
-          "My Sessions",
-          "Tutor Materials",
-          "Quizzes",
-          "Flash Cards",
-          "Packages",
-        ].includes(item.name);
-
-      // Section type colors
-      const isMainFeature = [
-        "Dashboard",
-        "Book a Session",
-        "My Sessions",
-        "Schedule Class",
-        "Manage Classes",
-      ].includes(item.name);
-      const isSettings = ["Settings", "Profile"].includes(item.name);
-      const isManagement = [
-        "Manage Students",
-        "Manage Tutors",
-        "Tutor Applications",
-        "ID Verifications",
-      ].includes(item.name);
-      const isContent = [
-        "Quizzes",
-        "Flash Cards",
-        "Tutor Materials",
-        "Manage Materials",
-      ].includes(item.name);
-
-      // Time-based color adaptation (subtle)
-
-      // Color assignment logic
-      if (isHighPriority) {
-        return { primary: "green", secondary: "emerald" };
-      }
-
-      if (profile?.role === "admin" || adminSession) {
-        if (isManagement) return { primary: "green", secondary: "emerald" };
-        if (isSettings) return { primary: "yellow", secondary: "amber" };
-        return { primary: "green", secondary: "emerald" };
-      }
-
-      if (profile?.role === "tutor") {
-        if (isMainFeature) return { primary: "green", secondary: "emerald" };
-        if (isContent) return { primary: "yellow", secondary: "amber" };
-        if (isSettings) return { primary: "yellow", secondary: "amber" };
-        return { primary: "green", secondary: "emerald" };
-      }
-
-      if (profile?.role === "student") {
-        if (isStudentItem) return { primary: "green", secondary: "emerald" };
-        if (isSettings) return { primary: "yellow", secondary: "amber" };
-        return { primary: "green", secondary: "emerald" };
-      }
-
-      // Default fallback
-      return { primary: "green", secondary: "emerald" };
-    };
-
-    const itemColors = getItemColor(item);
-    const isGreenActive = itemColors.primary === "green";
-
-    // Dynamic class generation for context-aware colors
+    // Use consistent theme colors for all navigation items
     const getActiveClasses = () => {
-      if (itemColors.primary === "green") {
-        return "text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm";
-      } else {
-        return "text-yellow-700 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 shadow-sm";
-      }
+      return "text-primary-foreground bg-primary border border-primary/20 shadow-sm";
     };
 
     const getHoverClasses = () => {
-      if (itemColors.primary === "green") {
-        return "text-gray-700 hover:text-green-600 hover:bg-gradient-to-r hover:from-green-50/50 hover:to-emerald-50/50 border border-transparent hover:border-green-100";
-      } else {
-        return "text-gray-700 hover:text-yellow-600 hover:bg-gradient-to-r hover:from-yellow-50/50 hover:to-amber-50/50 border border-transparent hover:border-yellow-100";
-      }
+      return "text-muted-foreground hover:text-foreground hover:bg-accent/50 border border-transparent hover:border-border/50";
     };
 
     // Simple animation variants
@@ -376,8 +295,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={cn(
               "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden cursor-not-allowed",
               active
-                ? "text-gray-400 bg-gray-100/50 border border-gray-200"
-                : "text-gray-400 bg-transparent hover:bg-gray-50/50 border border-transparent",
+                ? "text-muted-foreground bg-muted/50 border border-border"
+                : "text-muted-foreground bg-transparent hover:bg-muted/30 border border-transparent",
               !isHovered && "justify-center"
             )}
             title={getTooltipMessage()}
@@ -401,16 +320,16 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Status indicators */}
             {isTutorPending && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-yellow-500 rounded-full" />
+              <div className="absolute top-2 right-2 w-2 h-2 bg-warning rounded-full" />
             )}
             {isTutorRejected && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+              <div className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
             )}
             {isTutorApproved && isIDVerificationPending && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full" />
+              <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
             )}
             {isTutorApproved && isIDVerificationRejected && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+              <div className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
             )}
 
             {/* Status indicator text */}
@@ -459,23 +378,12 @@ const Sidebar: React.FC<SidebarProps> = ({
               className={cn(
                 "h-5 w-5 shrink-0 transition-colors duration-200",
                 active
-                  ? isGreenActive
-                    ? "text-green-600"
-                    : "text-yellow-600"
-                  : "text-gray-600",
-                !active &&
-                  (itemColors.primary === "green"
-                    ? "group-hover:text-green-600"
-                    : "group-hover:text-yellow-600")
+                  ? "text-primary-foreground"
+                  : "text-muted-foreground group-hover:text-foreground"
               )}
             />
             {active && (
-              <div
-                className={cn(
-                  "absolute -top-1 -right-1 w-2 h-2 rounded-full",
-                  isGreenActive ? "bg-green-500" : "bg-yellow-500"
-                )}
-              />
+              <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-secondary" />
             )}
           </div>
 
@@ -494,12 +402,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </AnimatePresence>
 
           {active && (
-            <div
-              className={cn(
-                "absolute inset-0 rounded-xl",
-                isGreenActive ? "bg-green-100/20" : "bg-yellow-100/20"
-              )}
-            />
+            <div className="absolute inset-0 rounded-xl bg-primary/10" />
           )}
         </Link>
       </motion.div>
@@ -526,7 +429,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       : "User";
 
     return (
-      <div className="border-t border-gray-200/50 pt-4 mt-4 mb-8">
+      <div className="border-t border-border/50 pt-4 mt-4 mb-8">
         <div
           className={cn(
             "flex items-center",
@@ -537,21 +440,21 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-3">
             {/* Profile Avatar */}
             <motion.div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white font-semibold text-sm">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground font-semibold text-sm">
                 {profile?.full_name
                   ? profile.full_name.charAt(0).toUpperCase()
                   : "U"}
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm" />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-secondary rounded-full border-2 border-background shadow-sm" />
             </motion.div>
 
             {/* Profile Details */}
             {isHovered && (
               <div className="flex flex-col overflow-hidden">
-                <span className="text-sm font-semibold text-gray-900 truncate max-w-[8rem]">
+                <span className="text-sm font-semibold text-card-foreground truncate max-w-[8rem]">
                   {displayName}
                 </span>
-                <span className="text-xs text-gray-500 truncate max-w-[8rem]">
+                <span className="text-xs text-muted-foreground truncate max-w-[8rem]">
                   {displayRole}
                 </span>
               </div>
@@ -567,9 +470,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.2 }}
                 onClick={onSignOut}
-                className="p-2 rounded-lg bg-green-50 border border-green-200 hover:bg-green-100 transition-colors duration-200"
+                className="p-2 rounded-lg bg-secondary/50 border border-border hover:bg-secondary/70 transition-colors duration-200"
               >
-                <ArrowRightOnRectangleIcon className="w-5 h-5 text-green-600" />
+                <ArrowRightOnRectangleIcon className="w-5 h-5 text-secondary-foreground" />
               </motion.button>
             )}
           </AnimatePresence>
@@ -591,7 +494,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             transition={{ duration: 0.3 }}
           >
             <motion.div
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -618,14 +521,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                     whileTap={{ scale: 0.95 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <XMarkIcon className="h-6 w-6 text-white" />
+                    <XMarkIcon className="h-6 w-6 text-foreground" />
                   </motion.button>
                 </div>
 
-              <div className="flex grow flex-col glass-panel-dark px-6 pb-4 relative overflow-hidden">
+              <div className="flex grow flex-col bg-card/95 backdrop-blur-lg border-r border-border px-6 pb-4 relative overflow-hidden shadow-lg">
                   {/* Subtle background pattern */}
                   <div className="absolute inset-0 opacity-20">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-200/10 via-transparent to-yellow-200/10" />
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
                   </div>
 
                   <div className="relative z-10 flex flex-col h-full overflow-y-auto">
@@ -644,7 +547,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Collapsible sidebar for desktop */}
       <div id="sidebar-navigation" className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col">
         <motion.div
-          className="flex grow flex-col glass-panel-dark shadow-xl relative overflow-hidden"
+          className="flex grow flex-col bg-card/95 backdrop-blur-lg border-r border-border shadow-xl relative overflow-hidden"
           animate={{
             width: isHovered ? 288 : 80, // 288px = 72 * 4 (lg:w-72), 80px for collapsed
           }}
@@ -654,7 +557,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         >
           {/* Subtle background pattern */}
           <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-200/10 via-transparent to-yellow-200/10" />
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
           </div>
 
           <div className="relative z-10 flex flex-col h-full overflow-y-auto px-6 pb-4">

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Flashcard {
   id: string;
@@ -43,6 +44,7 @@ if (_vfs) (pdfMake as any).vfs = _vfs;
 
 const FlashcardStudyPage: React.FC = () => {
   const { setId } = useParams<{ setId: string }>();
+  const { profile } = useAuth();
   const [setData, setSetData] = useState<
     (FlashcardSet & { cards: Flashcard[] }) | null
   >(null);
@@ -60,6 +62,7 @@ const FlashcardStudyPage: React.FC = () => {
   }, [setId]);
 
   const current = setData?.cards?.[index];
+  const isTutor = profile?.role === 'tutor';
 
   const next = () => {
     if (!setData || setData.cards.length === 0) return;
@@ -161,14 +164,32 @@ const FlashcardStudyPage: React.FC = () => {
   const progressPct = Math.round(((index + 1) / total) * 100);
 
   return (
-    <div className="min-h-screen ">
+    <div className={`min-h-screen ${isTutor ? 'bg-slate-800 relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 -my-10 px-4 sm:px-6 lg:px-8 py-10' : ''}`}>
       {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-900/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-400/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
+      {isTutor ? (
+        <>
+          {/* Tutor theme background */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.05),transparent_50%)]"></div>
 
-      <div className="relative max-w-6xl mx-auto px-6 py-8 space-y-8">
+          {/* Floating decorative elements */}
+          <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/15 to-yellow-400/15 rounded-full blur-3xl animate-pulse"></div>
+          <div
+            className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/15 to-green-400/15 rounded-full blur-2xl animate-pulse"
+            style={{ animationDelay: "1s" }}
+          ></div>
+          <div
+            className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/10 to-yellow-300/10 rounded-full blur-3xl animate-pulse"
+            style={{ animationDelay: "2s" }}
+          ></div>
+        </>
+      ) : (
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-900/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-400/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+      )}
+
+      <div className={`relative ${isTutor ? 'z-10 max-w-7xl mx-auto px-6 pb-16 space-y-8' : 'max-w-6xl mx-auto px-6 py-8 space-y-8'}`}>
         {/* Header Section */}
         <motion.div
           className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6"
@@ -178,31 +199,31 @@ const FlashcardStudyPage: React.FC = () => {
         >
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-green-900 to-green-800 rounded-2xl shadow-lg">
-                <Sparkles className="h-6 w-6 text-yellow-400" />
+              <div className={`p-3 rounded-2xl shadow-lg ${isTutor ? 'bg-green-600' : 'bg-gradient-to-br from-green-900 to-green-800'}`}>
+                <Sparkles className={`h-6 w-6 ${isTutor ? 'text-white' : 'text-yellow-400'}`} />
               </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-green-900 to-green-700 bg-clip-text text-transparent">
+              <h1 className={`text-4xl font-bold ${isTutor ? 'text-green-400' : 'bg-gradient-to-r from-green-900 to-green-700 bg-clip-text text-transparent'}`}>
                 {setData.title}
               </h1>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Badge
                 variant="secondary"
-                className="bg-green-900/10 text-green-900 hover:bg-green-900/20 rounded-xl px-4 py-2 text-base font-medium"
+                className={isTutor ? "bg-green-500/20 text-green-300 hover:bg-green-500/30 rounded-xl px-4 py-2 text-base font-medium" : "bg-green-900/10 text-green-900 hover:bg-green-900/20 rounded-xl px-4 py-2 text-base font-medium"}
               >
                 {setData.subject}
               </Badge>
               {setData.topic && (
                 <Badge
                   variant="outline"
-                  className="border-yellow-400 text-yellow-600 rounded-xl px-4 py-2 text-base"
+                  className={isTutor ? "border-slate-400 text-slate-300 rounded-xl px-4 py-2 text-base" : "border-yellow-400 text-yellow-600 rounded-xl px-4 py-2 text-base"}
                 >
                   {setData.topic}
                 </Badge>
               )}
               <Badge
                 variant="outline"
-                className="border-slate-300 text-slate-600 rounded-xl px-4 py-2 text-base"
+                className={isTutor ? "border-slate-400 text-slate-300 rounded-xl px-4 py-2 text-base" : "border-slate-300 text-slate-600 rounded-xl px-4 py-2 text-base"}
               >
                 {setData.cards.length} cards
               </Badge>
@@ -211,7 +232,7 @@ const FlashcardStudyPage: React.FC = () => {
 
           <Button
             onClick={downloadVectorFastPdf}
-            className="bg-yellow-400 text-black font-semibold px-6 py-3 rounded-2xl shadow-xl hover:scale-105 transition-all duration-200 "
+            className={isTutor ? "bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white px-6 py-3 rounded-2xl shadow-[0_2px_2px_0_#16803D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300" : "bg-yellow-400 text-black font-semibold px-6 py-3 rounded-2xl shadow-xl hover:scale-105 transition-all duration-200"}
           >
             <Download className="mr-2 h-5 w-5" />
             Download PDF
@@ -222,7 +243,7 @@ const FlashcardStudyPage: React.FC = () => {
         <div className="flex flex-col items-center space-y-6">
           {/* Flip Instruction */}
           <motion.div
-            className="flex items-center gap-2 text-slate-600 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
+            className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg ${isTutor ? 'text-slate-300 bg-slate-700/60 backdrop-blur-sm' : 'text-slate-600 bg-white/60 backdrop-blur-sm'}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -257,18 +278,18 @@ const FlashcardStudyPage: React.FC = () => {
               >
                 {/* Front Side */}
                 <motion.div
-                  className="absolute inset-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
+                  className={`absolute inset-0 rounded-3xl shadow-2xl overflow-hidden ${isTutor ? 'bg-slate-700' : 'bg-white'}`}
                   style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
                   animate={{ opacity: showBack ? 0 : 1 }}
                   transition={{ duration: 0.1, delay: showBack ? 0 : 0.25 }}
                 >
                   <div className="absolute inset-0 flex items-center justify-center p-10">
                     <div className="text-center space-y-4">
-                      <div className="inline-flex items-center gap-2 bg-green-900/10 text-green-900 px-3 py-1 rounded-full text-sm font-medium">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${isTutor ? 'bg-green-500/20 text-green-300' : 'bg-green-900/10 text-green-900'}`}>
                         <BookOpen className="h-4 w-4" />
                         Front
                       </div>
-                      <div className="text-2xl lg:text-3xl font-bold text-green-900 whitespace-pre-wrap leading-relaxed">
+                      <div className={`text-2xl lg:text-3xl font-bold whitespace-pre-wrap leading-relaxed ${isTutor ? 'text-slate-200' : 'text-green-900'}`}>
                         {current?.front_text}
                       </div>
                     </div>
@@ -277,18 +298,18 @@ const FlashcardStudyPage: React.FC = () => {
 
                 {/* Back Side */}
                 <motion.div
-                  className="absolute inset-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
+                  className={`absolute inset-0 rounded-3xl shadow-2xl overflow-hidden ${isTutor ? 'bg-slate-700' : 'bg-white'}`}
                   style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                   animate={{ opacity: showBack ? 1 : 0 }}
                   transition={{ duration: 0.1, delay: showBack ? 0.25 : 0 }}
                 >
                   <div className="absolute inset-0 flex items-center justify-center p-10">
                     <div className="text-center space-y-4">
-                      <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${isTutor ? 'bg-yellow-400/20 text-yellow-300' : 'bg-yellow-400/20 text-yellow-700'}`}>
                         <Sparkles className="h-4 w-4" />
                         Back
                       </div>
-                      <div className="text-xl lg:text-2xl font-semibold text-slate-800 whitespace-pre-wrap leading-relaxed">
+                      <div className={`text-xl lg:text-2xl font-semibold whitespace-pre-wrap leading-relaxed ${isTutor ? 'text-slate-200' : 'text-slate-800'}`}>
                         {current?.back_text}
                       </div>
                     </div>
@@ -309,18 +330,18 @@ const FlashcardStudyPage: React.FC = () => {
           <Button
             onClick={prev}
             variant="outline"
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-white transition-all duration-300 font-semibold"
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl border-2 transition-all duration-300 font-semibold ${isTutor ? 'border-green-500/30 hover:border-green-400 hover:bg-green-600 hover:text-white text-slate-300' : 'border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-white'}`}
             disabled={!setData?.cards.length}
           >
             <ChevronLeft className="h-5 w-5" />
             Previous
           </Button>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
-            <CardContent className="px-6 py-4">
+          <div className={`rounded-2xl shadow-lg ${isTutor ? 'bg-slate-700/60 backdrop-blur-sm border border-slate-600' : 'bg-white/80 backdrop-blur-sm border-0'}`}>
+            <div className="px-6 py-4">
               <div className="flex items-center gap-4">
-                <div className="text-lg font-bold text-green-900">{index + 1}</div>
-                <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div className={`text-lg font-bold ${isTutor ? 'text-green-400' : 'text-green-900'}`}>{index + 1}</div>
+                <div className={`w-24 h-2 rounded-full overflow-hidden ${isTutor ? 'bg-slate-600' : 'bg-slate-200'}`}>
                   <motion.div
                     className="h-full bg-gradient-to-r from-green-900 to-yellow-400 rounded-full"
                     initial={{ width: 0 }}
@@ -328,15 +349,15 @@ const FlashcardStudyPage: React.FC = () => {
                     transition={{ duration: 0.3 }}
                   />
                 </div>
-                <div className="text-lg font-bold text-slate-600">{setData.cards.length}</div>
+                <div className={`text-lg font-bold ${isTutor ? 'text-slate-400' : 'text-slate-600'}`}>{setData.cards.length}</div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           <Button
             onClick={next}
             variant="outline"
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-white transition-all duration-300 font-semibold"
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl border-2 transition-all duration-300 font-semibold ${isTutor ? 'border-green-500/30 hover:border-green-400 hover:bg-green-600 hover:text-white text-slate-300' : 'border-green-900/20 hover:border-green-900 hover:bg-green-900 hover:text-white'}`}
             disabled={!setData?.cards.length}
           >
             Next
@@ -351,26 +372,26 @@ const FlashcardStudyPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
         >
-          <Card className="bg-gradient-to-br from-green-900 to-green-800 border-0 shadow-xl rounded-2xl text-white">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-yellow-400 mb-2">{setData.cards.length}</div>
+          <div className={`border-0 shadow-xl rounded-2xl ${isTutor ? 'bg-slate-700 text-white' : 'bg-gradient-to-br from-green-900 to-green-800 text-white'}`}>
+            <div className="p-6 text-center">
+              <div className={`text-3xl font-bold mb-2 ${isTutor ? 'text-green-400' : 'text-yellow-400'}`}>{setData.cards.length}</div>
               <div className="text-sm font-medium opacity-90">Total Cards</div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="bg-gradient-to-br from-yellow-400 to-yellow-500 border-0 shadow-xl rounded-2xl text-white">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-green-900 mb-2">{index + 1}</div>
-              <div className="text-sm font-medium text-green-900 opacity-90">Current Card</div>
-            </CardContent>
-          </Card>
+          <div className={`border-0 shadow-xl rounded-2xl ${isTutor ? 'bg-slate-700 text-white' : 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-white'}`}>
+            <div className="p-6 text-center">
+              <div className={`text-3xl font-bold mb-2 ${isTutor ? 'text-yellow-400' : 'text-green-900'}`}>{index + 1}</div>
+              <div className={`text-sm font-medium opacity-90 ${isTutor ? 'text-slate-300' : 'text-green-900'}`}>Current Card</div>
+            </div>
+          </div>
 
-          <Card className="bg-gradient-to-br from-slate-700 to-slate-800 border-0 shadow-xl rounded-2xl text-white">
-            <CardContent className="p-6 text-center">
+          <div className={`border-0 shadow-xl rounded-2xl text-white ${isTutor ? 'bg-slate-700' : 'bg-gradient-to-br from-slate-700 to-slate-800'}`}>
+            <div className="p-6 text-center">
               <div className="text-3xl font-bold text-yellow-400 mb-2">{progressPct}%</div>
               <div className="text-sm font-medium opacity-90">Progress</div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>

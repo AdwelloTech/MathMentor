@@ -6,6 +6,7 @@ import App from "./App";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AdminProvider } from "./contexts/AdminContext";
 import { TutorialProvider } from "./contexts/TutorialContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import "./index.css";
 
 // Create root element
@@ -16,40 +17,42 @@ const root = ReactDOM.createRoot(
 // Render app
 root.render(
   <React.StrictMode>
-    <BrowserRouter future={{ v7_relativeSplatPath: true }}>
-      <AuthProvider>
-        <AdminProvider>
-          <TutorialProvider>
-            <App />
-            <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: "#ffffff",
-                color: "#1f2937",
-                border: "1px solid #e5e7eb",
-                borderRadius: "0.75rem",
-                boxShadow:
-                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-              },
-              success: {
-                iconTheme: {
-                  primary: "#10b981",
-                  secondary: "#ffffff",
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: "#ef4444",
-                  secondary: "#ffffff",
-                },
-              },
-            }}
-          />
+    <ThemeProvider>
+      <BrowserRouter future={{ v7_relativeSplatPath: true }}>
+        <AuthProvider>
+          <AdminProvider>
+            <TutorialProvider>
+              <App />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: "#ffffff",
+                    color: "#1f2937",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "0.75rem",
+                    boxShadow:
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                  },
+                  success: {
+                    iconTheme: {
+                      primary: "#10b981",
+                      secondary: "#ffffff",
+                    },
+                  },
+                  error: {
+                    iconTheme: {
+                      primary: "#ef4444",
+                      secondary: "#ffffff",
+                    },
+                  },
+                }}
+              />
             </TutorialProvider>
-        </AdminProvider>
-      </AuthProvider>
-    </BrowserRouter>
+          </AdminProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   </React.StrictMode>
 );

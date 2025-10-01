@@ -179,7 +179,8 @@ export class ProfileImageService {
     // Update user's profile image URL
     const imageUrl = FileUploadService.getFileUrl(profileImage.filePath, baseUrl);
     await User.findByIdAndUpdate(userId, {
-      profileImageUrl: imageUrl,
+      avatarUrl: imageUrl,
+      profileImageUrl: imageUrl, // Also update this for backward compatibility
       updatedAt: new Date()
     });
 

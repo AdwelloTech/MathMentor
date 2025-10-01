@@ -282,27 +282,47 @@ const CreateEditFlashcardSetPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {isEdit ? "Edit" : "Create"} Flash Card Set
-        </h1>
-        <Button
-          onClick={save}
-          disabled={loading}
-          className="px-4 py-2 bg-[#16803D] hover:bg-[#0F5A2A] text-white shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          {loading
-            ? isEdit
-              ? "Updating..."
-              : "Creating..."
-            : isEdit
-            ? "Update"
-            : "Create"}
-        </Button>
-      </div>
+    <div className="min-h-screen bg-slate-800 relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 -my-10 px-4 sm:px-6 lg:px-8 py-10">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.05),transparent_50%)]"></div>
 
-      <Card className="p-6 space-y-4">
+      {/* Floating decorative elements */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/15 to-yellow-400/15 rounded-full blur-3xl animate-pulse"></div>
+      <div
+        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/15 to-green-400/15 rounded-full blur-2xl animate-pulse"
+        style={{ animationDelay: "1s" }}
+      ></div>
+      <div
+        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/10 to-yellow-300/10 rounded-full blur-3xl animate-pulse"
+        style={{ animationDelay: "2s" }}
+      ></div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pb-16 space-y-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-green-400 mb-4">
+            {isEdit ? "Edit" : "Create"} Flash Card Set
+          </h1>
+        </div>
+
+        {/* Action Button */}
+        <div className="flex justify-center mb-8">
+          <Button
+            onClick={save}
+            disabled={loading}
+            className="px-8 py-3 bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white shadow-[0_2px_2px_0_#16803D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+          >
+            {loading
+              ? isEdit
+                ? "Updating..."
+                : "Creating..."
+              : isEdit
+              ? "Update"
+              : "Create"}
+          </Button>
+        </div>
+
+      <div className="bg-slate-700/50 rounded-xl shadow-lg p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             value={title}
@@ -314,7 +334,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
             charCountClassName="py-1"
           />
           <Select value={subject} onValueChange={(value) => setSubject(value)}>
-            <SelectTrigger className="border rounded-md p-2 bg-white">
+            <SelectTrigger className="border rounded-md p-2 bg-slate-600/50 border-slate-600 text-slate-200">
               <SelectValue placeholder="Select Subject" />
             </SelectTrigger>
             <SelectContent>
@@ -329,7 +349,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
             value={gradeLevel}
             onChange={(value) => setGradeLevel(value)}
             placeholder="Select grade level"
-            className="border rounded-md p-2 bg-white"
+            className="border rounded-md p-2 bg-slate-600/50 border-slate-600 text-slate-200"
           />
           <div className="flex items-center space-x-2">
             <Checkbox
@@ -337,14 +357,14 @@ const CreateEditFlashcardSetPage: React.FC = () => {
               checked={isPublic}
               onCheckedChange={(checked) => setIsPublic(checked === true)}
             />
-            <Label htmlFor="is-public" className="text-sm font-medium">
+            <Label htmlFor="is-public" className="text-sm font-medium text-slate-200">
               Make public (visible to students)
             </Label>
           </div>
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          <h2 className="font-semibold">Cards</h2>
+          <h2 className="font-semibold text-slate-200">Cards</h2>
           <Button
             onClick={addCard}
             variant="outline"
@@ -357,7 +377,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Label className="text-sm text-gray-600">Cards:</Label>
+            <Label className="text-sm text-slate-400">Cards:</Label>
             <Input
               type="number"
               min={1}
@@ -379,13 +399,13 @@ const CreateEditFlashcardSetPage: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Difficulty:</span>
+            <span className="text-sm text-slate-400">Difficulty:</span>
             <Select
               value={aiDifficulty}
               onValueChange={(value) => setAiDifficulty(value as any)}
             >
               <SelectTrigger
-                className="border rounded-md p-2"
+                className="border rounded-md p-2 bg-slate-600/50 border-slate-600 text-slate-200"
                 aria-label="Difficulty"
               >
                 <SelectValue />
@@ -414,10 +434,10 @@ const CreateEditFlashcardSetPage: React.FC = () => {
         </div>
 
         <div className="mt-4">
-          <Label className="block text-sm font-medium text-gray-700 mb-2">
+          <Label className="block text-sm font-medium text-slate-200 mb-2">
             Optional: Upload syllabus PDF for context
           </Label>
-          <div className="flex items-center justify-between rounded-md border-2 border-dashed border-gray-300 bg-gray-50 px-3 py-3">
+          <div className="flex items-center justify-between rounded-md border-2 border-dashed border-slate-600 bg-slate-700/50 px-3 py-3">
             <div className="flex items-center gap-3">
               <input
                 id="flashcards-pdf"
@@ -462,7 +482,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
               />
               <label
                 htmlFor="flashcards-pdf"
-                className="inline-flex items-center px-3 py-2 bg-white border rounded-md text-sm cursor-pointer hover:bg-gray-50"
+                className="inline-flex items-center px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-sm cursor-pointer hover:bg-slate-500 text-slate-200"
               >
                 Choose PDFs (up to 10)
               </label>
@@ -471,14 +491,14 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                   {pdfs.map((pdf, index) => (
                     <span
                       key={index}
-                      className="text-xs text-gray-700 bg-white border rounded-full px-2 py-1 flex items-center gap-1"
+                      className="text-xs text-slate-300 bg-slate-600 border border-slate-500 rounded-full px-2 py-1 flex items-center gap-1"
                     >
                       {pdf.fileName} ({Math.round(pdf.fileSize / 1024)} KB, {pdf.pdfText.length} chars)
                       <button
                         onClick={() =>
                           setPdfs((prev) => prev.filter((_, i) => i !== index))
                         }
-                        className="ml-1 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center"
+                        className="ml-1 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-full w-4 h-4 flex items-center justify-center"
                         title="Remove PDF"
                       >
                         ×
@@ -487,19 +507,19 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <span className="text-xs text-gray-500">No files selected</span>
+                <span className="text-xs text-slate-400">No files selected</span>
               )}
             </div>
             {pdfs.length > 0 && (
               <button
                 onClick={() => setPdfs([])}
-                className="text-xs text-gray-600 hover:text-gray-900"
+                className="text-xs text-slate-400 hover:text-slate-200"
               >
                 Clear All
               </button>
             )}
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-slate-400">
             PDFs up to 10MB each, maximum 10 files. We'll use their text as AI
             context.
           </p>
@@ -509,7 +529,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
           {cards.map((c, idx) => (
             <div
               key={idx}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4 border rounded-md p-4"
+              className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-slate-600 rounded-md p-4 bg-slate-700/30"
             >
               <div className="md:col-span-2 flex items-center justify-between -mt-1 mb-1">
                 <div className="text-xs">
@@ -587,7 +607,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
                   onClick={() => removeCard(idx)}
                   variant="ghost"
                   size="sm"
-                  className="absolute -top-2 -right-2 p-1 bg-gray-100 rounded-full hover:bg-gray-200"
+                  className="absolute -top-2 -right-2 p-1 bg-slate-600 rounded-full hover:bg-slate-500 text-slate-300"
                   title="Remove Card"
                 >
                   <XMarkIcon className="h-4 w-4" />
@@ -596,7 +616,8 @@ const CreateEditFlashcardSetPage: React.FC = () => {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
+      </div>
     </div>
   );
 };

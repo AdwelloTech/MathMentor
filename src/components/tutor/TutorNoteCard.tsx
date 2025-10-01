@@ -162,14 +162,14 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
     <motion.div
       whileHover={{ y: -4 }}
       onClick={handleCardClick}
-      className="bg-white rounded-xl shadow-[0_4px_4px_0_#16803D] border-0 overflow-hidden hover:shadow-xl transition-all duration-200 cursor-pointer group"
+      className="bg-slate-700 rounded-xl shadow-lg border-0 overflow-hidden hover:shadow-xl transition-all duration-200 cursor-pointer group"
     >
       {/* Header */}
-      <div className="p-6 border-b border-gray-100 group-hover:bg-gray-50 transition-colors duration-200">
+      <div className="p-6 border-b border-slate-600 group-hover:bg-slate-600/50 transition-colors duration-200">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-2">
             <DocumentTextIcon className="h-5 w-5 text-green-600" />
-            <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+            <h3 className="text-lg font-semibold text-slate-200 line-clamp-2">
               {title || "Untitled Material"}
             </h3>
           </div>
@@ -182,7 +182,7 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
         </div>
 
         {(description || !title) && (
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+          <p className="text-slate-400 text-sm mb-3 line-clamp-2">
             {description
               ? truncateTutorNoteText(description, 100)
               : "No description provided"}
@@ -203,14 +203,14 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
             </span>
           )}
           {gradeLevelDisplay && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-600 text-slate-300">
               {gradeLevelDisplay}
             </span>
           )}
         </div>
 
         {/* Stats */}
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
+        <div className="flex items-center space-x-4 text-sm text-slate-400">
           <div className="flex items-center space-x-1">
             <EyeIcon className="h-4 w-4" />
             <span>{viewCount} views</span>
@@ -223,9 +223,9 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-4 bg-gray-50">
+      <div className="p-4 bg-slate-800/50">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-slate-400">
             {formatTutorNoteDate(createdAt)}
           </span>
 
@@ -237,7 +237,7 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
                   whileTap={{ scale: 0.95 }}
                   onClick={handleViewFile}
                   disabled={loadingFile}
-                  className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                  className="p-2 text-slate-400 hover:text-green-400 hover:bg-green-500/20 rounded-lg transition-colors duration-200"
                   title="View file"
                 >
                   <EyeIcon className="h-4 w-4" />
@@ -248,7 +248,7 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
                   whileTap={{ scale: 0.95 }}
                   onClick={handleDownload}
                   disabled={loadingFile}
-                  className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                  className="p-2 text-slate-400 hover:text-purple-400 hover:bg-purple-500/20 rounded-lg transition-colors duration-200"
                   title="Download file"
                 >
                   <ArrowDownTrayIcon className="h-4 w-4" />
@@ -263,7 +263,7 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
                 e.stopPropagation();
                 onEdit();
               }}
-              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+              className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors duration-200"
               title="Edit material"
             >
               <PencilIcon className="h-4 w-4" />
@@ -279,8 +279,8 @@ const TutorNoteCard: React.FC<TutorNoteCardComponentProps> = ({
               disabled={isDeleting}
               className={`p-2 rounded-lg transition-colors duration-200 ${
                 isDeleting
-                  ? "text-gray-400 cursor-not-allowed"
-                  : "text-gray-600 hover:text-red-600 hover:bg-red-50"
+                  ? "text-slate-500 cursor-not-allowed"
+                  : "text-slate-400 hover:text-red-400 hover:bg-red-500/20"
               }`}
               title="Delete material"
             >

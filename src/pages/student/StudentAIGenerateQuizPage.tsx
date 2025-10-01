@@ -334,33 +334,14 @@ const StudentAIGenerateQuizPage: React.FC = () => {
   // Remove unused totalPoints since it's not being used
 
   return (
-    <StudentPageWrapper>
-      <div className="min-h-screen bg-[#D5FFC5] relative overflow-auto">
-        {/* Full page background */}
-        <div className="fixed inset-0 bg-[#D5FFC5] -z-10" />
-
-        {/* Animated background elements */}
-        <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_70%)]" />
-
-        {/* Floating decorative elements */}
-        <div className="fixed top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse" />
-        <div
-          className="fixed top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        />
-        <div
-          className="fixed bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "2s" }}
-        />
-
+    <StudentPageWrapper backgroundClass="bg-background" className="text-foreground">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="mb-8">
             <Button
               variant="ghost"
               onClick={() => navigate('/student/quizzes')}
-              className="mb-4 text-green-700 hover:text-green-800 hover:bg-green-100 z-50 relative"
-              style={{ pointerEvents: 'auto' }}
+              className="mb-4"
             >
               <ArrowLeftIcon className="w-5 h-5 mr-2" />
               Back to Quiz Dashboard
@@ -370,10 +351,10 @@ const StudentAIGenerateQuizPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               className="text-center"
             >
-              <h1 className="text-4xl font-bold text-green-800 mb-2">
+              <h1 className="text-4xl font-bold text-foreground mb-2">
                 AI Quiz Generator
               </h1>
-              <p className="text-lg text-green-600 max-w-2xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Generate personalized quizzes using AI with context from
                 admin-uploaded PDFs
               </p>
@@ -386,18 +367,18 @@ const StudentAIGenerateQuizPage: React.FC = () => {
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
                   currentStep >= 1
-                    ? "bg-green-500 border-green-500 text-white"
-                    : "bg-white border-gray-300 text-gray-500"
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "bg-card border-border text-muted-foreground"
                 }`}
               >
                 {currentStep > 1 ? <CheckIcon className="w-6 h-6" /> : "1"}
               </div>
-              <div className="w-16 h-0.5 bg-gray-300" />
+              <div className="w-16 h-0.5 bg-border" />
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
                   currentStep >= 2
-                    ? "bg-green-500 border-green-500 text-white"
-                    : "bg-white border-gray-300 text-gray-500"
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "bg-card border-border text-muted-foreground"
                 }`}
               >
                 {currentStep > 2 ? <CheckIcon className="w-6 h-6" /> : "2"}
@@ -412,9 +393,9 @@ const StudentAIGenerateQuizPage: React.FC = () => {
               animate={{ opacity: 1, x: 0 }}
               className="max-w-4xl mx-auto"
             >
-              <Card className="bg-white/80 backdrop-blur-sm border-2 border-green-200 mb-6">
+              <Card className="bg-card border-border mb-6">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-800">
+                  <CardTitle className="flex items-center gap-2 text-card-foreground">
                     <SparklesIcon className="w-6 h-6" />
                     Quiz Information
                   </CardTitle>
@@ -423,7 +404,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                   <div>
                     <Label
                       htmlFor="quiz-title"
-                      className="text-green-700 font-medium"
+                      className="text-card-foreground font-medium"
                     >
                       Quiz Title
                     </Label>
@@ -438,7 +419,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                   <div>
                     <Label
                       htmlFor="quiz-description"
-                      className="text-green-700 font-medium"
+                      className="text-card-foreground font-medium"
                     >
                       Description (Optional)
                     </Label>
@@ -456,7 +437,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                   <div>
                     <Label
                       htmlFor="time-limit"
-                      className="text-green-700 font-medium"
+                      className="text-card-foreground font-medium"
                     >
                       Time Limit (minutes)
                     </Label>
@@ -491,8 +472,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                     e.stopPropagation();
                     setCurrentStep(2);
                   }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 relative z-50"
-                  style={{ pointerEvents: 'auto' }}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3"
                 >
                   Continue to Questions
                   <ArrowLeftIcon className="w-5 h-5 ml-2 rotate-180" />
@@ -509,13 +489,13 @@ const StudentAIGenerateQuizPage: React.FC = () => {
               className="max-w-6xl mx-auto"
             >
               {/* AI Generation Controls */}
-              <Card className="bg-white/80 backdrop-blur-sm border-2 border-green-200 mb-6">
+              <Card className="bg-card border-border mb-6">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-800">
+                  <CardTitle className="flex items-center gap-2 text-card-foreground">
                     <SparklesIcon className="w-6 h-6" />
                     AI Question Generation
                   </CardTitle>
-                  <p className="text-sm text-green-600">
+                  <p className="text-sm text-muted-foreground">
                     Generate questions using AI with context from:{" "}
                     {selectedPDF?.file_name}
                   </p>
@@ -523,7 +503,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <Label className="text-green-700 font-medium">
+                      <Label className="text-card-foreground font-medium">
                         Number of Questions
                       </Label>
                       <Input
@@ -537,11 +517,11 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                             )
                           )
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        className="w-full"
                       />
                     </div>
                     <div>
-                      <Label className="text-green-700 font-medium">
+                      <Label className="text-card-foreground font-medium">
                         Difficulty
                       </Label>
                       <Select
@@ -559,7 +539,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-green-700 font-medium">
+                      <Label className="text-card-foreground font-medium">
                         Question Type
                       </Label>
                       <Select
@@ -581,7 +561,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                       <Button
                         onClick={handleGenerateAI}
                         disabled={aiLoading}
-                        className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center"
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 flex items-center justify-center"
                       >
                         {aiLoading ? (
                           <>
@@ -599,10 +579,10 @@ const StudentAIGenerateQuizPage: React.FC = () => {
 
               {/* Questions Display */}
               {questions.length > 0 && (
-                <Card className="bg-white/80 backdrop-blur-sm border-2 border-green-200 mb-6">
+                <Card className="bg-card border-border mb-6">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-green-800">
+                      <CardTitle className="text-card-foreground">
                         Generated Questions ({questions.length})
                       </CardTitle>
                       <div className="flex items-center gap-4">
@@ -630,11 +610,11 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                           key={questionIndex}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-4 border border-gray-200 rounded-lg bg-white"
+                          className="p-4 border border-border rounded-lg bg-background"
                         >
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-500">
+                              <span className="text-sm font-medium text-muted-foreground">
                                 Q{question.question_order}
                               </span>
                               {question.is_ai_generated && (
@@ -647,7 +627,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => removeQuestion(questionIndex)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                             >
                               <TrashIcon className="w-4 h-4" />
                             </Button>
@@ -655,7 +635,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
 
                           <div className="space-y-3">
                             <div>
-                              <Label className="text-gray-700 font-medium">
+                              <Label className="text-foreground font-medium">
                                 Question
                               </Label>
                               <Textarea
@@ -676,7 +656,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
 
                             {/* Answers */}
                             <div>
-                              <Label className="text-gray-700 font-medium">
+                              <Label className="text-foreground font-medium">
                                 Answers
                               </Label>
                               <div className="space-y-2 mt-2">
@@ -686,30 +666,30 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                                     className={`p-3 rounded-lg border ${
                                       isSubmitted
                                         ? answer.is_correct
-                                          ? 'border-green-500 bg-green-50'
+                                          ? 'border-green-500 bg-green-500/10'
                                           : question.selectedAnswer === answerIndex
-                                          ? 'border-red-500 bg-red-50'
-                                          : 'border-gray-200'
-                                        : 'border-gray-200 hover:border-blue-300 cursor-pointer'
+                                          ? 'border-red-500 bg-red-500/10'
+                                          : 'border-border'
+                                        : 'border-border hover:border-primary/50 cursor-pointer'
                                     } transition-colors`}
                                     onClick={() => handleAnswerSelect(questionIndex, answerIndex)}
                                   >
                                     <div className="flex items-center gap-3">
                                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                                         isSubmitted && answer.is_correct 
-                                          ? 'bg-green-100 border-green-500' 
+                                          ? 'bg-green-500/20 border-green-500' 
                                           : question.selectedAnswer === answerIndex
-                                          ? 'bg-blue-100 border-blue-500'
-                                          : 'border-gray-400'
+                                          ? 'bg-primary/20 border-primary'
+                                          : 'border-muted-foreground'
                                       }`}>
                                         {isSubmitted && answer.is_correct && (
                                           <CheckIcon className="w-3.5 h-3.5 text-green-600" />
                                         )}
                                         {!isSubmitted && question.selectedAnswer === answerIndex && (
-                                          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                          <div className="w-3 h-3 rounded-full bg-primary"></div>
                                         )}
                                       </div>
-                                      <span className={isSubmitted && answer.is_correct ? 'font-medium text-green-700' : ''}>
+                                      <span className={isSubmitted && answer.is_correct ? 'font-medium text-green-600' : ''}>
                                         {answer.answer_text}
                                       </span>
                                     </div>
@@ -744,8 +724,6 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                       setCurrentStep(1);
                     }}
                     variant="outline"
-                    className="border-green-300 text-green-700 hover:bg-green-50 relative z-50"
-                    style={{ pointerEvents: 'auto' }}
                   >
                     <ArrowLeftIcon className="w-5 h-5 mr-2" />
                     Back to Setup
@@ -757,13 +735,12 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                         e.stopPropagation();
                         handleSubmitQuiz();
                       }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 relative z-50"
-                      style={{ pointerEvents: 'auto' }}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3"
                     >
                       Submit Quiz
                     </Button>
                   ) : (
-                    <div className="text-xl font-bold text-green-700">
+                    <div className="text-xl font-bold text-primary">
                       Score: {score} / {totalPossible}
                     </div>
                   )}
@@ -776,8 +753,6 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                       }}
                       disabled={loading || questions.length === 0}
                       variant="outline"
-                      className="border-purple-300 text-purple-700 hover:bg-purple-50 relative z-50"
-                      style={{ pointerEvents: 'auto' }}
                     >
                       {loading ? (
                         <>
@@ -797,8 +772,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                         handleSubmit(e as any);
                       }}
                       disabled={!validateStep2() || loading}
-                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 relative z-50"
-                      style={{ pointerEvents: 'auto' }}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3"
                     >
                       {loading ? (
                         <>
@@ -815,7 +789,6 @@ const StudentAIGenerateQuizPage: React.FC = () => {
             </motion.div>
           )}
         </div>
-      </div>
     </StudentPageWrapper>
   );
 };

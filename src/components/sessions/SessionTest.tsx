@@ -7,8 +7,7 @@ import SessionRoom from "./SessionRoom";
 
 // Mock session data for testing
 const mockSession: StudentUpcomingSession = {
-  booking_id: "test-booking-1",
-  class_id: "test-class-1",
+  id: "test-booking-1",
   title: "Algebra Fundamentals",
   description: "Learn the basics of algebra with interactive examples",
   date: new Date(Date.now() + 10 * 60 * 1000).toISOString().split("T")[0], // 10 minutes from now

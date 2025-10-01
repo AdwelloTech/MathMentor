@@ -58,7 +58,6 @@ export interface StudentTutorMaterialCardProps {
 
 // Service functions
 export const getStudentTutorMaterials = async (
-  studentId: string,
   params?: StudentTutorMaterialsSearchParams
 ): Promise<StudentTutorMaterial[]> => {
   try {
@@ -76,7 +75,7 @@ export const getStudentTutorMaterials = async (
     const url = `/api/tutor-materials${queryString ? `?${queryString}` : ''}`;
 
     const response = await apiClient.get(url);
-    return response || [];
+    return Array.isArray(response) ? response : [];
   } catch (error) {
     console.error("Error fetching student tutor materials:", error);
     throw error;
@@ -84,12 +83,11 @@ export const getStudentTutorMaterials = async (
 };
 
 export const getStudentTutorMaterialById = async (
-  studentId: string,
   materialId: string
 ): Promise<StudentTutorMaterialWithAccess | null> => {
   try {
     const response = await apiClient.get(`/api/tutor-materials/${materialId}`);
-    return response || null;
+    return (response && typeof response === 'object' && !Array.isArray(response)) ? response as StudentTutorMaterialWithAccess : null;
   } catch (error: any) {
     if (error.response?.status === 404) {
       return null;
@@ -99,12 +97,10 @@ export const getStudentTutorMaterialById = async (
   }
 };
 
-export const checkStudentPremiumAccess = async (
-  studentId: string
-): Promise<boolean> => {
+export const checkStudentPremiumAccess = async (): Promise<boolean> => {
   try {
     const response = await apiClient.get('/api/tutor-materials/premium/check');
-    return response?.has_premium_access || false;
+    return (response && typeof response === 'object' && !Array.isArray(response) && (response as any).has_premium_access) || false;
   } catch (error) {
     console.error("Error checking student premium access:", error);
     return false;
@@ -199,8 +195,7 @@ export const incrementStudentTutorMaterialViewCount = async (
 };
 
 export const incrementStudentTutorMaterialViewCountUnique = async (
-  materialId: string,
-  studentId: string
+  materialId: string
 ): Promise<void> => {
   try {
     // For now, use simple view tracking

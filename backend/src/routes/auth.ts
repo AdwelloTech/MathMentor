@@ -150,11 +150,13 @@ router.get('/me', authenticate, async (req, res) => {
         full_name: user.fullName,
         email: user.email,
         role: user.role,
+        package: user.package, // Include package for students
         avatar_url: user.avatarUrl,
         phone: user.phone,
         address: user.address,
         gender: user.gender,
         emergency_contact: user.emergencyContact,
+        date_of_birth: user.dateOfBirth,
         age: (user as any).age, // Access virtual field
         grade_level_id: user.gradeLevelId,
         current_grade: user.currentGrade,
@@ -168,6 +170,18 @@ router.get('/me', authenticate, async (req, res) => {
         postcode: user.postcode,
         school_name: user.schoolName,
         profile_image_url: user.profileImageUrl,
+        // Tutor-specific fields
+        qualification: user.qualification,
+        experience_years: user.experienceYears,
+        specializations: user.specializations,
+        hourly_rate: user.hourlyRate,
+        availability: user.availability,
+        bio: user.bio,
+        certifications: user.certifications,
+        languages: user.languages,
+        cv_url: user.cvUrl,
+        cv_file_name: user.cvFileName,
+        profile_completed: user.profileCompleted,
         created_at: user.createdAt,
         last_login: user.lastLogin
       }
@@ -198,7 +212,109 @@ router.put('/profile', authenticate, async (req, res) => {
       data: updatedProfile
     });
   } catch (error: any) {
-    res.status(400).json({
+    console.error('Profile update error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to update profile'
+    });
+  }
+});
+
+// Admin login
+router.post('/admin/login', async (req, res) => {
+  try {
+    // Validate input
+    const { email, password } = validateOrThrow(loginSchema, req.body) as LoginData;
+
+    // Login admin
+    const result = await AuthService.adminLogin({ email, password });
+
+    res.json({
+      success: true,
+      message: 'Admin login successful',
+      data: result
+    });
+  } catch (error: any) {
+    res.status(401).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Admin logout
+router.post('/admin/logout', authenticate, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    // Verify user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    const { refreshToken } = req.body;
+
+    if (refreshToken) {
+      await AuthService.logout(refreshToken);
+    }
+
+    res.json({
+      success: true,
+      message: 'Admin logout successful'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Validate admin session
+router.get('/admin/validate-session', authenticate, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    // Verify user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    const user = await AuthService.getUserById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        valid: true,
+        admin_id: user._id.toString(),
+        admin_email: user.email
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
       success: false,
       error: error.message
     });

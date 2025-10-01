@@ -114,6 +114,10 @@ quizSchema.set('toJSON', {
   virtuals: true,
 });
 
+quizSchema.set('toObject', {
+  virtuals: true,
+});
+
 // Virtual for total questions in quiz
 quizSchema.virtual('questionCount', {
   ref: 'Question',
@@ -226,6 +230,70 @@ quizAttemptSchema.set('toJSON', {
 quizAttemptSchema.index({ quiz_id: 1, student_id: 1 });
 quizAttemptSchema.index({ student_id: 1, created_at: -1 });
 quizAttemptSchema.index({ status: 1 });
+
+// StudentAnswer schema for tracking individual student answers
+export interface IStudentAnswer extends Document {
+  _id: mongoose.Types.ObjectId;
+  attempt_id: mongoose.Types.ObjectId;
+  question_id: mongoose.Types.ObjectId;
+  selected_answer_id?: mongoose.Types.ObjectId;
+  answer_text?: string;
+  is_correct: boolean;
+  points_earned: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+const studentAnswerSchema = new Schema<IStudentAnswer>(
+  {
+    attempt_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'QuizAttempt',
+      required: true,
+    },
+    question_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'Question',
+      required: true,
+    },
+    selected_answer_id: {
+      type: Schema.Types.ObjectId,
+    },
+    answer_text: {
+      type: String,
+      trim: true,
+    },
+    is_correct: {
+      type: Boolean,
+      required: true,
+    },
+    points_earned: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  }
+);
+
+// Add virtual for id field
+studentAnswerSchema.virtual('id').get(function() {
+  return this._id.toHexString();
+});
+
+// Ensure virtual fields are serialized
+studentAnswerSchema.set('toJSON', {
+  virtuals: true,
+});
+
+// Indexes
+studentAnswerSchema.index({ attempt_id: 1 });
+studentAnswerSchema.index({ question_id: 1 });
+studentAnswerSchema.index({ attempt_id: 1, question_id: 1 });
+
+export const StudentAnswer = mongoose.model<IStudentAnswer>('StudentAnswer', studentAnswerSchema);
 
 export const QuizAttempt = mongoose.model<IQuizAttempt>('QuizAttempt', quizAttemptSchema);
 

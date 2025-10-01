@@ -10,7 +10,7 @@ const router = express.Router();
 // Validation schemas
 const createQuizSchema = Joi.object({
   title: Joi.string().min(1).max(200).required(),
-  description: Joi.string().max(500).optional(),
+  description: Joi.string().max(500).allow('').optional(),
   subject: Joi.string().min(1).max(100).required(),
   gradeLevelId: Joi.string().optional(),
   difficulty: Joi.string().valid('easy', 'medium', 'hard').required(),
@@ -20,7 +20,7 @@ const createQuizSchema = Joi.object({
   isPublic: Joi.boolean().optional(),
   tags: Joi.array().items(Joi.string()).optional(),
   passingScore: Joi.number().min(0).max(100).optional(),
-  instructions: Joi.string().max(1000).optional(),
+  instructions: Joi.string().max(1000).allow('').optional(),
   // Additional fields from frontend
   tutorId: Joi.string().optional(), // User ID from frontend (ignored, we use auth)
   questions: Joi.array().optional(), // Allow empty questions array
@@ -38,7 +38,7 @@ const updateQuizSchema = Joi.object({
   isPublic: Joi.boolean().optional(),
   tags: Joi.array().items(Joi.string()).optional(),
   passingScore: Joi.number().min(0).max(100).optional(),
-  instructions: Joi.string().max(1000).optional(),
+  instructions: Joi.string().max(1000).allow('').optional(),
 });
 
 const createQuestionSchema = Joi.object({
@@ -279,6 +279,114 @@ router.get('/:quizId/stats', authenticate, async (req, res) => {
   }
 });
 
+// Get all quiz attempts/responses for a quiz (for tutors to view student responses)
+router.get('/:quizId/attempts', authenticate, authorize('tutor'), async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const attempts = await QuizService.getQuizAttempts(quizId, req.user!.id);
+
+    res.json({
+      success: true,
+      data: attempts,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Get tutor statistics
+router.get('/tutor/stats/:tutorId', authenticate, async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+
+    // Verify the user can access this tutor's stats
+    if (req.user!.id !== tutorId && req.user!.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied',
+      });
+    }
+
+    const stats = await QuizService.getTutorStats(tutorId);
+
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Get quiz attempt details by attempt ID
+router.get('/student/attempts/:attemptId', authenticate, async (req, res) => {
+  try {
+    const { attemptId } = req.params;
+    const attempt = await QuizService.getAttemptById(attemptId, req.user!.id);
+
+    res.json({
+      success: true,
+      data: attempt,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Get student answers for an attempt
+router.get('/student/attempts/:attemptId/answers', authenticate, async (req, res) => {
+  try {
+    const { attemptId } = req.params;
+    const answers = await QuizService.getStudentAnswersByAttempt(attemptId, req.user!.id);
+
+    res.json({
+      success: true,
+      data: answers,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Save tutor feedback for a quiz attempt
+router.post('/student/attempts/:attemptId/feedback', authenticate, authorize('tutor'), async (req, res) => {
+  try {
+    const { attemptId } = req.params;
+    const { feedback } = req.body;
+
+    if (typeof feedback !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Feedback must be a string',
+      });
+    }
+
+    await QuizService.saveTutorFeedback(attemptId, req.user!.id, feedback.trim());
+
+    res.json({
+      success: true,
+      message: 'Feedback saved successfully',
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 // Question routes
 
 // Get questions for a quiz
@@ -468,12 +576,13 @@ router.get('/student/recent/:studentId', authenticate, async (req, res) => {
 // Start a quiz attempt for a student
 router.post('/student/attempts/start', authenticate, authorize('student'), async (req, res) => {
   try {
-    const { quizId, studentId } = req.body;
+    const { quizId } = req.body;
+    const studentId = req.user!.id; // Use authenticated user's ID
 
-    if (!quizId || !studentId) {
+    if (!quizId) {
       return res.status(400).json({
         success: false,
-        error: 'quizId and studentId are required',
+        error: 'quizId is required',
       });
     }
 
@@ -504,10 +613,49 @@ router.post('/student/attempts/start', authenticate, authorize('student'), async
   }
 });
 
+// Submit quiz attempt with answers
+router.post('/student/attempts/submit', authenticate, authorize('student'), async (req, res) => {
+  try {
+    const { attemptId, answers } = req.body;
+
+    if (!attemptId || !answers || !Array.isArray(answers)) {
+      return res.status(400).json({
+        success: false,
+        error: 'attemptId and answers array are required',
+      });
+    }
+
+    const results = await QuizService.submitQuizAttempt(
+      attemptId,
+      req.user!.id,
+      answers
+    );
+
+    res.json({
+      success: true,
+      data: results,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 // Get quiz attempts for a student
-router.get('/student/attempts/:studentId', authenticate, async (req, res) => {
+router.get('/students/:studentId/attempts', authenticate, async (req, res) => {
   try {
     const { studentId } = req.params;
+
+    // Students can only view their own attempts, admins can view any student's attempts
+    if (req.user!.id !== studentId && req.user!.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied: You can only view your own quiz attempts',
+      });
+    }
+
     const attempts = await QuizService.getStudentAttempts(studentId);
 
     res.json({
@@ -516,6 +664,26 @@ router.get('/student/attempts/:studentId', authenticate, async (req, res) => {
     });
   } catch (error: any) {
     res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Delete a quiz attempt (students can delete their own incomplete attempts)
+router.delete('/students/attempts/:attemptId', authenticate, authorize('student'), async (req, res) => {
+  try {
+    const { attemptId } = req.params;
+
+    await QuizService.deleteQuizAttempt(attemptId, req.user!.id);
+
+    res.json({
+      success: true,
+      message: 'Quiz attempt deleted successfully',
+    });
+  } catch (error: any) {
+    const statusCode = error.message.includes('not found') || error.message.includes('access denied') ? 404 : 400;
+    res.status(statusCode).json({
       success: false,
       error: error.message,
     });

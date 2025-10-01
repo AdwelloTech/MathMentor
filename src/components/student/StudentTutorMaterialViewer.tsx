@@ -5,17 +5,11 @@ import {
   FileText,
   Download,
   Eye,
-  Calendar,
-  User,
   BookOpen,
-  GraduationCap,
-  Sparkles,
 } from "lucide-react";
 import DOMPurify from "dompurify";
 import {
-  formatStudentTutorMaterialDate,
   formatFileSize,
-  getStudentTutorMaterialSubjectColor,
   type StudentTutorMaterial,
 } from "@/lib/studentTutorMaterials";
 import {

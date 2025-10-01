@@ -3,19 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   XMarkIcon,
   DocumentArrowUpIcon,
-  DocumentTextIcon,
-  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  createTutorNote,
-  uploadTutorNoteFile,
-  type CreateTutorNoteData,
-  resolveNoteSubjectIdFromSubject,
+  createTutorMaterialRest,
 } from "@/lib/tutorNotes";
-import { subjectsService } from "@/lib/subjects";
 import RichTextEditor from "@/components/notes/RichTextEditor";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -62,6 +56,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
     content: "",
     subjectId: "",
     isPremium: false,
+    tags: [] as string[],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,34 +86,31 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
     setLoading(true);
 
     try {
-      // Resolve selected subject (from subjects table) to note_subjects.id
-      const selected = subjects.find((s) => s.id === formData.subjectId);
-      let subjectIdForNote = formData.subjectId;
-      if (selected) {
-        const resolved = await resolveNoteSubjectIdFromSubject({
-          id: selected.id,
-          name: selected.name,
-          display_name: selected.display_name,
-        });
-        if (resolved) subjectIdForNote = resolved;
+      // Create FormData for the REST API
+      const submitFormData = new FormData();
+      submitFormData.append('title', formData.title.trim());
+      if (formData.description.trim()) {
+        submitFormData.append('description', formData.description.trim());
+      }
+      if (formData.content.trim()) {
+        submitFormData.append('content', formData.content.trim());
+      }
+      if (formData.subjectId && formData.subjectId.trim()) {
+        submitFormData.append('subjectId', formData.subjectId.trim());
+      }
+      submitFormData.append('isPremium', formData.isPremium.toString());
+
+      // Add tags if any
+      if (formData.tags && formData.tags.length > 0) {
+        submitFormData.append('tags', JSON.stringify(formData.tags));
       }
 
-      // Create the note first
-      const noteData: CreateTutorNoteData = {
-        title: formData.title.trim(),
-        description: formData.description.trim() || undefined,
-        content: formData.content.trim() || undefined,
-        subjectId: subjectIdForNote || undefined,
-        isPremium: formData.isPremium,
-      };
-
-      const newNote = await createTutorNote(noteData, user.id);
-
-      // If a file was selected, handle the file upload
+      // Add file if selected
       if (selectedFile) {
-        setUploadingFile(true);
-        await uploadTutorNoteFile(selectedFile, newNote.id);
+        submitFormData.append('file', selectedFile);
       }
+
+      await createTutorMaterialRest(submitFormData);
 
       toast.success("Material created successfully!");
       resetForm();
@@ -214,6 +206,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
       content: "",
       subjectId: "",
       isPremium: false,
+      tags: [],
     });
     setSelectedFile(null);
     setIsDragOver(false);

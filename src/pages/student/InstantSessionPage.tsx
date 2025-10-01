@@ -24,17 +24,6 @@ import {
 import { subjectsService } from "@/lib/subjects";
 import type { Subject } from "@/types/subject";
 
-interface InstantRequest {
-  id: string;
-  student_id: string;
-  subject_id: string;
-  duration_minutes: number;
-  status: "pending" | "accepted" | "cancelled";
-  accepted_by_tutor_id: string | null;
-  jitsi_meeting_url: string | null;
-  created_at: string;
-  updated_at: string;
-}
 
 type NoteSubject = Subject;
 

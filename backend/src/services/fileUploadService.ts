@@ -19,6 +19,12 @@ export const FILE_TYPE_CONFIGS: Record<string, FileTypeConfig> = {
     allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
     folder: 'profile-images'
   },
+  idVerificationImages: {
+    maxSize: 5 * 1024 * 1024, // 5MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp'],
+    folder: 'id-verification'
+  },
   documents: {
     maxSize: 10 * 1024 * 1024, // 10MB
     allowedTypes: [
@@ -111,6 +117,15 @@ export const uploadInstances = {
     fileFilter: createFileFilter(FILE_TYPE_CONFIGS.profileImages)
   }),
 
+  idVerificationImages: multer({
+    storage: createStorage(FILE_TYPE_CONFIGS.idVerificationImages.folder),
+    limits: {
+      fileSize: FILE_TYPE_CONFIGS.idVerificationImages.maxSize,
+      files: 3 // front, back, selfie
+    },
+    fileFilter: createFileFilter(FILE_TYPE_CONFIGS.idVerificationImages)
+  }),
+
   documents: multer({
     storage: createStorage(FILE_TYPE_CONFIGS.documents.folder),
     limits: {
@@ -188,10 +203,18 @@ export class FileUploadService {
   /**
    * Get public URL for a file
    */
-  static getFileUrl(filePath: string): string {
+  static getFileUrl(filePath: string, baseUrl?: string): string {
     // For local storage, construct URL relative to uploads directory
     const relativePath = path.relative(path.join(__dirname, '../../uploads'), filePath);
-    return `/uploads/${relativePath.replace(/\\/g, '/')}`;
+    const urlPath = `/uploads/${relativePath.replace(/\\/g, '/')}`;
+
+    // If baseUrl is provided, return full URL
+    if (baseUrl) {
+      return `${baseUrl}${urlPath}`;
+    }
+
+    // Otherwise return relative URL
+    return urlPath;
   }
 
   /**

@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import {
   PlusIcon,
   TrashIcon,
-  EyeIcon,
   PencilIcon,
   CloudArrowUpIcon,
   DocumentIcon,
@@ -32,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import {
@@ -40,7 +38,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 const ManageQuizPdfsPage: React.FC = () => {
@@ -148,12 +145,12 @@ const ManageQuizPdfsPage: React.FC = () => {
 
       // Upload PDF and get base64
       const result = await uploadPdfForAI(uploadForm.file);
-      let pdfBase64: string, fileName: string, fileSize: number;
+      let pdfBase64: string, fileSize: number;
 
       if ("pdfs" in result && result.pdfs.length > 0) {
-        ({ pdfBase64, fileName, fileSize } = result.pdfs[0]);
+        ({ pdfBase64, fileSize } = result.pdfs[0]);
       } else {
-        ({ pdfBase64, fileName, fileSize } = result as any);
+        ({ pdfBase64, fileSize } = result as any);
       }
 
       // Create PDF record
@@ -198,7 +195,7 @@ const ManageQuizPdfsPage: React.FC = () => {
       setLoading(true);
       const updatedPdf = await quizPdfService.update(selectedPdf.id, {
         file_name: editForm.file_name,
-        grade_level_id: editForm.grade_level_id,
+        grade_level_id: editForm.grade_level_id ? String(editForm.grade_level_id) : undefined,
         subject_id: editForm.subject_id,
         is_active: editForm.is_active,
       });

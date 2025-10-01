@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -7,7 +6,6 @@ import {
   TrashIcon,
   ArrowLeftIcon,
   CheckIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Input } from "@/components/ui/input";
@@ -27,7 +25,6 @@ import type {
   Quiz,
   Question,
   Answer,
-  CreateQuestionData,
   CreateAnswerData,
 } from "@/types/quiz";
 import toast from "react-hot-toast";
@@ -38,10 +35,6 @@ interface EditableQuestion extends Omit<Question, "answers"> {
   isNew?: boolean;
 }
 
-// Helper type for new answers without ID
-interface NewAnswer extends CreateAnswerData {
-  id?: string;
-}
 
 const EditQuizPage: React.FC = () => {
   const navigate = useNavigate();
@@ -91,7 +84,7 @@ const EditQuizPage: React.FC = () => {
         title: quizData.title,
         description: quizData.description || "",
         subject: quizData.subject,
-        grade_level: quizData.grade_level || "",
+        grade_level: (quizData as any).grade_level || (quizData.gradeLevelId as any)?.displayName || "",
         time_limit_minutes: quizData.time_limit_minutes,
       });
 
@@ -344,7 +337,7 @@ const EditQuizPage: React.FC = () => {
           }
         } else {
           // Create new question with answers
-          const newQuestion = await quizService.questions.create(quizId!, {
+          await quizService.questions.create(quizId!, {
             question_text: question.question_text,
             question_type: question.question_type,
             points: question.points,

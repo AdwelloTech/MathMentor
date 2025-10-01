@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import DashboardLayout from "@/components/layout/DashboardLayout";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { db } from "@/lib/db";
+import { checkTutorDashboardAccess } from "@/lib/tutorApplicationAcceptance";
 import toast from "react-hot-toast";
 import {
   CheckCircleIcon,
@@ -37,7 +37,23 @@ const TutorApplicationPage: React.FC = () => {
     }
 
     try {
-      const application = await db.tutorApplications.getByUserId(user.id);
+      const response = await db.tutorApplications.getByUserId(user.id);
+      const application = response.success ? response.data : null;
+
+      // If application is under_review, try to auto-approve it for immediate access
+      if (application && application.application_status === 'under_review') {
+        console.log('Found under_review application, attempting auto-approval...');
+        const accessCheck = await checkTutorDashboardAccess(user.id);
+        if (accessCheck.hasAccess) {
+          console.log('Auto-approval successful, refreshing application status...');
+          // Refresh the application status after auto-approval
+          const updatedResponse = await db.tutorApplications.getByUserId(user.id);
+          const updatedApplication = updatedResponse.success ? updatedResponse.data : null;
+          setExistingApplication(updatedApplication);
+          return;
+        }
+      }
+
       setExistingApplication(application);
     } catch (error: any) {
       // If no application found, that's fine
@@ -49,8 +65,15 @@ const TutorApplicationPage: React.FC = () => {
     }
   };
 
-  const handleApplicationSuccess = () => {
+  const handleApplicationSuccess = async () => {
     setShowSuccessMessage(true);
+    // Check if we can grant immediate access
+    if (user) {
+      const accessCheck = await checkTutorDashboardAccess(user.id);
+      if (accessCheck.hasAccess) {
+        toast.success('Tutor dashboard access granted! You can now access tutor features.');
+      }
+    }
     checkExistingApplication(); // Refresh application status
   };
 
@@ -65,34 +88,30 @@ const TutorApplicationPage: React.FC = () => {
   // Redirect if user is already a tutor
   if (profile?.role === "tutor") {
     return (
-      <DashboardLayout>
-        <div className="max-w-2xl mx-auto text-center py-12">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-8">
-            <AcademicCapIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              You're Already a Tutor!
-            </h1>
-            <p className="text-gray-600 mb-6">
-              You already have tutor access in your account. You can manage your
-              tutoring activities from your dashboard.
-            </p>
-            <button onClick={handleGoToDashboard} className="btn btn-primary">
-              Go to Tutor Dashboard
-            </button>
-          </div>
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-8">
+          <AcademicCapIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            You're Already a Tutor!
+          </h1>
+          <p className="text-gray-600 mb-6">
+            You already have tutor access in your account. You can manage your
+            tutoring activities from your dashboard.
+          </p>
+          <button onClick={handleGoToDashboard} className="btn btn-primary">
+            Go to Tutor Dashboard
+          </button>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   // Show loading spinner while checking for existing application
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex justify-center items-center py-12">
-          <LoadingSpinner size="lg" />
-        </div>
-      </DashboardLayout>
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner size="lg" />
+      </div>
     );
   }
 
@@ -103,7 +122,7 @@ const TutorApplicationPage: React.FC = () => {
       existingApplication.application_status === "pending")
   ) {
     return (
-      <DashboardLayout>
+      <div>
         <div className="max-w-2xl mx-auto text-center py-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -142,14 +161,14 @@ const TutorApplicationPage: React.FC = () => {
             </button>
           </motion.div>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   // Show status for approved applications
   if (existingApplication?.application_status === "approved") {
     return (
-      <DashboardLayout>
+      <div>
         <div className="max-w-2xl mx-auto text-center py-12">
           <div className="bg-green-50 border border-green-200 rounded-lg p-8">
             <CheckCircleIcon className="h-16 w-16 text-green-600 mx-auto mb-4" />
@@ -165,14 +184,14 @@ const TutorApplicationPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   // Show status for rejected applications
   if (existingApplication?.application_status === "rejected") {
     return (
-      <DashboardLayout>
+      <div>
         <div className="max-w-2xl mx-auto text-center py-12">
           <div className="bg-red-50 border border-red-200 rounded-lg p-8">
             <XCircleIcon className="h-16 w-16 text-red-600 mx-auto mb-4" />
@@ -214,14 +233,14 @@ const TutorApplicationPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   // Show status for under_review applications
   if (existingApplication?.application_status === "under_review") {
     return (
-      <DashboardLayout>
+      <div>
         <div className="max-w-2xl mx-auto text-center py-12">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8">
             <ExclamationTriangleIcon className="h-16 w-16 text-yellow-600 mx-auto mb-4" />
@@ -245,20 +264,18 @@ const TutorApplicationPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   // Show application form for new applications
   return (
-    <DashboardLayout>
-      <div className="container mx-auto px-4 py-8">
-        <TutorApplicationForm
-          onSuccess={handleApplicationSuccess}
-          onCancel={handleGoToDashboard}
-        />
-      </div>
-    </DashboardLayout>
+    <div className="container mx-auto px-4 py-8">
+      <TutorApplicationForm
+        onSuccess={handleApplicationSuccess}
+        onCancel={handleGoToDashboard}
+      />
+    </div>
   );
 };
 

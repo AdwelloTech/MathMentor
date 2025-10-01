@@ -134,7 +134,6 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
         "::placeholder": {
           color: "#aab7c4",
         },
-        padding: "12px",
       },
       invalid: {
         color: "#9e2146",

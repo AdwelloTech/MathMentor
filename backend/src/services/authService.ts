@@ -8,8 +8,14 @@ export interface RegisterData {
   lastName: string;
   email: string;
   password: string;
-  role: 'admin' | 'principal' | 'teacher' | 'student' | 'parent' | 'hr' | 'finance' | 'support';
+  role: 'admin' | 'principal' | 'teacher' | 'student' | 'parent' | 'tutor' | 'hr' | 'finance' | 'support';
   phone?: string;
+  // Student specific fields
+  package?: 'free' | 'silver' | 'gold';
+  // Tutor specific fields
+  subjects?: string[];
+  experience?: string;
+  qualification?: string;
 }
 
 export interface LoginData {
@@ -36,7 +42,7 @@ export class AuthService {
    * Register a new user
    */
   static async register(data: RegisterData): Promise<AuthTokens> {
-    const { firstName, lastName, email, password, role, phone } = data;
+    const { firstName, lastName, email, password, role, phone, package: studentPackage, subjects, experience, qualification } = data;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -46,7 +52,7 @@ export class AuthService {
 
     // Create new user
     const fullName = `${firstName} ${lastName}`;
-    const user = new User({
+    const userData: any = {
       firstName,
       lastName,
       fullName,
@@ -55,7 +61,31 @@ export class AuthService {
       role,
       phone,
       isActive: true
-    });
+    };
+
+    // Add role-specific fields
+    if (role === 'student' && studentPackage) {
+      userData.package = studentPackage;
+    }
+
+    if (role === 'tutor') {
+      if (subjects) userData.subjects = subjects;
+      if (qualification) userData.qualification = qualification;
+      if (experience) {
+        // Convert experience string to number
+        const parseExperience = (exp: string): number => {
+          if (exp === "0-1") return 1;
+          if (exp === "1-3") return 2;
+          if (exp === "3-5") return 4;
+          if (exp === "5-10") return 7;
+          if (exp === "10+") return 10;
+          return 0;
+        };
+        userData.experienceYears = parseExperience(experience);
+      }
+    }
+
+    const user = new User(userData);
 
     await user.save();
 
@@ -247,13 +277,69 @@ export class AuthService {
   }
 
   /**
+   * Admin login - verifies admin role
+   */
+  static async adminLogin(data: LoginData): Promise<AuthTokens> {
+    const { email, password } = data;
+
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    if (!user) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      throw new Error('Account is deactivated');
+    }
+
+    // Verify user has admin role
+    if (user.role !== 'admin') {
+      throw new Error('Access denied: Admin privileges required');
+    }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Generate tokens
+    const tokens = generateTokenPair(user._id, user.email, user.role);
+
+    // Save refresh token
+    await this.saveRefreshToken(user._id, tokens.tokenId, tokens.refreshToken);
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user._id.toString(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        avatarUrl: user.avatarUrl
+      }
+    };
+  }
+
+  /**
    * Update user profile
    */
   static async updateProfile(userId: string, updates: Partial<any>): Promise<any> {
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
+    console.log('AuthService.updateProfile called with userId:', userId, 'updates:', updates);
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      console.log('Found user:', user._id);
 
     // Update allowed fields
     const allowedFields = [
@@ -261,16 +347,28 @@ export class AuthService {
       'emergencyContact', 'age', 'gradeLevelId', 'currentGrade', 'academicSet',
       'hasLearningDisabilities', 'learningNeedsDescription', 'parentName',
       'parentPhone', 'parentEmail', 'city', 'postcode', 'schoolName',
-      'avatarUrl', 'profileImageUrl'
+      'avatarUrl', 'profileImageUrl',
+      // Tutor-specific fields
+      'qualification', 'experienceYears', 'specializations', 'hourlyRate',
+      'availability', 'bio', 'certifications', 'languages', 'cvUrl',
+      'cvFileName', 'dateOfBirth'
     ];
+
+    // Fields that should remain camelCase (not converted to snake_case)
+    const camelCaseFields = ['cvUrl', 'cvFileName'];
 
     // Build update object with only allowed fields
     const updateData: any = {};
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
-        // Convert field names to match database schema
-        const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
-        updateData[field] = updates[field];
+        if (camelCaseFields.includes(field)) {
+          // Keep camelCase for these fields
+          updateData[field] = updates[field];
+        } else {
+          // Convert other field names to match database schema (snake_case)
+          const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
+          updateData[field] = updates[field];
+        }
       }
     }
 
@@ -279,37 +377,66 @@ export class AuthService {
       updateData.fullName = `${updates.firstName || user.firstName} ${updates.lastName || user.lastName}`;
     }
 
-    // Apply updates
-    Object.assign(user, updateData);
-    await user.save();
+    // Handle dateOfBirth conversion if it's a string
+    if (updateData.dateOfBirth && typeof updateData.dateOfBirth === 'string') {
+      updateData.dateOfBirth = new Date(updateData.dateOfBirth);
+    }
 
-    return {
-      id: user._id.toString(),
-      user_id: user._id.toString(),
-      first_name: user.firstName,
-      last_name: user.lastName,
-      full_name: user.fullName,
-      email: user.email,
-      role: user.role,
-      avatar_url: user.avatarUrl,
-      phone: user.phone,
-      address: user.address,
-      gender: user.gender,
-      emergency_contact: user.emergencyContact,
-      age: (user as any).age, // Access virtual field
-      grade_level_id: user.gradeLevelId,
-      current_grade: user.currentGrade,
-      academic_set: user.academicSet,
-      has_learning_disabilities: user.hasLearningDisabilities,
-      learning_needs_description: user.learningNeedsDescription,
-      parent_name: user.parentName,
-      parent_phone: user.parentPhone,
-      parent_email: user.parentEmail,
-      city: user.city,
-      postcode: user.postcode,
-      school_name: user.schoolName,
-      profile_image_url: user.profileImageUrl,
-      updated_at: user.updatedAt
-    };
+    // Apply updates
+    console.log('Applying updates:', updateData);
+    Object.assign(user, updateData);
+    console.log('Saving user...');
+    try {
+      await user.save();
+      console.log('User saved successfully');
+    } catch (saveError: any) {
+      console.error('Error saving user:', saveError);
+      throw saveError;
+    }
+
+      return {
+        id: user._id.toString(),
+        user_id: user._id.toString(),
+        first_name: user.firstName,
+        last_name: user.lastName,
+        full_name: user.fullName,
+        email: user.email,
+        role: user.role,
+        avatar_url: user.avatarUrl,
+        phone: user.phone,
+        address: user.address,
+        gender: user.gender,
+        emergency_contact: user.emergencyContact,
+        date_of_birth: user.dateOfBirth,
+        age: (user as any).age, // Access virtual field
+        grade_level_id: user.gradeLevelId,
+        current_grade: user.currentGrade,
+        academic_set: user.academicSet,
+        has_learning_disabilities: user.hasLearningDisabilities,
+        learning_needs_description: user.learningNeedsDescription,
+        parent_name: user.parentName,
+        parent_phone: user.parentPhone,
+        parent_email: user.parentEmail,
+        city: user.city,
+        postcode: user.postcode,
+        school_name: user.schoolName,
+        profile_image_url: user.profileImageUrl,
+        // Tutor-specific fields
+        qualification: user.qualification,
+        experience_years: user.experienceYears,
+        specializations: user.specializations,
+        hourly_rate: user.hourlyRate,
+        availability: user.availability,
+        bio: user.bio,
+        certifications: user.certifications,
+        languages: user.languages,
+        cv_url: user.cvUrl,
+        cv_file_name: user.cvFileName,
+        updated_at: user.updatedAt
+      };
+    } catch (error: any) {
+      console.error('Error in updateProfile:', error);
+      throw error;
+    }
   }
 }

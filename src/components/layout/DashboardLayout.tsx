@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Bars3Icon,
@@ -18,28 +18,24 @@ import {
   instantSessionService,
   type InstantRequest,
 } from "@/lib/instantSessionService";
+import { idVerificationService } from "@/lib/idVerificationService";
+import apiClient from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorApplication, setTutorApplication] =
     useState<TutorApplication | null>(null);
   const [idVerification, setIdVerification] = useState<any>(null);
-  const [loadingApplication, setLoadingApplication] = useState(false);
   const { user, profile, signOut } = useAuth();
   const { isAdminLoggedIn, logoutAdmin } = useAdmin();
   const navigate = useNavigate();
-  const location = useLocation();
   const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
   const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
-
-  // Hide the global header on all student pages
-  const isStudentDashboardRoute = location.pathname.startsWith("/student");
 
   // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
@@ -49,23 +45,11 @@ const DashboardLayout: React.FC = () => {
   useEffect(() => {
     const loadSubjects = async () => {
       try {
-        // Use the new API client instead of Supabase
-        const response = await fetch('/api/subjects', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('mathmentor_tokens') ? JSON.parse(localStorage.getItem('mathmentor_tokens')!).accessToken : ''}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          console.error("Error loading subjects:", response.statusText);
-          return;
-        }
-
-        const result = await response.json();
-        if (result.success && result.data) {
+        // Use apiClient for consistent URL handling
+        const result = await apiClient.get<any[]>('/api/subjects');
+        if (result) {
           const subjectsMap: { [key: string]: string } = {};
-          result.data.forEach((subject: any) => {
+          result.forEach((subject: any) => {
             subjectsMap[subject._id] = subject.displayName || subject.name;
           });
           setSubjects(subjectsMap);
@@ -150,50 +134,23 @@ const DashboardLayout: React.FC = () => {
   useEffect(() => {
     if (profile?.role !== "tutor") return;
 
-    // Initial fetch to validate RLS and data visibility
+    // Initial fetch to validate data visibility
     (async () => {
       try {
-        const sinceIso = new Date(Date.now() - FRESH_WINDOW_MS).toISOString();
-        const { data, error } = await supabase
-          .from("instant_requests")
-          .select("*")
-          .eq("status", "pending")
-          .gte("created_at", sinceIso)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        if (error) {
-          console.error("[Instant] initial fetch error", error);
-        } else {
-          console.log("[Instant] initial pending count", data?.length || 0);
-          if (data && data.length > 0) {
-            const unique = Array.from(
-              new Map(data.map((r: any) => [r.id, r])).values()
-            ) as any;
-            setInstantRequests(unique);
-          }
-        }
+        // For now, we'll skip the initial fetch since the API isn't implemented yet
+        // This can be implemented later when the instant requests API is ready
+        console.log("[Instant] initial fetch skipped - API not implemented yet");
       } catch (e) {
         console.error("[Instant] initial fetch exception", e);
       }
     })();
 
     // Fallback polling every 10s (until Realtime confirmed)
+    // For now, we'll skip polling since the API isn't implemented yet
     const poll = setInterval(async () => {
       try {
-        const sinceIso = new Date(Date.now() - FRESH_WINDOW_MS).toISOString();
-        const { data, error } = await supabase
-          .from("instant_requests")
-          .select("*")
-          .eq("status", "pending")
-          .gte("created_at", sinceIso)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        if (error) return;
-        if (!data) return;
-        // Replace the list with current pending requests to avoid stale items lingering
-        setInstantRequests(
-          (data as any[]).filter((r: any) => r.status === "pending")
-        );
+        // Skip polling for now - implement when instant requests API is ready
+        console.log("[Instant] polling skipped - API not implemented yet");
       } catch (_) {}
     }, 10000);
 
@@ -243,16 +200,19 @@ const DashboardLayout: React.FC = () => {
   const checkTutorApplication = async () => {
     if (!user) return;
 
-    setLoadingApplication(true);
     try {
-      const applications = await db.tutorApplications.getByUserId(user.id);
-      // Get the most recent application
-      const mostRecentApplication = applications?.[0] || null;
-      setTutorApplication(mostRecentApplication);
+      // Use apiClient instead of direct fetch for consistent URL handling
+      const result = await apiClient.get<TutorApplication[]>('/api/tutors/applications');
+
+      if (result && result.length > 0) {
+        // Get the most recent application
+        const mostRecentApplication = result[0];
+        setTutorApplication(mostRecentApplication);
+      } else {
+        setTutorApplication(null);
+      }
     } catch (error) {
       console.error("Error checking tutor application:", error);
-    } finally {
-      setLoadingApplication(false);
     }
   };
 
@@ -260,29 +220,13 @@ const DashboardLayout: React.FC = () => {
     if (!user || !profile) return;
 
     try {
-      const { data, error } = await supabase
-        .from("id_verifications")
-        .select("*")
-        .eq("user_id", profile.id) // Use profile.id instead of user.id
-        .order("submitted_at", { ascending: false })
-        .limit(1);
-
-      if (error) {
-        console.error("Error checking ID verification:", error);
-        setIdVerification(null);
-      } else {
-        // Set the first record or null if no records found
-        setIdVerification(data?.[0] || null);
-      }
+      const verification = await idVerificationService.getVerificationByUserId();
+      setIdVerification(verification);
     } catch (error) {
       console.error("Error checking ID verification:", error);
       setIdVerification(null);
     }
   };
-
-  const isTutorApproved = tutorApplication?.application_status === "approved";
-  const isTutorPending = tutorApplication?.application_status === "pending";
-  const isTutorRejected = tutorApplication?.application_status === "rejected";
 
   const handleSignOut = async () => {
     if (isAdminLoggedIn) {
@@ -388,9 +332,6 @@ const DashboardLayout: React.FC = () => {
         setSidebarOpen={setSidebarOpen}
         tutorApplication={tutorApplication}
         idVerification={idVerification}
-        loadingApplication={loadingApplication}
-        checkTutorApplication={checkTutorApplication}
-        checkIDVerification={checkIDVerification}
         onSignOut={handleSignOut}
       />
 
@@ -465,7 +406,7 @@ const DashboardLayout: React.FC = () => {
               <CardContent className="pt-0">
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {instantRequests
-                    .filter((req, index) => !dismissedIds.has(req.id))
+                    .filter((req, _index) => !dismissedIds.has(req.id))
                     .map((req, index) => (
                       <motion.div
                         key={req.id}

@@ -72,9 +72,9 @@ const ResetPasswordPage: React.FC = () => {
         
         // Check if we already have an active session (user might have refreshed the page)
         const session = await auth.getSession();
-        console.log('Current session check:', { hasSession: !!session, hasUser: !!session?.user });
-        
-        if (session?.user) {
+        console.log('Current session check:', { hasSession: !!(session as any)?.data?.session, hasUser: !!(session as any)?.data?.session?.user });
+
+        if ((session as any)?.data?.session?.user) {
           console.log('Active session found for password reset');
           setIsValidSession(true);
           return;
@@ -87,15 +87,14 @@ const ResetPasswordPage: React.FC = () => {
         if (accessToken || type === 'recovery') {
           console.log('Waiting for Supabase to process tokens...');
           setTimeout(() => {
-            auth.getSession().then(newSession => {
-              if (newSession?.user) {
-                console.log('Session established after delay');
-                setIsValidSession(true);
-              } else {
-                console.log('No session after delay');
-                setIsValidSession(false);
-              }
-            });
+            const newSession = auth.getSession();
+            if ((newSession as any)?.data?.session?.user) {
+              console.log('Session established after delay');
+              setIsValidSession(true);
+            } else {
+              console.log('No session after delay');
+              setIsValidSession(false);
+            }
           }, 1000);
           return;
         }

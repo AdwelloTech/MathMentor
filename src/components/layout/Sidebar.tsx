@@ -6,7 +6,6 @@ import {
   XMarkIcon,
   AcademicCapIcon,
   UserCircleIcon,
-  Cog6ToothIcon,
   SparklesIcon,
   CalendarDaysIcon,
   UserGroupIcon,
@@ -20,8 +19,6 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { getRoleDisplayName } from "@/utils/permissions";
-import { db } from "@/lib/db";
-import { supabase } from "@/lib/supabase";
 import type { TutorApplication } from "@/types/auth";
 import { cn } from "@/lib/utils";
 
@@ -30,9 +27,6 @@ interface SidebarProps {
   setSidebarOpen: (open: boolean) => void;
   tutorApplication: TutorApplication | null;
   idVerification: any;
-  loadingApplication: boolean;
-  checkTutorApplication: () => void;
-  checkIDVerification: () => void;
   onSignOut?: () => void;
 }
 
@@ -41,9 +35,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   setSidebarOpen,
   tutorApplication,
   idVerification,
-  loadingApplication,
-  checkTutorApplication,
-  checkIDVerification,
   onSignOut,
 }) => {
   const { profile } = useAuth();
@@ -210,7 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const isActive = (href: string) => location.pathname === href;
 
   // Get tooltip message based on application status
-  const getTooltipMessage = (item: any) => {
+  const getTooltipMessage = () => {
     if (profile?.role !== "tutor") return "";
 
     if (!isTutorActive) {
@@ -273,10 +264,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       const isHighPriority = highPriorityItems.includes(item.name);
 
       // Role-based colors
-      const isAdminItem = adminNavigation.some((nav) => nav.name === item.name);
-      const isTutorItem = tutorNavigationItems.some(
-        (nav) => nav.name === item.name
-      );
       const isStudentItem =
         profile?.role === "student" &&
         [
@@ -311,8 +298,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       ].includes(item.name);
 
       // Time-based color adaptation (subtle)
-      const hour = new Date().getHours();
-      const isDayTime = hour >= 6 && hour <= 18;
 
       // Color assignment logic
       if (isHighPriority) {
@@ -395,7 +380,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 : "text-gray-400 bg-transparent hover:bg-gray-50/50 border border-transparent",
               !isHovered && "justify-center"
             )}
-            title={getTooltipMessage(item)}
+            title={getTooltipMessage()}
           >
             <div className="relative opacity-50">
               <item.icon className="h-5 w-5 shrink-0" />
@@ -637,7 +622,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </motion.button>
                 </div>
 
-                <div className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 px-6 pb-4 shadow-2xl relative overflow-hidden">
+              <div className="flex grow flex-col glass-panel-dark px-6 pb-4 relative overflow-hidden">
                   {/* Subtle background pattern */}
                   <div className="absolute inset-0 opacity-20">
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-200/10 via-transparent to-yellow-200/10" />
@@ -659,7 +644,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Collapsible sidebar for desktop */}
       <div id="sidebar-navigation" className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col">
         <motion.div
-          className="flex grow flex-col bg-gradient-to-br from-green-50/95 via-yellow-50/95 to-green-50/95 backdrop-blur-xl border-r border-green-200/50 shadow-xl relative overflow-hidden"
+          className="flex grow flex-col glass-panel-dark shadow-xl relative overflow-hidden"
           animate={{
             width: isHovered ? 288 : 80, // 288px = 72 * 4 (lg:w-72), 80px for collapsed
           }}

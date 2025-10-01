@@ -21,6 +21,8 @@ export interface CreateClassData {
   prerequisites?: string[];
   materials?: string[];
   meetingLink?: string;
+  jitsiRoomName?: string;
+  jitsiPassword?: string;
   roomNumber?: string;
   location?: string;
 }
@@ -45,6 +47,8 @@ export interface UpdateClassData {
   prerequisites?: string[];
   materials?: string[];
   meetingLink?: string;
+  jitsiRoomName?: string;
+  jitsiPassword?: string;
   roomNumber?: string;
   location?: string;
 }
@@ -85,9 +89,33 @@ export class ClassService {
       throw new Error('Teacher not found');
     }
 
+    // Validate ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(classData.subjectId)) {
+      throw new Error(`Invalid subjectId: ${classData.subjectId}`);
+    }
+    if (!mongoose.Types.ObjectId.isValid(classData.gradeLevelId)) {
+      throw new Error(`Invalid gradeLevelId: ${classData.gradeLevelId}`);
+    }
+
+    // Verify subject exists
+    const Subject = mongoose.model('Subject');
+    const subject = await Subject.findById(classData.subjectId);
+    if (!subject) {
+      throw new Error(`Subject not found: ${classData.subjectId}`);
+    }
+
+    // Verify grade level exists
+    const GradeLevel = mongoose.model('GradeLevel');
+    const gradeLevel = await GradeLevel.findById(classData.gradeLevelId);
+    if (!gradeLevel) {
+      throw new Error(`Grade level not found: ${classData.gradeLevelId}`);
+    }
+
     // Create the class
     const newClass = new Class({
       ...classData,
+      subjectId: new mongoose.Types.ObjectId(classData.subjectId),
+      gradeLevelId: new mongoose.Types.ObjectId(classData.gradeLevelId),
       teacherId: new mongoose.Types.ObjectId(teacherId),
       enrolledCount: 0,
       isActive: true,
@@ -179,14 +207,15 @@ export class ClassService {
     }
 
     // Date range filter - only show upcoming classes
-    const now = new Date();
-    query.startDate = { $gte: now };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of today
+    query.startDate = { $gte: today };
     if (!query.$or) {
       query.$or = [];
     }
     query.$or.push(
       { endDate: { $exists: false } },
-      { endDate: { $gte: now } }
+      { endDate: { $gte: today } }
     );
 
     // Price filters
@@ -255,8 +284,17 @@ export class ClassService {
       throw new Error('Class not found or access denied');
     }
 
+    // Convert string IDs to ObjectIds if provided
+    const processedUpdates: any = { ...updates };
+    if (processedUpdates.subjectId && typeof processedUpdates.subjectId === 'string') {
+      processedUpdates.subjectId = new mongoose.Types.ObjectId(processedUpdates.subjectId);
+    }
+    if (processedUpdates.gradeLevelId && typeof processedUpdates.gradeLevelId === 'string') {
+      processedUpdates.gradeLevelId = new mongoose.Types.ObjectId(processedUpdates.gradeLevelId);
+    }
+
     // Update fields
-    Object.assign(classDoc, updates);
+    Object.assign(classDoc, processedUpdates);
 
     // Update isFull status if capacity or enrolledCount changed
     if (updates.capacity || updates.hasOwnProperty('enrolledCount')) {

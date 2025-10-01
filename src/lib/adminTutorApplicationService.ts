@@ -1,5 +1,4 @@
 import { supabase } from "./supabase";
-import { supabase as adminSupabase } from "./supabase";
 
 export interface TutorApplication {
   id: string;
@@ -48,7 +47,7 @@ export class AdminTutorApplicationService {
       console.log("Fetching all tutor applications...");
 
       // First, let's test if we can access the table at all
-      const { data: testData, error: testError } = await supabase
+      const { error: testError } = await supabase
         .from("tutor_applications")
         .select("id")
         .limit(1);
@@ -172,20 +171,20 @@ export class AdminTutorApplicationService {
 
       const total = applications?.length || 0;
       const pending =
-        applications?.filter((app) => app.application_status === "pending")
+        applications?.filter((app: any) => app.application_status === "pending")
           .length || 0;
       const approved =
-        applications?.filter((app) => app.application_status === "approved")
+        applications?.filter((app: any) => app.application_status === "approved")
           .length || 0;
       const rejected =
-        applications?.filter((app) => app.application_status === "rejected")
+        applications?.filter((app: any) => app.application_status === "rejected")
           .length || 0;
 
       // Recent applications (last 7 days)
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
       const recentApplications =
-        applications?.filter((app) => new Date(app.created_at) >= oneWeekAgo)
+        applications?.filter((app: any) => new Date(app.created_at) >= oneWeekAgo)
           .length || 0;
 
       return {
@@ -210,7 +209,6 @@ export class AdminTutorApplicationService {
   // Approve an application
   static async approveApplication(
     applicationId: string,
-    adminId: string,
     adminNotes?: string
   ): Promise<boolean> {
     try {
@@ -220,11 +218,10 @@ export class AdminTutorApplicationService {
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("tutor_applications")
         .update(updateData)
-        .eq("id", applicationId)
-        .select();
+        .eq("id", applicationId);
 
       if (error) {
         console.error("Error approving application:", error);
@@ -242,7 +239,6 @@ export class AdminTutorApplicationService {
   // Reject an application
   static async rejectApplication(
     applicationId: string,
-    adminId: string,
     rejectionReason: string,
     adminNotes?: string
   ): Promise<boolean> {
@@ -254,11 +250,10 @@ export class AdminTutorApplicationService {
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("tutor_applications")
         .update(updateData)
-        .eq("id", applicationId)
-        .select();
+        .eq("id", applicationId);
 
       if (error) {
         console.error("Error rejecting application:", error);
@@ -298,38 +293,38 @@ export class AdminTutorApplicationService {
 
       // Transform the data
       const application: TutorApplication = {
-        id: data.id,
-        user_id: data.user_id,
-        applicant_email: data.applicant_email,
-        full_name: data.full_name,
-        phone_number: data.phone_number,
-        subjects: Array.isArray(data.subjects)
-          ? data.subjects
-          : JSON.parse(data.subjects || "[]"),
+        id: (data as any).id,
+        user_id: (data as any).user_id,
+        applicant_email: (data as any).applicant_email,
+        full_name: (data as any).full_name,
+        phone_number: (data as any).phone_number,
+        subjects: Array.isArray((data as any).subjects)
+          ? (data as any).subjects
+          : JSON.parse((data as any).subjects || "[]"),
         specializes_learning_disabilities:
-          data.specializes_learning_disabilities || false,
-        cv_file_name: data.cv_file_name,
-        cv_url: data.cv_url,
-        cv_file_size: data.cv_file_size,
-        additional_notes: data.additional_notes,
-        application_status: data.application_status || "pending",
-        admin_notes: data.admin_notes,
-        rejection_reason: data.rejection_reason,
-        submitted_at: data.submitted_at,
-        reviewed_at: data.reviewed_at,
-        reviewed_by: data.reviewed_by,
-        approved_by: data.approved_by,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
+          (data as any).specializes_learning_disabilities || false,
+        cv_file_name: (data as any).cv_file_name,
+        cv_url: (data as any).cv_url,
+        cv_file_size: (data as any).cv_file_size,
+        additional_notes: (data as any).additional_notes,
+        application_status: (data as any).application_status || "pending",
+        admin_notes: (data as any).admin_notes,
+        rejection_reason: (data as any).rejection_reason,
+        submitted_at: (data as any).submitted_at,
+        reviewed_at: (data as any).reviewed_at,
+        reviewed_by: (data as any).reviewed_by,
+        approved_by: (data as any).approved_by,
+        created_at: (data as any).created_at,
+        updated_at: (data as any).updated_at,
         // New fields
-        postcode: data.postcode || 'N/A',
-        past_experience: data.past_experience,
-        weekly_availability: data.weekly_availability,
-        employment_status: data.employment_status,
-        education_level: data.education_level,
-        average_weekly_hours: data.average_weekly_hours,
-        expected_hourly_rate: data.expected_hourly_rate,
-        based_in_country: data.based_in_country || 'Not specified',
+        postcode: (data as any).postcode || 'N/A',
+        past_experience: (data as any).past_experience,
+        weekly_availability: (data as any).weekly_availability,
+        employment_status: (data as any).employment_status,
+        education_level: (data as any).education_level,
+        average_weekly_hours: (data as any).average_weekly_hours,
+        expected_hourly_rate: (data as any).expected_hourly_rate,
+        based_in_country: (data as any).based_in_country || 'Not specified',
       };
 
       return application;

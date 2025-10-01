@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  PlusIcon,
   TrashIcon,
   ArrowLeftIcon,
   CheckIcon,
@@ -114,41 +113,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
     );
   };
 
-  const updateAnswer = (
-    questionIndex: number,
-    answerIndex: number,
-    field: string,
-    value: string | boolean
-  ) => {
-    setQuestions((prev) =>
-      prev.map((q, qIndex) =>
-        qIndex === questionIndex
-          ? {
-              ...q,
-              answers: q.answers.map((a, aIndex) =>
-                aIndex === answerIndex ? { ...a, [field]: value } : a
-              ),
-            }
-          : q
-      )
-    );
-  };
 
-  const setCorrectAnswer = (questionIndex: number, answerIndex: number) => {
-    setQuestions((prev) =>
-      prev.map((q, qIndex) =>
-        qIndex === questionIndex
-          ? {
-              ...q,
-              answers: q.answers.map((a, aIndex) => ({
-                ...a,
-                is_correct: aIndex === answerIndex,
-              })),
-            }
-          : q
-      )
-    );
-  };
 
   const removeQuestion = (questionIndex: number) => {
     setQuestions((prev) => {
@@ -160,9 +125,6 @@ const StudentAIGenerateQuizPage: React.FC = () => {
     });
   };
 
-  const validateStep1 = () => {
-    return true; // Temporarily removing validation for testing
-  };
 
   const validateStep2 = () => {
     if (questions.length === 0) return false;
@@ -294,8 +256,6 @@ const StudentAIGenerateQuizPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const totalPoints = questions.reduce((sum, q) => sum + (q.points || 10), 0);
-
       // Step 1: Create the quiz with basic metadata
       const createQuizData: CreateQuizData = {
         title: quizData.title,

@@ -73,7 +73,7 @@ export const sessionRatingService = {
       ...ratingData,
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("session_ratings")
       .insert([payload])
       .select()
@@ -103,7 +103,7 @@ export const sessionRatingService = {
       }
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("session_ratings")
       .update(updates)
       .eq("id", ratingId)
@@ -120,13 +120,13 @@ export const sessionRatingService = {
 
   // Get rating by ID
   getById: async (ratingId: string): Promise<SessionRating | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("session_ratings")
       .select("*")
       .eq("id", ratingId)
       .single();
 
-    if (error && error.code !== "PGRST116") {
+    if (error && (error as any).code !== "PGRST116") {
       console.error("Error fetching rating:", error);
       throw new Error(`Failed to fetch rating: ${error.message}`);
     }
@@ -139,14 +139,14 @@ export const sessionRatingService = {
     sessionId: string,
     studentId: string
   ): Promise<SessionRating | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("session_ratings")
       .select("*")
       .eq("session_id", sessionId)
       .eq("student_id", studentId)
       .single();
 
-    if (error && error.code !== "PGRST116") {
+    if (error && (error as any).code !== "PGRST116") {
       console.error("Error fetching rating:", error.message);
       throw new Error(`Failed to fetch rating: ${error.message}`);
     }
@@ -200,7 +200,7 @@ export const sessionRatingService = {
 
   // Get tutor rating statistics using proper aggregation
   getTutorStats: async (tutorId: string): Promise<TutorRatingStats> => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("session_ratings")
       .select("rating")
       .eq("tutor_id", tutorId);
@@ -220,11 +220,11 @@ export const sessionRatingService = {
 
     // Calculate statistics manually since RPC might not be available
     const totalReviews = data.length;
-    const totalRating = data.reduce((sum, item) => sum + item.rating, 0);
+    const totalRating = data.reduce((sum: number, item: any) => sum + item.rating, 0);
     const averageRating = totalRating / totalReviews;
 
     const ratingDistribution = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
-    data.forEach((item) => {
+    data.forEach((item: any) => {
       ratingDistribution[item.rating as keyof typeof ratingDistribution]++;
     });
 
@@ -258,11 +258,11 @@ export const sessionRatingService = {
       console.debug("🔍 hasStudentRated result:", {
         data,
         error,
-        errorCode: error?.code,
+        errorCode: (error as any)?.code,
       });
     }
 
-    if (error && error.code !== "PGRST116") {
+    if (error && (error as any).code !== "PGRST116") {
       console.error("Error checking if student rated:", error.message);
       throw new Error(`Failed to check rating: ${error.message}`);
     }

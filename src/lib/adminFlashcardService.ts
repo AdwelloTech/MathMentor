@@ -43,22 +43,22 @@ export class AdminFlashcardService {
 
       // Get card counts for each set using the known working table name
       const setsWithCounts = await Promise.all(
-        data.map(async (set) => {
+        data.map(async (set: any) => {
           const { count, error: countError } = await supabase
             .from("flashcards")
             .select("*", { count: "exact", head: true })
-            .eq("set_id", set.id);
+            .eq("set_id", (set as any).id);
 
           if (countError) {
             console.error(
               "Error fetching card count for set:",
-              set.id,
+              (set as any).id,
               countError
             );
           }
 
           return {
-            ...set,
+            ...(set as any),
             card_count: count || 0,
           } as AdminFlashcardSet;
         })
@@ -86,12 +86,12 @@ export class AdminFlashcardService {
       if (setsError) throw setsError;
 
       const total = sets?.length || 0;
-      const active = sets?.filter((s) => s.is_active).length || 0;
+      const active = sets?.filter((s: any) => s.is_active).length || 0;
       const inactive = total - active;
 
       // Count by subject
       const bySubject: Record<string, number> = {};
-      sets?.forEach((set) => {
+      sets?.forEach((set: any) => {
         bySubject[set.subject] = (bySubject[set.subject] || 0) + 1;
       });
 
@@ -125,7 +125,7 @@ export class AdminFlashcardService {
       console.log("Starting flashcard set deletion for:", setId);
 
       // Use admin RPC function to bypass RLS restrictions
-      const { data, error } = await supabase.rpc("admin_delete_flashcard_set", {
+      const { error } = await supabase.rpc("admin_delete_flashcard_set", {
         set_id_param: setId,
       });
 
@@ -168,8 +168,8 @@ export class AdminFlashcardService {
       if (!data) return null;
 
       return {
-        ...data,
-        card_count: data.cards?.length || 0,
+        ...(data as any),
+        card_count: (data as any).cards?.length || 0,
       } as AdminFlashcardSet;
     } catch (error) {
       console.error("Error getting flashcard set details:", error);

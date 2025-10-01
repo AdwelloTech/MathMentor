@@ -13,7 +13,7 @@ export const flashcards = {
   // Tutor-side operations (migrated to backend endpoints)
   sets: {
     async create(
-      tutorProfileId: string,
+      _tutorProfileId: string,
       input: CreateFlashcardSetData
     ): Promise<FlashcardSet> {
       // Transform frontend format to backend format
@@ -21,15 +21,10 @@ export const flashcards = {
         title: input.title,
         subject: input.subject,
         topic: input.topic,
-        description: input.description,
-        difficulty: input.difficulty,
-        gradeLevelId: input.grade_level_id,
-        isPublic: input.is_public,
-        flashcards: input.flashcards?.map(card => ({
+        gradeLevelId: input.grade_level,
+        flashcards: input.cards?.map(card => ({
           frontText: card.front_text,
           backText: card.back_text,
-          difficulty: card.difficulty,
-          tags: card.tags,
         })) || [],
       };
 
@@ -42,15 +37,13 @@ export const flashcards = {
       input: UpdateFlashcardSetData
     ): Promise<FlashcardSet> {
       // Transform frontend format to backend format
-      const backendData = {
-        title: input.title,
-        subject: input.subject,
-        topic: input.topic,
-        description: input.description,
-        difficulty: input.difficulty,
-        gradeLevelId: input.grade_level_id,
-        isPublic: input.is_public,
-      };
+      const backendData: any = {};
+
+      if (input.title !== undefined) backendData.title = input.title;
+      if (input.subject !== undefined) backendData.subject = input.subject;
+      if (input.topic !== undefined) backendData.topic = input.topic;
+      if (input.grade_level !== undefined) backendData.gradeLevelId = input.grade_level;
+      if (input.is_public !== undefined) backendData.isPublic = input.is_public;
 
       const result = await apiClient.put<FlashcardSet>(`/api/flashcards/sets/${setId}`, backendData);
       return result;

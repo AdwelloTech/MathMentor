@@ -7,7 +7,6 @@ import {
   IDVerification,
 } from "@/lib/idVerificationService";
 import IDVerificationForm from "@/components/idVerification/IDVerificationForm";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorPageWrapper from "@/components/ui/TutorPageWrapper";
 import {
   IdentificationIcon,
@@ -36,7 +35,7 @@ const IDVerificationPage: React.FC = () => {
     try {
       setLoading(true);
       const existingVerification =
-        await idVerificationService.getVerificationByUserId(profile.id); // Use profile.id instead of user.id
+        await idVerificationService.getVerificationByUserId();
       setVerification(existingVerification);
 
       // Show form if no verification exists
@@ -236,7 +235,6 @@ const IDVerificationPage: React.FC = () => {
             {/* Form */}
             {showForm && (
               <IDVerificationForm
-                userId={profile!.id}
                 onSuccess={handleVerificationSuccess}
                 onCancel={handleCancel}
               />

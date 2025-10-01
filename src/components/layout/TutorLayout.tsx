@@ -1,10 +1,8 @@
 import React from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { Outlet, useLocation } from "react-router-dom";
 import TutorDashboard from "@/pages/dashboards/TutorDashboard";
 
 const TutorLayout: React.FC = () => {
-  const navigate = useNavigate();
   const location = useLocation();
 
   // If we're on the main tutor route, show the dashboard

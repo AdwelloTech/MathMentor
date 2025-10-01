@@ -2,7 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import { useAdmin } from "./contexts/AdminContext";
-import LoadingSpinner from "./components/ui/LoadingSpinner";
+import GameLoadingAnimation from "./components/ui/GameLoadingAnimation";
 import LoginPage from "./pages/auth/LoginPage";
 import AdminLoginPage from "./pages/auth/AdminLoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
@@ -10,7 +10,6 @@ import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfilePage from "./pages/ProfilePage";
-import SettingsPage from "./pages/SettingsPage";
 
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
@@ -24,7 +23,6 @@ import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
 import AdminLayout from "./components/layout/AdminLayout";
 import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
-import TutorDashboard from "./pages/dashboards/TutorDashboard";
 import ScheduleClassPage from "./components/classScheduling/ClassSchedulingPage";
 import TutorManageClassesPage from "./pages/TutorManageClassesPage";
 
@@ -74,24 +72,11 @@ function App() {
   // Check if user is fully authenticated (both user and profile exist)
   const isUserAuthenticated = user && profile;
 
-  // Check if we're on admin routes
-  const isOnAdminRoute = location.pathname.startsWith("/admin");
-
-  // List of public routes that don't require authentication
-  const publicRoutes = [
-    "/login",
-    "/admin/login",
-    "/register",
-    "/forgot-password",
-    "/reset-password",
-  ];
-  const isOnPublicRoute = publicRoutes.includes(location.pathname);
-
   // Show loading spinner while checking authentication
   if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }
@@ -360,7 +345,7 @@ function DashboardRoute() {
   if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }
@@ -378,7 +363,7 @@ function DashboardRoute() {
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }
@@ -437,7 +422,7 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }
@@ -454,7 +439,7 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" />
+        <GameLoadingAnimation size="lg" />
       </div>
     );
   }

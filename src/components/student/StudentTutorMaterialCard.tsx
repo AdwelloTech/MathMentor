@@ -3,32 +3,24 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
   Star,
-  Eye,
-  Download,
   FileText,
   Upload,
   Lock,
   User,
   Calendar,
-  Sparkles,
 } from "lucide-react";
 import {
   formatStudentTutorMaterialDate,
-  formatFileSize,
-  getStudentTutorMaterialSubjectColor,
-  truncateStudentTutorMaterialText,
   type StudentTutorMaterialCardProps,
 } from "@/lib/studentTutorMaterials";
 import {
   incrementTutorNoteViewCountUnique,
-  incrementTutorNoteDownloadCount,
 } from "@/lib/tutorNotes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
 } from "@/components/ui/card";
 
@@ -43,17 +35,10 @@ const StudentTutorMaterialCard: React.FC<
 > = ({
   id,
   title,
-  description,
-  subjectDisplayName,
-  subjectColor,
-  gradeLevelDisplay,
   tutorName,
   isPremium,
-  viewCount,
-  downloadCount,
   fileUrl,
   fileName,
-  fileSize,
   createdAt,
   hasAccess,
   onView,
@@ -90,39 +75,6 @@ const StudentTutorMaterialCard: React.FC<
     onView();
   };
 
-  const handleDownload = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (!hasAccess || !fileUrl) return;
-
-    try {
-      // Increment download count
-      await incrementTutorNoteDownloadCount(id);
-
-      // Force download by fetching the file and creating a blob
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName || "download";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading file:", error);
-      // Fallback: try direct download
-      const link = document.createElement("a");
-      link.href = fileUrl;
-      link.download = fileName || "download";
-      link.target = "_blank";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
 
   return (
     <Card

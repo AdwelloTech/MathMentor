@@ -11,10 +11,7 @@ import { useTutorial } from "@/contexts/TutorialContext";
 import { TutorialOverlay, TutorialPrompt } from "@/components/tutorial";
 import {
   BookOpenIcon,
-  CalendarDaysIcon,
-  ChartBarIcon,
   VideoCameraIcon,
-  StarIcon,
   ClockIcon,
   UserGroupIcon,
   AcademicCapIcon,
@@ -22,12 +19,8 @@ import {
   ArrowRightIcon,
   PlayIcon,
   DocumentTextIcon,
-  ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
-  TrophyIcon,
-  GiftIcon,
   LightBulbIcon,
-  CheckCircleIcon,
   CogIcon,
   ChartBarIcon as TrendingUpIcon,
 } from "@heroicons/react/24/outline";
@@ -49,14 +42,14 @@ import type { StudentDashboardStats } from "@/lib/dashboardService";
 import type { Quiz } from "@/types/quiz";
 import type { FlashcardSet } from "@/types/flashcards";
 
-// Images (bellIcon currently unused; keeping imports intact per original)
-import bellIcon from "../../assets/bell.png";
+// Images
 import logoutIcon from "../../assets/logout.png";
 
 interface DashboardData {
   stats: StudentDashboardStats | null;
   upcomingSessions: any[];
   recentQuizzes: Quiz[];
+  recentQuizAttempts: any[];
   availableFlashcards: FlashcardSet[];
   studyMaterials: any[];
   packageInfo: any;
@@ -66,7 +59,7 @@ interface DashboardData {
 const StudentDashboard: React.FC = () => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const { shouldShowTutorial } = useTutorial();
+  const { } = useTutorial();
 
   const handleLogout = async () => {
     try {
@@ -81,6 +74,7 @@ const StudentDashboard: React.FC = () => {
     stats: null,
     upcomingSessions: [],
     recentQuizzes: [],
+    recentQuizAttempts: [],
     availableFlashcards: [],
     studyMaterials: [],
     packageInfo: null,
@@ -104,6 +98,7 @@ const StudentDashboard: React.FC = () => {
         stats,
         upcomingSessions,
         recentQuizzes,
+        recentQuizAttempts,
         availableFlashcardsRes,
         studyMaterials,
         packageInfo,
@@ -111,6 +106,7 @@ const StudentDashboard: React.FC = () => {
         dashboardService.getStudentStats(profile.user_id),
         loadUpcomingSessions(),
         loadRecentQuizzes(),
+        loadRecentQuizAttempts(),
         flashcards.student.listAvailable(profile.user_id),
         loadStudyMaterials(),
         packagePricingService.getCurrentStudentPackage(profile.user_id),
@@ -121,6 +117,8 @@ const StudentDashboard: React.FC = () => {
         upcomingSessions.status === "fulfilled" ? upcomingSessions.value : [];
       const recentQuizzesResult =
         recentQuizzes.status === "fulfilled" ? recentQuizzes.value : [];
+      const recentQuizAttemptsResult =
+        recentQuizAttempts.status === "fulfilled" ? recentQuizAttempts.value : [];
       const availableFlashcardsResult =
         availableFlashcardsRes.status === "fulfilled"
           ? availableFlashcardsRes.value
@@ -134,6 +132,7 @@ const StudentDashboard: React.FC = () => {
         stats: statsResult,
         upcomingSessions: upcomingSessionsResult,
         recentQuizzes: recentQuizzesResult.slice(0, 3),
+        recentQuizAttempts: recentQuizAttemptsResult.slice(0, 3),
         availableFlashcards: availableFlashcardsResult.slice(0, 3),
         studyMaterials: studyMaterialsResult.slice(0, 3),
         packageInfo: packageInfoResult,
@@ -171,7 +170,7 @@ const StudentDashboard: React.FC = () => {
     try {
       const [notes, materials] = await Promise.all([
         searchStudyNotes(),
-        getStudentTutorMaterials(profile.user_id),
+        getStudentTutorMaterials(),
       ]);
       return [...notes, ...materials].slice(0, 6);
     } catch (error) {
@@ -203,6 +202,22 @@ const StudentDashboard: React.FC = () => {
         console.error("Fallback quizzes error:", fallbackError);
         return [];
       }
+    }
+  };
+
+  const loadRecentQuizAttempts = async () => {
+    if (!profile?.user_id) return [];
+    try {
+      const attempts = await quizService.studentQuizzes.getStudentAttempts(
+        profile.user_id
+      );
+      // Filter for completed attempts and take the most recent 3
+      return attempts
+        .filter((attempt: any) => attempt.status === 'completed')
+        .slice(0, 3);
+    } catch (error) {
+      console.error("Error loading recent quiz attempts:", error);
+      return [];
     }
   };
 
@@ -274,7 +289,7 @@ const StudentDashboard: React.FC = () => {
 
   if (data.loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-green-100 p-6 relative">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-amber-50 to-emerald-100 p-6 relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]" />
         <div className="max-w-7xl mx-auto space-y-8 relative z-10">
           <div className="bg-white rounded-2xl p-8 shadow-xl shadow-gray-200/50">
@@ -284,7 +299,7 @@ const StudentDashboard: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
-              <Card key={i} className="shadow-lg shadow-gray-200/50 border-0">
+              <Card key={i} className="shadow-lg shadow-gray-200/50 border border-amber-500/10 bg-black/5 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <Skeleton className="h-4 w-24" />
                 </CardHeader>
@@ -298,7 +313,7 @@ const StudentDashboard: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {[...Array(2)].map((_, i) => (
-              <Card key={i} className="shadow-xl shadow-gray-200/50 border-0">
+              <Card key={i} className="shadow-xl shadow-gray-200/50 border border-amber-500/10 bg-black/5 backdrop-blur-sm">
                 <CardHeader>
                   <Skeleton className="h-6 w-48" />
                 </CardHeader>
@@ -316,17 +331,17 @@ const StudentDashboard: React.FC = () => {
   }
 
   return (
-    <StudentPageWrapper backgroundClass="bg-[#D5FFC5]">
+    <StudentPageWrapper backgroundClass="bg-background" className="text-foreground font-clash">
       <div className="relative overflow-hidden">
         {/* Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]" />
-        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.03),transparent_50%)]" />
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-emerald-400/10 to-amber-400/10 rounded-full blur-3xl animate-pulse" />
         <div
-          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-amber-400/10 to-emerald-400/10 rounded-full blur-2xl animate-pulse"
           style={{ animationDelay: "1s" }}
         />
         <div
-          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-emerald-300/5 to-amber-300/5 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "2s" }}
         />
 
@@ -341,7 +356,7 @@ const StudentDashboard: React.FC = () => {
             <motion.div variants={itemVariants}>
               <div className="pt-6 relative">
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-3xl font-bold text-gray-900">
                     Student Dashboard
                   </h1>
                   <div className="flex items-center space-x-4">
@@ -358,14 +373,14 @@ const StudentDashboard: React.FC = () => {
 
             {/* Welcome */}
             <motion.div variants={itemVariants}>
-              <Card id="dashboard-welcome" className="bg-gradient-to-r from-[#199421] to-[#94DF4A] text-white border-0 shadow-[0_2px_2px_0_rgba(0,0,0,0.5)]">
+              <Card id="dashboard-welcome" className="glass-card glass-card-hover glow-border text-amber-50">
                 <CardHeader className="pb-4">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-2">
-                      <CardTitle className="text-3xl lg:text-4xl font-bold text-white">
+                      <CardTitle className="text-4xl lg:text-5xl font-bold text-white">
                         Welcome back, {profile?.full_name?.split(" ")[0]}! 👋
                       </CardTitle>
-                      <CardDescription className="text-white text-lg">
+                      <CardDescription className="text-white text-xl">
                         Ready to continue your learning journey?
                       </CardDescription>
                     </div>
@@ -394,31 +409,31 @@ const StudentDashboard: React.FC = () => {
 
             {/* Package Status Card (gradient) */}
             <motion.div variants={itemVariants}>
-              <Card className="bg-gradient-to-r from-green-600 to-green-700 text-white border-0 shadow-2xl shadow-green-900/20">
+              <Card className="glass-card glass-card-hover glow-border text-amber-50">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-3">
-                      <CardTitle className="text-xl">
+                      <CardTitle className="text-2xl">
                         My Learning Package
                       </CardTitle>
                       <div className="space-y-2">
-                        <p className="text-green-100">
+                        <p className="text-amber-100">
                           {getPackageProgress().used} of{" "}
                           {getPackageProgress().total} sessions used
                         </p>
                         <Progress
                           value={getPackageProgress().percentage}
-                          className="w-64 h-2 bg-white [&>div]:bg-yellow-400"
+                          className="w-64 h-2 bg-white [&>div]:bg-amber-400"
                         />
                       </div>
                       <div className="flex items-center space-x-4 text-sm">
                         <Badge
                           variant="secondary"
-                          className="border-yellow-500/20"
+                          className="border-amber-500/20"
                         >
                           {data.packageInfo?.display_name || "Free Package"}
                         </Badge>
-                        <span className="text-green-100">
+                        <span className="text-amber-100">
                           {data.packageInfo?.price_monthly
                             ? `${formatCurrency(
                                 data.packageInfo.price_monthly
@@ -431,13 +446,13 @@ const StudentDashboard: React.FC = () => {
                       <div className="text-3xl font-bold">
                         {Math.max(data.upcomingSessions.length, 0)}
                       </div>
-                      <div className="text-green-100 text-sm">
+                      <div className="text-amber-100 text-sm">
                         sessions remaining
                       </div>
                     </div>
                   </div>
                   <Button
-                    className="mt-4 bg-yellow-300 text-black hover:bg-yellow-200 shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+                    className="mt-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
                     onClick={() => navigate("/packages")}
                   >
                     <CurrencyDollarIcon className="w-4 h-4 mr-2" />
@@ -458,28 +473,28 @@ const StudentDashboard: React.FC = () => {
                   name: "Total Sessions",
                   value: data.stats?.total_bookings || 0,
                   icon: VideoCameraIcon,
-                  color: "bg-green-900",
+                  color: "bg-emerald-900",
                   description: "All time bookings",
                 },
                 {
                   name: "Hours Learned",
                   value: calculateHoursLearned(),
                   icon: ClockIcon,
-                  color: "bg-green-900",
+                  color: "bg-emerald-900",
                   description: "Estimated learning time",
                 },
                 {
                   name: "Tutors Worked With",
                   value: data.stats?.total_tutors || 0,
                   icon: UserGroupIcon,
-                  color: "bg-green-900",
+                  color: "bg-emerald-900",
                   description: "Unique tutors",
                 },
                 {
                   name: "This Month",
                   value: data.stats?.bookings_this_month || 0,
                   icon: TrendingUpIcon,
-                  color: "bg-yellow-900",
+                  color: "bg-amber-900",
                   description: "Sessions booked",
                 },
               ].map((stat, index) => (
@@ -488,22 +503,22 @@ const StudentDashboard: React.FC = () => {
                   variants={itemVariants}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50">
+                  <Card className="glass-card glass-card-hover group">
                     <CardHeader className="pb-2">
                       <div
                         className={`${stat.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}
                       >
                         <stat.icon className="w-6 h-6 text-white" />
                       </div>
-                      <CardTitle className="text-2xl font-bold">
+                      <CardTitle className="text-3xl font-bold">
                         {stat.value}
                       </CardTitle>
-                      <CardDescription className="text-sm font-medium">
+                      <CardDescription className="text-base font-medium">
                         {stat.name}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {stat.description}
                       </p>
                     </CardContent>
@@ -516,14 +531,14 @@ const StudentDashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Study Materials (tall) */}
               <motion.div id="study-materials" variants={itemVariants} className="h-full">
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 h-full min-h-[500px]">
+                <Card className="glass-card glass-card-hover h-full min-h-[500px]">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                        <div className="bg-emerald-800 w-8 h-8 rounded-lg flex items-center justify-center">
                           <BookOpenIcon className="w-4 h-4 text-white" />
                         </div>
-                        <CardTitle>Study Materials</CardTitle>
+                        <CardTitle className="text-xl">Study Materials</CardTitle>
                       </div>
                     </div>
                   </CardHeader>
@@ -533,25 +548,25 @@ const StudentDashboard: React.FC = () => {
                         className="p-4 bg-[#D5FFC5] rounded-[10px] text-center shadow-sm cursor-pointer hover:bg-[#C5F0B5] transition-colors duration-200"
                         onClick={() => navigate("/student/notes")}
                       >
-                        <div className="bg-[#16803D] w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <div className="bg-emerald-800 w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2">
                           <DocumentTextIcon className="w-5 h-5 text-white" />
                             </div>
-                        <p className="text-base font-medium text-black">
+                        <p className="text-lg font-medium text-black">
                           {data.studyMaterials.filter((m) => (m as any).content).length}
                         </p>
-                        <p className="text-sm text-black">Notes</p>
+                        <p className="text-base text-black">Notes</p>
                       </div>
                       <div
                         className="p-4 bg-[#D5FFC5] rounded-[10px] text-center shadow-sm cursor-pointer hover:bg-[#C5F0B5] transition-colors duration-200"
                         onClick={() => navigate("/student/flashcards")}
                       >
-                        <div className="bg-[#16803D] w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <div className="bg-emerald-800 w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2">
                           <BookOpenIcon className="w-5 h-5 text-white" />
                             </div>
-                        <p className="text-base font-medium text-black">
+                        <p className="text-lg font-medium text-black">
                           {data.availableFlashcards.length}
                         </p>
-                        <p className="text-sm text-black">Flashcards</p>
+                        <p className="text-base text-black">Flashcards</p>
                         </div>
                       </div>
                   </CardContent>
@@ -560,19 +575,19 @@ const StudentDashboard: React.FC = () => {
 
               {/* Learning Activity */}
               <motion.div variants={itemVariants}>
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+                <Card className="glass-card glass-card-hover">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                        <div className="bg-emerald-800 w-8 h-8 rounded-lg flex items-center justify-center">
                           <ClockIcon className="w-4 h-4 text-white" />
                         </div>
-                        <CardTitle>Learning Activity</CardTitle>
+                        <CardTitle className="text-xl">Learning Activity</CardTitle>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-[#16803D] hover:text-[#16803D] hover:bg-green-50 font-medium"
+                        className="text-emerald-600 hover:text-emerald-600 hover:bg-emerald-50 font-medium"
                         onClick={() => navigate("/student/activity")}
                       >
                         View all
@@ -584,13 +599,13 @@ const StudentDashboard: React.FC = () => {
                     {/* Quizzes */}
                     <div id="recent-quizzes" className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">
+                        <h4 className="text-lg font-medium text-gray-900">
                           Recent Quizzes
                         </h4>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50 font-medium"
+                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium"
                           onClick={() => navigate("/student/quizzes")}
                         >
                           View all
@@ -617,7 +632,7 @@ const StudentDashboard: React.FC = () => {
                             }
                           >
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-black truncate">
+                              <p className="text-base font-medium text-black truncate">
                                 {quiz.title || "Untitled Quiz"}
                               </p>
                               <p className="text-sm text-black">
@@ -625,7 +640,7 @@ const StudentDashboard: React.FC = () => {
                                 {quiz.total_questions || 0} questions
                               </p>
                             </div>
-                            <span className="text-black font-medium">
+                            <span className="text-base text-black font-medium">
                               {(quiz as any).attempt_status === "completed"
                                 ? "Completed"
                                 : (quiz as any).attempt_status === "in_progress"
@@ -635,8 +650,60 @@ const StudentDashboard: React.FC = () => {
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-base text-gray-500">
                           No recent quiz activity
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Recent Quiz Results */}
+                    <div id="recent-quiz-results" className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-lg font-medium text-gray-900">
+                          Recent Quiz Results
+                        </h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium"
+                          onClick={() => navigate("/student/quiz-results")}
+                        >
+                          View all results
+                          <ArrowRightIcon className="w-4 h-4 ml-1" />
+                        </Button>
+                      </div>
+
+                      {data.recentQuizAttempts.length > 0 ? (
+                        data.recentQuizAttempts.map((attempt: any) => (
+                          <div
+                            key={attempt.id || attempt._id}
+                            className="flex items-center space-x-3 p-3 bg-[#FFF3CD] rounded-[10px] shadow-sm cursor-pointer hover:bg-[#FFF0B3] transition-colors duration-200"
+                            onClick={() => navigate(`/student/quiz-results/${attempt.id || attempt._id}`)}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-base font-medium text-black truncate">
+                                {attempt.quiz_id?.title || "Quiz"}
+                              </p>
+                              <p className="text-sm text-black">
+                                {attempt.quiz_id?.subject || "General"} •{" "}
+                                {new Date(attempt.completed_at || attempt.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg text-black font-bold">
+                                {attempt.score !== undefined && attempt.max_score !== undefined
+                                  ? `${Math.round((attempt.score / attempt.max_score) * 100)}%`
+                                  : "—"}
+                              </div>
+                              <div className="text-base text-black">
+                                {attempt.correct_answers || 0}/{attempt.total_questions || 0} correct
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-base text-gray-500">
+                          No completed quizzes yet
                         </p>
                       )}
                     </div>
@@ -644,13 +711,13 @@ const StudentDashboard: React.FC = () => {
                     {/* Upcoming Sessions (moved here) */}
                     <div id="upcoming-sessions" className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">
+                        <h4 className="text-lg font-medium text-gray-900">
                           Upcoming Sessions
                         </h4>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50 font-medium"
+                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium"
                           onClick={() => navigate("/student/manage-sessions")}
                         >
                           View all
@@ -663,11 +730,11 @@ const StudentDashboard: React.FC = () => {
                             key={session.id}
                             className="flex items-center space-x-3 p-3 bg-[#D5FFC5] rounded-[10px] shadow-sm"
                         >
-                            <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                            <div className="bg-emerald-800 w-8 h-8 rounded-lg flex items-center justify-center">
                               <VideoCameraIcon className="w-4 h-4 text-white" />
                           </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-black truncate">
+                              <p className="text-base font-medium text-black truncate">
                                 {session.subject}
                               </p>
                               <p className="text-sm text-black truncate">
@@ -677,7 +744,7 @@ const StudentDashboard: React.FC = () => {
                       </div>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-500">No upcoming sessions</p>
+                        <p className="text-base text-gray-500">No upcoming sessions</p>
                       )}
                     </div>
                   </CardContent>
@@ -687,13 +754,13 @@ const StudentDashboard: React.FC = () => {
 
             {/* Quick Actions */}
             <motion.div id="quick-actions" variants={itemVariants} className="mb-16">
-              <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+              <Card className="glass-card glass-card-hover">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                    <div className="bg-emerald-800 w-8 h-8 rounded-lg flex items-center justify-center">
                       <LightBulbIcon className="w-4 h-4 text-white" />
                     </div>
-                    <span>Quick Actions</span>
+                    <span className="text-xl">Quick Actions</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -730,20 +797,20 @@ const StudentDashboard: React.FC = () => {
                         whileTap={{ scale: 0.98 }}
                       >
                         <Card
-                          className="cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg shadow-gray-200/50 border-0"
+                          className="cursor-pointer glass-card glass-card-hover transition-all duration-300 group"
                           onClick={action.action}
                         >
                           <CardContent className="p-6 text-center">
-                            <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg">
+                            <div className="bg-emerald-800 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg">
                               <action.icon className="w-6 h-6 text-white" />
                             </div>
-                            <h3 className="font-semibold text-gray-900 mb-2">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
                               {action.title}
                             </h3>
-                            <p className="text-sm text-gray-600 mb-4">
+                            <p className="text-base text-gray-600 mb-4">
                               {action.description}
                             </p>
-                            <div className="bg-yellow-300 text-black px-4 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-all duration-200 shadow-md hover:shadow-lg">
+                            <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg font-medium text-base hover:from-emerald-500 hover:to-emerald-600 transition-all duration-200 shadow-md hover:shadow-lg">
                               Get Started
                             </div>
                           </CardContent>

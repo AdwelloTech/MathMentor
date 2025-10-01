@@ -299,7 +299,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                   <CardContent className="pt-0">
                     <div className="pl-0">
                       <div className="text-3xl font-bold text-gray-900 ml-3">
-                        {stats.total}
+                        {stats.total_verifications}
                       </div>
                     </div>
                   </CardContent>
@@ -327,7 +327,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                   <CardContent className="pt-0">
                     <div className="pl-0">
                       <div className="text-3xl font-bold text-gray-900 ml-3">
-                        {stats.pending}
+                        {stats.pending_verifications}
                       </div>
                     </div>
                   </CardContent>
@@ -355,7 +355,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                   <CardContent className="pt-0">
                     <div className="pl-0">
                       <div className="text-3xl font-bold text-gray-900 ml-3">
-                        {stats.approved}
+                        {stats.approved_verifications}
                       </div>
                     </div>
                   </CardContent>
@@ -383,7 +383,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                   <CardContent className="pt-0">
                     <div className="pl-0">
                       <div className="text-3xl font-bold text-gray-900 ml-3">
-                        {stats.rejected}
+                        {stats.rejected_verifications}
                       </div>
                     </div>
                   </CardContent>

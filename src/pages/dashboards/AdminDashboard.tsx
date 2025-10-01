@@ -3,14 +3,8 @@ import { motion } from "framer-motion";
 import {
   UsersIcon,
   AcademicCapIcon,
-  CurrencyDollarIcon,
-  ChartBarIcon,
-  BookOpenIcon,
-  CalendarDaysIcon,
   UserGroupIcon,
-  BanknotesIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
   EyeIcon,
   CreditCardIcon,
   ClockIcon,
@@ -541,7 +535,7 @@ const AdminDashboard: React.FC = () => {
                         </div>
                         <div>
                           <strong>Grade Level:</strong>{" "}
-                          {selectedStudent.grade_level}
+                          {selectedStudent.current_grade}
                         </div>
                         <div>
                           <strong>Learning Disabilities:</strong>{" "}

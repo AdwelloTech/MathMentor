@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { quizService } from "@/lib/quizService";
-import type { Quiz, Question, Answer } from "@/types/quiz";
+import type { Quiz } from "@/types/quiz";
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -15,7 +14,6 @@ import {
 } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import toast from "react-hot-toast";
-import { getGradeLevelDisplayName } from "@/lib/gradeLevels";
 
 const QuizViewPage: React.FC = () => {
   const { quizId } = useParams<{ quizId: string }>();
@@ -152,7 +150,7 @@ const QuizViewPage: React.FC = () => {
               Grade Level
             </h3>
             <p className="text-gray-900">
-              {getGradeLevelDisplayName(quiz.grade_level)}
+              {quiz.gradeLevelId?.displayName || "Not specified"}
             </p>
           </div>
 
@@ -207,13 +205,13 @@ const QuizViewPage: React.FC = () => {
 
           <div
             className={`border rounded-lg p-4 ${
-              quiz.is_active
+              quiz.isPublic
                 ? "bg-green-50 border-green-200"
                 : "bg-red-50 border-red-200"
             }`}
           >
             <div className="flex items-center">
-              {quiz.is_active ? (
+              {quiz.isPublic ? (
                 <CheckCircleIcon className="h-6 w-6 text-green-600 mr-2" />
               ) : (
                 <XCircleIcon className="h-6 w-6 text-red-600 mr-2" />
@@ -221,17 +219,17 @@ const QuizViewPage: React.FC = () => {
               <div>
                 <p
                   className={`text-sm font-medium ${
-                    quiz.is_active ? "text-green-800" : "text-red-800"
+                    quiz.isPublic ? "text-green-800" : "text-red-800"
                   }`}
                 >
                   Status
                 </p>
                 <p
                   className={`text-lg font-bold ${
-                    quiz.is_active ? "text-green-900" : "text-red-900"
+                    quiz.isPublic ? "text-green-900" : "text-red-900"
                   }`}
                 >
-                  {quiz.is_active ? "Active" : "Inactive"}
+                  {quiz.isPublic ? "Published" : "Unpublished"}
                 </p>
               </div>
             </div>
@@ -274,7 +272,7 @@ const QuizViewPage: React.FC = () => {
                     <h4 className="text-sm font-medium text-gray-700 mb-2">
                       Answers:
                     </h4>
-                    {question.answers.map((answer, answerIndex) => (
+                    {question.answers.map((answer, _answerIndex) => (
                       <div
                         key={answer.id}
                         className={`flex items-center space-x-3 p-3 rounded-lg border ${
@@ -321,8 +319,8 @@ const QuizViewPage: React.FC = () => {
       {/* Created Info */}
       <div className="bg-gray-50 rounded-lg p-4">
         <div className="text-sm text-gray-600">
-          <p>Created: {new Date(quiz.created_at).toLocaleDateString()}</p>
-          <p>Last updated: {new Date(quiz.updated_at).toLocaleDateString()}</p>
+          <p>Created: {new Date(quiz.createdAt).toLocaleDateString()}</p>
+          <p>Last updated: {new Date(quiz.updatedAt).toLocaleDateString()}</p>
         </div>
       </div>
     </div>

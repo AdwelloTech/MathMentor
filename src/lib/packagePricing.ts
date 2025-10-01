@@ -4,11 +4,12 @@ interface PackagePricing {
   id: string;
   package_type: string;
   display_name: string;
-  description: string;
   price_monthly: number;
+  price_yearly: number;
   features: string[];
-  session_limit: number;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export const packagePricingService = {

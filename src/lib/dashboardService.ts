@@ -57,32 +57,32 @@ class DashboardService {
    * Get student upcoming sessions
    */
   static async getStudentUpcomingSessions(studentId: string): Promise<any[]> {
-    const sessions = await apiClient.get(`/api/dashboard/student/sessions/upcoming/${studentId}`);
-    return sessions;
+    const sessions = await apiClient.get<any[]>(`/api/dashboard/student/sessions/upcoming/${studentId}`);
+    return sessions || [];
   }
 
   /**
    * Get tutor upcoming sessions
    */
   static async getTutorUpcomingSessions(tutorId: string): Promise<any[]> {
-    const sessions = await apiClient.get(`/api/dashboard/tutor/sessions/upcoming/${tutorId}`);
-    return sessions;
+    const sessions = await apiClient.get<any[]>(`/api/dashboard/tutor/sessions/upcoming/${tutorId}`);
+    return sessions || [];
   }
 
   /**
    * Get student recent activity
    */
   static async getStudentRecentActivity(studentId: string): Promise<any[]> {
-    const activity = await apiClient.get(`/api/dashboard/student/activity/recent/${studentId}`);
-    return activity;
+    const activity = await apiClient.get<any[]>(`/api/dashboard/student/activity/recent/${studentId}`);
+    return activity || [];
   }
 
   /**
    * Get tutor recent activity
    */
   static async getTutorRecentActivity(tutorId: string): Promise<any[]> {
-    const activity = await apiClient.get(`/api/dashboard/tutor/activity/recent/${tutorId}`);
-    return activity;
+    const activity = await apiClient.get<any[]>(`/api/dashboard/tutor/activity/recent/${tutorId}`);
+    return activity || [];
   }
 }
 

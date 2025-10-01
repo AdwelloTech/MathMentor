@@ -20,10 +20,13 @@ export interface IClass extends Document {
   price?: number;
   currency?: string;
   isActive: boolean;
+  status?: string; // 'scheduled', 'in_progress', 'completed', 'cancelled'
   isFull: boolean;
   prerequisites?: string[];
   materials?: string[];
   meetingLink?: string;
+  jitsiRoomName?: string;
+  jitsiPassword?: string;
   roomNumber?: string;
   location?: string;
   createdAt: Date;
@@ -124,6 +127,11 @@ const classSchema = new Schema<IClass>(
       type: Boolean,
       default: true
     },
+    status: {
+      type: String,
+      enum: ['scheduled', 'in_progress', 'completed', 'cancelled'],
+      default: 'scheduled'
+    },
     isFull: {
       type: Boolean,
       default: false
@@ -133,6 +141,16 @@ const classSchema = new Schema<IClass>(
     meetingLink: {
       type: String,
       trim: true
+    },
+    jitsiRoomName: {
+      type: String,
+      trim: true,
+      maxlength: 100
+    },
+    jitsiPassword: {
+      type: String,
+      trim: true,
+      maxlength: 50
     },
     roomNumber: {
       type: String,

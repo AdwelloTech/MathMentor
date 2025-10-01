@@ -1,317 +1,73 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+// Stub supabase client - Supabase has been removed from frontend
+// All database operations should use backend API endpoints instead
 
-// Get environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Missing Supabase environment variables. Please check your .env file."
-  );
-}
-
-// Create Supabase client with TypeScript types
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false, // Disable automatic session detection from URL
-    storage: window.localStorage,
-    storageKey: "sb-auth-token",
-    flowType: "pkce",
-  },
-  global: {
-    headers: {
-      "X-Client-Info": "iems-web-app",
-    },
-  },
-});
-
-// Auth helper functions
-export const auth = {
-  // Sign in with email and password
-  signIn: async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Sign up with email and password
-  signUp: async (
-    email: string,
-    password: string,
-    metadata?: Record<string, any>
-  ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    });
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Sign out
-  signOut: async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  },
-
-  // Reset password
-  resetPassword: async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-
-    if (error) throw error;
-  },
-
-  // Update user password
-  updatePassword: async (password: string) => {
-    const { error } = await supabase.auth.updateUser({
-      password,
-    });
-
-    if (error) throw error;
-  },
-
-  // Update user metadata
-  updateUser: async (attributes: {
-    email?: string;
-    password?: string;
-    data?: Record<string, any>;
-  }) => {
-    const { data, error } = await supabase.auth.updateUser(attributes);
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Get current session
-  getSession: async () => {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-
-    if (error) throw error;
-    return session;
-  },
-
-  // Get current user
-  getUser: async () => {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error) throw error;
-    return user;
-  },
-
-  // Listen to auth changes
-  onAuthStateChange: (callback: (event: string, session: any) => void) => {
-    return supabase.auth.onAuthStateChange(callback);
-  },
+const createQueryBuilder = () => {
+  const qb = {
+    select: (..._args: any[]) => qb,
+    eq: (..._args: any[]) => qb,
+    single: () => ({
+      data: null,
+      error: new Error('Supabase removed - use backend API endpoints instead')
+    }),
+    order: (..._args: any[]) => qb,
+    in: (..._args: any[]) => qb,
+    gte: (..._args: any[]) => qb,
+    limit: (..._args: any[]) => qb,
+    update: (..._args: any[]) => qb,
+    insert: (..._args: any[]) => ({
+      data: null,
+      error: new Error('Supabase removed - use backend API endpoints instead')
+    }),
+    delete: (..._args: any[]) => qb,
+    data: [],
+    error: new Error('Supabase removed - use backend API endpoints instead'),
+    count: 0
+  };
+  return qb;
 };
 
-// Database helper functions
-export const db = {
-  // Profiles table operations
-  profiles: {
-    // Get user profile by ID with enhanced error handling
-    getById: async (userId: string) => {
-      try {
-        console.log("🔍 Fetching profile for user ID:", userId);
-
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .single();
-
-        if (error) {
-          console.error("❌ Profile fetch error:", error);
-
-          // Handle specific error codes
-          if (error.code === "PGRST116") {
-            console.log(
-              "📭 No profile found for user - this will trigger profile creation"
-            );
-            return null;
-          }
-
-          // Handle 406 Not Acceptable errors (likely RLS issues)
-          if (
-            error.message?.includes("406") ||
-            error.message?.includes("Not Acceptable")
-          ) {
-            console.log(
-              "🔐 RLS or permission issue, trying alternative query..."
-            );
-
-            // Try with RLS bypassed for debugging
-            const { data: altData, error: altError } = await supabase
-              .from("profiles")
-              .select(
-                "user_id, full_name, first_name, last_name, email, role, package, phone, created_at, updated_at, last_login, cv_url, cv_file_name, specializations, hourly_rate, availability, bio, certifications, languages, profile_completed"
-              )
-              .eq("user_id", userId)
-              .maybeSingle();
-
-            if (altError) {
-              console.error("❌ Alternative query also failed:", altError);
-              throw new Error(`Database access denied: ${altError.message}`);
-            }
-
-            console.log("✅ Alternative query succeeded:", !!altData);
-            return altData;
-          }
-
-          throw error;
-        }
-
-        console.log("✅ Profile found:", data?.full_name, "role:", data?.role);
-        return data;
-      } catch (error: any) {
-        console.error("❌ Profile fetch failed:", error);
-        throw error;
-      }
-    },
-
-    // Create user profile
-    create: async (profile: any) => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .insert([profile])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-
-    // Update user profile
-    update: async (userId: string, updates: any) => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .update(updates)
-        .eq("user_id", userId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-
-    // Delete user profile
-    delete: async (userId: string) => {
-      const { error } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("user_id", userId);
-
-      if (error) throw error;
-    },
-
-    // Get all profiles with optional filters
-    getAll: async (filters?: Record<string, any>) => {
-      let query = supabase.from("profiles").select("*");
-
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          query = query.eq(key, value);
-        });
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data;
-    },
-  },
-
-  // Generic database operations
-  from: (table: string) => supabase.from(table),
-
-  // Storage operations
+export const supabase = {
+  from: (..._args: any[]) => createQueryBuilder(),
+  rpc: (..._args: any[]) => ({
+    data: null,
+    error: new Error('Supabase RPC removed - use backend API endpoints instead')
+  }),
   storage: {
-    // Upload file
-    upload: async (bucket: string, path: string, file: File) => {
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(path, file);
-
-      if (error) throw error;
-      return data;
-    },
-
-    // Download file
-    download: async (bucket: string, path: string) => {
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .download(path);
-
-      if (error) throw error;
-      return data;
-    },
-
-    // Get public URL
-    getPublicUrl: (bucket: string, path: string) => {
-      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-
-      return data.publicUrl;
-    },
-
-    // Delete file
-    delete: async (bucket: string, paths: string[]) => {
-      const { error } = await supabase.storage.from(bucket).remove(paths);
-
-      if (error) throw error;
-    },
+    from: (..._args: any[]) => ({
+      upload: (..._args: any[]) => ({
+        data: null,
+        error: new Error('Supabase storage removed - use backend API endpoints instead')
+      }),
+      getPublicUrl: (..._args: any[]) => ({
+        data: { publicUrl: '' },
+        error: new Error('Supabase storage removed - use backend API endpoints instead')
+      }),
+      download: (..._args: any[]) => ({
+        data: null,
+        error: new Error('Supabase storage removed - use backend API endpoints instead')
+      }),
+      remove: (..._args: any[]) => ({
+        data: null,
+        error: new Error('Supabase storage removed - use backend API endpoints instead')
+      })
+    })
   },
+  auth: {
+    getUser: (..._args: any[]) => ({
+      data: { user: null },
+      error: new Error('Supabase auth removed - use backend API endpoints instead')
+    }),
+    getSession: (..._args: any[]) => ({
+      data: { session: null },
+      error: new Error('Supabase auth removed - use backend API endpoints instead')
+    }),
+    updatePassword: (..._args: any[]) => ({
+      data: { user: null },
+      error: new Error('Supabase auth removed - use backend API endpoints instead')
+    })
+  }
 };
 
-// Real-time subscriptions
-export const realtime = {
-  // Subscribe to table changes
-  subscribe: (table: string, callback: (payload: any) => void) => {
-    return supabase
-      .channel(`public:${table}`)
-      .on("postgres_changes", { event: "*", schema: "public", table }, callback)
-      .subscribe();
-  },
-
-  // Subscribe to specific user's changes
-  subscribeToUser: (userId: string, callback: (payload: any) => void) => {
-    return supabase
-      .channel(`user:${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "profiles",
-          filter: `user_id=eq.${userId}`,
-        },
-        callback
-      )
-      .subscribe();
-  },
-
-  // Unsubscribe from channel
-  unsubscribe: (channel: any) => {
-    return supabase.removeChannel(channel);
-  },
-};
+export const auth = supabase.auth;
 
 export default supabase;

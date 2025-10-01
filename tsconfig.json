@@ -35,6 +35,6 @@
     },
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["src", "server"],
+  "include": ["src", "old-backend"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

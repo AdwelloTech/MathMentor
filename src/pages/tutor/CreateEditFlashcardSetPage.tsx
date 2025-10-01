@@ -5,8 +5,7 @@ import { flashcards } from "@/lib/flashcards";
 import type { CreateFlashcardSetData } from "@/types/flashcards";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
-import { getNoteSubjects } from "@/lib/notes";
-import { generateAIFlashcards, uploadPdfForAI, extractTextFromPdf } from "@/lib/ai";
+import { generateAIFlashcards, extractTextFromPdf } from "@/lib/ai";
 import { subjectsService } from "@/lib/subjects";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Local type to track AI workflow in UI
 type DraftCard = {
@@ -45,6 +45,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
     { id: string; name: string; display_name: string }[]
   >([]);
   const [gradeLevel, setGradeLevel] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiNumCards, setAiNumCards] = useState(10);
   const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">(
@@ -62,7 +63,12 @@ const CreateEditFlashcardSetPage: React.FC = () => {
         const data = await flashcards.sets.withCards(setId);
         setTitle(data.title);
         setSubject(data.subject);
-        setGradeLevel(data.grade_level || "");
+        setGradeLevel(String(
+          typeof data.grade_level === 'object' && data.grade_level && '_id' in data.grade_level
+            ? (data.grade_level as any)._id
+            : data.grade_level || ""
+        ));
+        setIsPublic(data.is_public || false);
         setCards(
           (data.cards || []).map((c) => ({
             front: c.front_text,
@@ -160,7 +166,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
           setLoading(false);
           return;
         }
-        if (!gradeLevel.trim()) {
+        if (!String(gradeLevel || "").trim()) {
           toast.error("Grade is required");
           setLoading(false);
           return;
@@ -169,6 +175,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
           title,
           subject,
           grade_level: gradeLevel,
+          is_public: isPublic,
           cards: includedCards.map((c, i) => ({
             front_text: c.front,
             back_text: c.back,
@@ -188,7 +195,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
           setLoading(false);
           return;
         }
-        if (!gradeLevel.trim()) {
+        if (!String(gradeLevel || "").trim()) {
           toast.error("Grade is required");
           setLoading(false);
           return;
@@ -197,32 +204,8 @@ const CreateEditFlashcardSetPage: React.FC = () => {
           title,
           subject,
           grade_level: gradeLevel,
+          is_public: isPublic,
         });
-        // Remove existing cards
-        await (await import("@/lib/supabase")).supabase
-
-          .from("flashcards")
-          .delete()
-          .eq("set_id", setId);
-        if (deleteError) {
-          throw deleteError;
-        }
-        // Reinsert with validation (only approved/manual)
-        const validCardsForUpdate = includedCards.map((c, i) => ({
-          set_id: setId,
-          front_text: c.front.trim(),
-          back_text: c.back.trim(),
-          card_order: i,
-        }));
-
-        if (validCardsForUpdate.length > 0) {
-          const { error: insertError } = await (
-            await import("@/lib/supabase")
-          ).supabase
-            .from("flashcards")
-            .insert(validCardsForUpdate);
-          if (insertError) throw insertError;
-        }
         toast.success("Flash card set updated");
       }
       navigate("/tutor/flashcards");
@@ -244,7 +227,7 @@ const CreateEditFlashcardSetPage: React.FC = () => {
       toast.error("Please select a subject first.");
       return;
     }
-    if (!gradeLevel.trim()) {
+    if (!String(gradeLevel || "").trim()) {
       toast.error("Please enter a grade level first.");
       return;
     }
@@ -348,6 +331,16 @@ const CreateEditFlashcardSetPage: React.FC = () => {
             placeholder="Select grade level"
             className="border rounded-md p-2 bg-white"
           />
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is-public"
+              checked={isPublic}
+              onCheckedChange={(checked) => setIsPublic(checked === true)}
+            />
+            <Label htmlFor="is-public" className="text-sm font-medium">
+              Make public (visible to students)
+            </Label>
+          </div>
         </div>
 
         <div className="flex items-center justify-between mt-4">

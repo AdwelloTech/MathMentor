@@ -70,11 +70,11 @@ const BookConsultationPage: React.FC = () => {
     if (!selectedSession || !user) return;
 
     try {
-      setBookingLoading(selectedSession.class.id);
+      setBookingLoading(selectedSession.class._id);
 
       // Create booking with payment information
       await classSchedulingService.bookings.create(
-        selectedSession.class.id,
+        selectedSession.class._id,
         user.id,
         selectedSession.class.price_per_session,
         paymentIntentId

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   ArrowLeftIcon,
   BookOpenIcon,
@@ -18,7 +17,6 @@ import RichTextEditor from "@/components/notes/RichTextEditor";
 import type { Database } from "@/types/database";
 
 type NoteSubject = Database["public"]["Tables"]["note_subjects"]["Row"];
-type StudyNote = Database["public"]["Tables"]["study_notes"]["Row"];
 
 const CreateNotePage: React.FC = () => {
   console.log("CreateNotePage component rendered");
@@ -132,8 +130,8 @@ const CreateNotePage: React.FC = () => {
             content: formData.content.trim(),
             subject_id: formData.subjectId,
           })
-          .eq("id", noteId)
-          .eq("created_by", user.id);
+          .eq('id', noteId)
+          .eq('created_by', user.id);
 
         if (error) {
           console.error("Error updating note:", error);

@@ -16,6 +16,8 @@ import {
   Filter,
   Search,
   X,
+  Check,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,10 +38,12 @@ const TutorManageClassesPage: React.FC = () => {
   const [classTypes, setClassTypes] = useState<ClassType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedClass, setSelectedClass] = useState<TutorClass | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [editingClass, setEditingClass] = useState<TutorClass | null>(null);
+  const [showRequests, setShowRequests] = useState(false);
+  const [bookingRequests, setBookingRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
   const [filterType, setFilterType] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -51,10 +55,6 @@ const TutorManageClassesPage: React.FC = () => {
     if (user) {
       loadClasses();
       loadClassTypes();
-      subjectsService
-        .listActive()
-        .then(setSubjects)
-        .catch(() => {});
     }
   }, [user]);
 
@@ -167,9 +167,67 @@ const TutorManageClassesPage: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const [year, month, day] = dateString.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
+  const loadBookingRequests = async (classId: string) => {
+    try {
+      setLoadingRequests(true);
+      // Get all bookings for this teacher and filter by class ID and status
+      const allBookings = await classSchedulingService.bookings.getByTeacherId(user!.id);
+      const classRequests = allBookings.filter(
+        (booking: any) =>
+          booking.class_id === classId &&
+          booking.booking_status === 'pending'
+      );
+      setBookingRequests(classRequests);
+    } catch (err) {
+      console.error("Error loading booking requests:", err);
+      toast.error("Failed to load booking requests");
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleConfirmBooking = async (bookingId: string) => {
+    try {
+      // Use the API client directly to call the confirm endpoint
+      const apiClient = (await import("@/lib/apiClient")).default;
+      await apiClient.post(`/api/bookings/${bookingId}/confirm`);
+
+      // Update the local state
+      setBookingRequests((prev) =>
+        prev.filter((booking) => booking.id !== bookingId)
+      );
+
+      toast.success("Booking confirmed successfully");
+      // Reload the selected class to update enrollment count
+      if (selectedClass) {
+        await loadClasses();
+      }
+    } catch (err) {
+      console.error("Error confirming booking:", err);
+      toast.error("Failed to confirm booking");
+    }
+  };
+
+  const formatDate = (dateString: string | Date) => {
+    let date: Date;
+
+    if (typeof dateString === 'string') {
+      // Handle ISO date strings (e.g., "2025-01-01T00:00:00.000Z")
+      if (dateString.includes('T')) {
+        date = new Date(dateString);
+      } else {
+        // Handle date-only strings (e.g., "2025-01-01")
+        const [year, month, day] = dateString.split("-").map(Number);
+        date = new Date(year, month - 1, day);
+      }
+    } else {
+      date = dateString;
+    }
+
+    if (isNaN(date.getTime())) {
+      return "Invalid Date";
+    }
+
     return date.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -186,10 +244,41 @@ const TutorManageClassesPage: React.FC = () => {
     });
   };
 
-  const getClassTypeName = (classTypeId: string) => {
-    const classType = classTypes.find((ct) => ct.id === classTypeId);
-    return classType?.name || "Unknown";
+  const getClassTypeName = (classTypeId: string | undefined, classData?: TutorClass) => {
+    // First try to find by class_type_id if it exists
+    if (classTypeId) {
+      const classType = classTypes.find((ct) => ct.id === classTypeId);
+      if (classType) return classType.name;
+    }
+
+    // If class_type_id is not set, try to infer from class data
+    if (classData) {
+      const { max_students, duration_minutes } = classData;
+
+      // Group: max_students > 1 and duration >= 60
+      if (max_students && max_students > 1 && duration_minutes && duration_minutes >= 60) {
+        return "Group";
+      }
+
+      // Consultation: max_students = 1 and duration <= 30
+      if (max_students === 1 && duration_minutes && duration_minutes <= 30) {
+        return "Consultation";
+      }
+
+      // One-on-One: max_students = 1 and duration > 30
+      if (max_students === 1 && duration_minutes && duration_minutes > 30) {
+        return "One-on-One";
+      }
+
+      // Default fallback based on max_students
+      if (max_students && max_students > 1) {
+        return "Group";
+      }
+    }
+
+    return "Unknown";
   };
+
 
   const filteredClasses = classes.filter((classItem) => {
     const matchesType =
@@ -404,7 +493,7 @@ const TutorManageClassesPage: React.FC = () => {
                             <CalendarDays className="w-3 h-3 text-white" />
                           </div>
                           <p className="text-sm font-medium text-gray-700">
-                            {getClassTypeName(classItem.class_type_id)}
+                            {getClassTypeName(classItem.class_type_id, classItem)}
                           </p>
                         </div>
                         <p className="mt-2 text-sm text-gray-700">
@@ -413,7 +502,7 @@ const TutorManageClassesPage: React.FC = () => {
                       </div>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(
-                          classItem.status
+                          classItem.status || 'scheduled'
                         )}`}
                       >
                         {classItem.status}
@@ -457,7 +546,7 @@ const TutorManageClassesPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 mt-auto">
+                    <div className="grid grid-cols-2 gap-2 mt-auto">
                       <Button
                         onClick={() => {
                           setSelectedClass(classItem);
@@ -478,6 +567,21 @@ const TutorManageClassesPage: React.FC = () => {
                       >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <Button
+                        onClick={() => {
+                          setSelectedClass(classItem);
+                          setShowRequests(true);
+                          loadBookingRequests(classItem.id);
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 text-purple-600 hover:text-purple-700 hover:bg-purple-50 group-hover:scale-105 transition-all duration-200"
+                      >
+                        <Users className="w-4 h-4 mr-1" />
+                        Requests
                       </Button>
                       <Button
                         onClick={() => handleDeleteClass(classItem.id)}
@@ -536,7 +640,7 @@ const TutorManageClassesPage: React.FC = () => {
                         Class Type
                       </h3>
                       <p className="text-gray-900">
-                        {getClassTypeName(selectedClass.class_type_id)}
+                        {getClassTypeName(selectedClass.class_type_id, selectedClass)}
                       </p>
                     </div>
                     <div>
@@ -598,7 +702,7 @@ const TutorManageClassesPage: React.FC = () => {
                       </h3>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          selectedClass.status
+                          selectedClass.status || 'scheduled'
                         )}`}
                       >
                         {selectedClass.status}
@@ -662,6 +766,127 @@ const TutorManageClassesPage: React.FC = () => {
             </motion.div>
           </div>
         )}
+
+        {/* Booking Requests Modal */}
+        {showRequests && selectedClass && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              <div className="p-8">
+                <div className="flex justify-between items-start mb-8">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-purple-100 w-12 h-12 rounded-xl flex items-center justify-center">
+                      <Users className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        Booking Requests
+                      </h3>
+                      <p className="text-gray-600 mt-1">
+                        {selectedClass.title}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowRequests(false);
+                      setSelectedClass(null);
+                      setBookingRequests([]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+
+                {loadingRequests ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                  </div>
+                ) : bookingRequests.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                    <h4 className="text-xl font-semibold text-gray-900 mb-3">
+                      No pending requests
+                    </h4>
+                    <p className="text-gray-600">
+                      There are currently no booking requests for this class.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {bookingRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="bg-gray-50 rounded-lg p-6 border border-gray-200"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-4 mb-4">
+                              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <UserCheck className="w-5 h-5 text-purple-600" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-gray-900">
+                                  {request.student?.full_name || 'Student'}
+                                </h4>
+                                <p className="text-sm text-gray-600">
+                                  {request.student?.email || ''}
+                                </p>
+                              </div>
+                              <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                                Payment: {request.payment_status}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium text-gray-700">Booked on:</span>
+                                <p className="text-gray-900">
+                                  {new Date(request.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-700">Amount:</span>
+                                <p className="text-gray-900">${request.payment_amount}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-700">Status:</span>
+                                <p className="text-yellow-600 font-medium capitalize">
+                                  {request.booking_status}
+                                </p>
+                              </div>
+                              {request.notes && (
+                                <div className="col-span-2 md:col-span-4">
+                                  <span className="font-medium text-gray-700">Notes:</span>
+                                  <p className="text-gray-900 mt-1">{request.notes}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="ml-6 flex flex-col gap-2">
+                            <Button
+                              onClick={() => handleConfirmBooking(request.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              size="sm"
+                            >
+                              <Check className="w-4 h-4 mr-2" />
+                              Confirm
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -680,12 +905,62 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
   onSave,
   onCancel,
 }) => {
+  const getClassTypeId = (classTypeId: string | undefined, classData?: TutorClass) => {
+    // First try to find by class_type_id if it exists
+    if (classTypeId) {
+      const classType = classTypes.find((ct) => ct.id === classTypeId);
+      if (classType) return classType.id;
+    }
+
+    // If class_type_id is not set, try to infer from class data
+    if (classData) {
+      const { max_students, duration_minutes } = classData;
+
+      // Group: max_students > 1 and duration >= 60 -> id '2'
+      if (max_students && max_students > 1 && duration_minutes && duration_minutes >= 60) {
+        return "2";
+      }
+
+      // Consultation: max_students = 1 and duration <= 30 -> id '3'
+      if (max_students === 1 && duration_minutes && duration_minutes <= 30) {
+        return "3";
+      }
+
+      // One-on-One: max_students = 1 and duration > 30 -> id '1'
+      if (max_students === 1 && duration_minutes && duration_minutes > 30) {
+        return "1";
+      }
+
+      // Default fallback based on max_students
+      if (max_students && max_students > 1) {
+        return "2"; // Group
+      }
+    }
+
+    return "1"; // Default to One-on-One
+  };
+
+  // Helper function to format date for HTML date input (YYYY-MM-DD)
+  const formatDateForInput = (dateString: string) => {
+    try {
+      // Handle ISO date strings (e.g., "2025-01-01T00:00:00.000Z")
+      if (dateString.includes('T')) {
+        return dateString.split('T')[0];
+      }
+      // Handle date-only strings (e.g., "2025-01-01")
+      return dateString;
+    } catch (error) {
+      console.error('Error formatting date for input:', error);
+      return '';
+    }
+  };
+
   const [formData, setFormData] = useState({
     title: classItem.title,
     description: classItem.description || "",
-    class_type_id: classItem.class_type_id,
+    class_type_id: getClassTypeId(classItem.class_type_id, classItem),
     subject_id: classItem.subject_id || "none",
-    date: classItem.date,
+    date: formatDateForInput(classItem.date),
     start_time: classItem.start_time,
     end_time: classItem.end_time,
     max_students: classItem.max_students,
@@ -739,7 +1014,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
       if (classType) {
         const startTime = new Date(`2000-01-01T${formData.start_time}`);
         const endTime = new Date(
-          startTime.getTime() + classType.duration_minutes * 60000
+          startTime.getTime() + (classType.duration_minutes || 60) * 60000
         );
         const endTimeString = endTime.toTimeString().slice(0, 5);
         updatedFormData.end_time = endTimeString;

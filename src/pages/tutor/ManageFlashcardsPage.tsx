@@ -9,6 +9,8 @@ import {
   TrashIcon,
   EyeIcon,
   AcademicCapIcon,
+  GlobeAltIcon,
+  LockClosedIcon,
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import DeleteTutorNoteModal from "@/components/tutor/DeleteTutorNoteModal";
@@ -23,6 +25,7 @@ const ManageFlashcardsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [togglingPublic, setTogglingPublic] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -55,8 +58,21 @@ const ManageFlashcardsPage: React.FC = () => {
     }
   };
 
+  const togglePublic = async (setId: string, currentIsPublic: boolean) => {
+    try {
+      setTogglingPublic(setId);
+      await flashcards.sets.update(setId, {
+        grade_level: undefined,
+        is_public: !currentIsPublic,
+      });
+      await load();
+    } finally {
+      setTogglingPublic(null);
+    }
+  };
+
   const totalCards = sets.reduce(
-    (sum, set) => sum + (set.cards?.length || 0),
+    (sum, set) => sum + (set.flashcardCount || 0),
     0
   );
   const totalSets = sets.length;
@@ -147,7 +163,7 @@ const ManageFlashcardsPage: React.FC = () => {
                     Active Sets
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {sets.filter((s) => s.cards && s.cards.length > 0).length}
+                    {sets.filter((s) => s.flashcardCount && s.flashcardCount > 0).length}
                   </p>
                 </div>
               </div>
@@ -250,9 +266,16 @@ const ManageFlashcardsPage: React.FC = () => {
                                 </div>
                               </div>
                               <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-900">
-                                  {set.title}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {set.title}
+                                  </p>
+                                  {set.is_public ? (
+                                    <GlobeAltIcon className="w-4 h-4 text-green-600" title="Public - visible to students" />
+                                  ) : (
+                                    <LockClosedIcon className="w-4 h-4 text-gray-500" title="Private - only visible to you" />
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -277,7 +300,7 @@ const ManageFlashcardsPage: React.FC = () => {
                           <td className="px-6 py-4">
                             <div className="flex items-center space-x-2">
                               <span className="text-sm font-medium text-gray-900">
-                                {set.cards ? set.cards.length : 0}
+                                {set.flashcardCount || 0}
                               </span>
                               <span className="text-xs text-gray-500">
                                 cards
@@ -304,6 +327,26 @@ const ManageFlashcardsPage: React.FC = () => {
                               title="Edit Set"
                             >
                               <PencilIcon className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => togglePublic(set.id, set.is_public || false)}
+                              disabled={togglingPublic === set.id}
+                              className={`${
+                                set.is_public
+                                  ? "text-orange-600 hover:text-orange-900 hover:bg-orange-50"
+                                  : "text-green-600 hover:text-green-900 hover:bg-green-50"
+                              }`}
+                              title={set.is_public ? "Make Private" : "Make Public"}
+                            >
+                              {togglingPublic === set.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                              ) : set.is_public ? (
+                                <LockClosedIcon className="h-4 w-4" />
+                              ) : (
+                                <GlobeAltIcon className="h-4 w-4" />
+                              )}
                             </Button>
                             <Button
                               variant="ghost"

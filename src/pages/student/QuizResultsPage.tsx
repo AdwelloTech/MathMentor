@@ -10,18 +10,16 @@ import {
   GraduationCap,
   Calendar,
   BarChart3,
-  User,
   BookOpen,
   Target,
   Award,
-  TrendingUp,
+  TrashIcon,
 } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { quizService } from "@/lib/quizService";
 import type { QuizAttempt, Question, StudentAnswer } from "@/types/quiz";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -96,6 +94,25 @@ const QuizResultsPage: React.FC = () => {
       }, 2000);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteAttempt = async (attemptId: string, attemptTitle: string) => {
+    if (!confirm(`Are you sure you want to delete the attempt for "${attemptTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await quizService.studentQuizzes.deleteQuizAttempt(attemptId);
+      toast.success("Quiz attempt deleted successfully");
+
+      // Reload attempts if we're on the list view
+      if (!selectedAttempt) {
+        await loadAttempts();
+      }
+    } catch (error) {
+      console.error("Error deleting attempt:", error);
+      toast.error("Failed to delete quiz attempt");
     }
   };
 
@@ -300,16 +317,34 @@ const QuizResultsPage: React.FC = () => {
                             </div>
                           </div>
 
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              loadAttemptDetails(attempt.id);
-                            }}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
-                          >
-                            <BarChart3 className="h-4 w-4 mr-2" />
-                            View Details
-                          </Button>
+                          {/* Action Buttons */}
+                          <div className="space-y-2">
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                loadAttemptDetails(attempt.id);
+                              }}
+                              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                            >
+                              <BarChart3 className="h-4 w-4 mr-2" />
+                              View Details
+                            </Button>
+
+                            {/* Delete button for incomplete attempts */}
+                            {attempt.status !== 'completed' && (
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteAttempt(attempt.id, attempt.quiz?.title || "Untitled Quiz");
+                                }}
+                                variant="outline"
+                                className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                              >
+                                <TrashIcon className="h-4 w-4 mr-2" />
+                                Delete Attempt
+                              </Button>
+                            )}
+                          </div>
                         </CardContent>
                       </Card>
                     </motion.div>

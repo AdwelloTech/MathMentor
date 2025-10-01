@@ -4,13 +4,15 @@ export interface Quiz {
   title: string;
   description?: string;
   subject: string;
-  grade_level?: string;
+  gradeLevelId?: {
+    displayName: string;
+  };
   time_limit_minutes: number;
   total_questions: number;
   total_points: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
   tutor?: {
     id: string;
     full_name: string;

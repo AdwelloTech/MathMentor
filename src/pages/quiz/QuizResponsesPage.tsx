@@ -1,11 +1,26 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
-import type { QuizAttempt } from "@/types/quiz";
+import { quizService } from "@/lib/quizService";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
-interface AttemptRow extends QuizAttempt {
-  answered_count?: number;
+interface AttemptRow {
+  id: string;
+  quiz_id: string;
+  student_id: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    email: string;
+  };
+  status: string;
+  score?: number;
+  max_score?: number;
+  correct_answers?: number;
+  total_questions?: number;
+  started_at: string;
+  completed_at?: string;
+  created_at: string;
 }
 
 const QuizResponsesPage: React.FC = () => {
@@ -23,45 +38,10 @@ const QuizResponsesPage: React.FC = () => {
   const load = async () => {
     try {
       setLoading(true);
-      // Fetch attempts for this quiz with student info
-      const { data, error } = await supabase
-        .from("quiz_attempts")
-        .select(
-          `
-          *,
-          student:profiles(id, full_name, email)
-        `
-        )
-        .eq("quiz_id", quizId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      // For answered_count, query counts from student_answers grouped by attempt
-      const { data: counts } = await supabase
-        .from("student_answers")
-        .select("attempt_id, count:attempt_id", { count: "exact", head: false })
-        .in(
-          "attempt_id",
-          (data || []).map((a: QuizAttempt) => a.id)
-        );
-
-      const attemptIdToCount = new Map<string, number>();
-      (counts || []).forEach((row: any) => {
-        // Supabase returns rows; count must be computed per attempt via separate query if needed.
-        // Fallback: compute by filtering later when we have answers (not ideal but fine for list)
-        if (row.attempt_id && typeof row.count === "number") {
-          attemptIdToCount.set(row.attempt_id, row.count);
-        }
-      });
-
-      const rows: AttemptRow[] = (data || []).map((a: QuizAttempt) => ({
-        ...a,
-        answered_count:
-          attemptIdToCount.get(a.id) ?? a.correct_answers ?? undefined,
-      }));
-
-      setAttempts(rows);
+      // Fetch attempts for this quiz using the backend API
+      // We need to add this method to quizService first
+      const attempts = await quizService.quizzes.getAttempts(quizId!);
+      setAttempts(attempts);
     } catch (e) {
       console.error("Failed to load attempts", e);
     } finally {
@@ -74,8 +54,8 @@ const QuizResponsesPage: React.FC = () => {
     if (!q) return attempts;
     return attempts.filter(
       (a) =>
-        (a.student?.full_name || "").toLowerCase().includes(q) ||
-        (a.student?.email || "").toLowerCase().includes(q)
+        (a.student_id?.fullName || "").toLowerCase().includes(q) ||
+        (a.student_id?.email || "").toLowerCase().includes(q)
     );
   }, [attempts, search]);
 
@@ -130,19 +110,21 @@ const QuizResponsesPage: React.FC = () => {
               <tr key={a.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
-                    {a.student?.full_name}
+                    {a.student_id?.fullName}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {a.student?.email}
+                    {a.student_id?.email}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {a.completed_at
                     ? new Date(a.completed_at).toLocaleString()
+                    : a.started_at
+                    ? new Date(a.started_at).toLocaleString()
                     : "—"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {a.answered_count ?? "—"}
+                  {a.correct_answers ?? "—"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {a.correct_answers ?? 0}/{a.total_questions ?? 0}

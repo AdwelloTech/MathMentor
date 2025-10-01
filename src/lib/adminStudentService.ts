@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
 // Use the regular supabase client for admin operations

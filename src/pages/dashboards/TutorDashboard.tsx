@@ -23,15 +23,14 @@ import {
 import { Star } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
-import { db } from "@/lib/db";
 import {
   instantSessionService,
   type InstantRequest,
 } from "@/lib/instantSessionService";
-import { classSchedulingService } from "@/lib/classSchedulingService";
-import { supabase } from "@/lib/supabase";
+import { idVerificationService } from "@/lib/idVerificationService";
+import DashboardService from "@/lib/dashboardService";
 import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
-import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
+import type { TutorDashboardStats } from "@/lib/dashboardService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateDocumentFile } from "@/constants/form";
@@ -54,6 +53,7 @@ const TutorDashboard: React.FC = () => {
   // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
+
 
 
 
@@ -135,31 +135,11 @@ const TutorDashboard: React.FC = () => {
     }
 
     // Polling mechanism to fetch pending requests every 10 seconds
+    // For now, we'll skip polling since the API isn't implemented yet
     const poll = setInterval(async () => {
       try {
-        const sinceIso = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // Last 5 minutes
-        const { data, error } = await (supabase as any)
-          .from("instant_requests")
-          .select("*")
-          .eq("status", "pending")
-          .gte("created_at", sinceIso)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        if (error) return;
-        if (!data) return;
-        setInstantRequests((prev) => {
-          const map = new Map(prev.map((r) => [r.id, r]));
-          for (const row of data as any) map.set(row.id, row);
-          const merged = Array.from(map.values()).filter(
-            (r: any) => r.status === "pending"
-          );
-          console.log("[TutorDashboard] Polling update:", {
-            fetched: (data as any).length,
-            merged: merged.length,
-            current: prev.length,
-          });
-          return merged;
-        });
+        // Skip polling for now - implement when instant requests API is ready
+        console.log("[TutorDashboard] polling skipped - API not implemented yet");
       } catch (_) {}
     }, 10000);
 
@@ -253,17 +233,18 @@ const TutorDashboard: React.FC = () => {
     }
 
     try {
-      const existingApplications = await db.tutorApplications.getByUserId(
-        user.id
-      );
-      // Get the most recent application (first in the array since it's ordered by submitted_at desc)
-      const mostRecentApplication = existingApplications?.[0] || null;
-      setApplication(mostRecentApplication);
+      // Use apiClient for consistent URL handling
+      const result = await apiClient.get<any[]>('/api/tutors/applications');
+      if (result && result.length > 0) {
+        // Get the most recent application
+        const mostRecentApplication = result[0];
+        setApplication(mostRecentApplication);
+      } else {
+        setApplication(null);
+      }
     } catch (error: any) {
       // If no application found, that's fine
-      if (error.code !== "PGRST116") {
-        console.error("Error checking application:", error);
-      }
+      console.error("Error checking application:", error);
     } finally {
       setLoading(false);
     }
@@ -273,20 +254,8 @@ const TutorDashboard: React.FC = () => {
     if (!user || !profile) return;
 
     try {
-      const { data, error } = await supabase
-        .from("id_verifications")
-        .select("*")
-        .eq("user_id", profile.id) // Use profile.id instead of user.id
-        .order("submitted_at", { ascending: false })
-        .limit(1);
-
-      if (error) {
-        console.error("Error checking ID verification:", error);
-        setIdVerification(null);
-      } else {
-        // Set the first record or null if no records found
-        setIdVerification(data?.[0] || null);
-      }
+      const verification = await idVerificationService.getVerificationByUserId();
+      setIdVerification(verification);
     } catch (error) {
       console.error("Error checking ID verification:", error);
       setIdVerification(null);
@@ -352,6 +321,7 @@ const TutorDashboard: React.FC = () => {
   const handleApplicationSuccess = () => {
     checkApplication(); // Refresh application status
   };
+
 
   const isApprovedTutor = application?.application_status === "approved";
   const isPendingTutor = application?.application_status === "pending";
@@ -465,6 +435,7 @@ const TutorDashboard: React.FC = () => {
                     Thank you for submitting your tutor application. Our team is
                     currently reviewing your qualifications and experience.
                   </p>
+
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
                     <h3 className="font-medium text-gray-900 mb-2">
@@ -838,10 +809,10 @@ const TutorDashboard: React.FC = () => {
               {[
                 {
                   name: "Total Classes",
-                  value: dashboardStats?.total_classes || 0,
+                  value: dashboardStats?.total_sessions || 0,
                   icon: VideoCameraIcon,
                   color: "from-green-600 to-green-700",
-                  description: "All time classes",
+                  description: "All time sessions",
                 },
                 {
                   name: "Students Taught",
@@ -852,24 +823,24 @@ const TutorDashboard: React.FC = () => {
                 },
                 {
                   name: "This Month",
-                  value: dashboardStats?.classes_this_month || 0,
+                  value: dashboardStats?.upcoming_sessions || 0,
                   icon: CalendarDaysIcon,
                   color: "from-yellow-500 to-yellow-600",
-                  description: "Classes this month",
+                  description: "Upcoming sessions",
                 },
                 {
                   name: "Earnings",
-                  value: `$${dashboardStats?.total_earnings || 0}`,
+                  value: `$${dashboardStats?.monthly_earnings || 0}`,
                   icon: CurrencyDollarIcon,
                   color: "from-green-700 to-green-800",
-                  description: "Total earnings",
+                  description: "Monthly earnings",
                 },
-              ].map((stat, index) => (
+              ].map((stat) => (
                 <motion.div
                   key={stat.name}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: 0.1 }}
                 >
                   <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
                     <CardHeader className="pb-2">
@@ -944,7 +915,7 @@ const TutorDashboard: React.FC = () => {
                         description: "Build assessments for students",
                         icon: DocumentTextIcon,
                         color: "from-purple-500 to-purple-600",
-                        action: () => navigate("/quizzes"),
+                        action: () => navigate("/create-quiz"),
                         disabled: !isActiveTutor,
                       },
                       {
@@ -955,6 +926,7 @@ const TutorDashboard: React.FC = () => {
                         action: () => navigate("/tutor/ratings"),
                         disabled: !isActiveTutor,
                       },
+                    ].map((action) => (
                     ].map((action) => (
                       <motion.div
                         key={action.title}
@@ -994,10 +966,6 @@ const TutorDashboard: React.FC = () => {
             </motion.div>
           </div>
         </motion.div>
-        
-                    {/* Tutorial Components */}
-            <TutorialPrompt />
-            <TutorialOverlay />
       </div>
     );
   }

@@ -8,8 +8,7 @@ import type {
   RegisterFormData,
   LoginFormData,
   User,
-  UserProfile,
-  AuthContextType
+  UserProfile
 } from '@/types/auth';
 
 export interface AuthTokens {
@@ -34,6 +33,7 @@ export interface BackendUser {
   full_name: string;
   email: string;
   role: string;
+  package?: 'free' | 'silver' | 'gold'; // Include package for students
   avatar_url?: string;
   phone?: string;
   address?: string;
@@ -73,11 +73,18 @@ class AuthService {
       // Add role-specific fields
       ...(data.role === 'student' && { package: data.package }),
       ...(data.role === 'tutor' && {
-        subjects: data.subjects?.split(',').map(s => s.trim()).filter(Boolean) || [],
+        subjects: Array.isArray(data.subjects) ? data.subjects : (data.subjects ? [data.subjects] : []),
         experience: data.experience,
         qualification: data.qualification,
       }),
     };
+
+    console.log('AuthService.register - Sending data:', {
+      ...registrationData,
+      password: '[REDACTED]',
+      confirmPassword: '[REDACTED]'
+    });
+    console.log('AuthService.register - subjects specifically:', registrationData.subjects, 'type:', typeof registrationData.subjects, 'isArray:', Array.isArray(registrationData.subjects));
 
     const result = await apiClient.post<AuthTokens>('/api/auth/register', registrationData, {
       skipAuth: true,
@@ -197,32 +204,42 @@ class AuthService {
 
   /**
    * Transform backend user data to frontend format
+   * Handles both camelCase (from login) and snake_case (from /me) formats
    */
-  static transformUserData(backendUser: BackendUser, profile: any): User {
+  static transformUserData(backendUser: any, profile: any): User {
+    // Handle both camelCase (login response) and snake_case (/me response) formats
+    const firstName = backendUser.first_name || backendUser.firstName;
+    const lastName = backendUser.last_name || backendUser.lastName;
+    const fullName = backendUser.full_name || backendUser.fullName;
+    const avatarUrl = backendUser.avatar_url || backendUser.avatarUrl;
+    const createdAt = backendUser.created_at || backendUser.createdAt;
+    const lastLogin = backendUser.last_login || backendUser.lastLogin;
+
     return {
       id: backendUser.id,
       email: backendUser.email,
-      created_at: backendUser.createdAt,
-      updated_at: backendUser.createdAt, // Backend doesn't provide updated_at in /me endpoint
-      email_confirmed_at: backendUser.createdAt, // Assume confirmed if user exists
-      last_sign_in_at: backendUser.lastLogin,
+      created_at: createdAt,
+      updated_at: createdAt, // Backend doesn't provide updated_at in /me endpoint
+      email_confirmed_at: createdAt, // Assume confirmed if user exists
+      last_sign_in_at: lastLogin,
       role: backendUser.role as any,
       profile: {
         ...profile,
         // Ensure required fields are present
         id: backendUser.id,
         user_id: backendUser.id,
-        first_name: backendUser.firstName,
-        last_name: backendUser.lastName,
-        full_name: backendUser.fullName,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName,
         email: backendUser.email,
         role: backendUser.role as any,
-        avatar_url: backendUser.avatarUrl,
+        package: backendUser.package as any, // Include package for students
+        avatar_url: avatarUrl,
         phone: backendUser.phone,
         is_active: true, // Assume active if user exists
-        last_login: backendUser.lastLogin,
-        created_at: backendUser.createdAt,
-        updated_at: backendUser.createdAt,
+        last_login: lastLogin,
+        created_at: createdAt,
+        updated_at: createdAt,
       },
     };
   }

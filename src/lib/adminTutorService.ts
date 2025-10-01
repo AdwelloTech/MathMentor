@@ -1,9 +1,17 @@
 import { supabase } from './supabase';
+import type { Database } from '@/types/database';
+
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+// Using any types for tables not yet in the database schema
+type TutorApplicationRow = any;
+type TutorClassRow = any;
+type ClassTypeRow = any;
+type JitsiMeetingRow = any;
 
 export interface Tutor {
   id: string;
   user_id: string;
-  email: string;
+  email?: string; // Email might come from auth.users, not profiles
   first_name: string;
   last_name: string;
   full_name: string;
@@ -25,7 +33,7 @@ export interface Tutor {
   bio: string | null;
   certifications: string[] | null;
   languages: string[] | null;
-  profile_completed: boolean;
+  profile_completed: boolean | null;
   qualification: string | null;
   experience_years: number | null;
   subjects: string[] | null;
@@ -86,7 +94,7 @@ class AdminTutorService {
         .from('profiles')
         .select('*')
         .eq('role', 'tutor')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as { data: ProfileRow[] | null; error: any };
 
       if (tutorsError) {
         console.error('Error fetching tutors:', tutorsError);
@@ -101,7 +109,7 @@ class AdminTutorService {
       const { data: applications, error: applicationsError } = await supabase
         .from('tutor_applications')
         .select('*')
-        .order('submitted_at', { ascending: false });
+        .order('submitted_at', { ascending: false }) as { data: TutorApplicationRow[] | null; error: any };
 
       if (applicationsError) {
         console.error('Error fetching applications:', applicationsError);
@@ -109,7 +117,7 @@ class AdminTutorService {
       }
 
       // Create a map of user_id to application for quick lookup
-      const applicationMap = new Map();
+      const applicationMap = new Map<string, TutorApplicationRow>();
       applications?.forEach(app => {
         if (!applicationMap.has(app.user_id)) {
           applicationMap.set(app.user_id, app);
@@ -137,7 +145,7 @@ class AdminTutorService {
   async getTutorById(tutorId: string): Promise<Tutor | null> {
     try {
       // Get tutor profile
-      const { data: tutor, error: tutorError } = await supabase
+      const { data: tutor, error: tutorError } = await (supabase as any)
         .from('profiles')
         .select('*')
         .eq('id', tutorId)
@@ -152,7 +160,7 @@ class AdminTutorService {
       if (!tutor) return null;
 
       // Get tutor application
-      const { data: applications, error: applicationsError } = await supabase
+      const { data: applications, error: applicationsError } = await (supabase as any)
         .from('tutor_applications')
         .select('*')
         .eq('user_id', tutor.user_id)
@@ -223,7 +231,7 @@ class AdminTutorService {
         .from('tutor_classes')
         .select('*')
         .eq('tutor_id', tutorId)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false }) as { data: TutorClassRow[] | null; error: any };
 
       if (classesError) {
         console.error('Error fetching tutor classes:', classesError);
@@ -237,7 +245,7 @@ class AdminTutorService {
       // Get class types
       const { data: classTypes, error: classTypesError } = await supabase
         .from('class_types')
-        .select('*');
+        .select('*') as { data: ClassTypeRow[] | null; error: any };
 
       if (classTypesError) {
         console.error('Error fetching class types:', classTypesError);
@@ -245,7 +253,7 @@ class AdminTutorService {
       }
 
       // Create a map of class type IDs to class type objects
-      const classTypeMap = new Map();
+      const classTypeMap = new Map<string, ClassTypeRow>();
       classTypes?.forEach(type => {
         classTypeMap.set(type.id, type);
       });
@@ -255,7 +263,7 @@ class AdminTutorService {
       const { data: jitsiMeetings, error: jitsiError } = await supabase
         .from('jitsi_meetings')
         .select('*')
-        .in('class_id', classIds);
+        .in('class_id', classIds) as { data: JitsiMeetingRow[] | null; error: any };
 
       if (jitsiError) {
         console.error('Error fetching jitsi meetings:', jitsiError);
@@ -263,7 +271,7 @@ class AdminTutorService {
       }
 
       // Create a map of class IDs to jitsi meeting objects
-      const jitsiMap = new Map();
+      const jitsiMap = new Map<string, JitsiMeetingRow>();
       jitsiMeetings?.forEach(jitsi => {
         jitsiMap.set(jitsi.class_id, jitsi);
       });
@@ -290,7 +298,7 @@ class AdminTutorService {
   async getTutorStats(): Promise<TutorStats> {
     try {
       // Get total tutors
-      const { count: total, error: totalError } = await supabase
+      const { count: total, error: totalError } = await (supabase as any)
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'tutor');
@@ -298,7 +306,7 @@ class AdminTutorService {
       if (totalError) throw totalError;
 
       // Get active tutors
-      const { count: active, error: activeError } = await supabase
+      const { count: active, error: activeError } = await (supabase as any)
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'tutor')
@@ -307,7 +315,7 @@ class AdminTutorService {
       if (activeError) throw activeError;
 
       // Get inactive tutors
-      const { count: inactive, error: inactiveError } = await supabase
+      const { count: inactive, error: inactiveError } = await (supabase as any)
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'tutor')
@@ -318,7 +326,7 @@ class AdminTutorService {
       // Get application status counts
       const { data: applications, error: applicationsError } = await supabase
         .from('tutor_applications')
-        .select('application_status');
+        .select('application_status') as { data: { application_status: string }[] | null; error: any };
 
       if (applicationsError) throw applicationsError;
 
@@ -330,7 +338,7 @@ class AdminTutorService {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const { count: recentRegistrations, error: recentError } = await supabase
+      const { count: recentRegistrations, error: recentError } = await (supabase as any)
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'tutor')

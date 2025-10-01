@@ -1,10 +1,38 @@
 import express from 'express';
 import Joi from 'joi';
 import { TutorNotesService } from '../services/tutorNotesService';
-import { authenticate } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 import { validateOrThrow } from '../utils/validation';
+import multer from 'multer';
 
 const router = express.Router();
+
+// Configure multer for file uploads
+const upload = multer({
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  fileFilter: (req, file, cb) => {
+    // Allow common document and media types
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'video/mp4',
+      'video/webm',
+      'audio/mpeg',
+      'audio/wav'
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only documents, images, and media files are allowed.'));
+    }
+  }
+});
 
 // Validation schemas
 const getMaterialsSchema = Joi.object({
@@ -134,6 +162,185 @@ router.post('/:materialId/download', authenticate, async (req, res) => {
     });
   } catch (error: any) {
     console.error('Error incrementing download count:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// TUTOR MANAGEMENT ROUTES
+
+const createMaterialSchema = Joi.object({
+  title: Joi.string().min(1).max(200).required(),
+  description: Joi.string().max(1000).optional(),
+  content: Joi.string().optional(),
+  subjectId: Joi.string().optional(),
+  gradeLevelId: Joi.string().optional(),
+  isPremium: Joi.boolean().default(false),
+  tags: Joi.array().items(Joi.string()).optional(),
+}).unknown(true); // Allow additional fields like file
+
+const updateMaterialSchema = Joi.object({
+  title: Joi.string().min(1).max(200).optional(),
+  description: Joi.string().max(1000).optional(),
+  content: Joi.string().optional(),
+  subjectId: Joi.string().optional(),
+  gradeLevelId: Joi.string().optional(),
+  isPremium: Joi.boolean().optional(),
+  tags: Joi.array().items(Joi.string()).optional(),
+}).unknown(true); // Allow additional fields like file
+
+/**
+ * GET /api/tutor-materials/tutor/list
+ * Get tutor materials for the authenticated tutor
+ */
+router.get('/tutor/list', authenticate, authorize('tutor'), async (req, res) => {
+  try {
+    const tutorId = req.user!.id;
+    const materials = await TutorNotesService.getTutorMaterials(tutorId);
+
+    res.json({
+      success: true,
+      data: materials,
+    });
+  } catch (error: any) {
+    console.error('Error fetching tutor materials:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/tutor-materials/tutor/create
+ * Create a new tutor material
+ */
+router.post('/tutor/create', authenticate, authorize('tutor'), upload.single('file'), async (req, res) => {
+  try {
+    const validatedData = validateOrThrow(createMaterialSchema, req.body);
+    const tutorId = req.user!.id;
+
+    const materialData = {
+      ...validatedData,
+      file: req.file,
+    };
+
+    const material = await TutorNotesService.createTutorMaterial(tutorId, materialData);
+
+    res.status(201).json({
+      success: true,
+      message: 'Material created successfully',
+      data: material,
+    });
+  } catch (error: any) {
+    console.error('Error creating tutor material:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * PUT /api/tutor-materials/tutor/:materialId
+ * Update a tutor material
+ */
+router.put('/tutor/:materialId', authenticate, authorize('tutor'), upload.single('file'), async (req, res) => {
+  try {
+    const { materialId } = req.params;
+
+    if (!materialId || typeof materialId !== 'string' || materialId.length !== 24) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid materialId: ${materialId}`,
+      });
+    }
+
+    const validatedData = validateOrThrow(updateMaterialSchema, req.body);
+    const tutorId = req.user!.id;
+
+    // Handle file from req.file (upload.single() returns single file or undefined)
+    const file = req.file;
+
+    const materialData = {
+      ...validatedData,
+      file: file,
+    };
+
+    const material = await TutorNotesService.updateTutorMaterial(materialId, tutorId, materialData);
+
+    if (!material) {
+      return res.status(404).json({
+        success: false,
+        error: 'Material not found or access denied',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Material updated successfully',
+      data: material,
+    });
+  } catch (error: any) {
+    console.error('Error updating tutor material:', error);
+    const statusCode = error.message.includes('not found') ? 404 : 400;
+    res.status(statusCode).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * DELETE /api/tutor-materials/tutor/:materialId
+ * Delete a tutor material
+ */
+router.delete('/tutor/:materialId', authenticate, authorize('tutor'), async (req, res) => {
+  try {
+    const { materialId } = req.params;
+    const tutorId = req.user!.id;
+
+    const success = await TutorNotesService.deleteTutorMaterial(materialId, tutorId);
+
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        error: 'Material not found or access denied',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Material deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('Error deleting tutor material:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/tutor-materials/tutor/search
+ * Search tutor materials for the authenticated tutor
+ */
+router.post('/tutor/search', authenticate, authorize('tutor'), async (req, res) => {
+  try {
+    const { searchTerm } = req.body;
+    const tutorId = req.user!.id;
+
+    const materials = await TutorNotesService.searchTutorMaterials(tutorId, searchTerm);
+
+    res.json({
+      success: true,
+      data: materials,
+    });
+  } catch (error: any) {
+    console.error('Error searching tutor materials:', error);
     res.status(400).json({
       success: false,
       error: error.message,

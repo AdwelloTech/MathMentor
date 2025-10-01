@@ -86,7 +86,7 @@ const SessionList: React.FC<SessionListProps> = ({
             className="bg-white rounded-xl shadow p-6 flex flex-col h-full"
           >
             <div className="flex items-center gap-2 mb-2">
-              {getClassTypeIcon(session.class_type?.name)}
+              {getClassTypeIcon(session.class_type?.name || '')}
               <span className="text-sm font-semibold text-blue-600">
                 {session.class_type?.name}
               </span>

@@ -5,7 +5,6 @@ import {
   type TutorRatingStats,
 } from "@/lib/sessionRatingService";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
 
 export const useSessionRating = (tutorId?: string) => {
   const { user } = useAuth();
@@ -148,10 +147,6 @@ export const useSessionRating = (tutorId?: string) => {
   const deleteRating = useCallback(
     async (ratingId: string) => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
         if (!user) {
           throw new Error("User must be authenticated to delete a rating");
         }

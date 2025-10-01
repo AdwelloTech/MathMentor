@@ -7,14 +7,11 @@ import toast from "react-hot-toast";
 import type { Database } from "../types/database";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
 
 import {
   CheckCircle,
   Crown,
-  Star,
-  CreditCard,
   ArrowUpCircle,
   Sparkles,
   Users,
@@ -26,14 +23,12 @@ import {
   Gift,
   X,
   Lock,
-  Unlock,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 type PackagePricing = Database["public"]["Tables"]["package_pricing"]["Row"];
 
 const PackagesPage: React.FC = () => {
-  const { user, profile, updatePackage } = useAuth();
+  const { user, updatePackage } = useAuth();
   const [packages, setPackages] = useState<PackagePricing[]>([]);
   const [currentPackage, setCurrentPackage] = useState<PackagePricing | null>(
     null
@@ -43,7 +38,6 @@ const PackagesPage: React.FC = () => {
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [pendingUpgrade, setPendingUpgrade] = useState<string | null>(null);
-  const navigate = useNavigate();
   useEffect(() => {
     if (user) {
       loadPackages();
@@ -87,7 +81,7 @@ const PackagesPage: React.FC = () => {
 
   const completeUpgrade = async (
     packageType: string,
-    paymentIntentId?: string
+    _paymentIntentId?: string
   ) => {
     if (!user) return;
 
@@ -135,19 +129,6 @@ const PackagesPage: React.FC = () => {
     setPendingUpgrade(null);
   };
 
-  const getPackageIcon = (packageType: string) => {
-    const iconProps = "w-8 h-8";
-    switch (packageType.toLowerCase()) {
-      case "gold":
-        return <Crown className={`${iconProps} text-yellow-500`} />;
-      case "silver":
-        return <Star className={`${iconProps} text-slate-500`} />;
-      case "free":
-        return <Gift className={`${iconProps} text-green-500`} />;
-      default:
-        return <CreditCard className={`${iconProps} text-slate-500`} />;
-    }
-  };
 
   const getFeatureIcon = (feature: string) => {
     const lowerFeature = feature.toLowerCase();

@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { useTheme } from "@/contexts/ThemeContext";
 
 interface TutorPageWrapperProps {
   children: React.ReactNode;
@@ -20,7 +19,6 @@ const TutorPageWrapper: React.FC<TutorPageWrapperProps> = ({
   backgroundClass = "bg-gradient-to-br from-slate-50 to-slate-100",
   className = "",
 }) => {
-  const { theme } = useTheme();
 
   useEffect(() => {
     // Set the background class on the body element for seamless appearance

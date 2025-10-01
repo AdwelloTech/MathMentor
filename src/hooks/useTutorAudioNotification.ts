@@ -9,8 +9,10 @@ export const useTutorAudioNotification = () => {
       try {
         const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
         if (!AC) return;
-        if (!audioCtxRef.current) audioCtxRef.current = new AC();
-        if (audioCtxRef.current.state !== "running") {
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new AC();
+        }
+        if (audioCtxRef.current && audioCtxRef.current.state !== "running") {
           audioCtxRef.current.resume();
         }
         setAudioEnabled(true);

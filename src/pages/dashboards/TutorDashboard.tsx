@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { TutorialOverlay, TutorialPrompt } from "@/components/tutorial";
+// Removed unused tutorial components
 import {
   DocumentArrowUpIcon,
   CheckCircleIcon,
@@ -28,6 +28,7 @@ import {
   type InstantRequest,
 } from "@/lib/instantSessionService";
 import { idVerificationService } from "@/lib/idVerificationService";
+import apiClient from "@/lib/apiClient";
 import DashboardService from "@/lib/dashboardService";
 import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
 import type { TutorDashboardStats } from "@/lib/dashboardService";
@@ -266,7 +267,7 @@ const TutorDashboard: React.FC = () => {
     if (!profile) return;
 
     try {
-      const stats = await classSchedulingService.stats.getTutorStats(profile.id); // Use profile.id instead of user.id
+      const stats = await DashboardService.getTutorStats(profile.id);
 
       setDashboardStats(stats);
     } catch (error) {

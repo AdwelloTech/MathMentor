@@ -1,3 +1,18 @@
+#!/bin/bash
+
+echo "Starting MathMentor Development Environment (Alternative Ports)..."
+echo "Frontend: http://localhost:3002"
+echo "Backend: http://localhost:5002"
+echo ""
+
+# Create alternative environment files
+cat > .env << 'EOF'
+# Frontend Environment Variables for Development (Alternative Ports)
+VITE_API_URL=http://localhost:5002
+VITE_NODE_ENV=development
+EOF
+
+cat > backend/.env << 'EOF'
 # Server Configuration
 PORT=5002
 NODE_ENV=development
@@ -23,4 +38,7 @@ LOG_LEVEL=info
 # File Upload
 MAX_FILE_SIZE=10485760
 UPLOAD_PATH=./uploads
+EOF
 
+# Start development environment with alternative ports
+npm run dev:alt

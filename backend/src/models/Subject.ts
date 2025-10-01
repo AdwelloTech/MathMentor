@@ -74,7 +74,6 @@ const subjectSchema = new Schema<ISubject>(
 );
 
 // Indexes
-subjectSchema.index({ name: 1 }, { unique: true });
 subjectSchema.index({ category: 1, isActive: 1 });
 subjectSchema.index({ parentId: 1 });
 

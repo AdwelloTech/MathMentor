@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { BookOpenIcon } from "@heroicons/react/24/solid";
 import { useAuth } from "@/contexts/AuthContext";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import GameLoadingAnimation from "@/components/ui/GameLoadingAnimation";
 import toast from "react-hot-toast";
 import type { LoginFormData } from "@/types/auth";
 // shadcn/ui
@@ -71,7 +71,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen grid grid-cols-1 lg:grid-cols-2 relative">
+    <div className="h-screen w-screen grid grid-cols-1 lg:grid-cols-2 relative bg-background text-foreground font-clash">
       {/* Left Column - Visual Panel (placeholder image) */}
       <motion.div
         initial={{ x: -24, opacity: 0 }}
@@ -79,9 +79,10 @@ const LoginPage: React.FC = () => {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="relative hidden lg:flex items-center justify-center overflow-hidden"
       >
-        <div className="absolute inset-10 rounded-3xl bg-gradient-to-br from-[#1f6d37] via-[#1c5d30] to-[#144d23] overflow-visible">
-          <div className="absolute -left-10 -bottom-24 h-[38rem] w-[38rem] rounded-full border-2 border-white/10" />
-          <div className="absolute left-10 top-16 h-[28rem] w-[28rem] rounded-full border-2 border-white/10" />
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-stone-900 overflow-visible border border-amber-500/20 shadow-2xl">
+          <div className="absolute -left-10 -bottom-24 h-[38rem] w-[38rem] rounded-full border-2 border-amber-400/10" />
+          <div className="absolute left-10 top-16 h-[28rem] w-[28rem] rounded-full border-2 border-amber-400/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
 
           {/* Math Symbols Background */}
           <svg
@@ -93,7 +94,7 @@ const LoginPage: React.FC = () => {
             <text
               x="15"
               y="25"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="8"
               fontFamily="Arial, sans-serif"
             >
@@ -102,7 +103,7 @@ const LoginPage: React.FC = () => {
             <text
               x="85"
               y="35"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="6"
               fontFamily="Arial, sans-serif"
             >
@@ -111,7 +112,7 @@ const LoginPage: React.FC = () => {
             <text
               x="25"
               y="75"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="7"
               fontFamily="Arial, sans-serif"
             >
@@ -122,7 +123,7 @@ const LoginPage: React.FC = () => {
             <text
               x="75"
               y="20"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="5"
               fontFamily="Arial, sans-serif"
             >
@@ -131,7 +132,7 @@ const LoginPage: React.FC = () => {
             <text
               x="10"
               y="60"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="6"
               fontFamily="Arial, sans-serif"
             >
@@ -142,7 +143,7 @@ const LoginPage: React.FC = () => {
             <text
               x="90"
               y="70"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="7"
               fontFamily="Arial, sans-serif"
             >
@@ -151,7 +152,7 @@ const LoginPage: React.FC = () => {
             <text
               x="35"
               y="45"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="5"
               fontFamily="Arial, sans-serif"
             >
@@ -162,7 +163,7 @@ const LoginPage: React.FC = () => {
             <text
               x="65"
               y="85"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="6"
               fontFamily="Arial, sans-serif"
             >
@@ -171,7 +172,7 @@ const LoginPage: React.FC = () => {
             <text
               x="5"
               y="40"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="4"
               fontFamily="Arial, sans-serif"
             >
@@ -182,7 +183,7 @@ const LoginPage: React.FC = () => {
             <text
               x="80"
               y="50"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="5"
               fontFamily="Arial, sans-serif"
             >
@@ -191,7 +192,7 @@ const LoginPage: React.FC = () => {
             <text
               x="20"
               y="85"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="6"
               fontFamily="Arial, sans-serif"
             >
@@ -202,7 +203,7 @@ const LoginPage: React.FC = () => {
             <text
               x="95"
               y="15"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="4"
               fontFamily="Arial, sans-serif"
             >
@@ -211,7 +212,7 @@ const LoginPage: React.FC = () => {
             <text
               x="45"
               y="80"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="5"
               fontFamily="Arial, sans-serif"
             >
@@ -222,7 +223,7 @@ const LoginPage: React.FC = () => {
             <text
               x="70"
               y="25"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="6"
               fontFamily="Arial, sans-serif"
             >
@@ -231,7 +232,7 @@ const LoginPage: React.FC = () => {
             <text
               x="15"
               y="90"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="5"
               fontFamily="Arial, sans-serif"
             >
@@ -242,7 +243,7 @@ const LoginPage: React.FC = () => {
             <text
               x="50"
               y="15"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="4"
               fontFamily="Arial, sans-serif"
             >
@@ -251,7 +252,7 @@ const LoginPage: React.FC = () => {
             <text
               x="30"
               y="95"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="5"
               fontFamily="Arial, sans-serif"
             >
@@ -262,7 +263,7 @@ const LoginPage: React.FC = () => {
             <text
               x="85"
               y="90"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="3"
               fontFamily="Arial, sans-serif"
             >
@@ -271,7 +272,7 @@ const LoginPage: React.FC = () => {
             <text
               x="55"
               y="65"
-              fill="#fbbf24"
+              fill="#f59e0b"
               fontSize="4"
               fontFamily="Arial, sans-serif"
             >
@@ -279,16 +280,16 @@ const LoginPage: React.FC = () => {
             </text>
           </svg>
 
-          <div className="relative z-10 h-full w-full flex flex-col items-center text-center text-white px-8 pt-12 md:pt-16">
+          <div className="relative z-10 h-full w-full flex flex-col items-center justify-center text-center text-amber-50 px-10 pt-0 ">
             <motion.h1
-              className="text-4xl font-bold leading-tight mb-3"
+              className="text-5xl md:text-6xl font-extrabold leading-tight mb-4 text-amber-100 drop-shadow-lg tracking-wide"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
             >
               Welcome Back
             </motion.h1>
             <motion.p
-              className="text-white/90 max-w-[640px] mb-8"
+              className="text-amber-200/90 max-w-[640px] mb-12 text-base md:text-xl"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -312,24 +313,25 @@ const LoginPage: React.FC = () => {
         initial={{ x: 24, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-white max-w-full flex flex-col justify-center items-center p-6 md:p-10 relative"
+        className="bg-card max-w-full flex flex-col justify-center items-center p-6 md:p-10 relative border-l border-border/50"
       >
         <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-3xl font-bold text-foreground mb-2 bg-gradient-to-r from-emerald-400 to-amber-400 bg-clip-text text-transparent tracking-wide">
             Sign in to MathMentor
           </h2>
+          <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-amber-500 mx-auto rounded-full" />
         </div>
 
         <motion.form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6 w-full max-w-md"
+          className="space-y-6 w-full max-w-md bg-black/20 border border-white/5 rounded-2xl p-6 backdrop-blur-sm shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Email */}
           <motion.div className="space-y-2" variants={fadeInUp}>
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email" className="text-amber-200/90">Email Address</Label>
             <Input
               {...register("email", {
                 required: "Email is required",
@@ -341,18 +343,18 @@ const LoginPage: React.FC = () => {
               type="email"
               id="email"
               placeholder="Enter your email"
-              className={
+              className={`bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                 errors.email ? "border-red-500 focus-visible:ring-red-500" : ""
-              }
+              }`}
             />
             {errors.email && (
-              <p className="text-sm text-red-600">{errors.email.message}</p>
+              <p className="text-sm text-red-400">{errors.email.message}</p>
             )}
           </motion.div>
 
           {/* Password */}
           <motion.div className="space-y-2" variants={fadeInUp}>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-amber-200/90">Password</Label>
             <div className="relative">
               <Input
                 {...register("password", {
@@ -365,7 +367,7 @@ const LoginPage: React.FC = () => {
                 type={showPassword ? "text" : "password"}
                 id="password"
                 placeholder="Enter your password"
-                className={`pr-10 ${
+                className={`pr-10 bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                   errors.password
                     ? "border-red-500 focus-visible:ring-red-500"
                     : ""
@@ -377,14 +379,14 @@ const LoginPage: React.FC = () => {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                  <EyeSlashIcon className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
                 ) : (
-                  <EyeIcon className="h-5 w-5 text-gray-400" />
+                  <EyeIcon className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
                 )}
               </button>
             </div>
             {errors.password && (
-              <p className="text-sm text-red-600">{errors.password.message}</p>
+              <p className="text-sm text-red-400">{errors.password.message}</p>
             )}
           </motion.div>
 
@@ -401,7 +403,7 @@ const LoginPage: React.FC = () => {
             </div>
             <Link
               to="/forgot-password"
-              className="text-sm text-[#32a852] hover:text-[#16a34a] font-medium"
+              className="text-sm text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
             >
               Forgot password?
             </Link>
@@ -412,9 +414,9 @@ const LoginPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              className="p-3 bg-red-950/50 border border-red-500/30 rounded-lg backdrop-blur-sm"
             >
-              <p className="text-sm text-red-600">{errors.root.message}</p>
+              <p className="text-sm text-red-400">{errors.root.message}</p>
             </motion.div>
           )}
 
@@ -423,11 +425,11 @@ const LoginPage: React.FC = () => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full"
+              className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-emerald-500/25 transition-all duration-200"
               size="lg"
             >
               {isLoading ? (
-                <LoadingSpinner size="sm" />
+                <GameLoadingAnimation size="sm" />
               ) : (
                 <>
                   <BookOpenIcon className="h-5 w-5" />
@@ -439,11 +441,11 @@ const LoginPage: React.FC = () => {
 
           {/* Register link */}
           <motion.div className="text-center" variants={fadeInUp}>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Don't have an account?{" "}
               <Link
                 to="/register"
-                className="text-[#32a852] hover:text-[#16a34a] font-medium"
+                className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
               >
                 Register here
               </Link>
@@ -452,10 +454,10 @@ const LoginPage: React.FC = () => {
 
           {/* Admin Login link */}
           <motion.div className="text-center" variants={fadeInUp}>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               <Link
                 to="/admin/login"
-                className="text-red-600 hover:text-red-500 font-medium"
+                className="text-amber-400 hover:text-amber-300 font-medium transition-colors"
               >
                 Admin Login →
               </Link>

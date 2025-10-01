@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTutorial } from "@/contexts/TutorialContext";
 import { TutorialOverlay, TutorialPrompt } from "@/components/tutorial";
 import {
   DocumentArrowUpIcon,
@@ -16,16 +15,10 @@ import {
   PlusIcon,
   VideoCameraIcon,
   UserGroupIcon,
-  ChatBubbleLeftRightIcon,
   XCircleIcon,
   IdentificationIcon,
   DocumentTextIcon,
-  SparklesIcon,
-  XMarkIcon,
-  CheckIcon,
-  ArrowRightIcon,
   LightBulbIcon,
-  BookOpenIcon,
 } from "@heroicons/react/24/outline";
 import { Star } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -41,7 +34,6 @@ import type { TutorApplication, TutorApplicationStatus } from "@/types/auth";
 import type { TutorDashboardStats, TutorClass } from "@/types/classScheduling";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { validateDocumentFile } from "@/constants/form";
 import toast from "react-hot-toast";
 import OnlineStatusToggle from "@/components/tutor/OnlineStatusToggle";
@@ -49,7 +41,6 @@ import OnlineStatusToggle from "@/components/tutor/OnlineStatusToggle";
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, updateProfile } = useAuth();
-  const { shouldShowTutorial } = useTutorial();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<TutorApplication | null>(null);
   const [idVerification, setIdVerification] = useState<any>(null);
@@ -57,47 +48,14 @@ const TutorDashboard: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dashboardStats, setDashboardStats] =
     useState<TutorDashboardStats | null>(null);
-  const [upcomingClasses, setUpcomingClasses] = useState<TutorClass[]>([]);
   const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
-  const [acceptingId, setAcceptingId] = useState<string | null>(null);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
-  const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
   const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
 
   // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
 
-  // Load subjects for display
-  useEffect(() => {
-    const loadSubjects = async () => {
-      try {
-        const { data, error } = await (supabase as any)
-          .from("note_subjects")
-          .select("id, display_name, name")
-          .eq("is_active", true);
 
-        if (error) {
-          console.error("Error loading subjects:", error);
-          return;
-        }
-
-        const subjectsMap: { [key: string]: string } = {};
-        data?.forEach((subject: any) => {
-          subjectsMap[subject.id] = subject.display_name || subject.name;
-        });
-        setSubjects(subjectsMap);
-      } catch (error) {
-        console.error("Error loading subjects:", error);
-      }
-    };
-
-    loadSubjects();
-  }, []);
-
-  const getSubjectName = (subjectId: string) => {
-    return subjects[subjectId] || "Unknown Subject";
-  };
 
   // Audio notification setup
   useEffect(() => {
@@ -339,13 +297,9 @@ const TutorDashboard: React.FC = () => {
     if (!profile) return;
 
     try {
-      const [stats, classes] = await Promise.all([
-        classSchedulingService.stats.getTutorStats(profile.id), // Use profile.id instead of user.id
-        classSchedulingService.classes.getUpcomingByTutorId(profile.id), // Use profile.id instead of user.id
-      ]);
+      const stats = await classSchedulingService.stats.getTutorStats(profile.id); // Use profile.id instead of user.id
 
       setDashboardStats(stats);
-      setUpcomingClasses(classes);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     }
@@ -393,32 +347,7 @@ const TutorDashboard: React.FC = () => {
     }
   };
 
-  const handleAcceptInstant = async (requestId: string) => {
-    try {
-      if (!profile?.id) return;
-      setAcceptingId(requestId);
-      const accepted = await instantSessionService.acceptRequest(
-        requestId,
-        profile.id
-      );
-      // Optimistically remove the card immediately after accept
-      setDismissedIds((prev) => new Set(prev).add(requestId));
-      setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
-      if (accepted.jitsi_meeting_url) {
-        window.open(accepted.jitsi_meeting_url, "_blank");
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setAcceptingId(null);
-    }
-  };
 
-  const handleRejectInstant = (requestId: string) => {
-    // Just remove from local state - no need to call service for local dismissal
-    setDismissedIds((prev) => new Set(prev).add(requestId));
-    setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
-  };
 
   const handleApplicationSuccess = () => {
     checkApplication(); // Refresh application status
@@ -1026,7 +955,7 @@ const TutorDashboard: React.FC = () => {
                         action: () => navigate("/tutor/ratings"),
                         disabled: !isActiveTutor,
                       },
-                    ].map((action, index) => (
+                    ].map((action) => (
                       <motion.div
                         key={action.title}
                         whileHover={{ scale: 1.02 }}

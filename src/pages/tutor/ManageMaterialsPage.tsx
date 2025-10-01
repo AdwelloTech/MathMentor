@@ -35,7 +35,7 @@ const ManageMaterialsPage: React.FC = () => {
       id: string;
       name: string;
       display_name: string;
-      color: string;
+      color?: string | null;
     }>
   >([]);
   const [loading, setLoading] = useState(true);

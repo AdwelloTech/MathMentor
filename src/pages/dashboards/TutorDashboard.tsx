@@ -37,6 +37,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateDocumentFile } from "@/constants/form";
 import toast from "react-hot-toast";
 import OnlineStatusToggle from "@/components/tutor/OnlineStatusToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -701,6 +702,9 @@ const TutorDashboard: React.FC = () => {
 
             {/* Action Buttons - Right Side */}
             <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+                  <ThemeToggle className="text-gray-600 hover:bg-gray-100" />
+                </div>
               <Button
                 id="schedule-class-button"
                 onClick={() => navigate("/schedule-class")}
@@ -1006,6 +1010,7 @@ const TutorDashboard: React.FC = () => {
                     Tutor Dashboard - Manage your tutoring profile and sessions.
                   </p>
                 </div>
+
               </div>
             </motion.div>
 

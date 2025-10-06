@@ -106,6 +106,24 @@ class IDVerificationService {
     }
   }
 
+  async updateVerificationStatusById(
+    verificationId: string,
+    status: IDVerification['verification_status'],
+    adminNotes?: string,
+    rejectionReason?: string
+  ): Promise<IDVerification> {
+    try {
+      const payload: any = { status };
+      if (adminNotes) payload.admin_notes = adminNotes;
+      if (rejectionReason) payload.rejection_reason = rejectionReason;
+
+      return await apiClient.put<IDVerification>(`/api/admin/id-verifications/${verificationId}`, payload);
+    } catch (error) {
+      console.error('Error in updateVerificationStatusById:', error);
+      throw error;
+    }
+  }
+
   async getAllVerifications(): Promise<IDVerification[]> {
     try {
       return await apiClient.get<IDVerification[]>('/api/admin/id-verifications');

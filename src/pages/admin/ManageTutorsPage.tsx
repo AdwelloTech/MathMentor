@@ -51,14 +51,39 @@ const ManageTutorsPage: React.FC = () => {
     try {
       setLoading(true);
 
-      const [tutorsData, statsData] = await Promise.all([
+      // Use Promise.allSettled to ensure both promises complete regardless of errors
+      const results = await Promise.allSettled([
         adminTutorService.getAllTutors(),
         adminTutorService.getTutorStats(),
       ]);
 
-      setTutors(tutorsData);
-      setFilteredTutors(tutorsData);
-      setStats(statsData);
+      // Handle tutors data
+      if (results[0].status === 'fulfilled') {
+        setTutors(results[0].value);
+        setFilteredTutors(results[0].value);
+      } else {
+        console.error("Error loading tutors:", results[0].reason);
+        toast.error("Failed to load tutor list");
+        setTutors([]);
+        setFilteredTutors([]);
+      }
+
+      // Handle stats data
+      if (results[1].status === 'fulfilled') {
+        setStats(results[1].value);
+      } else {
+        console.error("Error loading stats:", results[1].reason);
+        toast.error("Failed to load tutor statistics");
+        setStats({
+          total: 0,
+          active: 0,
+          inactive: 0,
+          approved: 0,
+          pending: 0,
+          rejected: 0,
+          recentRegistrations: 0
+        });
+      }
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Failed to load tutor data");
@@ -76,15 +101,15 @@ const ManageTutorsPage: React.FC = () => {
         (tutor) =>
           tutor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (tutor.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          tutor.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+          (tutor.phone && tutor.phone.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
     if (filterStatus !== "all") {
       if (filterStatus === "active") {
-        filtered = filtered.filter((tutor) => tutor.is_active);
+        filtered = filtered.filter((tutor) => tutor.is_active === true);
       } else if (filterStatus === "inactive") {
-        filtered = filtered.filter((tutor) => !tutor.is_active);
+        filtered = filtered.filter((tutor) => tutor.is_active === false);
       } else if (filterStatus === "approved") {
         filtered = filtered.filter(
           (tutor) => tutor.application_status === "approved"
@@ -96,6 +121,10 @@ const ManageTutorsPage: React.FC = () => {
       } else if (filterStatus === "rejected") {
         filtered = filtered.filter(
           (tutor) => tutor.application_status === "rejected"
+        );
+      } else if (filterStatus === "no_application") {
+        filtered = filtered.filter(
+          (tutor) => !tutor.application_status
         );
       }
     }
@@ -110,7 +139,7 @@ const ManageTutorsPage: React.FC = () => {
 
   const handleViewClasses = async (tutor: Tutor) => {
     try {
-      const classes = await adminTutorService.getTutorClasses(tutor.user_id);
+      const classes = await adminTutorService.getTutorClasses(tutor.id || tutor.user_id);
       setTutorClasses(classes);
       setSelectedTutor(tutor);
       setShowClassesModal(true);
@@ -128,7 +157,7 @@ const ManageTutorsPage: React.FC = () => {
       // Update local state
       setTutors((prev) =>
         prev.map((tutor) =>
-          tutor.id === tutorId ? { ...tutor, is_active: isActive } : tutor
+          (tutor.id || tutor.user_id) === tutorId ? { ...tutor, is_active: isActive } : tutor
         )
       );
 
@@ -157,7 +186,7 @@ const ManageTutorsPage: React.FC = () => {
       await adminTutorService.deleteTutor(tutorId);
 
       // Update local state
-      setTutors((prev) => prev.filter((tutor) => tutor.id !== tutorId));
+      setTutors((prev) => prev.filter((tutor) => (tutor.id || tutor.user_id) !== tutorId));
 
       toast.success("Tutor deleted successfully");
     } catch (error) {
@@ -173,6 +202,14 @@ const ManageTutorsPage: React.FC = () => {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
           Inactive
+        </span>
+      );
+    }
+
+    if (!tutor.application_status) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          No Application
         </span>
       );
     }
@@ -224,31 +261,15 @@ const ManageTutorsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
-
-      {/* Floating decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
-      <div
-        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
-        style={{ animationDelay: "1s" }}
-      ></div>
-      <div
-        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
-        style={{ animationDelay: "2s" }}
-      ></div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="px-6 pb-16 relative z-10"
-      >
-        <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
           {/* Header */}
           <div className="pt-6">
-            <h1 className="text-3xl font-bold text-gray-900">Manage Tutors</h1>
-            <p className="mt-2 text-lg text-gray-600">
+            <h1 className="text-3xl font-bold text-foreground">Manage Tutors</h1>
+            <p className="mt-2 text-lg text-muted-foreground">
               View and manage all tutor profiles, their status, and scheduled
               classes.
             </p>
@@ -274,7 +295,7 @@ const ManageTutorsPage: React.FC = () => {
                         <UserIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
                           Total Tutors
                         </CardTitle>
                       </div>
@@ -282,7 +303,7 @@ const ManageTutorsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="pl-0">
-                      <div className="text-3xl font-bold text-gray-900 ml-3">
+                      <div className="text-3xl font-bold text-card-foreground ml-3">
                         {stats.total}
                       </div>
                     </div>
@@ -302,7 +323,7 @@ const ManageTutorsPage: React.FC = () => {
                         <CheckCircleIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
                           Active
                         </CardTitle>
                       </div>
@@ -310,7 +331,7 @@ const ManageTutorsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="pl-0">
-                      <div className="text-3xl font-bold text-gray-900 ml-3">
+                      <div className="text-3xl font-bold text-card-foreground ml-3">
                         {stats.active}
                       </div>
                     </div>
@@ -330,7 +351,7 @@ const ManageTutorsPage: React.FC = () => {
                         <AcademicCapIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
                           Approved
                         </CardTitle>
                       </div>
@@ -338,7 +359,7 @@ const ManageTutorsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="pl-0">
-                      <div className="text-3xl font-bold text-gray-900 ml-3">
+                      <div className="text-3xl font-bold text-card-foreground ml-3">
                         {stats.approved}
                       </div>
                     </div>
@@ -358,7 +379,7 @@ const ManageTutorsPage: React.FC = () => {
                         <ClockIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
                           Pending
                         </CardTitle>
                       </div>
@@ -366,7 +387,7 @@ const ManageTutorsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="pl-0">
-                      <div className="text-3xl font-bold text-gray-900 ml-3">
+                      <div className="text-3xl font-bold text-card-foreground ml-3">
                         {stats.pending}
                       </div>
                     </div>
@@ -387,7 +408,7 @@ const ManageTutorsPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1">
                     <div className="relative">
-                      <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                      <MagnifyingGlassIcon className="h-5 w-5 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" />
                       <input
                         type="text"
                         placeholder="Search tutors by name, email, or phone..."
@@ -399,7 +420,7 @@ const ManageTutorsPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <FunnelIcon className="h-5 w-5 text-gray-400" />
+                    <FunnelIcon className="h-5 w-5 text-muted-foreground" />
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
@@ -411,6 +432,7 @@ const ManageTutorsPage: React.FC = () => {
                       <option value="approved">Approved</option>
                       <option value="pending">Pending</option>
                       <option value="rejected">Rejected</option>
+                      <option value="no_application">No Application</option>
                     </select>
                   </div>
                 </div>
@@ -437,31 +459,31 @@ const ManageTutorsPage: React.FC = () => {
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-muted">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Tutor
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Contact
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Joined
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-border">
                       {filteredTutors.map((tutor) => (
-                        <tr key={tutor.id} className="hover:bg-gray-50">
+                        <tr key={tutor.id} className="hover:bg-muted/50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
                                 {tutor.profile_image_url ? (
                                   <img
                                     src={tutor.profile_image_url}
@@ -469,7 +491,7 @@ const ManageTutorsPage: React.FC = () => {
                                     className="h-10 w-10 rounded-full object-cover"
                                   />
                                 ) : (
-                                  <span className="text-sm font-medium text-gray-700">
+                                  <span className="text-sm font-medium text-card-foreground">
                                     {tutor.full_name
                                       .split(" ")
                                       .map((n) => n[0])
@@ -479,17 +501,17 @@ const ManageTutorsPage: React.FC = () => {
                                 )}
                               </div>
                               <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className="text-sm font-medium text-card-foreground">
                                   {tutor.full_name}
                                 </div>
-                                <div className="text-sm text-gray-500">
+                                <div className="text-sm text-muted-foreground">
                                   {tutor.qualification || "No qualification"}
                                 </div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-card-foreground">
                               {tutor.email}
                             </div>
                             <div className="text-sm text-gray-500">
@@ -499,7 +521,7 @@ const ManageTutorsPage: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             {getStatusBadge(tutor)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                             {formatDate(tutor.created_at)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -525,15 +547,15 @@ const ManageTutorsPage: React.FC = () => {
                               {/* Activate/Deactivate Button */}
                               <button
                                 onClick={() =>
-                                  handleUpdateStatus(tutor.id, !tutor.is_active)
+                                  handleUpdateStatus(tutor.id || tutor.user_id, !tutor.is_active)
                                 }
-                                disabled={updatingStatus === tutor.id}
+                                disabled={updatingStatus === (tutor.id || tutor.user_id)}
                                 className={`inline-flex items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                                   tutor.is_active
                                     ? "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
                                     : "bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 focus:ring-green-500"
                                 } ${
-                                  updatingStatus === tutor.id
+                                  updatingStatus === (tutor.id || tutor.user_id)
                                     ? "opacity-50 cursor-not-allowed"
                                     : ""
                                 }`}
@@ -541,7 +563,7 @@ const ManageTutorsPage: React.FC = () => {
                                   tutor.is_active ? "Deactivate" : "Activate"
                                 }
                               >
-                                {updatingStatus === tutor.id ? (
+                                {updatingStatus === (tutor.id || tutor.user_id) ? (
                                   <LoadingSpinner size="sm" />
                                 ) : tutor.is_active ? (
                                   <XCircleIcon className="h-5 w-5" />
@@ -552,16 +574,16 @@ const ManageTutorsPage: React.FC = () => {
 
                               {/* Delete Button */}
                               <button
-                                onClick={() => handleDeleteTutor(tutor.id)}
-                                disabled={deletingTutor === tutor.id}
+                                onClick={() => handleDeleteTutor(tutor.id || tutor.user_id)}
+                                disabled={deletingTutor === (tutor.id || tutor.user_id)}
                                 className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                                  deletingTutor === tutor.id
+                                  deletingTutor === (tutor.id || tutor.user_id)
                                     ? "opacity-50 cursor-not-allowed"
                                     : ""
                                 }`}
                                 title="Delete"
                               >
-                                {deletingTutor === tutor.id ? (
+                                {deletingTutor === (tutor.id || tutor.user_id) ? (
                                   <LoadingSpinner size="sm" />
                                 ) : (
                                   <TrashIcon className="h-5 w-5" />
@@ -577,11 +599,11 @@ const ManageTutorsPage: React.FC = () => {
 
                 {filteredTutors.length === 0 && (
                   <div className="text-center py-12">
-                    <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    <UserIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-2 text-sm font-medium text-foreground">
                       No tutors found
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {searchTerm || filterStatus !== "all"
                         ? "Try adjusting your search or filter criteria."
                         : "No tutors have been registered yet."}
@@ -594,15 +616,15 @@ const ManageTutorsPage: React.FC = () => {
 
           {/* Tutor Details Modal */}
           {showTutorModal && selectedTutor && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-card rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-card-foreground">
                     Tutor Details
                   </h2>
                   <button
                     onClick={() => setShowTutorModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <XCircleIcon className="h-6 w-6" />
                   </button>
@@ -612,12 +634,12 @@ const ManageTutorsPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Basic Information */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-lg font-medium text-card-foreground">
                         Basic Information
                       </h3>
 
                       <div className="flex items-center space-x-3">
-                        <div className="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center">
+                        <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
                           {selectedTutor.profile_image_url ? (
                             <img
                               src={selectedTutor.profile_image_url}
@@ -625,7 +647,7 @@ const ManageTutorsPage: React.FC = () => {
                               className="h-16 w-16 rounded-full object-cover"
                             />
                           ) : (
-                            <span className="text-lg font-medium text-gray-700">
+                            <span className="text-lg font-medium text-card-foreground">
                               {selectedTutor.full_name
                                 .split(" ")
                                 .map((n) => n[0])
@@ -635,10 +657,10 @@ const ManageTutorsPage: React.FC = () => {
                           )}
                         </div>
                         <div>
-                          <h4 className="text-lg font-medium text-gray-900">
+                          <h4 className="text-lg font-medium text-card-foreground">
                             {selectedTutor.full_name}
                           </h4>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             {selectedTutor.role}
                           </p>
                           {getStatusBadge(selectedTutor)}
@@ -647,23 +669,23 @@ const ManageTutorsPage: React.FC = () => {
 
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
-                          <EnvelopeIcon className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">
+                          <EnvelopeIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-card-foreground">
                             {selectedTutor.email}
                           </span>
                         </div>
                         {selectedTutor.phone && (
                           <div className="flex items-center space-x-2">
-                            <PhoneIcon className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-900">
+                            <PhoneIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm text-card-foreground">
                               {selectedTutor.phone}
                             </span>
                           </div>
                         )}
                         {selectedTutor.address && (
                           <div className="flex items-center space-x-2">
-                            <MapPinIcon className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-900">
+                            <MapPinIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm text-card-foreground">
                               {selectedTutor.address}
                             </span>
                           </div>
@@ -673,17 +695,17 @@ const ManageTutorsPage: React.FC = () => {
 
                     {/* Professional Information */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-lg font-medium text-card-foreground">
                         Professional Information
                       </h3>
 
                       <div className="space-y-2">
                         {selectedTutor.qualification && (
                           <div>
-                            <span className="text-sm font-medium text-gray-500">
+                            <span className="text-sm font-medium text-muted-foreground">
                               Qualification:
                             </span>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-card-foreground">
                               {selectedTutor.qualification}
                             </p>
                           </div>
@@ -691,10 +713,10 @@ const ManageTutorsPage: React.FC = () => {
 
                         {selectedTutor.experience_years && (
                           <div>
-                            <span className="text-sm font-medium text-gray-500">
+                            <span className="text-sm font-medium text-muted-foreground">
                               Experience:
                             </span>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-card-foreground">
                               {selectedTutor.experience_years} years
                             </p>
                           </div>
@@ -702,10 +724,10 @@ const ManageTutorsPage: React.FC = () => {
 
                         {selectedTutor.hourly_rate && (
                           <div>
-                            <span className="text-sm font-medium text-gray-500">
+                            <span className="text-sm font-medium text-muted-foreground">
                               Hourly Rate:
                             </span>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-card-foreground">
                               {formatCurrency(selectedTutor.hourly_rate)}
                             </p>
                           </div>
@@ -714,10 +736,10 @@ const ManageTutorsPage: React.FC = () => {
                         {selectedTutor.subjects &&
                           selectedTutor.subjects.length > 0 && (
                             <div>
-                              <span className="text-sm font-medium text-gray-500">
+                              <span className="text-sm font-medium text-muted-foreground">
                                 Subjects:
                               </span>
-                              <p className="text-sm text-gray-900">
+                              <p className="text-sm text-card-foreground">
                                 {selectedTutor.subjects.join(", ")}
                               </p>
                             </div>
@@ -729,10 +751,10 @@ const ManageTutorsPage: React.FC = () => {
                     <div className="md:col-span-2 space-y-4">
                       {selectedTutor.bio && (
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">
+                          <h3 className="text-lg font-medium text-card-foreground">
                             Bio
                           </h3>
-                          <p className="text-sm text-gray-700 mt-2">
+                          <p className="text-sm text-card-foreground mt-2">
                             {selectedTutor.bio}
                           </p>
                         </div>
@@ -740,10 +762,10 @@ const ManageTutorsPage: React.FC = () => {
 
                       {selectedTutor.availability && (
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">
+                          <h3 className="text-lg font-medium text-card-foreground">
                             Availability
                           </h3>
-                          <p className="text-sm text-gray-700 mt-2">
+                          <p className="text-sm text-card-foreground mt-2">
                             {selectedTutor.availability}
                           </p>
                         </div>
@@ -776,15 +798,15 @@ const ManageTutorsPage: React.FC = () => {
 
           {/* Tutor Classes Modal */}
           {showClassesModal && selectedTutor && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-card-foreground">
                     Classes by {selectedTutor.full_name}
                   </h2>
                   <button
                     onClick={() => setShowClassesModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <XCircleIcon className="h-6 w-6" />
                   </button>
@@ -796,10 +818,10 @@ const ManageTutorsPage: React.FC = () => {
                       {tutorClasses.map((classItem) => (
                         <div
                           key={classItem.id}
-                          className="bg-gray-50 rounded-lg p-4 border"
+                          className="bg-muted/50 rounded-lg p-4 border"
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-medium text-gray-900">
+                            <h3 className="font-medium text-card-foreground">
                               {classItem.title}
                             </h3>
                             <span
@@ -815,7 +837,7 @@ const ManageTutorsPage: React.FC = () => {
                             </span>
                           </div>
 
-                          <div className="space-y-1 text-sm text-gray-600">
+                          <div className="space-y-1 text-sm text-muted-foreground">
                             <div className="flex items-center space-x-1">
                               <CalendarDaysIcon className="h-4 w-4" />
                               <span>{formatDate(classItem.date)}</span>
@@ -847,7 +869,7 @@ const ManageTutorsPage: React.FC = () => {
 
                           {classItem.jitsi_meeting && (
                             <div className="mt-3 pt-3 border-t border-gray-200">
-                              <div className="flex items-center space-x-1 text-sm text-gray-600">
+                              <div className="flex items-center space-x-1 text-sm text-muted-foreground">
                                 <VideoCameraIcon className="h-4 w-4" />
                                 <span>Jitsi Meeting Available</span>
                               </div>
@@ -867,11 +889,11 @@ const ManageTutorsPage: React.FC = () => {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <CalendarDaysIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <h3 className="mt-2 text-sm font-medium text-gray-900">
+                      <CalendarDaysIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <h3 className="mt-2 text-sm font-medium text-foreground">
                         No classes found
                       </h3>
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         This tutor hasn't scheduled any classes yet.
                       </p>
                     </div>
@@ -880,9 +902,7 @@ const ManageTutorsPage: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-      </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

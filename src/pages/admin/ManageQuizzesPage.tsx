@@ -178,26 +178,10 @@ const ManageQuizzesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
-
-      {/* Floating decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
-      <div
-        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
-        style={{ animationDelay: "1s" }}
-      ></div>
-      <div
-        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
-        style={{ animationDelay: "2s" }}
-      ></div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="px-6 pb-16 relative z-10"
-      >
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="pt-6 mb-8">
@@ -506,10 +490,8 @@ const ManageQuizzesPage: React.FC = () => {
             <ManageQuizPdfsPage />
           )}
         </div>
-      </motion.div>
 
-      {/* Quiz Details Modal */}
-      {showQuizModal && selectedQuiz && (
+        {showQuizModal && selectedQuiz && (
         <motion.div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]"
           style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
@@ -700,7 +682,7 @@ const ManageQuizzesPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

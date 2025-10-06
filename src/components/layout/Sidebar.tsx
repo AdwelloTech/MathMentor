@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import logoUrl from "@/assets/math-mentor-logo.png";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +15,8 @@ import {
   CreditCardIcon,
   BookOpenIcon,
   ArrowRightOnRectangleIcon,
+  Cog6ToothIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -41,12 +43,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { adminSession, loading: adminLoading } = useAdmin();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
   // Add admin-specific navigation
   const adminNavigation = [
     { name: "Dashboard", href: "/admin", icon: AcademicCapIcon },
-    { name: "Manage Students", href: "/admin/students", icon: UserGroupIcon },
-    { name: "Manage Tutors", href: "/admin/tutors", icon: UserIcon },
+    { 
+      name: "Tutor Management",
+      href: "/admin/tutors", 
+      icon: UserIcon
+    },
     {
       name: "Tutor Applications",
       href: "/admin/tutor-applications",
@@ -57,17 +63,36 @@ const Sidebar: React.FC<SidebarProps> = ({
       href: "/admin/id-verifications",
       icon: IdentificationIcon,
     },
+    { 
+      name: "Student Management", 
+      href: "/admin/students", 
+      icon: UserGroupIcon 
+    },
     {
-      name: "Manage Quizzes & PDFs",
+      name: "Content Management",
       href: "/admin/quizzes",
       icon: DocumentTextIcon,
+      subItems: [
+        { name: "Quiz PDFs", href: "/admin/quiz-pdfs" },
+        { name: "Manage Quizzes", href: "/admin/quizzes" },
+        { name: "Flashcard Sets", href: "/admin/flashcards" },
+      ]
     },
     {
-      name: "Manage Flashcards",
-      href: "/admin/flashcards",
-      icon: BookOpenIcon,
+      name: "System Settings",
+      href: "/admin/settings",
+      icon: Cog6ToothIcon,
+      subItems: [
+        { name: "Subjects", href: "/admin/subjects" },
+        { name: "Grade Levels", href: "/admin/grade-levels" },
+        { name: "System Config", href: "/admin/settings" },
+      ]
     },
-    { name: "Manage Subjects", href: "/admin/subjects", icon: AcademicCapIcon },
+    {
+      name: "View Reports",
+      href: "/admin/reports",
+      icon: ChartBarIcon,
+    },
     { name: "Profile", href: "/profile", icon: UserCircleIcon },
   ];
 
@@ -256,6 +281,17 @@ const Sidebar: React.FC<SidebarProps> = ({
   const NavigationItem = ({ item, index }: { item: any; index: number }) => {
     const isDisabled = item.disabled;
     const active = isActive(item.href);
+    const showSubItems = expandedItem === item.name;
+
+    // Check if any sub-item is active
+    const hasActiveSubItem = item.subItems?.some((subItem: any) => isActive(subItem.href));
+
+    // Auto-expand submenu if any sub-item is active
+    useEffect(() => {
+      if (hasActiveSubItem && item.subItems && expandedItem !== item.name) {
+        setExpandedItem(item.name);
+      }
+    }, [hasActiveSubItem, item.name, item.subItems, expandedItem]);
 
     // Use consistent theme colors for all navigation items
     const getActiveClasses = () => {
@@ -356,6 +392,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       );
     }
 
+    const hasSubItems = item.subItems && item.subItems.length > 0;
+
     return (
       <motion.div
         key={item.name}
@@ -364,47 +402,115 @@ const Sidebar: React.FC<SidebarProps> = ({
         animate="visible"
         className="relative"
       >
-        <Link
-          to={item.href}
-          onClick={() => setSidebarOpen(false)}
-          className={cn(
-            "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden",
-            active ? getActiveClasses() : getHoverClasses(),
-            !isHovered && "justify-center"
-          )}
-        >
-          <div className="relative">
-            <item.icon
-              className={cn(
-                "h-5 w-5 shrink-0 transition-colors duration-200",
-                active
-                  ? "text-primary-foreground"
-                  : "text-muted-foreground group-hover:text-foreground"
-              )}
-            />
-            {active && (
-              <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-secondary" />
+        <div className="flex flex-col">
+          {/* Main nav item */}
+          <Link
+            to={item.href}
+            onClick={() => {
+              setSidebarOpen(false);
+              if (hasSubItems) {
+                // Toggle the submenu - if it's already expanded, collapse it; otherwise expand it
+                setExpandedItem(expandedItem === item.name ? null : item.name);
+              } else {
+                // If clicking on a regular item (no submenu), collapse any expanded submenu
+                setExpandedItem(null);
+              }
+            }}
+            className={cn(
+              "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden",
+              (active || hasActiveSubItem) ? getActiveClasses() : getHoverClasses(),
+              !isHovered && "justify-center"
             )}
-          </div>
+          >
+            <div className="relative">
+              <item.icon
+                className={cn(
+                  "h-5 w-5 shrink-0 transition-colors duration-200",
+                  (active || hasActiveSubItem)
+                    ? "text-primary-foreground"
+                    : "text-muted-foreground group-hover:text-foreground"
+                )}
+              />
+              {(active || hasActiveSubItem) && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-secondary" />
+              )}
+            </div>
 
+            <AnimatePresence>
+              {isHovered && (
+                <motion.div
+                  className="flex items-center justify-between flex-1"
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <span className="group-hover:translate-x-1 transition-transform duration-200 overflow-hidden whitespace-nowrap">
+                    {item.name}
+                  </span>
+                  
+                  {hasSubItems && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setExpandedItem(expandedItem === item.name ? null : item.name);
+                      }}
+                      className="ml-2 rounded-full p-1 hover:bg-accent/50"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`h-3 w-3 transition-transform ${showSubItems ? 'rotate-180' : ''}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {(active || hasActiveSubItem) && (
+              <div className="absolute inset-0 rounded-xl bg-primary/10" />
+            )}
+          </Link>
+          
+          {/* Sub items */}
           <AnimatePresence>
-            {isHovered && (
-              <motion.span
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
+            {isHovered && hasSubItems && expandedItem === item.name && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="group-hover:translate-x-1 transition-transform duration-200 overflow-hidden whitespace-nowrap"
+                className="ml-8 overflow-hidden"
               >
-                {item.name}
-              </motion.span>
+                {item.subItems.map((subItem: any, subIndex: number) => {
+                  const subActive = isActive(subItem.href);
+                  return (
+                    <Link
+                      key={`${item.name}-sub-${subIndex}`}
+                      to={subItem.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={cn(
+                        "flex items-center py-2 px-3 text-xs rounded-lg my-1 transition-colors",
+                        subActive
+                          ? "bg-primary/20 text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                      )}
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full mr-2 bg-current opacity-70" />
+                      {subItem.name}
+                    </Link>
+                  );
+                })}
+              </motion.div>
             )}
           </AnimatePresence>
-
-          {active && (
-            <div className="absolute inset-0 rounded-xl bg-primary/10" />
-          )}
-        </Link>
+        </div>
       </motion.div>
     );
   };

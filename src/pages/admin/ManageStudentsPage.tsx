@@ -152,33 +152,17 @@ const ManageStudentsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
-
-      {/* Floating decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
-      <div
-        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
-        style={{ animationDelay: "1s" }}
-      ></div>
-      <div
-        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
-        style={{ animationDelay: "2s" }}
-      ></div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="px-6 pb-16 relative z-10"
-      >
-        <div className="space-y-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-8"
+    >
           {/* Header */}
           <div className="pt-6">
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-foreground">
               Manage Students
             </h1>
-            <p className="mt-2 text-lg text-gray-600">
+            <p className="mt-2 text-lg text-muted-foreground">
               View and manage all student accounts, subscriptions, and
               information.
             </p>
@@ -198,14 +182,14 @@ const ManageStudentsPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
+                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg border border-border h-[152px] w-[311px]">
                   <CardHeader className="pb-2">
                     <div className="flex items-start space-x-3">
                       <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
                         <stat.icon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                        <CardTitle className="text-lg font-bold text-foreground max-w-xs">
                           {stat.name}
                         </CardTitle>
                       </div>
@@ -214,7 +198,7 @@ const ManageStudentsPage: React.FC = () => {
                   <CardContent className="pt-0">
                     <div className="pl-0">
                       <div className="flex items-start space-x-2">
-                        <div className="text-3xl font-bold text-gray-900 ml-3">
+                        <div className="text-3xl font-bold text-foreground ml-3">
                           {stat.value}
                         </div>
                         <div
@@ -240,7 +224,7 @@ const ManageStudentsPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+            <Card className="shadow-lg border border-border">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
@@ -255,13 +239,13 @@ const ManageStudentsPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-4 mb-6">
                   <div className="flex-1">
                     <div className="relative">
-                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <input
                         type="text"
                         placeholder="Search students..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="input pl-10 w-full"
+                        className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-lg px-3 py-2 pl-10 w-full focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -269,7 +253,7 @@ const ManageStudentsPage: React.FC = () => {
                     <select
                       value={filterPackage}
                       onChange={(e) => setFilterPackage(e.target.value)}
-                      className="input"
+                      className="bg-input border border-border text-foreground rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                       <option value="all">All Packages</option>
                       <option value="free">Free</option>
@@ -281,32 +265,32 @@ const ManageStudentsPage: React.FC = () => {
 
                 {/* Students Table */}
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-muted">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Student
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Package
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Last Login
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-border">
                       {filteredStudents.length === 0 ? (
                         <tr>
                           <td
                             colSpan={5}
-                            className="px-6 py-4 text-center text-gray-500"
+                            className="px-6 py-4 text-center text-muted-foreground"
                           >
                             {students.length === 0
                               ? "No students found"
@@ -317,14 +301,14 @@ const ManageStudentsPage: React.FC = () => {
                         filteredStudents.map((student) => {
                           const packageInfo = getPackageInfo(student.package);
                           return (
-                            <tr key={student.id} className="hover:bg-gray-50">
+                            <tr key={student.id} className="hover:bg-muted/50">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   {student.profile_image_url ? (
                                     <img
                                       src={student.profile_image_url}
                                       alt={`${student.full_name}'s profile`}
-                                      className="h-10 w-10 rounded-full object-cover border-2 border-gray-200"
+                                      className="h-10 w-10 rounded-full object-cover border-2 border-border"
                                       onError={(e) => {
                                         // Fallback to initials if image fails to load
                                         const target =
@@ -337,23 +321,23 @@ const ManageStudentsPage: React.FC = () => {
                                     />
                                   ) : null}
                                   <div
-                                    className={`h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center ${
+                                    className={`h-10 w-10 rounded-full bg-muted flex items-center justify-center ${
                                       student.profile_image_url ? "hidden" : ""
                                     }`}
                                   >
-                                    <span className="text-sm font-medium text-gray-600">
+                                    <span className="text-sm font-medium text-muted-foreground">
                                       {student.first_name[0]}
                                       {student.last_name[0]}
                                     </span>
                                   </div>
                                   <div className="ml-4">
-                                    <div className="text-sm font-medium text-gray-900">
+                                    <div className="text-sm font-medium text-foreground">
                                       {student.full_name}
                                     </div>
-                                    <div className="text-sm text-gray-500">
+                                    <div className="text-sm text-muted-foreground">
                                       {student.email}
                                     </div>
-                                    <div className="text-xs text-gray-400">
+                                    <div className="text-xs text-muted-foreground">
                                       ID: {student.student_id}
                                     </div>
                                   </div>
@@ -361,14 +345,14 @@ const ManageStudentsPage: React.FC = () => {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <CreditCardIcon className="h-4 w-4 mr-2 text-gray-400" />
+                                  <CreditCardIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                                   <span
                                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                       student.package === "gold"
-                                        ? "bg-yellow-100 text-yellow-800"
+                                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                                         : student.package === "silver"
-                                        ? "bg-gray-100 text-gray-800"
-                                        : "bg-green-100 text-green-800"
+                                        ? "bg-slate-500/10 text-slate-400 border border-slate-500/20"
+                                        : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                     }`}
                                   >
                                     {packageInfo?.display_name ||
@@ -376,7 +360,7 @@ const ManageStudentsPage: React.FC = () => {
                                   </span>
                                 </div>
                                 {packageInfo && (
-                                  <div className="text-xs text-gray-500 mt-1">
+                                  <div className="text-xs text-muted-foreground mt-1">
                                     {formatCurrency(packageInfo.price_monthly)}
                                     /month
                                   </div>
@@ -385,24 +369,24 @@ const ManageStudentsPage: React.FC = () => {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   {student.is_active ? (
-                                    <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2" />
+                                    <CheckCircleIcon className="h-4 w-4 text-emerald-400 mr-2" />
                                   ) : (
-                                    <XCircleIcon className="h-4 w-4 text-red-500 mr-2" />
+                                    <XCircleIcon className="h-4 w-4 text-red-400 mr-2" />
                                   )}
                                   <span
                                     className={`text-sm ${
                                       student.is_active
-                                        ? "text-green-600"
-                                        : "text-red-600"
+                                        ? "text-emerald-400"
+                                        : "text-red-400"
                                     }`}
                                   >
                                     {student.is_active ? "Active" : "Inactive"}
                                   </span>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                 <div className="flex items-center">
-                                  <ClockIcon className="h-4 w-4 mr-2 text-gray-400" />
+                                  <ClockIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                                   {formatDate(student.last_login)}
                                 </div>
                               </td>
@@ -431,16 +415,16 @@ const ManageStudentsPage: React.FC = () => {
 
           {/* Student Details Modal */}
           {showStudentModal && selectedStudent && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50">
+              <div className="relative top-20 mx-auto p-5 border border-border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-card">
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-medium text-foreground">
                       Student Details: {selectedStudent.full_name}
                     </h3>
                     <button
                       onClick={() => setShowStudentModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <XCircleIcon className="h-6 w-6" />
                     </button>
@@ -452,7 +436,7 @@ const ManageStudentsPage: React.FC = () => {
                       <img
                         src={selectedStudent.profile_image_url}
                         alt={`${selectedStudent.full_name}'s profile`}
-                        className="h-24 w-24 rounded-full object-cover border-4 border-gray-200 shadow-lg"
+                        className="h-24 w-24 rounded-full object-cover border-4 border-border shadow-lg"
                         onError={(e) => {
                           // Fallback to initials if image fails to load
                           const target = e.target as HTMLImageElement;
@@ -462,11 +446,11 @@ const ManageStudentsPage: React.FC = () => {
                       />
                     ) : null}
                     <div
-                      className={`h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-200 shadow-lg ${
+                      className={`h-24 w-24 rounded-full bg-muted flex items-center justify-center border-4 border-border shadow-lg ${
                         selectedStudent.profile_image_url ? "hidden" : ""
                       }`}
                     >
-                      <span className="text-2xl font-bold text-gray-600">
+                      <span className="text-2xl font-bold text-muted-foreground">
                         {selectedStudent.first_name[0]}
                         {selectedStudent.last_name[0]}
                       </span>
@@ -476,7 +460,7 @@ const ManageStudentsPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Personal Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-foreground mb-3">
                         Personal Information
                       </h4>
                       <div className="space-y-2 text-sm">
@@ -510,7 +494,7 @@ const ManageStudentsPage: React.FC = () => {
 
                     {/* Location Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-foreground mb-3">
                         Location Information
                       </h4>
                       <div className="space-y-2 text-sm">
@@ -534,7 +518,7 @@ const ManageStudentsPage: React.FC = () => {
 
                     {/* Parent Contact Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-foreground mb-3">
                         Parent Contact Information
                       </h4>
                       <div className="space-y-2 text-sm">
@@ -555,7 +539,7 @@ const ManageStudentsPage: React.FC = () => {
 
                     {/* Academic Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-foreground mb-3">
                         Academic Information
                       </h4>
                       <div className="space-y-2 text-sm">
@@ -588,33 +572,33 @@ const ManageStudentsPage: React.FC = () => {
 
                     {/* Subscription Information */}
                     <div className="md:col-span-2">
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-foreground mb-3">
                         Subscription Details
                       </h4>
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="bg-muted p-4 rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <div className="text-sm font-medium text-gray-500">
+                            <div className="text-sm font-medium text-muted-foreground">
                               Package
                             </div>
-                            <div className="text-lg font-semibold text-gray-900">
+                            <div className="text-lg font-semibold text-foreground">
                               {getPackageInfo(selectedStudent.package)
                                 ?.display_name || selectedStudent.package}
                             </div>
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-gray-500">
+                            <div className="text-sm font-medium text-muted-foreground">
                               Status
                             </div>
-                            <div className="text-lg font-semibold text-green-600">
+                            <div className="text-lg font-semibold text-emerald-400">
                               {selectedStudent.subscription_status}
                             </div>
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-gray-500">
+                            <div className="text-sm font-medium text-muted-foreground">
                               Monthly Price
                             </div>
-                            <div className="text-lg font-semibold text-gray-900">
+                            <div className="text-lg font-semibold text-foreground">
                               {getPackageInfo(selectedStudent.package)
                                 ? formatCurrency(
                                     getPackageInfo(selectedStudent.package)!
@@ -628,20 +612,20 @@ const ManageStudentsPage: React.FC = () => {
                         {selectedStudent.subscription_start_date && (
                           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <div className="text-sm font-medium text-gray-500">
+                              <div className="text-sm font-medium text-muted-foreground">
                                 Start Date
                               </div>
-                              <div className="text-sm text-gray-900">
+                              <div className="text-sm text-foreground">
                                 {formatDate(
                                   selectedStudent.subscription_start_date
                                 )}
                               </div>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-500">
+                              <div className="text-sm font-medium text-muted-foreground">
                                 End Date
                               </div>
-                              <div className="text-sm text-gray-900">
+                              <div className="text-sm text-foreground">
                                 {formatDate(
                                   selectedStudent.subscription_end_date
                                 )}
@@ -652,7 +636,7 @@ const ManageStudentsPage: React.FC = () => {
 
                         {getPackageInfo(selectedStudent.package)?.features && (
                           <div className="mt-4">
-                            <div className="text-sm font-medium text-gray-500 mb-2">
+                            <div className="text-sm font-medium text-muted-foreground mb-2">
                               Package Features
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -661,7 +645,7 @@ const ManageStudentsPage: React.FC = () => {
                               )!.features.map((feature, index) => (
                                 <span
                                   key={index}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
                                 >
                                   {feature}
                                 </span>
@@ -674,7 +658,7 @@ const ManageStudentsPage: React.FC = () => {
 
                     {/* Account Information */}
                     <div className="md:col-span-2">
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-foreground mb-3">
                         Account Information
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -701,7 +685,7 @@ const ManageStudentsPage: React.FC = () => {
                   <div className="flex justify-end space-x-3 mt-6">
                     <button
                       onClick={() => setShowStudentModal(false)}
-                      className="btn btn-secondary"
+                      className="px-4 py-2 border border-border rounded-lg text-muted-foreground hover:bg-muted"
                     >
                       Close
                     </button>
@@ -710,9 +694,7 @@ const ManageStudentsPage: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-      </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

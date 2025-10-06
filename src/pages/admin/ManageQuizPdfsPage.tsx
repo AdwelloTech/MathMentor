@@ -291,8 +291,8 @@ const ManageQuizPdfsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <>
+    <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -464,7 +464,6 @@ const ManageQuizPdfsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Upload Modal */}
       <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -567,7 +566,6 @@ const ManageQuizPdfsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -658,7 +656,6 @@ const ManageQuizPdfsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Modal */}
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -691,7 +688,7 @@ const ManageQuizPdfsPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
 

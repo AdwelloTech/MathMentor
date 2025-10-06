@@ -1,13 +1,3 @@
-import { supabase } from './supabase';
-import type { Database } from '@/types/database';
-
-type ProfileRow = Database['public']['Tables']['profiles']['Row'];
-// Using any types for tables not yet in the database schema
-type TutorApplicationRow = any;
-type TutorClassRow = any;
-type ClassTypeRow = any;
-type JitsiMeetingRow = any;
-
 export interface Tutor {
   id: string;
   user_id: string;
@@ -89,98 +79,53 @@ export interface TutorClass {
 class AdminTutorService {
   async getAllTutors(): Promise<Tutor[]> {
     try {
-      // Get all tutors first
-      const { data: tutors, error: tutorsError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'tutor')
-        .order('created_at', { ascending: false }) as { data: ProfileRow[] | null; error: any };
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+      });
 
-      if (tutorsError) {
-        console.error('Error fetching tutors:', tutorsError);
-        throw tutorsError;
-      }
-
-      if (!tutors || tutors.length === 0) {
+      if (!response.ok) {
+        console.error('Failed to fetch tutors:', response.status, response.statusText);
+        // Return empty array instead of throwing
         return [];
       }
 
-      // Get all tutor applications
-      const { data: applications, error: applicationsError } = await supabase
-        .from('tutor_applications')
-        .select('*')
-        .order('submitted_at', { ascending: false }) as { data: TutorApplicationRow[] | null; error: any };
-
-      if (applicationsError) {
-        console.error('Error fetching applications:', applicationsError);
-        throw applicationsError;
+      try {
+        const data = await response.json();
+        return data.data || [];
+      } catch (parseError) {
+        console.error('Error parsing tutor response:', parseError);
+        return [];
       }
-
-      // Create a map of user_id to application for quick lookup
-      const applicationMap = new Map<string, TutorApplicationRow>();
-      applications?.forEach(app => {
-        if (!applicationMap.has(app.user_id)) {
-          applicationMap.set(app.user_id, app);
-        }
-      });
-
-      // Transform the data to include application information
-      const transformedTutors = tutors.map(tutor => {
-        const application = applicationMap.get(tutor.user_id);
-        return {
-          ...tutor,
-          application_status: application?.application_status || null,
-          submitted_at: application?.submitted_at || null,
-          reviewed_at: application?.reviewed_at || null,
-        };
-      });
-
-      return transformedTutors;
     } catch (error) {
       console.error('Error in getAllTutors:', error);
-      throw error;
+      return []; // Return empty array instead of throwing
     }
   }
 
   async getTutorById(tutorId: string): Promise<Tutor | null> {
     try {
-      // Get tutor profile
-      const { data: tutor, error: tutorError } = await (supabase as any)
-        .from('profiles')
-        .select('*')
-        .eq('id', tutorId)
-        .eq('role', 'tutor')
-        .single();
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/${tutorId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+      });
 
-      if (tutorError) {
-        console.error('Error fetching tutor:', tutorError);
-        throw tutorError;
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch tutor');
       }
 
-      if (!tutor) return null;
-
-      // Get tutor application
-      const { data: applications, error: applicationsError } = await (supabase as any)
-        .from('tutor_applications')
-        .select('*')
-        .eq('user_id', tutor.user_id)
-        .order('submitted_at', { ascending: false })
-        .limit(1);
-
-      if (applicationsError) {
-        console.error('Error fetching applications:', applicationsError);
-        throw applicationsError;
-      }
-
-      const application = applications?.[0];
-
-      // Transform the data
-      return {
-        ...tutor,
-        application_status: application?.application_status || null,
-        submitted_at: application?.submitted_at || null,
-        reviewed_at: application?.reviewed_at || null,
-      };
+      const data = await response.json();
+      return data.data;
     } catch (error) {
       console.error('Error in getTutorById:', error);
       throw error;
@@ -189,14 +134,18 @@ class AdminTutorService {
 
   async updateTutorStatus(tutorId: string, isActive: boolean): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_active: isActive })
-        .eq('id', tutorId);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/${tutorId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ is_active: isActive })
+      });
 
-      if (error) {
-        console.error('Error updating tutor status:', error);
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update tutor status');
       }
     } catch (error) {
       console.error('Error in updateTutorStatus:', error);
@@ -206,17 +155,17 @@ class AdminTutorService {
 
   async deleteTutor(tutorId: string): Promise<void> {
     try {
-      // First, delete related records (tutor applications, classes, etc.)
-      // Note: This is a simplified version. In production, you might want to handle this more carefully
-      
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', tutorId);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/${tutorId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+      });
 
-      if (error) {
-        console.error('Error deleting tutor:', error);
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete tutor');
       }
     } catch (error) {
       console.error('Error in deleteTutor:', error);
@@ -226,140 +175,122 @@ class AdminTutorService {
 
   async getTutorClasses(tutorId: string): Promise<TutorClass[]> {
     try {
-      // Get tutor classes
-      const { data: classes, error: classesError } = await supabase
-        .from('tutor_classes')
-        .select('*')
-        .eq('tutor_id', tutorId)
-        .order('date', { ascending: false }) as { data: TutorClassRow[] | null; error: any };
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/${tutorId}/classes`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+      });
 
-      if (classesError) {
-        console.error('Error fetching tutor classes:', classesError);
-        throw classesError;
+      if (!response.ok) {
+        console.error('Failed to fetch tutor classes:', response.status, response.statusText);
+        return []; // Return empty array instead of throwing
       }
 
-      if (!classes || classes.length === 0) {
+      try {
+        const data = await response.json();
+        return data.data || [];
+      } catch (parseError) {
+        console.error('Error parsing classes response:', parseError);
         return [];
       }
-
-      // Get class types
-      const { data: classTypes, error: classTypesError } = await supabase
-        .from('class_types')
-        .select('*') as { data: ClassTypeRow[] | null; error: any };
-
-      if (classTypesError) {
-        console.error('Error fetching class types:', classTypesError);
-        throw classTypesError;
-      }
-
-      // Create a map of class type IDs to class type objects
-      const classTypeMap = new Map<string, ClassTypeRow>();
-      classTypes?.forEach(type => {
-        classTypeMap.set(type.id, type);
-      });
-
-      // Get jitsi meetings for all classes
-      const classIds = classes.map(c => c.id);
-      const { data: jitsiMeetings, error: jitsiError } = await supabase
-        .from('jitsi_meetings')
-        .select('*')
-        .in('class_id', classIds) as { data: JitsiMeetingRow[] | null; error: any };
-
-      if (jitsiError) {
-        console.error('Error fetching jitsi meetings:', jitsiError);
-        throw jitsiError;
-      }
-
-      // Create a map of class IDs to jitsi meeting objects
-      const jitsiMap = new Map<string, JitsiMeetingRow>();
-      jitsiMeetings?.forEach(jitsi => {
-        jitsiMap.set(jitsi.class_id, jitsi);
-      });
-
-      // Combine the data
-      const enrichedClasses = classes.map(classItem => ({
-        ...classItem,
-        class_type: classTypeMap.get(classItem.class_type_id) || {
-          id: classItem.class_type_id,
-          name: 'Unknown',
-          duration_minutes: 0,
-          description: null
-        },
-        jitsi_meeting: jitsiMap.get(classItem.id) || null,
-      }));
-
-      return enrichedClasses;
     } catch (error) {
       console.error('Error in getTutorClasses:', error);
-      throw error;
+      return []; // Return empty array instead of throwing
     }
   }
 
   async getTutorStats(): Promise<TutorStats> {
     try {
-      // Get total tutors
-      const { count: total, error: totalError } = await (supabase as any)
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'tutor');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/stats`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+      });
 
-      if (totalError) throw totalError;
+      if (!response.ok) {
+        console.error('Failed to fetch tutor stats:', response.status, response.statusText);
+        // Return default values instead of throwing
+        return {
+          total: 0,
+          active: 0,
+          inactive: 0,
+          approved: 0,
+          pending: 0,
+          rejected: 0,
+          recentRegistrations: 0
+        };
+      }
 
-      // Get active tutors
-      const { count: active, error: activeError } = await (supabase as any)
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'tutor')
-        .eq('is_active', true);
-
-      if (activeError) throw activeError;
-
-      // Get inactive tutors
-      const { count: inactive, error: inactiveError } = await (supabase as any)
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'tutor')
-        .eq('is_active', false);
-
-      if (inactiveError) throw inactiveError;
-
-      // Get application status counts
-      const { data: applications, error: applicationsError } = await supabase
-        .from('tutor_applications')
-        .select('application_status') as { data: { application_status: string }[] | null; error: any };
-
-      if (applicationsError) throw applicationsError;
-
-      const approved = applications?.filter(app => app.application_status === 'approved').length || 0;
-      const pending = applications?.filter(app => app.application_status === 'pending').length || 0;
-      const rejected = applications?.filter(app => app.application_status === 'rejected').length || 0;
-
-      // Get recent registrations (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { count: recentRegistrations, error: recentError } = await (supabase as any)
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'tutor')
-        .gte('created_at', thirtyDaysAgo.toISOString());
-
-      if (recentError) throw recentError;
-
-      return {
-        total: total || 0,
-        active: active || 0,
-        inactive: inactive || 0,
-        approved,
-        pending,
-        rejected,
-        recentRegistrations: recentRegistrations || 0,
-      };
+      try {
+        const data = await response.json();
+        return data.data || {
+          total: 0,
+          active: 0,
+          inactive: 0,
+          approved: 0,
+          pending: 0,
+          rejected: 0,
+          recentRegistrations: 0
+        };
+      } catch (parseError) {
+        console.error('Error parsing stats response:', parseError);
+        return {
+          total: 0,
+          active: 0,
+          inactive: 0,
+          approved: 0,
+          pending: 0,
+          rejected: 0,
+          recentRegistrations: 0
+        };
+      }
     } catch (error) {
       console.error('Error in getTutorStats:', error);
+      return {
+        total: 0,
+        active: 0,
+        inactive: 0,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+        recentRegistrations: 0
+      }; // Return default values instead of throwing
+    }
+  }
+  
+  async updateTutorApplication(
+    userId: string,
+    status: 'pending' | 'approved' | 'rejected',
+    rejectionReason?: string,
+    adminNotes?: string
+  ): Promise<void> {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutor-applications/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          status,
+          rejection_reason: rejectionReason,
+          admin_notes: adminNotes
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update application status');
+      }
+    } catch (error) {
+      console.error('Error in updateTutorApplication:', error);
       throw error;
     }
   }
 }
 
-export const adminTutorService = new AdminTutorService(); 
+export const adminTutorService = new AdminTutorService();

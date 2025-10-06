@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import apiClient from "./apiClient";
 
 export interface TutorApplication {
   id: string;
@@ -45,105 +45,83 @@ export class AdminTutorApplicationService {
   static async getAllApplications(): Promise<TutorApplication[]> {
     try {
       console.log("Fetching all tutor applications...");
+      const applications = await apiClient.get<TutorApplication[]>('/api/admin/tutor-applications');
 
-      // First, let's test if we can access the table at all
-      const { error: testError } = await supabase
-        .from("tutor_applications")
-        .select("id")
-        .limit(1);
+      // Transform the data to ensure proper typing and handle any malformed data
+      const transformedApplications = applications.map((app: any) => {
+        try {
+          return {
+            id: app.id || app._id,
+            user_id: app.user_id,
+            applicant_email: app.applicant_email,
+            full_name: app.full_name,
+            phone_number: app.phone_number,
+            subjects: (() => {
+              try {
+                if (Array.isArray(app.subjects)) {
+                  return app.subjects;
+                }
+                if (typeof app.subjects === "string") {
+                  // Handle the malformed JSON string from your data
+                  let cleaned = app.subjects;
 
-      if (testError) {
-        console.error("❌ Cannot access tutor_applications table:", testError);
-        console.error("Error details:", testError);
-        return [];
-      }
-
-      const { data, error } = await supabase
-        .from("tutor_applications")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching applications:", error);
-        return [];
-      }
-
-      // Transform the data to match our interface
-      const transformedApplications =
-        data
-          ?.map((app: any) => {
-            try {
-              return {
-                id: app.id,
-                user_id: app.user_id,
-                applicant_email: app.applicant_email,
-                full_name: app.full_name,
-                phone_number: app.phone_number,
-                subjects: (() => {
-                  try {
-                    if (Array.isArray(app.subjects)) {
-                      return app.subjects;
-                    }
-                    if (typeof app.subjects === "string") {
-                      // Handle the malformed JSON string from your data
-                      let cleaned = app.subjects;
-
-                      // Remove outer quotes if present
-                      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-                        cleaned = cleaned.slice(1, -1);
-                      }
-
-                      // Replace escaped quotes
-                      cleaned = cleaned.replace(/\\"/g, '"');
-
-                      // Fix the malformed JSON (remove extra quotes and fix brackets)
-                      cleaned = cleaned.replace(/^"|"$/g, "");
-                      cleaned = cleaned.replace(/\]}$/, "}");
-
-                      const parsed = JSON.parse(cleaned);
-                      return parsed;
-                    }
-                    return [];
-                  } catch (parseError) {
-                    console.error("❌ Error parsing subjects:", parseError);
-                    console.error("Raw subjects data:", app.subjects);
-                    return [];
+                  // Remove outer quotes if present
+                  if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+                    cleaned = cleaned.slice(1, -1);
                   }
-                })(),
-                specializes_learning_disabilities:
-                  app.specializes_learning_disabilities || false,
-                cv_file_name: app.cv_file_name,
-                cv_url: app.cv_url,
-                cv_file_size: app.cv_file_size,
-                additional_notes: app.additional_notes,
-                application_status: app.application_status || "pending",
-                admin_notes: app.admin_notes,
-                rejection_reason: app.rejection_reason,
-                submitted_at: app.submitted_at,
-                reviewed_at: app.reviewed_at,
-                reviewed_by: app.reviewed_by,
-                approved_by: app.approved_by,
-                created_at: app.created_at,
-                updated_at: app.updated_at,
-                // New fields
-                postcode: app.postcode || "N/A",
-                past_experience: app.past_experience,
-                weekly_availability: app.weekly_availability,
-                employment_status: app.employment_status,
-                education_level: app.education_level,
-                average_weekly_hours: app.average_weekly_hours,
-                expected_hourly_rate: app.expected_hourly_rate,
-                based_in_country: app.based_in_country || "Not specified",
-              } as TutorApplication;
-            } catch (transformError) {
-              console.error(
-                "Error transforming application data:",
-                transformError
-              );
-              return null;
-            }
-          })
-          .filter((app): app is TutorApplication => app !== null) || [];
+
+                  // Replace escaped quotes
+                  cleaned = cleaned.replace(/\\"/g, '"');
+
+                  // Fix the malformed JSON (remove extra quotes and fix brackets)
+                  cleaned = cleaned.replace(/^"|"$/g, "");
+                  cleaned = cleaned.replace(/\]}$/, "}");
+
+                  const parsed = JSON.parse(cleaned);
+                  return parsed;
+                }
+                return [];
+              } catch (parseError) {
+                console.error("❌ Error parsing subjects:", parseError);
+                console.error("Raw subjects data:", app.subjects);
+                return [];
+              }
+            })(),
+            specializes_learning_disabilities:
+              app.specializes_learning_disabilities || false,
+            cv_file_name: app.cv_file_name,
+            cv_url: app.cv_url,
+            cv_file_size: app.cv_file_size,
+            additional_notes: app.additional_notes,
+            application_status: app.application_status || "pending",
+            admin_notes: app.admin_notes,
+            rejection_reason: app.rejection_reason,
+            submitted_at: app.submitted_at,
+            reviewed_at: app.reviewed_at,
+            reviewed_by: app.reviewed_by,
+            approved_by: app.approved_by,
+            created_at: app.created_at,
+            updated_at: app.updated_at,
+            // New fields
+            postcode: app.postcode || "N/A",
+            past_experience: app.past_experience,
+            weekly_availability: app.weekly_availability,
+            employment_status: app.employment_status,
+            education_level: app.education_level,
+            average_weekly_hours: app.average_weekly_hours,
+            expected_hourly_rate: app.expected_hourly_rate,
+            based_in_country: app.based_in_country || "Not specified",
+          } as TutorApplication;
+        } catch (transformError) {
+          console.error(
+            "Error transforming application data:",
+            transformError
+          );
+          return null;
+        }
+      }).filter((app): app is TutorApplication => app !== null);
+
+      console.log(`Successfully fetched ${transformedApplications.length} applications`);
       return transformedApplications;
     } catch (error) {
       console.error("❌ Error in getAllApplications:", error);
@@ -154,46 +132,10 @@ export class AdminTutorApplicationService {
   // Get application statistics
   static async getApplicationStats(): Promise<ApplicationStats> {
     try {
-      const { data: applications, error } = await supabase
-        .from("tutor_applications")
-        .select("application_status, created_at");
-
-      if (error) {
-        console.error("Error fetching application stats:", error);
-        return {
-          total: 0,
-          pending: 0,
-          approved: 0,
-          rejected: 0,
-          recentApplications: 0,
-        };
-      }
-
-      const total = applications?.length || 0;
-      const pending =
-        applications?.filter((app: any) => app.application_status === "pending")
-          .length || 0;
-      const approved =
-        applications?.filter((app: any) => app.application_status === "approved")
-          .length || 0;
-      const rejected =
-        applications?.filter((app: any) => app.application_status === "rejected")
-          .length || 0;
-
-      // Recent applications (last 7 days)
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      const recentApplications =
-        applications?.filter((app: any) => new Date(app.created_at) >= oneWeekAgo)
-          .length || 0;
-
-      return {
-        total,
-        pending,
-        approved,
-        rejected,
-        recentApplications,
-      };
+      console.log("Fetching application statistics...");
+      const stats = await apiClient.get<ApplicationStats>('/api/admin/tutor-applications/stats');
+      console.log("Application stats retrieved successfully:", stats);
+      return stats;
     } catch (error) {
       console.error("Error fetching application stats:", error);
       return {
@@ -212,23 +154,22 @@ export class AdminTutorApplicationService {
     adminNotes?: string
   ): Promise<boolean> {
     try {
-      const updateData = {
-        application_status: "approved",
-        admin_notes: adminNotes,
-        updated_at: new Date().toISOString(),
-      };
+      console.log("Approving application:", applicationId);
 
-      const { error } = await supabase
-        .from("tutor_applications")
-        .update(updateData)
-        .eq("id", applicationId);
-
-      if (error) {
-        console.error("Error approving application:", error);
+      // First get the application to find the user_id
+      const application = await this.getApplicationById(applicationId);
+      if (!application) {
+        console.error("Application not found:", applicationId);
         return false;
       }
 
-      return true;
+      const updateData = {
+        status: "approved",
+        admin_notes: adminNotes,
+      };
+
+      await apiClient.put(`/api/admin/tutor-applications/${application.user_id}`, updateData);
+      console.log("Application approved successfully");
       return true;
     } catch (error) {
       console.error("❌ Error approving application:", error);
@@ -243,24 +184,23 @@ export class AdminTutorApplicationService {
     adminNotes?: string
   ): Promise<boolean> {
     try {
-      const updateData = {
-        application_status: "rejected",
-        rejection_reason: rejectionReason,
-        admin_notes: adminNotes,
-        updated_at: new Date().toISOString(),
-      };
+      console.log("Rejecting application:", applicationId);
 
-      const { error } = await supabase
-        .from("tutor_applications")
-        .update(updateData)
-        .eq("id", applicationId);
-
-      if (error) {
-        console.error("Error rejecting application:", error);
+      // First get the application to find the user_id
+      const application = await this.getApplicationById(applicationId);
+      if (!application) {
+        console.error("Application not found:", applicationId);
         return false;
       }
 
-      return true;
+      const updateData = {
+        status: "rejected",
+        rejection_reason: rejectionReason,
+        admin_notes: adminNotes,
+      };
+
+      await apiClient.put(`/api/admin/tutor-applications/${application.user_id}`, updateData);
+      console.log("Application rejected successfully");
       return true;
     } catch (error) {
       console.error("❌ Error rejecting application:", error);
@@ -275,57 +215,14 @@ export class AdminTutorApplicationService {
     try {
       console.log("Fetching application by ID:", applicationId);
 
-      const { data, error } = await supabase
-        .from("tutor_applications")
-        .select("*")
-        .eq("id", applicationId)
-        .single();
+      // Get all applications and find the one with matching ID
+      const applications = await this.getAllApplications();
+      const application = applications.find(app => app.id === applicationId);
 
-      if (error) {
-        console.error("Error fetching application:", error);
-        return null;
-      }
-
-      if (!data) {
+      if (!application) {
         console.log("Application not found");
         return null;
       }
-
-      // Transform the data
-      const application: TutorApplication = {
-        id: (data as any).id,
-        user_id: (data as any).user_id,
-        applicant_email: (data as any).applicant_email,
-        full_name: (data as any).full_name,
-        phone_number: (data as any).phone_number,
-        subjects: Array.isArray((data as any).subjects)
-          ? (data as any).subjects
-          : JSON.parse((data as any).subjects || "[]"),
-        specializes_learning_disabilities:
-          (data as any).specializes_learning_disabilities || false,
-        cv_file_name: (data as any).cv_file_name,
-        cv_url: (data as any).cv_url,
-        cv_file_size: (data as any).cv_file_size,
-        additional_notes: (data as any).additional_notes,
-        application_status: (data as any).application_status || "pending",
-        admin_notes: (data as any).admin_notes,
-        rejection_reason: (data as any).rejection_reason,
-        submitted_at: (data as any).submitted_at,
-        reviewed_at: (data as any).reviewed_at,
-        reviewed_by: (data as any).reviewed_by,
-        approved_by: (data as any).approved_by,
-        created_at: (data as any).created_at,
-        updated_at: (data as any).updated_at,
-        // New fields
-        postcode: (data as any).postcode || 'N/A',
-        past_experience: (data as any).past_experience,
-        weekly_availability: (data as any).weekly_availability,
-        employment_status: (data as any).employment_status,
-        education_level: (data as any).education_level,
-        average_weekly_hours: (data as any).average_weekly_hours,
-        expected_hourly_rate: (data as any).expected_hourly_rate,
-        based_in_country: (data as any).based_in_country || 'Not specified',
-      };
 
       return application;
     } catch (error) {
@@ -342,19 +239,20 @@ export class AdminTutorApplicationService {
     try {
       console.log("Updating application notes:", applicationId);
 
-      const { error } = await supabase
-        .from("tutor_applications")
-        .update({
-          admin_notes: adminNotes,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", applicationId);
-
-      if (error) {
-        console.error("Error updating application notes:", error);
+      // First get the application to find the user_id and current status
+      const application = await this.getApplicationById(applicationId);
+      if (!application) {
+        console.error("Application not found:", applicationId);
         return false;
       }
 
+      // Update notes by calling the status update route with the current status
+      const updateData = {
+        status: application.application_status,
+        admin_notes: adminNotes,
+      };
+
+      await apiClient.put(`/api/admin/tutor-applications/${application.user_id}`, updateData);
       console.log("Application notes updated successfully");
       return true;
     } catch (error) {

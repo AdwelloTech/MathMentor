@@ -6,10 +6,7 @@ import {
   ReactNode,
 } from "react";
 import toast from "react-hot-toast";
-import {
-  AdminAuthService,
-  AdminLoginResponse,
-} from "@/lib/adminAuth";
+import apiClient from "@/lib/apiClient";
 
 interface AdminSession {
   user: {
@@ -19,6 +16,8 @@ interface AdminSession {
     profile: any;
   };
   profile: any;
+  refreshToken?: string;
+  created_at: string;
 }
 
 interface AdminContextType {
@@ -40,102 +39,28 @@ export function AdminProvider({ children }: AdminProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadAdminSession = async () => {
+    // Load admin session from localStorage
+    const loadAdminSession = () => {
       try {
-        // First, check if there's a valid session token
-        const hasValidToken = AdminAuthService.isLoggedIn();
-        
-        if (hasValidToken) {
-          // Validate the session token with the backend
-          const sessionValidation = await AdminAuthService.validateSession();
-          if (sessionValidation.valid) {
-            // Create admin session object
-            const adminProfile = {
-              id: sessionValidation.admin_id,
-              user_id: sessionValidation.admin_id,
-              email: sessionValidation.admin_email,
-              first_name: "Admin",
-              last_name: "User",
-              full_name: "Admin User",
-              role: "admin",
-              avatar_url: null,
-              phone: null,
-              address: null,
-              date_of_birth: null,
-              gender: null,
-              emergency_contact: null,
-              student_id: null,
-              package: null,
-              class_id: null,
-              employee_id: null,
-              department: null,
-              subjects: null,
-              qualification: null,
-              experience_years: null,
-              age: null,
-              grade_level: null,
-              grade_level_id: null,
-              has_learning_disabilities: false,
-              learning_needs_description: null,
-              profile_image_id: null,
-              profile_image_url: null,
-              cv_url: null,
-              cv_file_name: null,
-              specializations: null,
-              hourly_rate: null,
-              availability: null,
-              bio: null,
-              certifications: null,
-              languages: null,
-              profile_completed: true,
-              children_ids: null,
-              relationship: null,
-              hire_date: null,
-              salary: null,
-              position: null,
-              is_active: true,
-              last_login: new Date().toISOString(),
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            };
-
-            const session = {
-              user: {
-                id: sessionValidation.admin_id || "admin-001",
-                email: sessionValidation.admin_email || "admin@mathmentor.com",
-                role: "admin",
-                profile: adminProfile,
-              },
-              profile: adminProfile,
-            };
-
-            setAdminSession(session);
-            // Store the session in localStorage for persistence
-            localStorage.setItem("adminSession", JSON.stringify(session));
-            setLoading(false);
-            return;
-          } else {
-            // If token was invalid, clear it
-            await AdminAuthService.logout();
-          }
-        }
-
-        // If no valid token, check for stored session data as fallback
         const storedSession = localStorage.getItem("adminSession");
         if (storedSession) {
-          try {
-            const parsedSession = JSON.parse(storedSession);
+          const parsedSession = JSON.parse(storedSession);
+          // Check if session is still valid (not expired)
+          const sessionTime = new Date(parsedSession.created_at).getTime();
+          const currentTime = new Date().getTime();
+          const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
+
+          if (currentTime - sessionTime < sessionDuration) {
             setAdminSession(parsedSession);
-          } catch (error) {
-            console.error("Error parsing stored session:", error);
+          } else {
+            // Session expired, clear it
             localStorage.removeItem("adminSession");
           }
         }
-        
-        setLoading(false);
       } catch (error) {
         console.error("Error loading admin session:", error);
         localStorage.removeItem("adminSession");
+      } finally {
         setLoading(false);
       }
     };
@@ -150,86 +75,80 @@ export function AdminProvider({ children }: AdminProviderProps) {
     try {
       setLoading(true);
 
-      // Use database authentication
-      const loginResult: AdminLoginResponse = await AdminAuthService.loginAdmin(
-        email,
-        password
-      );
+      // Clear any existing tokens before admin login
+      apiClient.clearTokens();
 
-      if (loginResult.success) {
-        // Create admin profile object
-        const adminProfile = {
-          id: loginResult.admin_id || "admin-001",
-          user_id: loginResult.admin_id || "admin-001",
-          email: email,
-          first_name: "Admin",
-          last_name: "User",
-          full_name: "Admin User",
-          role: "admin",
-          avatar_url: null,
-          phone: null,
-          address: null,
-          date_of_birth: null,
-          gender: null,
-          emergency_contact: null,
-          student_id: null,
-          package: null,
-          class_id: null,
-          employee_id: null,
-          department: null,
-          subjects: null,
-          qualification: null,
-          experience_years: null,
-          age: null,
-          grade_level: null,
-          grade_level_id: null,
-          has_learning_disabilities: false,
-          learning_needs_description: null,
-          profile_image_id: null,
-          profile_image_url: null,
-          cv_url: null,
-          cv_file_name: null,
-          specializations: null,
-          hourly_rate: null,
-          availability: null,
-          bio: null,
-          certifications: null,
-          languages: null,
-          profile_completed: true,
-          children_ids: null,
-          relationship: null,
-          hire_date: null,
-          salary: null,
-          position: null,
-          is_active: true,
-          last_login: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+      // Call real admin login API (skip auth since we're authenticating)
+      const loginResponse = await apiClient.post<{
+        accessToken: string;
+        refreshToken: string;
+        user: {
+          id: string;
+          firstName: string;
+          lastName: string;
+          fullName: string;
+          email: string;
+          role: string;
+          avatarUrl?: string;
         };
+      }>("/api/auth/admin/login", { email, password }, { skipAuth: true });
 
-        const session = {
-          user: {
-            id: loginResult.admin_id || "admin-001",
-            email: email,
-            role: "admin",
-            profile: adminProfile,
-          },
-          profile: adminProfile,
-        };
+      // Set tokens in API client
+      apiClient.setTokens(loginResponse.accessToken, loginResponse.refreshToken);
 
-        setAdminSession(session);
-        // Store the session in localStorage for persistence
-        localStorage.setItem("adminSession", JSON.stringify(session));
+      // Get admin profile using the /me endpoint
+      const profileResponse = await apiClient.get<{
+        id: string;
+        user_id: string;
+        first_name: string;
+        last_name: string;
+        full_name: string;
+        email: string;
+        role: string;
+        avatar_url?: string;
+        phone?: string;
+        address?: string;
+        date_of_birth?: string;
+        gender?: string;
+        emergency_contact?: string;
+        employee_id?: string;
+        department?: string;
+        qualification?: string;
+        experience_years?: number;
+        specializations?: string[];
+        bio?: string;
+        certifications?: string[];
+        languages?: string[];
+        hire_date?: string;
+        position?: string;
+        is_active: boolean;
+        last_login?: string;
+        created_at: string;
+        updated_at: string;
+        profile_completed: boolean;
+      }>("/api/auth/me");
 
-        toast.success("Welcome, Admin!");
-        return true;
-      } else {
-        toast.error(loginResult.message || "Invalid admin credentials");
-        return false;
-      }
-    } catch (error) {
+      const session = {
+        user: {
+          id: loginResponse.user.id,
+          email: loginResponse.user.email,
+          role: loginResponse.user.role,
+          profile: profileResponse,
+        },
+        profile: profileResponse,
+        refreshToken: loginResponse.refreshToken,
+        created_at: new Date().toISOString(),
+      };
+
+      setAdminSession(session);
+      // Store the session in localStorage for persistence
+      localStorage.setItem("adminSession", JSON.stringify(session));
+
+      toast.success("Welcome, Admin!");
+      return true;
+    } catch (error: any) {
       console.error("Admin login error:", error);
-      toast.error("Login failed");
+      toast.error(error.message || "Login failed");
       return false;
     } finally {
       setLoading(false);
@@ -238,15 +157,26 @@ export function AdminProvider({ children }: AdminProviderProps) {
 
   const logoutAdmin = async () => {
     try {
-      await AdminAuthService.logout();
+      // Call admin logout API if we have a refresh token
+      if (adminSession?.refreshToken) {
+        try {
+          await apiClient.post("/api/auth/admin/logout", { refreshToken: adminSession.refreshToken });
+        } catch (apiError) {
+          // Ignore API logout errors, proceed with local logout
+          console.warn("Admin logout API call failed:", apiError);
+        }
+      }
+
+      // Clear session and tokens
       setAdminSession(null);
-      // Clear the stored session from localStorage
+      apiClient.clearTokens();
       localStorage.removeItem("adminSession");
       toast.success("Admin logged out successfully");
     } catch (error) {
       console.error("Logout error:", error);
+      // Always clear local session even if logout fails
       setAdminSession(null);
-      // Clear the stored session from localStorage even if logout fails
+      apiClient.clearTokens();
       localStorage.removeItem("adminSession");
       toast.success("Admin logged out successfully");
     }

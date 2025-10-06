@@ -140,11 +140,11 @@ const ManageSubjectsPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Subjects</h1>
+        <h1 className="text-2xl font-bold text-foreground">Subjects</h1>
         {!creating ? (
           <button
             onClick={startCreate}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md"
+            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >
             <PlusIcon className="h-5 w-5 mr-2" /> New Subject
           </button>
@@ -154,29 +154,29 @@ const ManageSubjectsPage: React.FC = () => {
               placeholder="Display Name"
               value={newDisplayName}
               onChange={(e) => setNewDisplayName(e.target.value)}
-              className="border rounded-md p-2"
+              className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <input
               placeholder="Key (optional)"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="border rounded-md p-2"
+              className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <input
               placeholder="#Color (optional)"
               value={newColor}
               onChange={(e) => setNewColor(e.target.value)}
-              className="border rounded-md p-2 w-40"
+              className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 w-40 focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <button
               onClick={submitCreate}
-              className="px-3 py-2 bg-green-600 text-white rounded-md"
+              className="px-3 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
             >
               <CheckIcon className="h-5 w-5" />
             </button>
             <button
               onClick={cancelCreate}
-              className="px-3 py-2 bg-gray-200 rounded-md"
+              className="px-3 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
@@ -184,24 +184,24 @@ const ManageSubjectsPage: React.FC = () => {
         )}
       </div>
 
-      <div className="bg-white border rounded-lg p-4">
+      <div className="bg-card border border-border rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
           <input
             placeholder="Search by name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="border rounded-md p-2 w-64"
+            className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 w-64 focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
         <div className="divide-y">
           {loadError ? (
             <div className="p-6 text-center">
-              <div className="text-red-600 mb-4">Failed to load subjects</div>
+              <div className="text-red-400 mb-4">Failed to load subjects</div>
               <button
                 onClick={loadSubjects}
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -214,9 +214,9 @@ const ManageSubjectsPage: React.FC = () => {
               </button>
             </div>
           ) : loading ? (
-            <div className="p-6 text-center text-gray-600">Loading…</div>
+            <div className="p-6 text-center text-muted-foreground">Loading…</div>
           ) : filtered.length === 0 ? (
-            <div className="p-6 text-center text-gray-600">No subjects</div>
+            <div className="p-6 text-center text-muted-foreground">No subjects</div>
           ) : (
             filtered.map((s) => (
               <div
@@ -228,19 +228,19 @@ const ManageSubjectsPage: React.FC = () => {
                     <input
                       value={editDisplayName}
                       onChange={(e) => setEditDisplayName(e.target.value)}
-                      className="border rounded-md p-2"
+                      className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="border rounded-md p-2"
+                      className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                     <input
                       value={editColor}
                       onChange={(e) => setEditColor(e.target.value)}
-                      className="border rounded-md p-2"
+                      className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                       <input
                         type="checkbox"
                         checked={editActive}
@@ -253,18 +253,18 @@ const ManageSubjectsPage: React.FC = () => {
                 ) : (
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3 pr-4">
                     <div>
-                      <div className="font-medium">{s.display_name}</div>
-                      <div className="text-xs text-gray-500">{s.name}</div>
+                      <div className="font-medium text-foreground">{s.display_name}</div>
+                      <div className="text-xs text-muted-foreground">{s.name}</div>
                     </div>
-                    <div className="text-sm">{s.color || "-"}</div>
+                    <div className="text-sm text-foreground">{s.color || "-"}</div>
                     <div className="text-sm">
                       {s.is_active ? (
-                        <span className="text-green-700">Active</span>
+                        <span className="text-emerald-400">Active</span>
                       ) : (
-                        <span className="text-gray-500">Inactive</span>
+                        <span className="text-muted-foreground">Inactive</span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {new Date(s.updated_at || s.created_at).toLocaleString()}
                     </div>
                   </div>
@@ -274,14 +274,14 @@ const ManageSubjectsPage: React.FC = () => {
                     <>
                       <button
                         onClick={submitEdit}
-                        className="px-2 py-2 bg-green-600 text-white rounded-md"
+                        className="px-2 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
                         title="Save"
                       >
                         <CheckIcon className="h-5 w-5" />
                       </button>
                       <button
                         onClick={cancelEdit}
-                        className="px-2 py-2 bg-gray-200 rounded-md"
+                        className="px-2 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80"
                         title="Cancel"
                       >
                         <XMarkIcon className="h-5 w-5" />
@@ -291,14 +291,14 @@ const ManageSubjectsPage: React.FC = () => {
                     <>
                       <button
                         onClick={() => startEdit(s)}
-                        className="px-2 py-2 bg-blue-50 text-blue-700 rounded-md"
+                        className="px-2 py-2 bg-primary/10 text-primary rounded-md hover:bg-primary/20"
                         title="Edit"
                       >
                         <PencilIcon className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => remove(s.id)}
-                        className="px-2 py-2 bg-red-50 text-red-700 rounded-md"
+                        className="px-2 py-2 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20"
                         title="Delete"
                       >
                         <TrashIcon className="h-5 w-5" />

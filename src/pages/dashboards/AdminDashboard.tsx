@@ -1,232 +1,449 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   UsersIcon,
   AcademicCapIcon,
   UserGroupIcon,
-  MagnifyingGlassIcon,
-  EyeIcon,
-  CreditCardIcon,
+  DocumentTextIcon,
+  IdentificationIcon,
   ClockIcon,
   CheckCircleIcon,
-  XCircleIcon,
+  ArrowRightIcon,
+  CloudArrowUpIcon,
+  BookOpenIcon,
+  Cog6ToothIcon,
+  ChartBarIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  BellAlertIcon,
 } from "@heroicons/react/24/outline";
 import { useAdmin } from "@/contexts/AdminContext";
-import {
-  AdminStudentService,
-  Student,
-  PackageInfo,
-} from "@/lib/adminStudentService";
-import toast from "react-hot-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+
+// Mock data for UI (Phase 1 - No Backend)
+const mockStats = {
+  pendingApplications: 5,
+  pendingIDVerifications: 3,
+  totalStudents: 142,
+  activeTutors: 28,
+  totalQuizzes: 87,
+  totalPDFs: 45,
+  totalFlashcards: 156,
+  recentSignups: 12,
+};
+
+const mockRecentActivity = {
+  applications: [
+    { id: 1, name: "John Doe", subject: "Mathematics", status: "pending", date: "2 hours ago" },
+    { id: 2, name: "Jane Smith", subject: "Physics", status: "pending", date: "5 hours ago" },
+    { id: 3, name: "Mike Johnson", subject: "Chemistry", status: "approved", date: "1 day ago" },
+  ],
+  verifications: [
+    { id: 1, name: "Sarah Wilson", type: "Driver's License", status: "pending", date: "1 hour ago" },
+    { id: 2, name: "Tom Brown", type: "Passport", status: "pending", date: "3 hours ago" },
+    { id: 3, name: "Emily Davis", type: "ID Card", status: "approved", date: "6 hours ago" },
+  ],
+  students: [
+    { id: 1, name: "Alex Thompson", grade: "Grade 10", package: "Gold", date: "30 mins ago" },
+    { id: 2, name: "Lisa Chen", grade: "Grade 9", package: "Silver", date: "2 hours ago" },
+    { id: 3, name: "David Lee", grade: "Grade 11", package: "Free", date: "4 hours ago" },
+  ],
+};
 
 const AdminDashboard: React.FC = () => {
-  const { adminSession } = useAdmin();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [packages, setPackages] = useState<PackageInfo[]>([]);
+  const { adminSession, logoutAdmin } = useAdmin();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterPackage, setFilterPackage] = useState("all");
-  const [showStudentModal, setShowStudentModal] = useState(false);
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    byPackage: {} as Record<string, number>,
-    recentRegistrations: 0,
-  });
-
+  // Simulate loading
   useEffect(() => {
-    loadData();
+    const timer = setTimeout(() => setLoading(false), 1000);
+    return () => clearTimeout(timer);
   }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-
-      // Load students, packages, and stats in parallel
-      const [studentsData, packagesData, statsData] = await Promise.all([
-        AdminStudentService.getAllStudents(),
-        AdminStudentService.getPackageInfo(),
-        AdminStudentService.getStudentStats(),
-      ]);
-
-      setStudents(studentsData);
-      setFilteredStudents(studentsData);
-      setPackages(packagesData);
-      setStats(statsData);
-    } catch (error) {
-      console.error("Error loading data:", error);
-      toast.error("Failed to load student data");
-    } finally {
-      setLoading(false);
-    }
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
-  useEffect(() => {
-    // Filter students based on search and package filter
-    let filtered = students;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (student) =>
-          student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.student_id.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (filterPackage !== "all") {
-      filtered = filtered.filter(
-        (student) => student.package === filterPackage
-      );
-    }
-
-    setFilteredStudents(filtered);
-  }, [students, searchTerm, filterPackage]);
-
-  const handleViewStudent = (student: Student) => {
-    setSelectedStudent(student);
-    setShowStudentModal(true);
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
   };
 
-  const getPackageInfo = (packageType: string) => {
-    return packages.find((p) => p.package_type === packageType);
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount / 100);
-  };
-
-  const dashboardStats = [
+  // Stats configuration
+  const statsCards = [
+    {
+      name: "Pending Applications",
+      value: mockStats.pendingApplications,
+      icon: ClockIcon,
+      color: "bg-orange-600",
+      description: "Tutor applications to review",
+      change: "+2 today",
+      changeType: "warning",
+      link: "/admin/tutor-applications",
+    },
+    {
+      name: "ID Verifications",
+      value: mockStats.pendingIDVerifications,
+      icon: IdentificationIcon,
+      color: "bg-blue-600",
+      description: "Pending verifications",
+      change: "+1 today",
+      changeType: "info",
+      link: "/admin/id-verifications",
+    },
     {
       name: "Total Students",
-      value: stats.total.toString(),
-      change: "+12%",
-      changeType: "positive",
+      value: mockStats.totalStudents,
       icon: UsersIcon,
+      color: "bg-green-600",
+      description: "Active students",
+      change: `+${mockStats.recentSignups} this week`,
+      changeType: "positive",
+      link: "/admin/students",
     },
     {
-      name: "Active Students",
-      value: stats.active.toString(),
-      change: "+5%",
-      changeType: "positive",
-      icon: CheckCircleIcon,
-    },
-    {
-      name: "Premium Subscriptions",
-      value: (
-        (stats.byPackage.gold || 0) + (stats.byPackage.silver || 0)
-      ).toString(),
-      change: "+15%",
-      changeType: "positive",
-      icon: CreditCardIcon,
-    },
-    {
-      name: "Recent Registrations",
-      value: stats.recentRegistrations.toString(),
-      change: "+8%",
-      changeType: "positive",
+      name: "Active Tutors",
+      value: mockStats.activeTutors,
       icon: AcademicCapIcon,
+      color: "bg-purple-600",
+      description: "Approved tutors",
+      change: "+3 this month",
+      changeType: "positive",
+      link: "/admin/tutors",
+    },
+    {
+      name: "Total Quizzes",
+      value: mockStats.totalQuizzes,
+      icon: DocumentTextIcon,
+      color: "bg-yellow-600",
+      description: "Available quizzes",
+      change: "+5 this week",
+      changeType: "positive",
+      link: "/admin/quizzes",
+    },
+    {
+      name: "Quiz PDFs",
+      value: mockStats.totalPDFs,
+      icon: CloudArrowUpIcon,
+      color: "bg-indigo-600",
+      description: "Uploaded materials",
+      change: "+2 this week",
+      changeType: "positive",
+      link: "/admin/quiz-pdfs",
+    },
+    {
+      name: "Flashcard Sets",
+      value: mockStats.totalFlashcards,
+      icon: BookOpenIcon,
+      color: "bg-pink-600",
+      description: "Total flashcard sets",
+      change: "+8 this week",
+      changeType: "positive",
+      link: "/admin/flashcards",
+    },
+    {
+      name: "Recent Sign-ups",
+      value: mockStats.recentSignups,
+      icon: UserGroupIcon,
+      color: "bg-teal-600",
+      description: "Last 7 days",
+      change: "+4 from last week",
+      changeType: "positive",
+      link: "/admin/students",
+    },
+  ];
+
+  // Management sections
+  const managementSections = [
+    {
+      title: "Tutor Management",
+      description: "Manage tutor applications and verifications",
+      icon: AcademicCapIcon,
+      color: "from-green-600 to-green-700",
+      actions: [
+        { label: "Review Applications", count: mockStats.pendingApplications, link: "/admin/tutor-applications" },
+        { label: "ID Verifications", count: mockStats.pendingIDVerifications, link: "/admin/id-verifications" },
+        { label: "Manage Tutors", count: mockStats.activeTutors, link: "/admin/tutors" },
+      ],
+    },
+    {
+      title: "Student Management",
+      description: "View and manage student accounts",
+      icon: UsersIcon,
+      color: "from-blue-600 to-blue-700",
+      actions: [
+        { label: "All Students", count: mockStats.totalStudents, link: "/admin/students" },
+        { label: "Recent Sign-ups", count: mockStats.recentSignups, link: "/admin/students?filter=recent" },
+        { label: "Package Management", count: null, link: "/packages" },
+      ],
+    },
+    {
+      title: "Content Management",
+      description: "Manage educational content",
+      icon: DocumentTextIcon,
+      color: "from-purple-600 to-purple-700",
+      actions: [
+        { label: "Upload Quiz PDFs", count: mockStats.totalPDFs, link: "/admin/quiz-pdfs" },
+        { label: "Manage Quizzes", count: mockStats.totalQuizzes, link: "/admin/quizzes" },
+        { label: "Flashcard Sets", count: mockStats.totalFlashcards, link: "/admin/flashcards" },
+      ],
+    },
+    {
+      title: "System Settings",
+      description: "Configure system parameters",
+      icon: Cog6ToothIcon,
+      color: "from-gray-600 to-gray-700",
+      actions: [
+        { label: "Manage Subjects", count: null, link: "/admin/subjects" },
+        { label: "Grade Levels", count: null, link: "/admin/grade-levels" },
+        { label: "System Config", count: null, link: "/admin/settings" },
+      ],
+    },
+  ];
+
+  // Quick actions
+  const quickActions = [
+    {
+      title: "Review Applications",
+      description: "Check tutor applications",
+      icon: CheckCircleIcon,
+      link: "/admin/tutor-applications",
+      badge: mockStats.pendingApplications,
+    },
+    {
+      title: "Verify IDs",
+      description: "Process ID verifications",
+      icon: IdentificationIcon,
+      link: "/admin/id-verifications",
+      badge: mockStats.pendingIDVerifications,
+    },
+    {
+      title: "Upload Quiz PDF",
+      description: "Add new quiz materials",
+      icon: CloudArrowUpIcon,
+      link: "/admin/quiz-pdfs",
+      badge: null,
+    },
+    {
+      title: "Manage Students",
+      description: "View student accounts",
+      icon: UsersIcon,
+      link: "/admin/students",
+      badge: null,
+    },
+    {
+      title: "Create Flashcards",
+      description: "Add flashcard sets",
+      icon: BookOpenIcon,
+      link: "/admin/flashcards",
+      badge: null,
+    },
+    {
+      title: "Manage Tutors",
+      description: "View active tutors",
+      icon: AcademicCapIcon,
+      link: "/admin/tutors",
+      badge: null,
+    },
+    {
+      title: "View Reports",
+      description: "Analytics and insights",
+      icon: ChartBarIcon,
+      link: "/admin/reports",
+      badge: null,
+    },
+    {
+      title: "System Settings",
+      description: "Configure platform",
+      icon: Cog6ToothIcon,
+      link: "/admin/settings",
+      badge: null,
     },
   ];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-green-100 p-6 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]" />
+        <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+          <div className="bg-white rounded-2xl p-8 shadow-xl shadow-gray-200/50">
+            <Skeleton className="h-8 w-64 mb-4" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Card key={i} className="shadow-lg shadow-gray-200/50 border-0">
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-4 w-24" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-3 w-32" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
+  // State and hooks are already declared at the top of the component
+
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
 
-      {/* Floating decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+      {/* Floating decorative elements - using the color palette from ADMIN_DASHBOARD_PLAN.md */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-600/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
       <div
-        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
+        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-600/10 rounded-full blur-2xl animate-pulse"
         style={{ animationDelay: "1s" }}
       ></div>
       <div
-        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
+        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-blue-600/5 to-purple-600/5 rounded-full blur-3xl animate-pulse"
         style={{ animationDelay: "2s" }}
       ></div>
 
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
         className="px-6 pb-16 relative z-10"
       >
         <div className="space-y-8">
           {/* Header */}
-          <div className="pt-6">
+          <motion.div variants={itemVariants} className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  Welcome back, {adminSession?.profile?.full_name || "Admin"}
-                </h1>
-                <p className="mt-2 text-lg text-gray-600">
-                  Manage students, subscriptions, and system overview.
-                </p>
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="p-3 bg-[#16803D] rounded-xl shadow-sm">
+                    <ShieldCheckIcon className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-4xl font-bold text-[#FBBF24]">Admin Dashboard</h1>
+                    <p className="mt-1 text-lg text-slate-300">
+                      Welcome back, {adminSession?.profile?.full_name || "Admin"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-[#16803D] text-[#34A853] hover:bg-green-50/10"
+                  onClick={() => navigate("/admin/reports")}
+                >
+                  <ChartBarIcon className="w-5 h-5 mr-2" />
+                  View Reports
+                </Button>
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="relative"
+                    onClick={() => navigate("/admin/notifications")}
+                  >
+                    <BellAlertIcon className="w-6 h-6 text-slate-300" />
+                    {(mockStats.pendingApplications + mockStats.pendingIDVerifications) > 0 && (
+                      <span className="absolute top-1 right-1 w-3 h-3 bg-[#EA580C] rounded-full"></span>
+                    )}
+                  </Button>
+                </div>
+                <ThemeToggle className="text-slate-300 hover:bg-slate-700/50" />
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                  onClick={async () => {
+                    await logoutAdmin();
+                    navigate("/admin-login");
+                  }}
+                >
+                  <ArrowRightOnRectangleIcon className="w-5 h-5 mr-2" />
+                  Logout
+                </Button>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Stats */}
+          {/* Urgent Actions Alert */}
+          {(mockStats.pendingApplications > 0 || mockStats.pendingIDVerifications > 0) && (
+            <motion.div variants={itemVariants}>
+              <Card className="bg-gradient-to-r from-[#EA580C]/20 to-[#FBBF24]/20 border-[#EA580C]/30 backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <BellAlertIcon className="h-6 w-6 text-[#FBBF24]" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-[#FCD34D]">
+                        Action Required: {mockStats.pendingApplications} tutor applications and{" "}
+                        {mockStats.pendingIDVerifications} ID verifications awaiting review
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-[#EA580C] hover:bg-[#EA580C]/80 text-white"
+                      onClick={() => navigate("/admin/tutor-applications")}
+                    >
+                      Review Now
+                    </Button>
+          </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Stats Grid */}
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 justify-center"
+            variants={itemVariants}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            {dashboardStats.map((stat, index) => (
+            {statsCards.map((stat, index) => (
               <motion.div
                 key={stat.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                variants={itemVariants}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ scale: 1.02 }}
+                className="cursor-pointer"
+                onClick={() => navigate(stat.link)}
               >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
+                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-full">
                   <CardHeader className="pb-2">
                     <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                      <div
+                        className={`${stat.color} w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}
+                      >
                         <stat.icon className="w-6 h-6 text-white" />
                       </div>
-                      <div>
-                        <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-sm font-medium text-slate-400 mb-1">
                           {stat.name}
                         </CardTitle>
+                        <div className="text-3xl font-bold text-white">{stat.value}</div>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="pl-0">
-                      <div className="flex items-start space-x-2">
-                        <div className="text-3xl font-bold text-gray-900 ml-3">
-                          {stat.value}
-                        </div>
-                        <div
-                          className={`ml-2 flex items-baseline text-sm font-semibold ${
+                    <p className="text-sm text-slate-400 mb-2">{stat.description}</p>
+                    <div
+                      className={`text-sm font-semibold ${
                             stat.changeType === "positive"
                               ? "text-green-600"
-                              : "text-red-600"
+                          : stat.changeType === "warning"
+                          ? "text-orange-600"
+                          : "text-blue-600"
                           }`}
                         >
                           {stat.change}
-                        </div>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -234,448 +451,233 @@ const AdminDashboard: React.FC = () => {
             ))}
           </motion.div>
 
-          {/* Student Management Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+          {/* Management Sections Grid */}
+          <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {managementSections.map((section) => (
+              <Card
+                key={section.title}
+                className="shadow-[0_2px_2px_0_#34A853] border-0 hover:shadow-xl transition-all duration-300"
+              >
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <div className={`bg-gradient-to-r ${section.color} w-10 h-10 rounded-lg flex items-center justify-center`}>
+                      <section.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">{section.title}</CardTitle>
+                      <CardDescription>{section.description}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {section.actions.map((action) => (
+                      <button
+                        key={action.label}
+                        onClick={() => navigate(action.link)}
+                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-700/50 transition-colors duration-200 group"
+                      >
+                        <span className="text-sm font-medium text-slate-300 group-hover:text-white">
+                          {action.label}
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          {action.count !== null && (
+                            <Badge variant="secondary" className="bg-green-100 text-green-700">
+                              {action.count}
+                            </Badge>
+                          )}
+                          <ArrowRightIcon className="w-4 h-4 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all duration-200" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </motion.div>
+
+          {/* Quick Actions */}
+          <motion.div variants={itemVariants}>
+            <Card className="shadow-[0_2px_2px_0_#34A853] border-0">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                    <UserGroupIcon className="w-4 h-4 text-white" />
+                    <SparklesIcon className="w-4 h-4 text-white" />
                   </div>
-                  <span>Recent Students</span>
+                  <span className="text-white">Quick Actions</span>
                 </CardTitle>
               </CardHeader>
-
               <CardContent>
-                {/* Search and Filter */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Search students..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="input pl-10 w-full"
-                      />
-                    </div>
-                  </div>
-                  <div className="sm:w-48">
-                    <select
-                      value={filterPackage}
-                      onChange={(e) => setFilterPackage(e.target.value)}
-                      className="input"
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {quickActions.map((action) => (
+                    <motion.div
+                      key={action.title}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      <option value="all">All Packages</option>
-                      <option value="free">Free</option>
-                      <option value="silver">Silver</option>
-                      <option value="gold">Gold</option>
-                    </select>
-                  </div>
+                      <Card
+                        className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group bg-gradient-to-br from-slate-800/40 to-slate-700/40 border border-slate-600/30 backdrop-blur-sm relative"
+                        onClick={() => navigate(action.link)}
+                      >
+                        <CardContent className="p-5 text-center">
+                          {action.badge !== null && action.badge > 0 && (
+                            <Badge className="absolute top-2 right-2 bg-red-500 text-white">
+                              {action.badge}
+                            </Badge>
+                          )}
+                          <div className="bg-gradient-to-r from-green-600 to-green-700 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200 shadow-lg">
+                            <action.icon className="w-6 h-6 text-white" />
+                                </div>
+                            <h3 className="font-semibold text-white mb-1">{action.title}</h3>
+                          <p className="text-xs text-slate-400">{action.description}</p>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
                 </div>
-
-                {/* Students Table */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Student
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Package
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Last Login
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredStudents.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={5}
-                            className="px-6 py-4 text-center text-gray-500"
-                          >
-                            {students.length === 0
-                              ? "No students found"
-                              : "No students match your search criteria"}
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredStudents.slice(0, 5).map((student) => {
-                          const packageInfo = getPackageInfo(student.package);
-                          return (
-                            <tr key={student.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  {student.profile_image_url ? (
-                                    <img
-                                      src={student.profile_image_url}
-                                      alt={`${student.full_name}'s profile`}
-                                      className="h-10 w-10 rounded-full object-cover border-2 border-gray-200"
-                                      onError={(e) => {
-                                        // Fallback to initials if image fails to load
-                                        const target =
-                                          e.target as HTMLImageElement;
-                                        target.style.display = "none";
-                                        target.nextElementSibling?.classList.remove(
-                                          "hidden"
-                                        );
-                                      }}
-                                    />
-                                  ) : null}
-                                  <div
-                                    className={`h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center ${
-                                      student.profile_image_url ? "hidden" : ""
-                                    }`}
-                                  >
-                                    <span className="text-sm font-medium text-gray-600">
-                                      {student.first_name[0]}
-                                      {student.last_name[0]}
-                                    </span>
-                                  </div>
-                                  <div className="ml-4">
-                                    <div className="text-sm font-medium text-gray-900">
-                                      {student.full_name}
-                                    </div>
-                                    <div className="text-sm text-gray-500">
-                                      {student.email}
-                                    </div>
-                                    <div className="text-xs text-gray-400">
-                                      ID: {student.student_id}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <CreditCardIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                  <span
-                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                      student.package === "gold"
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : student.package === "silver"
-                                        ? "bg-gray-100 text-gray-800"
-                                        : "bg-green-100 text-green-800"
-                                    }`}
-                                  >
-                                    {packageInfo?.display_name ||
-                                      student.package}
-                                  </span>
-                                </div>
-                                {packageInfo && (
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    {formatCurrency(packageInfo.price_monthly)}
-                                    /month
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  {student.is_active ? (
-                                    <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2" />
-                                  ) : (
-                                    <XCircleIcon className="h-4 w-4 text-red-500 mr-2" />
-                                  )}
-                                  <span
-                                    className={`text-sm ${
-                                      student.is_active
-                                        ? "text-green-600"
-                                        : "text-red-600"
-                                    }`}
-                                  >
-                                    {student.is_active ? "Active" : "Inactive"}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <div className="flex items-center">
-                                  <ClockIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                  {formatDate(student.last_login)}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={() => handleViewStudent(student)}
-                                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#34A853] to-[#6DD47E] rounded-lg hover:from-[#2E8B47] hover:to-[#5BC06F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34A853] transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
-                                  >
-                                    <EyeIcon className="h-4 w-4 mr-1" />
-                                    View
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* View All Students Link */}
-                {students.length > 5 && (
-                  <div className="mt-6 text-center">
-                    <a
-                      href="/admin/students"
-                      className="text-primary-600 hover:text-primary-500 font-medium"
-                    >
-                      View All Students →
-                    </a>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Student Details Modal */}
-          {showStudentModal && selectedStudent && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-                <div className="mt-3">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      Student Details: {selectedStudent.full_name}
-                    </h3>
-                    <button
-                      onClick={() => setShowStudentModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <XCircleIcon className="h-6 w-6" />
-                    </button>
-                  </div>
-
-                  {/* Profile Image Section */}
-                  <div className="flex justify-center mb-6">
-                    {selectedStudent.profile_image_url ? (
-                      <img
-                        src={selectedStudent.profile_image_url}
-                        alt={`${selectedStudent.full_name}'s profile`}
-                        className="h-24 w-24 rounded-full object-cover border-4 border-gray-200 shadow-lg"
-                        onError={(e) => {
-                          // Fallback to initials if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                          target.nextElementSibling?.classList.remove("hidden");
-                        }}
-                      />
-                    ) : null}
+          {/* Recent Activity */}
+          <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Recent Applications */}
+            <Card className="shadow-[0_2px_2px_0_#34A853] border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="text-lg">Recent Applications</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/admin/tutor-applications")}
+                  >
+                    View All
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {mockRecentActivity.applications.map((app) => (
                     <div
-                      className={`h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-200 shadow-lg ${
-                        selectedStudent.profile_image_url ? "hidden" : ""
-                      }`}
+                      key={app.id}
+                      className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
+                      onClick={() => navigate("/admin/tutor-applications")}
                     >
-                      <span className="text-2xl font-bold text-gray-600">
-                        {selectedStudent.first_name[0]}
-                        {selectedStudent.last_name[0]}
-                      </span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">{app.name}</p>
+                        <p className="text-xs text-slate-400">{app.subject}</p>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Personal Information */}
-                    <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
-                        Personal Information
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <strong>Name:</strong> {selectedStudent.full_name}
-                        </div>
-                        <div>
-                          <strong>Email:</strong> {selectedStudent.email}
-                        </div>
-                        <div>
-                          <strong>Phone:</strong>{" "}
-                          {selectedStudent.phone || "N/A"}
-                        </div>
-                        <div>
-                          <strong>Address:</strong>{" "}
-                          {selectedStudent.address || "N/A"}
-                        </div>
-                        <div>
-                          <strong>Date of Birth:</strong>{" "}
-                          {formatDate(selectedStudent.date_of_birth)}
-                        </div>
-                        <div>
-                          <strong>Gender:</strong>{" "}
-                          {selectedStudent.gender || "N/A"}
-                        </div>
-                        <div>
-                          <strong>Age:</strong> {selectedStudent.age}
-                        </div>
-                        <div>
-                          <strong>Emergency Contact:</strong>{" "}
-                          {selectedStudent.emergency_contact || "N/A"}
-                        </div>
+                      <div className="text-right">
+                        <Badge
+                          variant={app.status === "approved" ? "default" : "secondary"}
+                          className={
+                            app.status === "approved"
+                              ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                              : "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                          }
+                        >
+                          {app.status}
+                        </Badge>
+                        <p className="text-xs text-slate-500 mt-1">{app.date}</p>
                       </div>
                     </div>
+                  ))}
+                        </div>
+              </CardContent>
+            </Card>
 
-                    {/* Academic Information */}
-                    <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
-                        Academic Information
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <strong>Student ID:</strong>{" "}
-                          {selectedStudent.student_id}
+            {/* Recent ID Verifications */}
+            <Card className="shadow-[0_2px_2px_0_#34A853] border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="text-lg">ID Verifications</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/admin/id-verifications")}
+                  >
+                    View All
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {mockRecentActivity.verifications.map((ver) => (
+                    <div
+                      key={ver.id}
+                      className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
+                      onClick={() => navigate("/admin/id-verifications")}
+                    >
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">{ver.name}</p>
+                        <p className="text-xs text-slate-400">{ver.type}</p>
                         </div>
-                        <div>
-                          <strong>Grade Level:</strong>{" "}
-                          {selectedStudent.current_grade}
-                        </div>
-                        <div>
-                          <strong>Learning Disabilities:</strong>{" "}
-                          {selectedStudent.has_learning_disabilities
-                            ? "Yes"
-                            : "No"}
-                        </div>
-                        {selectedStudent.learning_needs_description && (
-                          <div>
-                            <strong>Learning Needs:</strong>{" "}
-                            {selectedStudent.learning_needs_description}
-                          </div>
-                        )}
+                      <div className="text-right">
+                        <Badge
+                          variant={ver.status === "approved" ? "default" : "secondary"}
+                          className={
+                            ver.status === "approved"
+                              ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                              : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                          }
+                        >
+                          {ver.status}
+                        </Badge>
+                        <p className="text-xs text-slate-500 mt-1">{ver.date}</p>
                       </div>
                     </div>
-
-                    {/* Subscription Information */}
-                    <div className="md:col-span-2">
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
-                        Subscription Details
-                      </h4>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <div className="text-sm font-medium text-gray-500">
-                              Package
-                            </div>
-                            <div className="text-lg font-semibold text-gray-900">
-                              {getPackageInfo(selectedStudent.package)
-                                ?.display_name || selectedStudent.package}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-500">
-                              Status
-                            </div>
-                            <div className="text-lg font-semibold text-green-600">
-                              {selectedStudent.subscription_status}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-500">
-                              Monthly Price
-                            </div>
-                            <div className="text-lg font-semibold text-gray-900">
-                              {getPackageInfo(selectedStudent.package)
-                                ? formatCurrency(
-                                    getPackageInfo(selectedStudent.package)!
-                                      .price_monthly
-                                  )
-                                : "Free"}
-                            </div>
-                          </div>
-                        </div>
-
-                        {selectedStudent.subscription_start_date && (
-                          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <div className="text-sm font-medium text-gray-500">
-                                Start Date
-                              </div>
-                              <div className="text-sm text-gray-900">
-                                {formatDate(
-                                  selectedStudent.subscription_start_date
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-500">
-                                End Date
-                              </div>
-                              <div className="text-sm text-gray-900">
-                                {formatDate(
-                                  selectedStudent.subscription_end_date
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {getPackageInfo(selectedStudent.package)?.features && (
-                          <div className="mt-4">
-                            <div className="text-sm font-medium text-gray-500 mb-2">
-                              Package Features
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {getPackageInfo(
-                                selectedStudent.package
-                              )!.features.map((feature, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                                >
-                                  {feature}
-                                </span>
                               ))}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+              </CardContent>
+            </Card>
 
-                    {/* Account Information */}
-                    <div className="md:col-span-2">
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
-                        Account Information
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <strong>Account Status:</strong>{" "}
-                          {selectedStudent.is_active ? "Active" : "Inactive"}
-                        </div>
-                        <div>
-                          <strong>Last Login:</strong>{" "}
-                          {formatDate(selectedStudent.last_login)}
-                        </div>
-                        <div>
-                          <strong>Created:</strong>{" "}
-                          {formatDate(selectedStudent.created_at)}
-                        </div>
-                        <div>
-                          <strong>Updated:</strong>{" "}
-                          {formatDate(selectedStudent.updated_at)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end space-x-3 mt-6">
-                    <button
-                      onClick={() => setShowStudentModal(false)}
-                      className="btn btn-secondary"
+            {/* Recent Student Sign-ups */}
+            <Card className="shadow-[0_2px_2px_0_#34A853] border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="text-lg">New Students</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/admin/students")}
+                  >
+                    View All
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {mockRecentActivity.students.map((student) => (
+                    <div
+                      key={student.id}
+                      className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
+                      onClick={() => navigate("/admin/students")}
                     >
-                      Close
-                    </button>
-                  </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">{student.name}</p>
+                        <p className="text-xs text-slate-400">{student.grade}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          variant="secondary"
+                          className={
+                            student.package === "Gold"
+                              ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                              : student.package === "Silver"
+                              ? "bg-slate-500/20 text-slate-300 border border-slate-500/30"
+                              : "bg-green-500/20 text-green-300 border border-green-500/30"
+                          }
+                        >
+                          {student.package}
+                        </Badge>
+                        <p className="text-xs text-slate-500 mt-1">{student.date}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </div>
-          )}
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </motion.div>
     </div>

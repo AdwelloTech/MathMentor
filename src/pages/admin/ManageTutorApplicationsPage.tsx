@@ -275,28 +275,28 @@ const ManageTutorApplicationsPage: React.FC = () => {
     switch (status) {
       case "pending":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
             <ClockIcon className="h-3 w-3 mr-1" />
             Pending
           </span>
         );
       case "approved":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
             <CheckCircleIcon className="h-3 w-3 mr-1" />
             Approved
           </span>
         );
       case "rejected":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
             <XCircleIcon className="h-3 w-3 mr-1" />
             Rejected
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
             Unknown
           </span>
         );
@@ -362,33 +362,17 @@ const ManageTutorApplicationsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
-
-      {/* Floating decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-400/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
-      <div
-        className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-yellow-400/10 to-green-400/10 rounded-full blur-2xl animate-pulse"
-        style={{ animationDelay: "1s" }}
-      ></div>
-      <div
-        className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-green-300/5 to-yellow-300/5 rounded-full blur-3xl animate-pulse"
-        style={{ animationDelay: "2s" }}
-      ></div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="px-6 pb-16 relative z-10"
-      >
-        <div className="space-y-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-8"
+    >
           {/* Header */}
           <div className="pt-6">
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
               Manage Tutor Applications
             </h1>
-            <p className="mt-2 text-lg text-gray-600">
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">
               Review and manage tutor applications submitted by potential
               educators.
             </p>
@@ -399,7 +383,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 justify-center"
+            className="flex flex-wrap justify-center gap-6"
           >
             {dashboardStats.map((stat, index) => (
               <motion.div
@@ -408,14 +392,14 @@ const ManageTutorApplicationsPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
               >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
+                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px] dark:bg-gray-800 dark:border-gray-700">
                   <CardHeader className="pb-2">
                     <div className="flex items-start space-x-3">
                       <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
                         <stat.icon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-gray-900 max-w-xs">
+                        <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100 max-w-xs">
                           {stat.name}
                         </CardTitle>
                       </div>
@@ -424,7 +408,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                   <CardContent className="pt-0">
                     <div className="pl-0">
                       <div className="flex items-start space-x-2">
-                        <div className="text-3xl font-bold text-gray-900 ml-3">
+                        <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 ml-3">
                           {stat.value}
                         </div>
                         <div
@@ -450,7 +434,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
           >
-            <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+            <Card className="shadow-[0_2px_2px_0_#16803D] border-0 dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
@@ -471,7 +455,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                         placeholder="Search applications..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
                       />
                     </div>
                   </div>
@@ -479,7 +463,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
+                      className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -492,31 +476,31 @@ const ManageTutorApplicationsPage: React.FC = () => {
                 {/* Applications Table */}
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                           Applicant
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                           Subjects
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                           Submitted
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {filteredApplications.length === 0 ? (
                         <tr>
                           <td
                             colSpan={5}
-                            className="px-6 py-4 text-center text-gray-500"
+                            className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
                           >
                             {applications.length === 0
                               ? "No applications found"
@@ -525,11 +509,11 @@ const ManageTutorApplicationsPage: React.FC = () => {
                         </tr>
                       ) : (
                         filteredApplications.map((application) => (
-                          <tr key={application.id} className="hover:bg-gray-50">
+                          <tr key={application.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                  <span className="text-sm font-medium text-gray-600">
+                                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                                     {application.full_name
                                       .split(" ")
                                       .map((n) => n[0])
@@ -537,13 +521,13 @@ const ManageTutorApplicationsPage: React.FC = () => {
                                   </span>
                                 </div>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {application.full_name}
                                   </div>
-                                  <div className="text-sm text-gray-500">
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
                                     {application.applicant_email}
                                   </div>
-                                  <div className="text-xs text-gray-400">
+                                  <div className="text-xs text-gray-400 dark:text-gray-500">
                                     {application.phone_number}
                                   </div>
                                 </div>
@@ -556,20 +540,20 @@ const ManageTutorApplicationsPage: React.FC = () => {
                                   .map((subject, index) => (
                                     <span
                                       key={index}
-                                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                                     >
                                       {subject}
                                     </span>
                                   ))}
                                 {application.subjects.length > 3 && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                                     +{application.subjects.length - 3} more
                                   </span>
                                 )}
                               </div>
                               {application.specializes_learning_disabilities && (
                                 <div className="mt-1">
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
                                     Learning Disabilities Specialist
                                   </span>
                                 </div>
@@ -632,16 +616,16 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
           {/* Application Details Modal */}
           {showApplicationModal && selectedApplication && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-70 overflow-y-auto h-full w-full z-50">
+              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800 dark:border-gray-700">
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                       Application Details: {selectedApplication.full_name}
                     </h3>
                     <button
                       onClick={() => setShowApplicationModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
                     >
                       <XMarkIcon className="h-6 w-6" />
                     </button>
@@ -650,7 +634,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                   <div className="space-y-6">
                     {/* Personal Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
                         Personal Information
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -687,7 +671,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                     {/* Teaching Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
                         Teaching Information
                       </h4>
                       <div className="space-y-3">
@@ -725,7 +709,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                     {/* Additional Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
                         Additional Information
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -775,8 +759,8 @@ const ManageTutorApplicationsPage: React.FC = () => {
                       {selectedApplication.past_experience && (
                         <div className="mt-4">
                           <strong>Past Experience:</strong>
-                          <div className="bg-gray-50 p-3 rounded-lg mt-2">
-                            <p className="text-sm text-gray-700">
+                          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mt-2">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
                               {selectedApplication.past_experience}
                             </p>
                           </div>
@@ -786,8 +770,8 @@ const ManageTutorApplicationsPage: React.FC = () => {
                       {selectedApplication.weekly_availability && (
                         <div className="mt-4">
                           <strong>Weekly Availability:</strong>
-                          <div className="bg-gray-50 p-3 rounded-lg mt-2">
-                            <p className="text-sm text-gray-700">
+                          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mt-2">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
                               {selectedApplication.weekly_availability}
                             </p>
                           </div>
@@ -797,16 +781,16 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                     {/* CV Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
                         CV Information
                       </h4>
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {selectedApplication.cv_file_name}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
                               Size:{" "}
                               {formatFileSize(selectedApplication.cv_file_size)}
                             </div>
@@ -830,10 +814,10 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     {/* Additional Notes */}
                     {selectedApplication.additional_notes && (
                       <div>
-                        <h4 className="text-md font-medium text-gray-900 mb-3">
+                        <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
                           Additional Notes
                         </h4>
-                        <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                           <p className="text-sm text-gray-700">
                             {selectedApplication.additional_notes}
                           </p>
@@ -843,7 +827,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                     {/* Application Status */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-3">
+                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
                         Application Status
                       </h4>
                       <div className="space-y-2">
@@ -905,17 +889,17 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
           {/* Action Modal */}
           {showActionModal && selectedApplication && actionType && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-70 overflow-y-auto h-full w-full z-50">
+              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800 dark:border-gray-700">
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                       {actionType === "approve" ? "Approve" : "Reject"}{" "}
                       Application
                     </h3>
                     <button
                       onClick={() => setShowActionModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
                     >
                       <XMarkIcon className="h-6 w-6" />
                     </button>
@@ -923,7 +907,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                         You are about to <strong>{actionType}</strong> the
                         application from{" "}
                         <strong>{selectedApplication.full_name}</strong>.
@@ -932,14 +916,14 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                     {actionType === "reject" && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Rejection Reason *
                         </label>
                         <textarea
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
                           rows={3}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
                           placeholder="Please provide a reason for rejection..."
                           required
                         />
@@ -947,7 +931,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     )}
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Admin Notes (Optional)
                       </label>
                       <textarea
@@ -962,7 +946,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     <div className="flex justify-end space-x-3 pt-4">
                       <button
                         onClick={() => setShowActionModal(false)}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                         disabled={processingAction}
                       >
                         Cancel
@@ -1006,9 +990,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-      </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

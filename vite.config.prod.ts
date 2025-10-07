@@ -24,11 +24,11 @@ export default defineConfig({
     open: false,
     proxy: {
       "/api": {
-        target: "http://72.60.20.140:5001",
+        target: "https://scenario-sbjct-pursuit-language.trycloudflare.com",
         changeOrigin: true,
       },
       "/api/ai": {
-        target: "http://72.60.20.140:5001",
+        target: "https://scenario-sbjct-pursuit-language.trycloudflare.com",
         changeOrigin: true,
       },
     },

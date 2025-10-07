@@ -64,6 +64,13 @@ app.use(cors({
       'http://72.60.20.140:3000',
       'http://72.60.20.140:3001',
       'http://72.60.20.140:3002',
+      'https://72.60.20.140:3000',
+      'https://72.60.20.140:3001',
+      'https://72.60.20.140:3002',
+      'https://72.60.20.140:5000',
+      'https://72.60.20.140:5001',
+      'https://offline-coal-difference-luggage.trycloudflare.com',
+      'https://scenario-sbjct-pursuit-language.trycloudflare.com',
       process.env.FRONTEND_URL
     ].filter(Boolean);
 

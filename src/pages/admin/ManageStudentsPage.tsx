@@ -98,7 +98,7 @@ const ManageStudentsPage: React.FC = () => {
     return packages.find((p) => p.package_type === packageType);
   };
 
-  const formatDate = (dateString: string | null) => {
+  const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
   };
@@ -642,7 +642,7 @@ const ManageStudentsPage: React.FC = () => {
                             <div className="flex flex-wrap gap-2">
                               {getPackageInfo(
                                 selectedStudent.package
-                              )!.features.map((feature, index) => (
+                              )!.features.map((feature: string, index: number) => (
                                 <span
                                   key={index}
                                   className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"

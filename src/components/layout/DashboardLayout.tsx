@@ -62,8 +62,9 @@ const DashboardLayout: React.FC = () => {
     loadSubjects();
   }, []);
 
-  const getSubjectName = (subjectId: string) => {
-    return subjects[subjectId] || "Unknown Subject";
+  const getSubjectName = (subjectId: string | { _id: string; name: string; displayName: string; color: string }) => {
+    const id = typeof subjectId === 'string' ? subjectId : subjectId._id;
+    return subjects[id] || "Unknown Subject";
   };
 
   useEffect(() => {
@@ -289,7 +290,7 @@ const DashboardLayout: React.FC = () => {
       const url = (() => {
         try {
           return new URL(
-            accepted?.jitsi_meeting_url || DEFAULT_JITSI_URL
+            accepted?.jitsiMeetingUrl || DEFAULT_JITSI_URL
           ).toString();
         } catch {
           return DEFAULT_JITSI_URL;
@@ -434,7 +435,7 @@ const DashboardLayout: React.FC = () => {
                                   <span>15 minutes</span>
                                   <span className="w-1 h-1 bg-gray-300 rounded-full" />
                                   <span className="text-purple-600 font-medium">
-                                    {getSubjectName(req.subject_id)}
+                                    {getSubjectName(req.subjectId)}
                                   </span>
                                 </div>
                               </div>

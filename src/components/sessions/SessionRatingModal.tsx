@@ -49,12 +49,11 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
       }
 
       const ratingData: CreateRatingData = {
-        session_id: session.id,
-        student_id: studentId,
-        tutor_id: session.tutor.id,
+        sessionId: session.id,
+        tutorId: session.tutor.id,
         rating,
-        review_text: reviewText.trim() || undefined,
-        is_anonymous: isAnonymous,
+        reviewText: reviewText.trim() || undefined,
+        isAnonymous: isAnonymous,
       };
 
       await sessionRatingService.create(ratingData);

@@ -12,7 +12,7 @@ import {
   XCircleIcon,
   DocumentIcon,
 } from "@heroicons/react/24/outline";
-import { AdminQuizService, AdminQuiz, QuizStats } from "@/lib/adminQuizService";
+import { AdminQuizService, AdminQuiz, AdminQuestion, AdminAnswer, QuizStats } from "@/lib/adminQuizService";
 import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ManageQuizPdfsPage from "./ManageQuizPdfsPage";
@@ -412,7 +412,7 @@ const ManageQuizzesPage: React.FC = () => {
                                 </span>
                                 {quiz.gradeLevelId && (
                                   <div className="text-xs text-gray-500 mt-1">
-                                    Grade: {quiz.gradeLevelId.displayName}
+                                    Grade: {typeof quiz.gradeLevelId === 'string' ? quiz.gradeLevelId : quiz.gradeLevelId.displayName}
                                   </div>
                                 )}
                               </td>
@@ -424,14 +424,14 @@ const ManageQuizzesPage: React.FC = () => {
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-900">
                                 {quiz.total_attempts}
-                                {quiz.total_attempts > 0 && (
+                                {quiz.total_attempts > 0 && quiz.avg_score !== undefined && (
                                   <div className="text-xs text-gray-500">
                                     Avg: {quiz.avg_score.toFixed(1)}%
                                   </div>
                                 )}
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-500">
-                                {new Date(quiz.createdAt).toLocaleDateString()}
+                                {new Date(quiz.created_at).toLocaleDateString()}
                               </td>
                               <td className="px-6 py-4 text-right text-sm font-medium">
                                 <div className="flex justify-end space-x-2">
@@ -562,7 +562,7 @@ const ManageQuizzesPage: React.FC = () => {
                     Questions ({selectedQuiz.questions.length})
                   </h3>
                   <div className="space-y-6">
-                    {selectedQuiz.questions.map((question, index) => (
+                    {selectedQuiz.questions.map((question: AdminQuestion, index: number) => (
                       <div
                         key={question.id}
                         className="border rounded-lg p-6 bg-gray-50"
@@ -592,8 +592,8 @@ const ManageQuizzesPage: React.FC = () => {
                               Answer Options:
                             </h5>
                             {question.answers
-                              .sort((a, b) => a.answer_order - b.answer_order)
-                              .map((answer, answerIndex) => (
+                              .sort((a: AdminAnswer, b: AdminAnswer) => a.answer_order - b.answer_order)
+                              .map((answer: AdminAnswer, answerIndex: number) => (
                                 <div
                                   key={answer.id}
                                   className={`flex items-start p-3 rounded-lg text-sm border-2 ${

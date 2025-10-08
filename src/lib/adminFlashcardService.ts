@@ -1,13 +1,40 @@
 import apiClient from "./apiClient";
-import type { FlashcardSet } from "@/types/flashcards";
 
-export interface AdminFlashcardSet extends FlashcardSet {
+export interface AdminFlashcard {
+  id: string;
+  set_id: string;
+  front_text: string;
+  back_text: string;
+  card_order: number;
+  created_at: string;
+}
+
+export interface AdminFlashcardSet {
+  _id: string;
+  id: string;
+  tutor_id: string;
+  title: string;
+  subject: string;
+  topic?: string;
+  description?: string;
+  difficulty?: string;
+  grade_level: string;
+  is_public: boolean;
+  is_active: boolean;
+  tags?: string[];
+  viewCount?: number;
+  studyCount?: number;
+  averageRating?: number;
+  totalRatings?: number;
+  createdAt: string;
+  updatedAt: string;
   tutor: {
     id: string;
     full_name: string;
     email: string;
   };
   card_count: number;
+  cards?: AdminFlashcard[];
 }
 
 export interface FlashcardStats {
@@ -33,15 +60,16 @@ export class AdminFlashcardService {
       // Transform backend data to match expected format
       const flashcardSets: AdminFlashcardSet[] = data.map((set: any) => ({
         _id: set._id,
-        tutorId: set.tutorId,
+        id: set._id,
+        tutor_id: set.tutorId,
         title: set.title,
         subject: set.subject,
         topic: set.topic,
         description: set.description,
         difficulty: set.difficulty,
-        gradeLevelId: set.gradeLevelId,
-        isPublic: set.isPublic,
-        isActive: set.isActive,
+        grade_level: set.gradeLevelId,
+        is_public: set.isPublic,
+        is_active: set.isActive,
         tags: set.tags || [],
         viewCount: set.viewCount || 0,
         studyCount: set.studyCount || 0,
@@ -74,7 +102,7 @@ export class AdminFlashcardService {
       const sets = await this.getAllFlashcardSets();
 
       const total = sets.length;
-      const active = sets.filter(s => s.isActive).length;
+      const active = sets.filter(s => s.is_active).length;
       const inactive = total - active;
 
       // Count by subject
@@ -131,15 +159,16 @@ export class AdminFlashcardService {
 
       return {
         _id: data._id,
-        tutorId: data.tutorId,
+        id: data._id,
+        tutor_id: data.tutorId,
         title: data.title,
         subject: data.subject,
         topic: data.topic,
         description: data.description,
         difficulty: data.difficulty,
-        gradeLevelId: data.gradeLevelId,
-        isPublic: data.isPublic,
-        isActive: data.isActive,
+        grade_level: data.gradeLevelId,
+        is_public: data.isPublic,
+        is_active: data.isActive,
         tags: data.tags || [],
         viewCount: data.viewCount || 0,
         studyCount: data.studyCount || 0,
@@ -152,8 +181,9 @@ export class AdminFlashcardService {
           full_name: 'Unknown',
           email: ''
         },
-        card_count: data.cards?.length || 0
-      } as AdminFlashcardSet;
+        card_count: data.cards?.length || 0,
+        cards: data.cards || []
+      };
     } catch (error) {
       console.error("Error getting flashcard set details:", error);
       throw error;

@@ -51,9 +51,6 @@ const ManageSessionsPage: React.FC = () => {
   const [sessionJoinability, setSessionJoinability] = useState<
     Record<string, boolean>
   >({});
-  const [sessionCountdowns, setSessionCountdowns] = useState<
-    Record<string, number>
-  >({});
 
   useEffect(() => {
     if (user) {
@@ -61,48 +58,32 @@ const ManageSessionsPage: React.FC = () => {
     }
   }, [user]);
 
-  // Real-time timer to update session joinability and countdowns
+  // Real-time timer to update session joinability
   useEffect(() => {
     const updateSessionStatus = () => {
       const newJoinability: Record<string, boolean> = {};
-      const newCountdowns: Record<string, number> = {};
 
       upcomingBookings.forEach((booking) => {
         if (
           booking.booking_status === "confirmed" &&
           booking.class?.jitsi_meeting_url
         ) {
-          const now = new Date();
-          const sessionDate = new Date(
-            `${booking.class.date}T${booking.class.start_time}`
-          );
-
           // Only allow joining when tutor has started the session (status = 'in_progress')
           const isNowJoinable = booking.class.status === "in_progress";
 
           newJoinability[booking.id] = isNowJoinable;
-
-          // Calculate countdown in minutes until session starts
-          if (now < sessionDate) {
-            const diffMs = sessionDate.getTime() - now.getTime();
-            newCountdowns[booking.id] = Math.ceil(diffMs / (1000 * 60));
-          } else {
-            newCountdowns[booking.id] = 0;
-          }
         } else {
           newJoinability[booking.id] = false;
-          newCountdowns[booking.id] = 0;
         }
       });
 
       setSessionJoinability(newJoinability);
-      setSessionCountdowns(newCountdowns);
     };
 
     // Update immediately
     updateSessionStatus();
 
-    // Update every second to keep button state and countdowns current
+    // Update every second to keep button state current
     const interval = setInterval(updateSessionStatus, 1000);
 
     return () => clearInterval(interval);

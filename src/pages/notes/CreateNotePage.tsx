@@ -52,14 +52,14 @@ const CreateNotePage: React.FC = () => {
           const note = await getStudyNoteById(noteId);
           if (note) {
             console.log("Note loaded:", note);
-            console.log("Note subject_id:", note.subject_id);
+            console.log("Note subjectId:", note.subjectId);
             setFormData({
               title: note.title,
               description: note.description || "",
               content: note.content,
-              subjectId: note.subject_id || "",
+              subjectId: note.subjectId?._id || "",
             });
-            console.log("Form data set with subjectId:", note.subject_id);
+            console.log("Form data set with subjectId:", note.subjectId);
           } else {
             toast.error("Note not found");
             navigate("/student/notes");

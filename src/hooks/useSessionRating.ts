@@ -73,27 +73,24 @@ export const useSessionRating = (tutorId?: string) => {
   // Create a new rating
   const createRating = useCallback(
     async (ratingData: {
-      session_id: string;
-      tutor_id: string;
+      sessionId: string;
+      tutorId: string;
       rating: number;
-      review_text?: string;
-      is_anonymous?: boolean;
+      reviewText?: string;
+      isAnonymous?: boolean;
     }) => {
       if (!user) {
         throw new Error("User must be logged in to create a rating");
       }
 
       try {
-        const newRating = await sessionRatingService.create({
-          ...ratingData,
-          student_id: user.id,
-        });
+        const newRating = await sessionRatingService.create(ratingData);
 
         // Update local state
         setRatings((prev) => [newRating, ...prev]);
 
         // Reload stats to get updated averages
-        if (ratingData.tutor_id === tutorId) {
+        if (ratingData.tutorId === tutorId) {
           await loadTutorStats();
         }
 
@@ -112,8 +109,8 @@ export const useSessionRating = (tutorId?: string) => {
       ratingId: string,
       updates: {
         rating?: number;
-        review_text?: string;
-        is_anonymous?: boolean;
+        reviewText?: string;
+        isAnonymous?: boolean;
       }
     ) => {
       try {
@@ -125,7 +122,7 @@ export const useSessionRating = (tutorId?: string) => {
         // Update local state
         setRatings((prev) =>
           prev.map((rating) =>
-            rating.id === ratingId ? updatedRating : rating
+            rating._id === ratingId ? updatedRating : rating
           )
         );
 
@@ -151,10 +148,10 @@ export const useSessionRating = (tutorId?: string) => {
           throw new Error("User must be authenticated to delete a rating");
         }
 
-        await sessionRatingService.delete(ratingId, user.id);
+        await sessionRatingService.delete(ratingId);
 
         // Update local state
-        setRatings((prev) => prev.filter((rating) => rating.id !== ratingId));
+        setRatings((prev) => prev.filter((rating) => rating._id !== ratingId));
 
         // Reload stats to get updated averages
         if (tutorId) {
@@ -165,7 +162,7 @@ export const useSessionRating = (tutorId?: string) => {
         throw err;
       }
     },
-    [tutorId, loadTutorStats]
+    [user, tutorId, loadTutorStats]
   );
 
   // Load data when tutorId changes

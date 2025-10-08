@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { AcademicCapIcon, LockClosedIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
-import apiClient from '@/lib/apiClient';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
 import type { NewPasswordFormData } from '@/types/auth';
@@ -13,9 +12,8 @@ const ResetPasswordPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [isSuccess] = useState(false);
   const [isValidSession, setIsValidSession] = useState<boolean | null>(null);
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const {

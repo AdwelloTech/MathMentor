@@ -141,21 +141,21 @@ const TutorRatingsPage: React.FC = () => {
   const filteredRatings =
     ratings
       ?.filter((rating) => {
-        if (!showAnonymous && rating.is_anonymous) return false;
+        if (!showAnonymous && rating.isAnonymous) return false;
         if (filterRating && rating.rating !== filterRating) return false;
         return true;
       })
       .sort((a, b) => {
         if (sortBy === "date") {
           return (
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
         }
         return b.rating - a.rating;
       }) || [];
 
-  const anonymousCount = ratings?.filter((r) => r.is_anonymous).length || 0;
-  const namedCount = ratings?.filter((r) => !r.is_anonymous).length || 0;
+  const anonymousCount = ratings?.filter((r) => r.isAnonymous).length || 0;
+  const namedCount = ratings?.filter((r) => !r.isAnonymous).length || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -307,7 +307,7 @@ const TutorRatingsPage: React.FC = () => {
                 <div className="space-y-4">
                   {filteredRatings.map((rating) => (
                     <div
-                      key={rating.id}
+                      key={rating._id}
                       className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-3">
@@ -326,13 +326,13 @@ const TutorRatingsPage: React.FC = () => {
                           </Badge>
                         </div>
                         <div className="text-sm text-gray-500">
-                          {format(new Date(rating.created_at), "MMM dd, yyyy")}
+                          {format(new Date(rating.createdAt), "MMM dd, yyyy")}
                         </div>
                       </div>
 
-                      {rating.review_text && (
+                      {rating.reviewText && (
                         <p className="text-gray-700 mb-3 italic">
-                          "{rating.review_text}"
+                          "{rating.reviewText}"
                         </p>
                       )}
 
@@ -340,9 +340,9 @@ const TutorRatingsPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4" />
                           <span>
-                            {rating.is_anonymous
+                            {rating.isAnonymous
                               ? "Anonymous Student"
-                              : rating.student?.full_name || "Student"}
+                              : rating.student?.fullName || "Student"}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -350,7 +350,7 @@ const TutorRatingsPage: React.FC = () => {
                           <span>
                             Session on{" "}
                             {format(
-                              new Date(rating.created_at),
+                              new Date(rating.createdAt),
                               "MMM dd, yyyy"
                             )}
                           </span>

@@ -12,6 +12,7 @@ import {
 import {
   AdminFlashcardService,
   AdminFlashcardSet,
+  AdminFlashcard,
   FlashcardStats,
 } from "@/lib/adminFlashcardService";
 import toast from "react-hot-toast";
@@ -347,7 +348,7 @@ const ManageFlashcardsPage: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-500">
-                            {new Date(set.created_at).toLocaleDateString()}
+                            {new Date(set.createdAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 text-right text-sm font-medium">
                             <div className="flex justify-end space-x-2">
@@ -456,8 +457,8 @@ const ManageFlashcardsPage: React.FC = () => {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {selectedSet.cards
-                      .sort((a, b) => a.card_order - b.card_order)
-                      .map((card, index) => (
+                      .sort((a: AdminFlashcard, b: AdminFlashcard) => a.card_order - b.card_order)
+                      .map((card: AdminFlashcard, index: number) => (
                         <div key={card.id} className="border rounded-lg p-4">
                           <div className="text-sm text-gray-500 mb-2">
                             Card {index + 1}

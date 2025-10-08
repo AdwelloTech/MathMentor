@@ -140,9 +140,6 @@ const ManageTutorApplicationsPage: React.FC = () => {
         return;
       }
 
-      const bucketName = urlMatch[1];
-      const filePath = urlMatch[2];
-
       // Try direct URL fetch for file download
       const response = await fetch(cvUrl);
 

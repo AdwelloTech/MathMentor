@@ -18,23 +18,20 @@ import {
   getStudyNoteById,
   transformNoteForCard,
   type NotesSearchParams,
+  type NoteCardProps,
 } from "@/lib/notes";
 import type { Database } from "@/types/database";
 
-type StudyNoteWithDetails =
-  Database["public"]["Functions"]["search_study_notes"]["Returns"][0];
 type NoteSubject = Database["public"]["Tables"]["note_subjects"]["Row"];
 
 const NotesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [notes, setNotes] = useState<StudyNoteWithDetails[]>([]);
+  const [notes, setNotes] = useState<NoteCardProps[]>([]);
   const [subjects, setSubjects] = useState<NoteSubject[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
-  const [selectedNote, setSelectedNote] = useState<StudyNoteWithDetails | null>(
-    null
-  );
+  const [selectedNote, setSelectedNote] = useState<Database["public"]["Functions"]["search_study_notes"]["Returns"][0] | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
@@ -50,7 +47,7 @@ const NotesPage: React.FC = () => {
           searchStudyNotes(),
           getNoteSubjects(),
         ]);
-        setNotes(notesData);
+        setNotes(notesData.map(transformNoteForCard));
         setSubjects(subjectsData);
       } catch (error) {
         console.error("Error loading initial data:", error);
@@ -82,7 +79,7 @@ const NotesPage: React.FC = () => {
         }
 
         const filteredNotes = await searchStudyNotes(searchParams);
-        setNotes(filteredNotes);
+        setNotes(filteredNotes.map(transformNoteForCard));
       } catch (error) {
         console.error("Error searching notes:", error);
       } finally {
@@ -101,7 +98,25 @@ const NotesPage: React.FC = () => {
     try {
       const note = await getStudyNoteById(noteId);
       if (note) {
-        setSelectedNote(note);
+        // Transform to the format expected by NoteViewer
+        const transformedNote = {
+          id: note._id,
+          title: note.title,
+          description: note.description || null,
+          content: note.content,
+          subject_name: note.subjectId?.name || null,
+          subject_display_name: note.subjectId?.displayName || null,
+          subject_color: note.subjectId?.color || null,
+          grade_level_code: note.gradeLevelId?.code || null,
+          grade_level_display: note.gradeLevelId?.displayName || null,
+          viewCount: note.viewCount,
+          created_at: note.createdAt,
+          updated_at: note.updatedAt,
+          createdBy: note.createdBy,
+          isPublic: note.isPublic,
+          _id: note._id,
+        };
+        setSelectedNote(transformedNote as any);
         setIsViewerOpen(true);
       }
     } catch (error) {
@@ -250,7 +265,7 @@ const NotesPage: React.FC = () => {
                   {notes.map((note) => (
                     <NoteCard
                       key={note.id}
-                      {...transformNoteForCard(note)}
+                      {...note}
                       onView={handleViewNote}
                     />
                   ))}

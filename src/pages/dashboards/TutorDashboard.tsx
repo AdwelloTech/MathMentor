@@ -38,6 +38,9 @@ import { validateDocumentFile } from "@/constants/form";
 import toast from "react-hot-toast";
 import OnlineStatusToggle from "@/components/tutor/OnlineStatusToggle";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import ActiveSessionFloatingButton from "@/components/tutor/dashboard/ActiveSessionFloatingButton";
+import ActiveInstantSessionButton from "@/components/tutor/dashboard/ActiveInstantSessionButton";
+import InstantSessionRequestPopup from "@/components/tutor/InstantSessionRequestPopup";
 
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -967,6 +970,18 @@ const TutorDashboard: React.FC = () => {
             </motion.div>
           </div>
         </motion.div>
+
+        {/* Floating Active Session Button */}
+        <ActiveSessionFloatingButton tutorId={profile?.id || ""} />
+        
+        {/* Active Instant Session Button */}
+        <ActiveInstantSessionButton tutorId={profile?.id || ""} />
+        
+        {/* Instant Session Request Popup */}
+        <InstantSessionRequestPopup 
+          tutorId={profile?.id || ""} 
+          isOnline={profile?.is_online || false}
+        />
       </div>
     );
   }

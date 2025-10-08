@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { AcademicCapIcon, LockClosedIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
-import { auth } from '@/lib/supabase';
+import apiClient from '@/lib/apiClient';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
 import type { NewPasswordFormData } from '@/types/auth';
@@ -70,35 +70,9 @@ const ResetPasswordPage: React.FC = () => {
           return;
         }
         
-        // Check if we already have an active session (user might have refreshed the page)
-        const session = await auth.getSession();
-        console.log('Current session check:', { hasSession: !!(session as any)?.data?.session, hasUser: !!(session as any)?.data?.session?.user });
-
-        if ((session as any)?.data?.session?.user) {
-          console.log('Active session found for password reset');
-          setIsValidSession(true);
-          return;
-        }
-        
-        // If no tokens and no session, but we're on the reset page, it might be invalid
-        console.log('No valid reset session found');
-        
-        // Wait a bit longer for Supabase to process tokens if they exist
-        if (accessToken || type === 'recovery') {
-          console.log('Waiting for Supabase to process tokens...');
-          setTimeout(() => {
-            const newSession = auth.getSession();
-            if ((newSession as any)?.data?.session?.user) {
-              console.log('Session established after delay');
-              setIsValidSession(true);
-            } else {
-              console.log('No session after delay');
-              setIsValidSession(false);
-            }
-          }, 1000);
-          return;
-        }
-        
+        // Password reset functionality needs backend implementation
+        // For now, mark as invalid since Supabase is removed
+        console.warn('Password reset requires backend implementation');
         setIsValidSession(false);
         
       } catch (error) {
@@ -131,32 +105,19 @@ const ResetPasswordPage: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Update the user's password
-      await auth.updatePassword(data.password);
+      // Password reset would need backend implementation
+      // await apiClient.post('/api/auth/reset-password', { password: data.password, token: accessToken });
       
-      setIsSuccess(true);
-      toast.success('Password updated successfully!');
-      
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        navigate('/login', { 
-          state: { 
-            message: 'Password reset successful! Please log in with your new password.' 
-          } 
-        });
-      }, 3000);
+      toast.error('Password reset requires backend implementation');
+      setError('root', {
+        message: 'Password reset feature is currently unavailable. Please contact support.',
+      });
       
     } catch (error: any) {
       console.error('Reset password error:', error);
-      
-      if (error.message?.includes('session_not_found')) {
-        toast.error('Session expired. Please request a new password reset link.');
-        setIsValidSession(false);
-      } else {
-        setError('root', {
-          message: error.message || 'Failed to update password. Please try again.',
-        });
-      }
+      setError('root', {
+        message: error.message || 'Failed to update password. Please try again.',
+      });
     } finally {
       setIsLoading(false);
     }

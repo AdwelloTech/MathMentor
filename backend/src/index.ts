@@ -32,6 +32,8 @@ import tutorMaterialsRoutes from './routes/tutorMaterials';
 import profileImagesRoutes from './routes/profileImages';
 import tutorRoutes from './routes/tutors';
 import adminRoutes from './routes/admin';
+import ratingsRoutes from './routes/ratings';
+import instantSessionsRoutes from './routes/instantSessions';
 
 // Load environment variables
 dotenv.config();
@@ -125,6 +127,8 @@ app.use('/api/tutor-materials', tutorMaterialsRoutes);
 app.use('/api/profile-images', profileImagesRoutes);
 app.use('/api/tutors', tutorRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/ratings', ratingsRoutes);
+app.use('/api/instant-sessions', instantSessionsRoutes);
 
 // 404 handler
 app.use(notFound);

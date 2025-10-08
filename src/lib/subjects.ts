@@ -7,18 +7,43 @@ import type {
 
 export const subjectsService = {
   async listActive(): Promise<Subject[]> {
-    const data = await apiClient.get<any[]>("/api/subjects");
+    try {
+      const data = await apiClient.get<any[]>("/api/subjects");
 
-    // Transform backend data to match frontend interface
-    return data.map(item => ({
-      id: item._id || item.id,
-      name: item.name,
-      display_name: item.displayName || item.display_name,
-      color: item.color,
-      is_active: item.isActive !== undefined ? item.isActive : item.is_active,
-      created_at: item.createdAt || item.created_at,
-      updated_at: item.updatedAt || item.updated_at,
-    }));
+      // Transform backend data to match frontend interface
+      return data.map(item => ({
+        id: item._id || item.id,
+        name: item.name,
+        display_name: item.displayName || item.display_name,
+        color: item.color,
+        is_active: item.isActive !== undefined ? item.isActive : item.is_active,
+        created_at: item.createdAt || item.created_at,
+        updated_at: item.updatedAt || item.updated_at,
+      }));
+    } catch (error: any) {
+      console.warn('Failed to load subjects:', error.message);
+      return []; // Return empty array on error
+    }
+  },
+
+  async listAvailable(): Promise<Subject[]> {
+    try {
+      const data = await apiClient.get<any[]>("/api/subjects/available");
+
+      // Transform backend data to match frontend interface
+      return data.map(item => ({
+        id: item._id || item.id,
+        name: item.name,
+        display_name: item.displayName || item.display_name,
+        color: item.color,
+        is_active: item.isActive !== undefined ? item.isActive : item.is_active,
+        created_at: item.createdAt || item.created_at,
+        updated_at: item.updatedAt || item.updated_at,
+      }));
+    } catch (error: any) {
+      console.warn('Failed to load available subjects:', error.message);
+      return []; // Return empty array on error
+    }
   },
 
   async listAll(): Promise<Subject[]> {

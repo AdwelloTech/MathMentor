@@ -351,7 +351,9 @@ export class AuthService {
       // Tutor-specific fields
       'qualification', 'experienceYears', 'specializations', 'hourlyRate',
       'availability', 'bio', 'certifications', 'languages', 'cvUrl',
-      'cvFileName', 'dateOfBirth'
+      'cvFileName', 'dateOfBirth',
+      // Status fields
+      'isOnline'
     ];
 
     // Fields that should remain camelCase (not converted to snake_case)
@@ -432,6 +434,7 @@ export class AuthService {
         languages: user.languages,
         cv_url: user.cvUrl,
         cv_file_name: user.cvFileName,
+        is_online: user.isOnline,
         updated_at: user.updatedAt
       };
     } catch (error: any) {

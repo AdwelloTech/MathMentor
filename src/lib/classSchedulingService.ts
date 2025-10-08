@@ -425,35 +425,40 @@ export const classSchedulingService = {
           duration = (endDate.getTime() - startDate.getTime()) / (1000 * 60);
         }
 
-        const backendUpdates = {
-          title: updates.title,
-          description: updates.description,
-          subjectId: updates.subject_id,
-          gradeLevelId: updates.grade_level_id,
-          schedule: updates.schedule || (startTime && endTime ? {
+        // Build backend updates object, only including defined fields
+        const backendUpdates: any = {};
+        
+        if (updates.title !== undefined) backendUpdates.title = updates.title;
+        if (updates.description !== undefined) backendUpdates.description = updates.description;
+        if (updates.subject_id !== undefined) backendUpdates.subjectId = updates.subject_id;
+        if (updates.grade_level_id !== undefined) backendUpdates.gradeLevelId = updates.grade_level_id;
+        
+        if (updates.schedule || (startTime && endTime)) {
+          backendUpdates.schedule = updates.schedule || {
             dayOfWeek: updates.date ? new Date(updates.date).getDay() : undefined,
             startTime: startTime,
             endTime: endTime,
             duration: duration,
-          } : undefined),
-          startDate: updates.date,
-          endDate: updates.recurring_end_date,
-          capacity: updates.max_students,
-          price: updates.price_per_session,
-          isActive: updates.status === "scheduled" || updates.status === "completed" || updates.status === "in_progress",
-          status: updates.status,
-          meetingLink: updates.meeting_link,
-          jitsiRoomName: updates.jitsi_room_name,
-          jitsiPassword: updates.jitsi_password,
-        };
-
-        const response = await apiClient.put<{ success: boolean; message: string; data: any }>(`/api/classes/${classId}`, backendUpdates);
-
-        if (!response.success) {
-          throw new Error(response.message || 'Failed to update class');
+          };
         }
+        
+        if (updates.date !== undefined) backendUpdates.startDate = updates.date;
+        if (updates.recurring_end_date !== undefined) backendUpdates.endDate = updates.recurring_end_date;
+        if (updates.max_students !== undefined) backendUpdates.capacity = updates.max_students;
+        if (updates.price_per_session !== undefined) backendUpdates.price = updates.price_per_session;
+        
+        if (updates.status !== undefined) {
+          backendUpdates.status = updates.status;
+          backendUpdates.isActive = updates.status === "scheduled" || updates.status === "completed" || updates.status === "in_progress";
+        }
+        
+        if (updates.meeting_link !== undefined) backendUpdates.meetingLink = updates.meeting_link;
+        if (updates.jitsi_room_name !== undefined) backendUpdates.jitsiRoomName = updates.jitsi_room_name;
+        if (updates.jitsi_password !== undefined) backendUpdates.jitsiPassword = updates.jitsi_password;
 
-        const updatedClass = response.data;
+        console.log('[classSchedulingService] Updating class with:', backendUpdates);
+        const updatedClass = await apiClient.put<any>(`/api/classes/${classId}`, backendUpdates);
+        console.log('[classSchedulingService] Update response:', updatedClass);
         return {
           // Base Class fields
           _id: updatedClass._id,

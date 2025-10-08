@@ -1,9 +1,4 @@
-import { supabase } from "./supabase";
-import type { Database } from "@/types/database";
-
-type StudyNoteWithDetails =
-  Database["public"]["Functions"]["search_study_notes"]["Returns"][0];
-type NoteSubject = Database["public"]["Tables"]["note_subjects"]["Row"];
+import apiClient from "./apiClient";
 
 export interface NotesSearchParams {
   searchTerm?: string;
@@ -23,6 +18,41 @@ export interface NoteCardProps {
   createdAt: string;
 }
 
+export interface StudyNoteWithDetails {
+  _id: string;
+  title: string;
+  description: string | null;
+  content: string;
+  subjectId?: {
+    _id: string;
+    name: string;
+    displayName: string;
+    color: string;
+  };
+  gradeLevelId?: {
+    _id: string;
+    code: string;
+    displayName: string;
+  };
+  createdBy: string;
+  isPublic: boolean;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NoteSubject {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string | null;
+  color: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 /**
  * Search and filter study notes
  */
@@ -30,16 +60,21 @@ export async function searchStudyNotes(
   params: NotesSearchParams = {}
 ): Promise<StudyNoteWithDetails[]> {
   try {
-    const { data, error } = await supabase.rpc("search_study_notes", {
-      search_term: params.searchTerm || "",
-      subject_filter: params.subjectFilter || null,
-      grade_filter: params.gradeFilter || null,
-    });
-
-    if (error) {
-      console.error("Error searching study notes:", error);
-      throw error;
+    const queryParams = new URLSearchParams();
+    
+    if (params.searchTerm) {
+      queryParams.append('q', params.searchTerm);
     }
+    if (params.subjectFilter) {
+      queryParams.append('subjectId', params.subjectFilter);
+    }
+    if (params.gradeFilter) {
+      queryParams.append('gradeLevelId', params.gradeFilter);
+    }
+
+    const data = await apiClient.get<StudyNoteWithDetails[]>(
+      `/api/study-notes?${queryParams.toString()}`
+    );
 
     return data || [];
   } catch (error) {
@@ -54,7 +89,6 @@ export async function searchStudyNotes(
 export async function getNoteSubjects(): Promise<NoteSubject[]> {
   try {
     console.log("Fetching note subjects from API...");
-    const apiClient = (await import("./apiClient")).default;
     const response = await apiClient.get("/api/subjects");
 
     console.log("Subjects API response:", response);
@@ -89,56 +123,14 @@ export async function getNoteSubjects(): Promise<NoteSubject[]> {
  */
 export async function getStudyNoteById(
   id: string
-): Promise<(StudyNoteWithDetails & { subject_id: string | null }) | null> {
+): Promise<StudyNoteWithDetails | null> {
   try {
-    // First get the basic note data with subject_id
-    const { data: noteData, error: noteError } = await (supabase as any)
-      .from("study_notes")
-      .select(
-        `
-        *,
-        note_subjects!inner(
-          id,
-          name,
-          display_name,
-          color
-        )
-      `
-      )
-      .eq("id", id)
-      .single();
-
-    if (noteError) {
-      console.error("Error fetching study note:", noteError);
-      throw noteError;
-    }
-
-    if (!noteData) {
+    const data = await apiClient.get<StudyNoteWithDetails>(`/api/study-notes/${id}`);
+    return data;
+  } catch (error: any) {
+    if (error.status === 404) {
       return null;
     }
-
-    // Transform the data to match the StudyNoteWithDetails format
-    const transformedNote: StudyNoteWithDetails & {
-      subject_id: string | null;
-    } = {
-      id: noteData.id,
-      title: noteData.title,
-      description: noteData.description,
-      content: noteData.content,
-      subject_id: noteData.subject_id, // Include the subject_id
-      subject_name: noteData.note_subjects?.name || null,
-      subject_display_name: noteData.note_subjects?.display_name || null,
-      subject_color: noteData.note_subjects?.color || null,
-      grade_level_code: null, // Not implemented yet
-      grade_level_display: null, // Not implemented yet
-      created_by: noteData.created_by,
-      is_public: noteData.is_public,
-      view_count: noteData.view_count,
-      created_at: noteData.created_at,
-    };
-
-    return transformedNote;
-  } catch (error) {
     console.error("Error in getStudyNoteById:", error);
     throw error;
   }
@@ -149,17 +141,13 @@ export async function getStudyNoteById(
  */
 export async function incrementNoteViewCount(noteId: string): Promise<void> {
   try {
-    const { error } = await supabase.rpc("increment_note_view_count", {
-      note_id: noteId,
-    });
-
-    if (error) {
-      console.error("Error incrementing note view count:", error);
-      throw error;
-    }
+    // The backend should handle incrementing view count when fetching a note
+    // For now, we'll make a simple request to increment it
+    // If you have a specific endpoint for this, use it
+    await apiClient.get(`/api/study-notes/${noteId}`);
   } catch (error) {
     console.error("Error in incrementNoteViewCount:", error);
-    throw error;
+    // Don't throw - view count increment failures shouldn't break the app
   }
 }
 
@@ -170,15 +158,15 @@ export function transformNoteForCard(
   note: StudyNoteWithDetails
 ): NoteCardProps {
   return {
-    id: note.id,
+    id: note._id,
     title: note.title,
     description: note.description,
-    subjectName: note.subject_name,
-    subjectDisplayName: note.subject_display_name,
-    subjectColor: note.subject_color,
-    gradeLevelDisplay: note.grade_level_display,
-    viewCount: note.view_count,
-    createdAt: note.created_at,
+    subjectName: note.subjectId?.name || null,
+    subjectDisplayName: note.subjectId?.displayName || null,
+    subjectColor: note.subjectId?.color || null,
+    gradeLevelDisplay: note.gradeLevelId?.displayName || null,
+    viewCount: note.viewCount,
+    createdAt: note.createdAt,
   };
 }
 

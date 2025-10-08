@@ -184,7 +184,7 @@ export class DashboardService {
         status: 'confirmed'
       })
       .populate('classId')
-      .populate('teacherId', 'firstName lastName fullName')
+      .populate('teacherId', 'firstName lastName fullName profileImageUrl')
       .lean();
 
       return upcomingBookings
@@ -202,6 +202,7 @@ export class DashboardService {
           return {
             id: booking._id,
             tutor_name: booking.teacherId?.fullName || 'Unknown Tutor',
+            tutor_profile_image: booking.teacherId?.profileImageUrl,
             title: classData?.title || 'Untitled Class',
             date: dateString,
             start_time: classData?.schedule?.startTime,

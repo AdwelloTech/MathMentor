@@ -4,7 +4,7 @@ import { XMarkIcon, BookOpenIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/lib/supabase";
+import apiClient from "@/lib/apiClient";
 import toast from "react-hot-toast";
 import RichTextEditor from "./RichTextEditor";
 import {
@@ -59,20 +59,13 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("study_notes").insert({
+      await apiClient.post("/api/study-notes", {
         title: formData.title.trim(),
         description: formData.description.trim() || null,
         content: formData.content.trim(),
-        subject_id: formData.subjectId,
-        created_by: user.id,
-        is_public: false,
+        subjectId: formData.subjectId,
+        isPublic: false,
       });
-
-      if (error) {
-        console.error("Error creating note:", error);
-        toast.error("Failed to create note. Please try again.");
-        return;
-      }
 
       toast.success("Note created successfully!");
       setFormData({

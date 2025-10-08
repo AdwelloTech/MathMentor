@@ -28,14 +28,11 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import ProfileImageUpload from "@/components/ui/ProfileImageUpload";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import MultiSelect from "@/components/ui/multi-select";
 import { validateDocumentFile } from "@/constants/form";
+import { subjectsService } from "@/lib/subjects";
+import type { Subject } from "@/types/subject";
 import apiClient from "@/lib/apiClient";
-
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
 
 interface TutorProfileFormData {
   email: string;
@@ -71,6 +68,7 @@ const TutorProfile: React.FC = () => {
   const [currentProfileImageUrl, setCurrentProfileImageUrl] = useState<
     string | null
   >(null);
+  const [availableSubjects, setAvailableSubjects] = useState<Subject[]>([]);
 
   const [formData, setFormData] = useState<TutorProfileFormData>({
     email: user?.email || "",
@@ -100,6 +98,15 @@ const TutorProfile: React.FC = () => {
 
       try {
         setIsLoading(true);
+
+        // Load available subjects
+        try {
+          const subjects = await subjectsService.listActive();
+          setAvailableSubjects(subjects);
+        } catch (error) {
+          console.warn('Failed to load subjects, using empty list:', error);
+          setAvailableSubjects([]); // Use empty array as fallback
+        }
 
         // Profile data comes from auth context which uses the new backend
         setFormData({
@@ -218,23 +225,13 @@ const TutorProfile: React.FC = () => {
       formDataUpload.append('isPublic', 'false');
 
       // Upload document via backend API
-      const result = await apiClient.post<ApiResponse<{ id: string; url: string; fileName: string }>>('/api/files/documents/upload', formDataUpload);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to upload CV');
-      }
-
-      const documentData = result.data!; // We know result.data exists when success is true
+      const documentData = await apiClient.post<{ id: string; url: string; fileName: string }>('/api/files/documents/upload', formDataUpload);
 
       // Update user profile with CV information
-      const profileResult = await apiClient.put<ApiResponse>('/api/auth/profile', {
+      await apiClient.put('/api/auth/profile', {
         cvFileName: file.name,
         cvUrl: documentData.url,
       });
-
-      if (!profileResult.success) {
-        throw new Error('Failed to update profile with CV information');
-      }
 
       // Update local form data
       setFormData((prev) => ({
@@ -276,14 +273,10 @@ const TutorProfile: React.FC = () => {
     if (!user?.id) return;
     try {
       // Update user profile to clear CV information
-      const result = await apiClient.put<ApiResponse>('/api/auth/profile', {
+      await apiClient.put('/api/auth/profile', {
         cvFileName: null,
         cvUrl: null,
       });
-
-      if (!result.success) {
-        throw new Error('Failed to remove CV from profile');
-      }
 
       // Clear local form data
       setFormData((prev) => ({ ...prev, cvFileName: "", cvStoragePath: "" }));
@@ -306,34 +299,49 @@ const TutorProfile: React.FC = () => {
     try {
       if (!user?.id) throw new Error("User not authenticated");
 
-      // Start with basic fields only to debug
+      // Include all profile fields
       const updateData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone?.trim() || null,
-        // address: formData.address?.trim() || null,
-        // dateOfBirth: formData.dateOfBirth?.trim() || null,
-        // gender: formData.gender || null,
-        // emergencyContact: formData.emergencyContact?.trim() || null,
-        // qualification: formData.qualification?.trim() || null,
-        // experienceYears: formData.experienceYears ?? null,
-        // specializations: formData.specializations?.filter(s => s.trim()) || [],
-        // hourlyRate: formData.hourlyRate ?? null,
-        // availability: formData.availability?.trim() || null,
-        // bio: formData.bio?.trim() || null,
-        // certifications: formData.certifications?.filter(c => c.trim()) || [],
-        // languages: formData.languages?.filter(l => l.trim()) || [],
-        // cvFileName: formData.cvFileName?.trim() || null,
-        // cvUrl: formData.cvStoragePath?.trim() || null, // cvStoragePath now contains the URL
+        address: formData.address?.trim() || null,
+        dateOfBirth: formData.dateOfBirth?.trim() || null,
+        gender: formData.gender || null,
+        emergencyContact: formData.emergencyContact?.trim() || null,
+        qualification: formData.qualification?.trim() || null,
+        experienceYears: formData.experienceYears ?? null,
+        specializations: formData.specializations?.filter(s => s.trim()) || [],
+        hourlyRate: formData.hourlyRate ?? null,
+        availability: formData.availability?.trim() || null,
+        bio: formData.bio?.trim() || null,
+        certifications: formData.certifications?.filter(c => c.trim()) || [],
+        languages: formData.languages?.filter(l => l.trim()) || [],
+        cvFileName: formData.cvFileName?.trim() || null,
+        cvUrl: formData.cvStoragePath?.trim() || null, // cvStoragePath now contains the URL
       };
 
-      // Update profile via backend API
-      const result = await apiClient.put<ApiResponse>('/api/auth/profile', updateData);
+      // Update profile via backend API with retry logic
+      let attempts = 0;
+      const maxAttempts = 3;
 
-      if (!result.success) {
-        console.error('Profile update failed:', result.error);
-        throw new Error(result.error || 'Failed to update profile');
+      while (attempts < maxAttempts) {
+        try {
+          await apiClient.put('/api/auth/profile', updateData);
+          break; // Success, exit retry loop
+        } catch (error: any) {
+          attempts++;
+          console.warn(`Profile update attempt ${attempts} failed:`, error.message);
+
+          if (attempts >= maxAttempts) {
+            throw new Error(`Failed to update profile after ${maxAttempts} attempts: ${error.message}`);
+          }
+
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+        }
       }
+
+      // If we get here, the update was successful (apiClient throws on error)
 
       setSaveStatus("success");
       setErrorMessage("");
@@ -688,20 +696,19 @@ const TutorProfile: React.FC = () => {
                       Specializations
                     </span>
                   </Label>
-                  <Input
-                    type="text"
-                    id="specializations"
-                    name="specializations"
-                    value={formData.specializations.join(", ")}
-                    onChange={(e) =>
-                      handleArrayInputChange("specializations", e.target.value)
-                    }
-                    placeholder="e.g., Algebra, Calculus, SAT Prep, Special Education"
-                    maxLength={300}
-                    showCharCount
+                  <MultiSelect
+                    options={availableSubjects.map(subject => ({
+                      value: subject.name,
+                      label: subject.display_name,
+                      color: subject.color || undefined
+                    }))}
+                    value={formData.specializations}
+                    onChange={(value) => setFormData(prev => ({ ...prev, specializations: value }))}
+                    placeholder="Select subjects you specialize in..."
+                    className="h-12 rounded-2xl border-slate-600 bg-slate-600/50 text-slate-200 focus:border-green-500 focus:ring-green-500"
                   />
                   <p className="mt-1 text-xs text-slate-400">
-                    Separate multiple specializations with commas
+                    Choose the subjects you are qualified to tutor in
                   </p>
                 </div>
 

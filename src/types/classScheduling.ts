@@ -427,6 +427,7 @@ export interface ClassSearchResult {
   tutor: {
     id: string;
     full_name: string;
+    profileImageUrl?: string;
     rating: number;
     total_reviews: number;
     subjects: string[];

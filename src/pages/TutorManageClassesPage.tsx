@@ -18,6 +18,7 @@ import {
   X,
   Check,
   UserCheck,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
+import ActiveSessionFloatingButton from "@/components/tutor/dashboard/ActiveSessionFloatingButton";
 
 const TutorManageClassesPage: React.FC = () => {
   const { user, profile } = useAuth();
@@ -205,6 +207,40 @@ const TutorManageClassesPage: React.FC = () => {
     } catch (err) {
       console.error("Error confirming booking:", err);
       toast.error("Failed to confirm booking");
+    }
+  };
+
+  const handleStartSession = async (classId: string) => {
+    try {
+      setError(null);
+
+      // Find the class to get the Jitsi meeting URL
+      const classItem = classes.find(c => c.id === classId);
+      if (!classItem) {
+        throw new Error("Class not found");
+      }
+
+      if (!classItem.jitsi_meeting_url) {
+        throw new Error("No meeting URL configured for this class");
+      }
+
+      await classSchedulingService.classes.update(classId, {
+        status: "in_progress",
+      });
+
+      // Update the local state
+      setClasses((prev) =>
+        prev.map((c) => (c.id === classId ? { ...c, status: "in_progress" } : c))
+      );
+
+      // Open Jitsi meeting in new tab
+      window.open(classItem.jitsi_meeting_url, '_blank');
+
+      toast.success("Session started successfully!");
+    } catch (err) {
+      console.error("Error starting session:", err);
+      setError("Failed to start session");
+      toast.error("Failed to start session");
     }
   };
 
@@ -593,6 +629,19 @@ const TutorManageClassesPage: React.FC = () => {
                         Delete
                       </Button>
                     </div>
+                    {classItem.status === "scheduled" && (
+                      <div className="mt-2">
+                        <Button
+                          onClick={() => handleStartSession(classItem.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-full text-emerald-600 hover:text-emerald-700 hover:bg-emerald-700/20 group-hover:scale-105 transition-all duration-200"
+                        >
+                          <Video className="w-4 h-4 mr-1" />
+                          Start Session
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -762,6 +811,7 @@ const TutorManageClassesPage: React.FC = () => {
                 classTypes={classTypes}
                 onSave={handleUpdateClass}
                 onCancel={() => setEditingClass(null)}
+                userId={user!.id}
               />
             </motion.div>
           </div>
@@ -897,6 +947,7 @@ interface EditClassFormProps {
   classTypes: ClassType[];
   onSave: (updatedClass: Partial<TutorClass>) => void;
   onCancel: () => void;
+  userId: string;
 }
 
 const EditClassForm: React.FC<EditClassFormProps> = ({
@@ -904,6 +955,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
   classTypes,
   onSave,
   onCancel,
+  userId,
 }) => {
   const getClassTypeId = (classTypeId: string | undefined, classData?: TutorClass) => {
     // First try to find by class_type_id if it exists
@@ -1323,6 +1375,8 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           </Button>
         </div>
       </form>
+      {/* Floating Active Session Button */}
+      <ActiveSessionFloatingButton tutorId={userId} />
     </div>
   );
 };

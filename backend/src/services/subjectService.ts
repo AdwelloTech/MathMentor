@@ -40,6 +40,23 @@ export class SubjectService {
   }
 
   /**
+   * Get subjects by names array
+   */
+  static async getSubjectsByNames(names: string[]): Promise<ISubject[]> {
+    try {
+      if (names.length === 0) return [];
+
+      return await Subject.find({
+        name: { $in: names },
+        isActive: true
+      }).sort({ sortOrder: 1, displayName: 1 });
+    } catch (error) {
+      console.error('Error getting subjects by names:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create a new subject
    */
   static async createSubject(subjectData: Partial<ISubject>): Promise<ISubject> {

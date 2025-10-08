@@ -499,7 +499,7 @@ const ClassSchedulingPage: React.FC = () => {
                   {classType.name}
                 </h3>
                 <p className="text-sm text-slate-400 mb-4">
-z                  {classType.description || "No description available"}
+                  {classType.description || "No description available"}
                 </p>
 
                 <div className="space-y-3 text-sm text-slate-400">
@@ -727,10 +727,10 @@ z                  {classType.description || "No description available"}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-slate-700/50 rounded-lg border-slate-600 p-6 w-full max-w-md mx-4"
+            className="bg-card rounded-xl border border-border p-6 w-full max-w-md mx-4 shadow-2xl"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-foreground">
                 Create {selectedClassType?.name}
               </h3>
               <button
@@ -743,7 +743,7 @@ z                  {classType.description || "No description available"}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-amber-200/90 mb-1">
                   Subject
                 </label>
                 <select
@@ -754,7 +754,7 @@ z                  {classType.description || "No description available"}
                       subject_id: e.target.value || undefined,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-slate-700/50"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-input text-foreground"
                 >
                   <option value="" disabled>
                     Select subject
@@ -784,7 +784,7 @@ z                  {classType.description || "No description available"}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-amber-200/90 mb-1">
                   Class Title
                 </label>
                 <input
@@ -793,13 +793,13 @@ z                  {classType.description || "No description available"}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, title: e.target.value }))
                   }
-                  className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-input text-foreground placeholder:text-muted-foreground"
                   placeholder="Enter class title"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-amber-200/90 mb-1">
                   Description (Optional)
                 </label>
                 <textarea
@@ -810,7 +810,7 @@ z                  {classType.description || "No description available"}
                       description: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-input text-foreground placeholder:text-muted-foreground"
                   rows={3}
                   placeholder="Enter class description"
                 />
@@ -818,7 +818,7 @@ z                  {classType.description || "No description available"}
 
               {selectedClassType && (selectedClassType.max_students || 1) > 1 && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-amber-200/90 mb-1">
                     Max Students
                   </label>
                   <input
@@ -832,13 +832,13 @@ z                  {classType.description || "No description available"}
                         max_students: parseInt(e.target.value),
                       }))
                     }
-                    className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-input text-foreground"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-amber-200/90 mb-1">
                   Price per Session ($)
                 </label>
                 <input
@@ -852,7 +852,7 @@ z                  {classType.description || "No description available"}
                       price_per_session: parseFloat(e.target.value),
                     }))
                   }
-                  className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-input text-foreground"
                 />
               </div>
 
@@ -860,13 +860,13 @@ z                  {classType.description || "No description available"}
                 <button
                   onClick={handleCreateClass}
                   disabled={loading || !formData.title || !formData.subject_id || !formData.grade_level_id}
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white py-2 px-4 rounded-md font-semibold shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Creating..." : "Create Class"}
                 </button>
                 <button
                   onClick={() => setShowClassForm(false)}
-                  className="flex-1 bg-gray-300 text-slate-300 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="flex-1 border border-border bg-transparent hover:bg-muted text-foreground py-2 px-4 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   Cancel
                 </button>

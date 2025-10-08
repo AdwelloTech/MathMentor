@@ -1,6 +1,7 @@
 import express from 'express';
 import Joi from 'joi';
 import { SubjectService } from '../services/subjectService';
+import { User } from '../models/User';
 import { authenticate, authorize } from '../middleware/auth';
 import { validateOrThrow } from '../utils/validation';
 
@@ -38,6 +39,39 @@ router.get('/', authenticate, async (req, res) => {
     res.json({
       success: true,
       data: subjects,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Get subjects available for instant sessions (subjects that have online tutors)
+router.get('/available', authenticate, async (req, res) => {
+  try {
+    // Get all online tutors with their specializations
+    const onlineTutors = await User.find({
+      role: 'tutor',
+      isOnline: true,
+      specializations: { $exists: true, $ne: [] }
+    }).select('specializations');
+
+    // Collect unique subject names from online tutors
+    const availableSubjectNames = new Set<string>();
+    onlineTutors.forEach(tutor => {
+      tutor.specializations?.forEach((subjectName: string) => {
+        availableSubjectNames.add(subjectName);
+      });
+    });
+
+    // Get subject details for available subjects
+    const availableSubjects = await SubjectService.getSubjectsByNames(Array.from(availableSubjectNames));
+
+    res.json({
+      success: true,
+      data: availableSubjects,
     });
   } catch (error: any) {
     res.status(400).json({

@@ -44,6 +44,7 @@ export interface UpdateClassData {
   price?: number;
   currency?: string;
   isActive?: boolean;
+  status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
   prerequisites?: string[];
   materials?: string[];
   meetingLink?: string;
@@ -227,7 +228,7 @@ export class ClassService {
     }
 
     const classes = await Class.find(query)
-      .populate('teacherId', 'firstName lastName fullName email')
+      .populate('teacherId', 'firstName lastName fullName email profileImageUrl')
       .populate('subjectId', 'name displayName color')
       .populate('gradeLevelId', 'displayName')
       .sort({ startDate: 1 })
@@ -257,6 +258,7 @@ export class ClassService {
         tutor: {
           id: cleanClass.teacherId,
           full_name: (cleanClass.teacherId_populated as any)?.fullName || 'Unknown Tutor',
+          profileImageUrl: (cleanClass.teacherId_populated as any)?.profileImageUrl,
           rating: 4.5, // Mock rating
           total_reviews: 10, // Mock reviews
           subjects: [] // Mock subjects

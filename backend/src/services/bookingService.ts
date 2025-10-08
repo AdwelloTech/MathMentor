@@ -118,7 +118,7 @@ export class BookingService {
     return await Booking.findOne(query)
       .populate('studentId', 'firstName lastName fullName email')
       .populate('teacherId', 'firstName lastName fullName email')
-      .populate('classId', 'title subjectId gradeLevelId schedule')
+      .populate('classId', 'title subjectId gradeLevelId schedule meetingLink jitsiRoomName jitsiPassword teacherId startDate endDate capacity enrolledCount price currency isActive isFull status')
       .populate('subjectId', 'name displayName color')
       .populate('gradeLevelId', 'displayName')
       .populate('createdBy', 'firstName lastName fullName');
@@ -153,7 +153,7 @@ export class BookingService {
 
     return await Booking.find(query)
       .populate('teacherId', 'firstName lastName fullName email')
-      .populate('classId', 'title subjectId gradeLevelId schedule meetingLink jitsiRoomName jitsiPassword teacherId startDate endDate capacity enrolledCount price currency isActive isFull')
+      .populate('classId', 'title subjectId gradeLevelId schedule meetingLink jitsiRoomName jitsiPassword teacherId startDate endDate capacity enrolledCount price currency isActive isFull status')
       .populate('subjectId', 'name displayName color')
       .populate('gradeLevelId', 'displayName')
       .sort({ scheduledDate: -1, startTime: -1 })
@@ -190,7 +190,7 @@ export class BookingService {
 
     return await Booking.find(query)
       .populate('studentId', 'firstName lastName fullName email')
-      .populate('classId', 'title subjectId gradeLevelId schedule meetingLink jitsiRoomName jitsiPassword teacherId startDate endDate capacity enrolledCount price currency isActive isFull')
+      .populate('classId', 'title subjectId gradeLevelId schedule meetingLink jitsiRoomName jitsiPassword teacherId startDate endDate capacity enrolledCount price currency isActive isFull status')
       .populate('subjectId', 'name displayName color')
       .populate('gradeLevelId', 'displayName')
       .sort({ scheduledDate: -1, startTime: -1 })

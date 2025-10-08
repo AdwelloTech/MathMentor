@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
+import apiClient from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
 
@@ -27,13 +27,8 @@ const OnlineStatusToggle: React.FC<OnlineStatusToggleProps> = ({
       // Optimistically update UI
       setIsOnline(newStatus);
 
-      // Update database
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_online: newStatus, updated_at: new Date().toISOString() })
-        .eq("id", profile.id);
-
-      if (error) throw error;
+      // Update database via profile endpoint
+      await apiClient.put(`/api/auth/profile`, { isOnline: newStatus });
 
       // Update local context
       if (updateProfile) {

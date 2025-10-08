@@ -182,6 +182,7 @@ router.get('/me', authenticate, async (req, res) => {
         cv_url: user.cvUrl,
         cv_file_name: user.cvFileName,
         profile_completed: user.profileCompleted,
+        is_online: user.isOnline,
         created_at: user.createdAt,
         last_login: user.lastLogin
       }

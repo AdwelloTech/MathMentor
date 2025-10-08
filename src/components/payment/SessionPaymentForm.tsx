@@ -15,6 +15,7 @@ import {
 } from "@heroicons/react/24/solid";
 import stripePromise from "@/lib/stripe";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SessionPaymentFormProps {
   sessionTitle: string;
@@ -41,6 +42,7 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
 }) => {
   const stripe = useStripe();
   const elements = useElements();
+  const { theme } = useTheme();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<
     "idle" | "processing" | "success" | "error"
@@ -126,19 +128,22 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
     }
   };
 
-  const cardElementOptions = {
-    style: {
-      base: {
-        fontSize: "16px",
-        color: "#424770",
-        "::placeholder": {
-          color: "#aab7c4",
+  const getCardElementOptions = () => {
+    const isDark = theme === 'dark';
+    return {
+      style: {
+        base: {
+          fontSize: "16px",
+          color: isDark ? "#F1F5F9" : "#111827", // foreground color
+          "::placeholder": {
+            color: isDark ? "#94A3B8" : "#6B7280", // muted-foreground color
+          },
+        },
+        invalid: {
+          color: "#EF4444", // red-500 (semantic error color)
         },
       },
-      invalid: {
-        color: "#9e2146",
-      },
-    },
+    };
   };
 
   if (paymentStatus === "success") {
@@ -161,24 +166,24 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
 
   return (
     <div className="max-w-md mx-auto">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
         {/* Header */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center mb-3">
             <CreditCardIcon className="h-8 w-8 text-primary-600" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900">
+          <h3 className="text-xl font-semibold text-foreground">
             Complete Your Session Payment
           </h3>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             ${amount.toFixed(2)} - {sessionTitle}
           </p>
         </div>
 
         {/* Session Details */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <h4 className="font-medium text-gray-900 mb-2">Session Details</h4>
-          <div className="space-y-1 text-sm text-gray-600">
+        <div className="bg-muted rounded-lg p-4 mb-6">
+          <h4 className="font-medium text-foreground mb-2">Session Details</h4>
+          <div className="space-y-1 text-sm text-muted-foreground">
             <p>
               <span className="font-medium">Tutor:</span> {tutorName}
             </p>
@@ -200,12 +205,12 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Card Number */}
           <div className="form-group">
-            <label className="form-label text-sm font-medium text-gray-700">
+            <label className="form-label text-sm font-medium text-foreground">
               Card Number
             </label>
             <div className="mt-1 relative">
-              <div className="input px-3 py-3 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500">
-                <CardNumberElement options={cardElementOptions} />
+              <div className="input px-3 py-3 border border-border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:border-ring">
+                <CardNumberElement options={getCardElementOptions()} />
               </div>
             </div>
           </div>
@@ -213,23 +218,23 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
           {/* Expiry and CVC */}
           <div className="grid grid-cols-2 gap-4">
             <div className="form-group">
-              <label className="form-label text-sm font-medium text-gray-700">
+              <label className="form-label text-sm font-medium text-foreground">
                 Expiry Date
               </label>
               <div className="mt-1">
-                <div className="input px-3 py-3 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500">
-                  <CardExpiryElement options={cardElementOptions} />
+                <div className="input px-3 py-3 border border-border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:border-ring">
+                  <CardExpiryElement options={getCardElementOptions()} />
                 </div>
               </div>
             </div>
 
             <div className="form-group">
-              <label className="form-label text-sm font-medium text-gray-700">
+              <label className="form-label text-sm font-medium text-foreground">
                 CVC
               </label>
               <div className="mt-1">
-                <div className="input px-3 py-3 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500">
-                  <CardCvcElement options={cardElementOptions} />
+                <div className="input px-3 py-3 border border-border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:border-ring">
+                  <CardCvcElement options={getCardElementOptions()} />
                 </div>
               </div>
             </div>
@@ -248,9 +253,9 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
           )}
 
           {/* Security Notice */}
-          <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-            <LockClosedIcon className="h-4 w-4 text-gray-500 mr-2" />
-            <p className="text-xs text-gray-600">
+          <div className="flex items-center p-3 bg-muted rounded-lg">
+            <LockClosedIcon className="h-4 w-4 text-muted-foreground mr-2" />
+            <p className="text-xs text-muted-foreground">
               Your payment information is encrypted and secure. Powered by
               Stripe.
             </p>
@@ -262,14 +267,14 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
               type="button"
               onClick={onCancel}
               disabled={isProcessing}
-              className="flex-1 btn btn-secondary"
+              className="flex-1 bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!stripe || isProcessing}
-              className="flex-1 btn btn-primary"
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isProcessing ? (
                 <>
@@ -284,17 +289,17 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
         </form>
 
         {/* Test Card Info */}
-        <div className="mt-6 p-3 bg-blue-50 rounded-lg">
-          <p className="text-xs font-medium text-blue-900 mb-1">
+        <div className="mt-6 p-3 bg-accent/10 rounded-lg border border-accent/20">
+          <p className="text-xs font-medium text-accent-foreground mb-1">
             Demo Mode - Use Test Cards:
           </p>
-          <p className="text-xs text-blue-700">
+          <p className="text-xs text-accent-foreground/80">
             ✅ Success: 4242 4242 4242 4242 | ❌ Decline: 4000 0000 0000 0002
           </p>
-          <p className="text-xs text-blue-600 mt-1">
+          <p className="text-xs text-accent-foreground/70 mt-1">
             Any future date | Any 3-digit CVC | Card validation active
           </p>
-          <p className="text-xs text-blue-500 mt-1">
+          <p className="text-xs text-accent-foreground/60 mt-1">
             💡 Real payments require backend API implementation
           </p>
         </div>

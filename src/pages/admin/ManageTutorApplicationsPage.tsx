@@ -21,7 +21,6 @@ import {
   ApplicationStats,
 } from "@/lib/adminTutorApplicationService";
 import { useAdmin } from "@/contexts/AdminContext";
-import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -144,72 +143,40 @@ const ManageTutorApplicationsPage: React.FC = () => {
       const bucketName = urlMatch[1];
       const filePath = urlMatch[2];
 
-      // Try to download using Supabase storage client first
-      try {
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .download(filePath);
+      // Try direct URL fetch for file download
+      const response = await fetch(cvUrl);
 
-        if (error) {
-          throw error;
+      if (!response.ok) {
+        if (response.status === 404) {
+          toast.error(
+            "CV file not found. The file may have been deleted or moved."
+          );
+        } else {
+          toast.error(`Failed to download CV. Error: ${response.status}`);
         }
-
-        if (data) {
-          // Create a blob URL
-          const blobUrl = window.URL.createObjectURL(data);
-
-          // Create a temporary anchor element
-          const link = document.createElement("a");
-          link.href = blobUrl;
-          link.download = fileName || "cv.pdf";
-
-          // Append to body, click, and remove
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          // Clean up the blob URL
-          window.URL.revokeObjectURL(blobUrl);
-
-          toast.success("CV download started");
-          return;
-        }
-      } catch (storageError) {
-        // Fallback: Try direct URL fetch
-        const response = await fetch(cvUrl);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            toast.error(
-              "CV file not found. The file may have been deleted or moved."
-            );
-          } else {
-            toast.error(`Failed to download CV. Error: ${response.status}`);
-          }
-          return;
-        }
-
-        // Get the blob from the response
-        const blob = await response.blob();
-
-        // Create a blob URL
-        const blobUrl = window.URL.createObjectURL(blob);
-
-        // Create a temporary anchor element
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = fileName || "cv.pdf";
-
-        // Append to body, click, and remove
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Clean up the blob URL
-        window.URL.revokeObjectURL(blobUrl);
-
-        toast.success("CV download started");
+        return;
       }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName || "cv.pdf";
+
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl);
+
+      toast.success("CV download started");
     } catch (error) {
       console.error("Error downloading CV:", error);
       toast.error("Failed to download CV. Please try again.");

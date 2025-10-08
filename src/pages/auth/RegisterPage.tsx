@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import registerIllustration from "@/assets/student-register.png";
 
 
 const RegisterPage: React.FC = () => {
@@ -413,7 +414,7 @@ const RegisterPage: React.FC = () => {
             </text>
           </svg>
 
-          <div className="relative z-10 h-full w-full flex flex-col items-center justify-center text-center px-10 pt-0">
+          <div className="relative z-10 h-full w-full flex flex-col items-center justify-start text-center px-10 pt-16 mt-8">
             <motion.h1
               className="text-5xl md:text-6xl font-extrabold leading-tight mb-4 text-white drop-shadow-lg tracking-wide"
               initial={{ opacity: 0, y: 12 }}
@@ -429,7 +430,7 @@ const RegisterPage: React.FC = () => {
               Start your learning journey with expert tutors and achieve academic excellence
             </motion.p>
             <motion.img
-              src={"/src/assets/student-register.png"}
+              src={registerIllustration}
               alt="Registration Illustration"
               className="pointer-events-none absolute -translate-x-1/2 bottom-[-42px] w-[88%] max-w-[680px] object-contain drop-shadow-2xl"
               initial={{ y: 20, opacity: 0 }}

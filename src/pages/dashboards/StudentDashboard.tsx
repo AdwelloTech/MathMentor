@@ -23,6 +23,7 @@ import {
   LightBulbIcon,
   CogIcon,
   ChartBarIcon as TrendingUpIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPackageDisplayName } from "@/utils/permissions";
@@ -151,6 +152,7 @@ const StudentDashboard: React.FC = () => {
       return sessions.map((session: any) => ({
         id: session.id,
         tutor: session.tutor_name,
+        tutorProfileImage: session.tutor_profile_image,
         subject: session.title,
         time: formatUpcomingTime(session.date, session.start_time),
         duration: getDuration(session.start_time, session.end_time),
@@ -700,16 +702,26 @@ const StudentDashboard: React.FC = () => {
                         data.upcomingSessions.slice(0, 3).map((session) => (
                         <div
                             key={session.id}
-                            className="flex items-center space-x-3 p-3 bg-secondary rounded-lg shadow-sm"
+                            className="flex items-center space-x-3 p-3 bg-secondary hover:bg-secondary/80 rounded-lg shadow-sm transition-colors duration-200 cursor-pointer"
                         >
-                            <div className="bg-primary/20 w-8 h-8 rounded-lg flex items-center justify-center">
-                              <VideoCameraIcon className="w-4 h-4 text-primary" />
+                            <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+                              {session.tutorProfileImage ? (
+                                <img
+                                  src={session.tutorProfileImage}
+                                  alt={session.tutor}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-primary font-semibold text-sm">
+                                  {session.tutor.charAt(0).toUpperCase()}
+                                </span>
+                              )}
                           </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-base font-semibold text-card-foreground truncate">
                                 {session.subject}
                               </p>
-                              <p className="text-sm text-card-foreground font-medium truncate">
+                              <p className="text-sm text-card-foreground/80 font-medium truncate">
                                 {session.tutor} • {session.time}
                               </p>
                         </div>
@@ -723,6 +735,97 @@ const StudentDashboard: React.FC = () => {
                 </Card>
               </motion.div>
             </div>
+
+            {/* Instant Session Hero Card */}
+            <motion.div variants={itemVariants} className="mb-8">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => navigate("/student/instant-session")}
+                className="cursor-pointer relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-emerald-600 shadow-2xl shadow-primary/20 border border-primary/20"
+              >
+                {/* Animated background effects */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+                
+                <div className="relative p-8 md:p-10">
+                  <div className="flex flex-col md:flex-row items-center gap-6">
+                    {/* Icon with pulse animation */}
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        rotate: [0, 5, -5, 0],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      className="flex-shrink-0 w-20 h-20 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center shadow-xl"
+                    >
+                      <SparklesIcon className="w-10 h-10 text-white" />
+                    </motion.div>
+
+                    {/* Content */}
+                    <div className="flex-1 text-center md:text-left">
+                      <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                        <Badge className="bg-white/20 text-white border-white/30 font-semibold px-3 py-1">
+                          NEW
+                        </Badge>
+                        <Badge className="bg-yellow-400/20 text-white border-yellow-400/30 font-semibold px-3 py-1">
+                          <ClockIcon className="w-3 h-3 mr-1" />
+                          15 min
+                        </Badge>
+                      </div>
+                      <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                        Instant Session
+                      </h2>
+                      <p className="text-white/90 text-lg mb-4">
+                        Get tutoring help immediately • Like Uber for tutoring
+                      </p>
+                      <div className="flex flex-wrap gap-3 justify-center md:justify-start text-sm text-white/80">
+                        <div className="flex items-center gap-1">
+                          <CheckCircleIcon className="w-4 h-4" />
+                          No waiting
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <UserGroupIcon className="w-4 h-4" />
+                          Live tutors
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <SparklesIcon className="w-4 h-4" />
+                          Instant connect
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div className="flex-shrink-0">
+                      <div className="bg-white text-primary px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/95 transition-all duration-200 shadow-xl hover:shadow-2xl flex items-center gap-2">
+                        Request Tutor Now
+                        <ArrowRightIcon className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Feature highlights */}
+                  <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-white/20">
+                    {[
+                      { label: "Quick Sessions", detail: "Get help in 15 min" },
+                      { label: "Expert Tutors", detail: "Qualified & ready" },
+                      { label: "Instant Connect", detail: "Start immediately" },
+                    ].map((feature) => (
+                      <div key={feature.label} className="text-center">
+                        <p className="text-white font-semibold text-sm mb-1">
+                          {feature.label}
+                        </p>
+                        <p className="text-white/70 text-xs">{feature.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
 
             <motion.div id="quick-actions" variants={itemVariants} className="mb-16">
               <Card className="border-border shadow-lg bg-card">

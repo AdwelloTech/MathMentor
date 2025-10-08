@@ -397,9 +397,9 @@ const CreateQuizPage: React.FC = () => {
   const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-800 relative overflow-auto -mx-4 sm:-mx-6 lg:-mx-8 -my-10 px-4 sm:px-6 lg:px-8 py-10">
+    <div className="min-h-screen bg-background relative overflow-auto -mx-4 sm:-mx-6 lg:-mx-8 -my-10 px-4 sm:px-6 lg:px-8 py-10">
       {/* Full page background */}
-      <div className="fixed inset-0 bg-slate-800 -z-10" />
+      <div className="fixed inset-0 bg-background -z-10" />
 
       {/* Animated background elements */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.05),transparent_50%)]" />
@@ -425,13 +425,13 @@ const CreateQuizPage: React.FC = () => {
           <div className="flex items-center justify-center space-x-4 mb-6">
             <button
               onClick={() => navigate("/quizzes")}
-              className="text-slate-300 hover:text-slate-200 p-2 hover:bg-slate-700/50/50 rounded-lg transition-colors"
+              className="text-muted-foreground hover:text-foreground p-2 hover:bg-muted/50 rounded-lg transition-colors"
             >
               <ArrowLeftIcon className="h-5 w-5" />
             </button>
             <h1 className="text-3xl font-bold text-green-400">Create Quiz</h1>
           </div>
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Create a new quiz with up to 40 questions
           </p>
         </motion.div>
@@ -444,21 +444,21 @@ const CreateQuizPage: React.FC = () => {
           className="space-y-6"
         >
           <div className="flex items-center justify-center space-x-4">
-            <h2 className="text-lg font-semibold text-slate-200 mb-6">
+            <h2 className="text-lg font-semibold text-foreground mb-6">
               Quiz Information
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Quiz Title *
               </label>
               <Input
                 type="text"
                 value={quizData.title}
                 onChange={(e) => updateQuizData("title", e.target.value)}
-                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Enter quiz title"
                 maxLength={100}
                 showCharCount
@@ -466,14 +466,14 @@ const CreateQuizPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Subject *
               </label>
               <Select
                 value={quizData.subject}
                 onValueChange={(value) => updateQuizData("subject", value)}
               >
-                <SelectTrigger className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                <SelectTrigger className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
                   <SelectValue placeholder="Select a subject" />
                 </SelectTrigger>
                 <SelectContent>
@@ -487,19 +487,19 @@ const CreateQuizPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Grade Level
               </label>
               <GradeSelect
                 value={quizData.grade_level}
                 onChange={(value) => updateQuizData("grade_level", value)}
                 placeholder="Select grade level"
-                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Time Limit (minutes)
               </label>
               <input
@@ -512,21 +512,21 @@ const CreateQuizPage: React.FC = () => {
                     : Math.min(180, Math.max(1, parsed));
                   updateQuizData("time_limit_minutes", next);
                 }}
-                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 min={1}
                 max={180}
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Description
               </label>
               <Textarea
                 value={quizData.description}
                 onChange={(e) => updateQuizData("description", e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Enter quiz description (optional)"
                 maxLength={500}
                 showCharCount
@@ -591,9 +591,9 @@ const CreateQuizPage: React.FC = () => {
             className="space-y-6"
           >
             {/* AI Generator */}
-            <div className="bg-slate-700/50 rounded-lg shadow-sm border p-6">
+            <div className="bg-card rounded-lg shadow-sm border p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-200">
+                <h3 className="text-lg font-semibold text-foreground">
                   AI Question Generator
                 </h3>
                 <div className="flex items-center space-x-2 text-sm">
@@ -602,7 +602,7 @@ const CreateQuizPage: React.FC = () => {
                     value={questionFilter}
                     onValueChange={(value) => setQuestionFilter(value as any)}
                   >
-                    <SelectTrigger className="px-2 py-1 border border-slate-600 rounded-md">
+                    <SelectTrigger className="px-2 py-1 border border-border rounded-md">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -615,14 +615,14 @@ const CreateQuizPage: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Difficulty
                   </label>
                   <Select
                     value={aiDifficulty}
                     onValueChange={(value) => setAiDifficulty(value as any)}
                   >
-                    <SelectTrigger className="w-full px-3 py-2 border border-slate-600 rounded-md">
+                    <SelectTrigger className="w-full px-3 py-2 border border-border rounded-md">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -633,14 +633,14 @@ const CreateQuizPage: React.FC = () => {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Question Type
                   </label>
                   <Select
                     value={aiQuestionType}
                     onValueChange={(value) => setAiQuestionType(value as any)}
                   >
-                    <SelectTrigger className="w-full px-3 py-2 border border-slate-600 rounded-md">
+                    <SelectTrigger className="w-full px-3 py-2 border border-border rounded-md">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -652,7 +652,7 @@ const CreateQuizPage: React.FC = () => {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Number of questions
                   </label>
                   <input
@@ -668,7 +668,7 @@ const CreateQuizPage: React.FC = () => {
                         )
                       )
                     }
-                    className="w-full px-3 py-2 border border-slate-600 rounded-md"
+                    className="w-full px-3 py-2 border border-border rounded-md"
                   />
                 </div>
                 <div className="flex items-end">
@@ -689,10 +689,10 @@ const CreateQuizPage: React.FC = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Optional: Upload syllabus PDF for context
                 </label>
-                <div className="flex items-center justify-between rounded-md border-2 border-dashed border-slate-600 bg-slate-700 px-3 py-3">
+                <div className="flex items-center justify-between rounded-md border-2 border-dashed border-border bg-card px-3 py-3">
                   <div className="flex items-center gap-3">
                     <input
                       id="quiz-create-pdf"
@@ -755,7 +755,7 @@ const CreateQuizPage: React.FC = () => {
                     />
                     <label
                       htmlFor="quiz-create-pdf"
-                      className="inline-flex items-center px-3 py-2 bg-slate-700/50 border rounded-md text-sm cursor-pointer hover:bg-slate-700"
+                      className="inline-flex items-center px-3 py-2 bg-muted border rounded-md text-sm cursor-pointer hover:bg-muted/80"
                     >
                       Choose PDFs (up to 10)
                     </label>
@@ -764,7 +764,7 @@ const CreateQuizPage: React.FC = () => {
                         {pdfs.map((pdf, index) => (
                           <span
                             key={`${pdf.fileName}-${index}`}
-                            className="text-xs text-slate-300 bg-slate-700/50 border rounded-full px-2 py-1 flex items-center gap-1"
+                            className="text-xs text-muted-foreground bg-muted border rounded-full px-2 py-1 flex items-center gap-1"
                           >
                             {pdf.fileName} ({Math.round(pdf.fileSize / 1024)}{" "}
                             KB)
@@ -774,7 +774,7 @@ const CreateQuizPage: React.FC = () => {
                                   prev.filter((_, i) => i !== index)
                                 )
                               }
-                              className="ml-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center"
+                              className="ml-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center"
                               title="Remove PDF"
                             >
                               ×
@@ -783,7 +783,7 @@ const CreateQuizPage: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-muted-foreground">
                         No files selected
                       </span>
                     )}
@@ -796,13 +796,13 @@ const CreateQuizPage: React.FC = () => {
                         setPdfSize(null);
                         setPdfs([]);
                       }}
-                      className="text-xs text-slate-300 hover:text-slate-200"
+                      className="text-xs text-muted-foreground hover:text-foreground"
                     >
                       Clear All
                     </button>
                   )}
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   PDFs up to 10MB each, maximum 10 files. We'll use their text
                   as AI context.
                 </p>
@@ -811,7 +811,7 @@ const CreateQuizPage: React.FC = () => {
 
             {/* Quiz Summary */}
             <div className="bg-blue-700/20 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-blue-300 mb-2">
+              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
                 Quiz Summary
               </h3>
               <div className="text-sm text-blue-400">
@@ -839,7 +839,7 @@ const CreateQuizPage: React.FC = () => {
             </div>
 
             {/* Question Management */}
-            <Card className="border border-slate-600 shadow-lg border-0">
+            <Card className="border border-border shadow-lg">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
@@ -863,8 +863,8 @@ const CreateQuizPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 {visibleQuestions.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-slate-600 rounded-lg">
-                    <div className="text-slate-400 mb-4">
+                  <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+                    <div className="text-muted-foreground mb-4">
                       <svg
                         className="mx-auto h-12 w-12 text-gray-400"
                         fill="none"
@@ -879,10 +879,10 @@ const CreateQuizPage: React.FC = () => {
                         />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-slate-200 mb-2">
+                    <h3 className="text-lg font-medium text-foreground mb-2">
                       No questions yet
                     </h3>
-                    <p className="text-slate-400 mb-4">
+                    <p className="text-muted-foreground mb-4">
                       Get started by adding manual questions or generating AI
                       questions
                     </p>
@@ -909,7 +909,7 @@ const CreateQuizPage: React.FC = () => {
                         <CardHeader className="pb-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                              <h4 className="text-lg font-medium text-slate-200">
+                              <h4 className="text-lg font-medium text-foreground">
                                 Question {question.question_order || questionIndex + 1}
                               </h4>
                               {isAI && (
@@ -926,7 +926,7 @@ const CreateQuizPage: React.FC = () => {
                                       ? "bg-green-600/20 text-green-800 hover:bg-green-600/20"
                                       : aiStatus === "pending"
                                       ? "bg-yellow-500/20 text-yellow-300 hover:bg-yellow-100"
-                                      : "bg-gray-100 text-slate-300 hover:bg-gray-100"
+                                      : "bg-muted text-muted-foreground hover:bg-muted"
                                   }
                                 >
                                   AI {aiStatus || "pending"}
@@ -944,7 +944,7 @@ const CreateQuizPage: React.FC = () => {
                                   )
                                 }
                               >
-                                <SelectTrigger className="px-3 py-1 border border-slate-600 rounded-md text-sm">
+                                <SelectTrigger className="px-3 py-1 border border-border rounded-md text-sm">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -957,7 +957,7 @@ const CreateQuizPage: React.FC = () => {
                                 </SelectContent>
                               </Select>
                               <div className="flex items-center space-x-2">
-                                <span className="text-sm text-slate-300">
+                                <span className="text-sm text-muted-foreground">
                                   Points:
                                 </span>
                                 <input
@@ -977,7 +977,7 @@ const CreateQuizPage: React.FC = () => {
                                       next
                                     );
                                   }}
-                                  className="w-16 px-2 py-1 border border-slate-600 rounded-md text-sm"
+                                  className="w-16 px-2 py-1 border border-border rounded-md text-sm"
                                   min={1}
                                   max={100}
                                 />
@@ -1016,7 +1016,7 @@ const CreateQuizPage: React.FC = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="mb-6">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-foreground mb-2">
                               Question Text *
                             </label>
                             <Textarea
@@ -1029,7 +1029,7 @@ const CreateQuizPage: React.FC = () => {
                                 )
                               }
                               rows={3}
-                              className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                               placeholder="Enter your question here"
                               maxLength={300}
                               showCharCount
@@ -1101,7 +1101,7 @@ const CreateQuizPage: React.FC = () => {
                           {/* Show selected PDFs (if any) */}
                           <div className="mt-4">
                             {pdfs.length > 0 ? (
-                              <div className="space-y-2 text-sm text-slate-300">
+                              <div className="space-y-2 text-sm text-muted-foreground">
                                 {pdfs.map((pdf, index) => (
                                   <div
                                     key={`${pdf.fileName}-${index}`}
@@ -1126,17 +1126,17 @@ const CreateQuizPage: React.FC = () => {
                                 ))}
                                 <button
                                   onClick={() => setPdfs([])}
-                                  className="text-xs text-slate-300 hover:text-slate-200"
+                                  className="text-xs text-muted-foreground hover:text-foreground"
                                 >
                                   Clear All
                                 </button>
                               </div>
                             ) : (
-                              <p className="text-xs text-slate-400">
+                              <p className="text-xs text-muted-foreground">
                                 No files selected
                               </p>
                             )}
-                            <p className="text-xs text-slate-400 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               PDFs up to 10MB each, maximum 10 files. We'll use
                               their text as AI context.
                             </p>
@@ -1154,13 +1154,13 @@ const CreateQuizPage: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => setCurrentStep(1)}
-                className="border-gray-300 text-slate-300 hover:bg-slate-700"
+                className="border-border text-muted-foreground hover:bg-muted"
               >
                 Back to Quiz Details
               </Button>
 
               <div className="flex items-center space-x-4">
-                <div className="text-sm text-slate-300">
+                <div className="text-sm text-muted-foreground">
                   Questions: {questions.length} | Total Points: {totalPoints}
                 </div>
                 <div className="relative group">
@@ -1182,9 +1182,9 @@ const CreateQuizPage: React.FC = () => {
                     )}
                   </Button>
                   {!validateStep2() && !loading && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-slate-200 text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
                       {getValidationReason()}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-popover" />
                     </div>
                   )}
                 </div>

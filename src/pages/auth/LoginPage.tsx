@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import loginIllustration from "@/assets/student-login.png";
 
 const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -320,7 +321,7 @@ const LoginPage: React.FC = () => {
               Enter your credentials to sign in to MathMentor
             </motion.p>
             <motion.img
-              src={"/src/assets/student-login.png"}
+              src={loginIllustration}
               alt="Login Illustration"
               className="pointer-events-none absolute -translate-x-1/2 bottom-[-42px] w-[88%] max-w-[680px] object-contain drop-shadow-2xl"
               initial={{ y: 20, opacity: 0 }}

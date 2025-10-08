@@ -1,270 +1,249 @@
-import { supabase } from "@/lib/supabase";
+// Instant Session Service - Real Implementation
+import apiClient from './apiClient';
 
-// Shared broadcast channel (singleton) to minimize latency when sending events
-// We subscribe once and reuse the same channel for .send() calls
-let __instantSharedChannel: any | null = null;
-let __instantSharedReady: Promise<void> | null = null;
+export type InstantSessionStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
 
-function getInstantSharedChannel() {
-  const channelId = `instant_requests:pending:shared`;
-  if (!__instantSharedChannel) {
-    __instantSharedChannel = (supabase as any).channel(channelId);
-    __instantSharedReady = new Promise<void>((resolve) => {
-      try {
-        __instantSharedChannel.subscribe((status: any) => {
-          if (status === "SUBSCRIBED") resolve();
-        });
-      } catch (_) {
-        // Best-effort; if subscribe throws, we'll still try to send later
-        resolve();
-      }
-    });
-  }
-  return { channel: __instantSharedChannel, ready: __instantSharedReady! };
-}
-
-type InstantRequest = {
-  id: string;
-  student_id: string;
-  subject_id: string;
-  duration_minutes: number;
-  status: "pending" | "accepted" | "cancelled";
-  accepted_by_tutor_id: string | null;
-  jitsi_meeting_url: string | null;
-  created_at: string;
-  updated_at: string;
+export type InstantRequest = {
+  _id: string;
+  id: string; // Alias for _id
+  studentId: string | { _id: string; fullName: string; email: string };
+  tutorId?: string | { _id: string; fullName: string; email: string };
+  subjectId: string | { _id: string; name: string; displayName: string; color: string };
+  status: InstantSessionStatus;
+  durationMinutes: number;
+  jitsiMeetingUrl?: string;
+  tutorJoinedAt?: string;
+  studentJoinedAt?: string;
+  requestedAt: string;
+  acceptedAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  cancelledAt?: string;
+  expiredAt?: string;
+  cancellationReason?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export const instantSessionService = {
   // Student creates a new instant request (fixed 15 minutes)
-  createRequest: async (studentProfileId: string, subjectId: string) => {
-    console.log("[Instant] createRequest", { studentProfileId, subjectId });
-    const id =
-      (globalThis.crypto?.randomUUID && globalThis.crypto.randomUUID()) ||
-      Math.random().toString(36).slice(2) + Date.now().toString(36);
+  createRequest: async (_studentProfileId: string, subjectId: string): Promise<InstantRequest> => {
+    console.log('[Instant] Creating instant session request');
 
-    // Deterministic canonical room, derived from request id
-    const jitsiUrl = `https://meet.jit.si/instant-${id}`;
+    const response = await apiClient.post<InstantRequest>('/api/instant-sessions/request', {
+      subjectId
+    });
 
-    const { data, error } = await (supabase as any)
-      .from("instant_requests")
-      .insert([
-        {
-          id,
-          student_id: studentProfileId,
-          subject_id: subjectId,
-          duration_minutes: 15,
-          status: "pending",
-          jitsi_meeting_url: jitsiUrl,
-        },
-      ])
-      .select("*")
-      .single();
-
-    if (error) throw error;
-    console.log("[Instant] createRequest ->", data?.id);
-    return data as InstantRequest;
+    // Add id alias for backwards compatibility
+    return {
+      ...response,
+      id: response._id
+    };
   },
 
-  // Tutors listen for new pending requests (only if online)
+  // Get all pending requests (for tutors)
+  getPendingRequests: async (subjectId?: string): Promise<InstantRequest[]> => {
+    console.log('[Instant] Fetching pending requests');
+
+    const params: any = {};
+    if (subjectId) {
+      params.subjectId = subjectId;
+    }
+
+    try {
+      const response = await apiClient.get<InstantRequest[]>('/api/instant-sessions/pending', params);
+
+      // Add id alias for backwards compatibility
+      return response.map(req => ({
+        ...req,
+        id: req._id
+      }));
+    } catch (error: any) {
+      console.warn('[Instant] Failed to fetch pending requests, returning empty array:', error.message);
+      return []; // Return empty array on error to prevent breaking the UI
+    }
+  },
+
+  // Student cancels their pending request
+  cancelRequest: async (requestId: string, _studentProfileId: string): Promise<InstantRequest> => {
+    console.log('[Instant] Cancelling request:', requestId);
+
+    const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/cancel`, {});
+
+    return {
+      ...response,
+      id: response._id
+    };
+  },
+
+  // Tutor rejects a pending request (local dismissal - just cancel)
+  rejectRequest: async (requestId: string, _tutorProfileId: string): Promise<InstantRequest> => {
+    console.log('[Instant] Tutor rejecting request:', requestId);
+
+    const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/cancel`, {
+      reason: 'Rejected by tutor'
+    });
+
+    return {
+      ...response,
+      id: response._id
+    };
+  },
+
+  // Atomic accept: only succeeds if still pending
+  acceptRequest: async (requestId: string, _tutorProfileId: string): Promise<InstantRequest> => {
+    console.log('[Instant] Tutor accepting request:', requestId);
+
+    const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/accept`, {});
+
+    return {
+      ...response,
+      id: response._id
+    };
+  },
+
+  // Get request status by ID
+  getRequestStatus: async (requestId: string): Promise<InstantRequest | null> => {
+    try {
+      const response = await apiClient.get<InstantRequest>(`/api/instant-sessions/${requestId}`);
+      
+      if (!response) return null;
+
+      return {
+        ...response,
+        id: response._id
+      };
+    } catch (error) {
+      console.error('[Instant] Error fetching request status:', error);
+      return null;
+    }
+  },
+
+  // Get student's sessions
+  getStudentSessions: async (limit: number = 10): Promise<InstantRequest[]> => {
+    const params = new URLSearchParams({ limit: limit.toString() });
+    const response = await apiClient.get<InstantRequest[]>(`/api/instant-sessions/student/me?${params.toString()}`);
+
+    return response.map(req => ({
+      ...req,
+      id: req._id
+    }));
+  },
+
+  // Get tutor's sessions
+  getTutorSessions: async (limit: number = 10): Promise<InstantRequest[]> => {
+    const params = new URLSearchParams({ limit: limit.toString() });
+    const response = await apiClient.get<InstantRequest[]>(`/api/instant-sessions/tutor/me?${params.toString()}`);
+
+    return response.map(req => ({
+      ...req,
+      id: req._id
+    }));
+  },
+
+  // Mark tutor as joined
+  markTutorJoined: async (requestId: string): Promise<InstantRequest> => {
+    const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/tutor-joined`, {});
+
+    return {
+      ...response,
+      id: response._id
+    };
+  },
+
+  // Mark student as joined
+  markStudentJoined: async (requestId: string): Promise<InstantRequest> => {
+    const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/student-joined`, {});
+
+    return {
+      ...response,
+      id: response._id
+    };
+  },
+
+  // Start session
+  startSession: async (requestId: string): Promise<InstantRequest> => {
+    const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/start`, {});
+
+    return {
+      ...response,
+      id: response._id
+    };
+  },
+
+  // Complete session
+  completeSession: async (requestId: string): Promise<InstantRequest> => {
+    const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/complete`, {});
+
+    return {
+      ...response,
+      id: response._id
+    };
+  },
+
+  // Polling-based subscription for tutors (fallback for real-time)
   subscribeToPending: (
     callback: (payload: {
       new: InstantRequest;
       old: InstantRequest | null;
       eventType: string;
     }) => void,
-    _subjectId?: string,
+    subjectId?: string,
     isOnline: boolean = false
   ) => {
-    // Don't subscribe if tutor is offline
+    console.log('[Instant] Setting up polling subscription for pending requests');
+
     if (!isOnline) {
-      console.log("[Instant] Tutor is offline, not subscribing to requests");
-      return () => {}; // Return empty cleanup function
+      console.log('[Instant] Tutor is offline, skipping subscription');
+      return () => {};
     }
-    const channelId = `instant_requests:pending:shared`;
-    const channel = (supabase as any).channel(channelId);
-    console.log("[Instant] subscribeToPending start", channelId);
 
-    // Listen for acceptance broadcasts; include the canonical meeting URL
-    channel.on("broadcast", { event: "accepted" } as any, (payload: any) => {
+    let lastRequestIds = new Set<string>();
+    
+    // Poll every 5 seconds for new requests
+    const pollInterval = setInterval(async () => {
       try {
-        const requestId = payload?.payload?.id;
-        const url = payload?.payload?.jitsi_meeting_url || null;
-        if (!requestId) return;
-        console.log("[Instant] BROADCAST accepted", { requestId, url });
-        // Synthesize a minimal payload to unify handling upstream
-        const minimal = {
-          id: requestId,
-          status: "accepted",
-          jitsi_meeting_url: url,
-        } as unknown as InstantRequest;
-        callback({
-          new: minimal,
-          old: null,
-          eventType: "BROADCAST_ACCEPTED",
+        const requests = await instantSessionService.getPendingRequests(subjectId);
+        
+        // Check for new requests
+        const currentRequestIds = new Set(requests.map(r => r.id || r._id));
+        
+        requests.forEach(req => {
+          const reqId = req.id || req._id;
+          if (!lastRequestIds.has(reqId)) {
+            // New request found
+            console.log('[Instant] New request detected:', reqId);
+            callback({
+              new: req,
+              old: null,
+              eventType: 'INSERT'
+            });
+          }
         });
-      } catch (e) {
-        console.warn("[Instant] broadcast accepted handler error", e);
-      }
-    });
-
-    channel.on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "instant_requests",
-      } as any,
-      (payload: any) => {
-        console.log("[Instant] INSERT payload", payload?.new?.id);
-        callback({
-          new: payload.new,
-          old: payload.old,
-          eventType: payload.eventType,
+        
+        // Check for removed requests (accepted, cancelled, or expired)
+        lastRequestIds.forEach(oldId => {
+          if (!currentRequestIds.has(oldId)) {
+            // Request was removed (likely accepted or cancelled)
+            console.log('[Instant] Request removed from pending:', oldId);
+            callback({
+              new: { id: oldId, status: 'accepted' } as InstantRequest,
+              old: null,
+              eventType: 'UPDATE'
+            });
+          }
         });
-      }
-    );
-
-    channel.on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "instant_requests",
-      } as any,
-      (payload: any) => {
-        console.log("[Instant] UPDATE payload received:", {
-          id: payload?.new?.id,
-          status: payload?.new?.status,
-          channel: channelId,
-          eventType: payload.eventType,
-        });
-        callback({
-          new: payload.new,
-          old: payload.old,
-          eventType: payload.eventType,
-        });
-      }
-    );
-
-    channel.subscribe((status: any) => {
-      console.log("[Instant] channel status", status, channelId);
-      if (status === "SUBSCRIBED") {
-        console.log(
-          "[Instant] Successfully subscribed to instant_requests changes"
-        );
-      } else if (status === "CHANNEL_ERROR") {
-        console.error("[Instant] Channel subscription error");
-      } else if (status === "TIMED_OUT") {
-        console.error("[Instant] Channel subscription timed out");
-      }
-    });
-
-    return () => {
-      console.log("[Instant] unsubscribe channel", channelId);
-      try {
-        (supabase as any).removeChannel(channel);
+        
+        lastRequestIds = currentRequestIds;
       } catch (error) {
-        console.error("[Instant] Error removing channel:", error);
+        console.error('[Instant] Error polling for pending requests:', error);
       }
+    }, 5000); // Poll every 5 seconds
+
+    // Return cleanup function
+    return () => {
+      console.log('[Instant] Cleaning up polling subscription');
+      clearInterval(pollInterval);
     };
   },
-
-  // Student cancels their pending request
-  cancelRequest: async (requestId: string, studentProfileId: string) => {
-    console.log("[Instant] cancelRequest", { requestId });
-    const { data, error } = await (supabase as any)
-      .from("instant_requests")
-      .update({ status: "cancelled" })
-      .eq("id", requestId)
-      .eq("student_id", studentProfileId)
-      .select("*")
-      .single();
-
-    if (error) throw error;
-    return data as InstantRequest;
-  },
-
-  // Tutor rejects a pending request (local dismissal)
-  rejectRequest: async (requestId: string, tutorProfileId: string) => {
-    console.log("[Instant] rejectRequest", { requestId, tutorProfileId });
-    // For now, just return success - the rejection is handled locally
-    // In the future, we could track rejections in the database
-    return { id: requestId } as InstantRequest;
-  },
-
-  // Atomic accept: only succeeds if still pending. Use existing meeting URL (single source of truth)
-  acceptRequest: async (requestId: string, tutorProfileId: string) => {
-    console.log("[Instant] acceptRequest", { requestId, tutorProfileId });
-
-    const { data: accepted, error: acceptError } = await (supabase as any)
-      .from("instant_requests")
-      .update({ status: "accepted", accepted_by_tutor_id: tutorProfileId })
-      .eq("id", requestId)
-      .eq("status", "pending")
-      .select("*")
-      .single();
-
-    if (acceptError) throw acceptError;
-    if (!accepted) throw new Error("Request was already accepted or cancelled");
-
-    // Ensure a meeting URL exists (deterministic canonical)
-    const jitsiMeetingUrl =
-      accepted.jitsi_meeting_url ||
-      `https://meet.jit.si/instant-${accepted.id}`;
-
-    // If URL was missing for some reason, persist it once
-    if (!accepted.jitsi_meeting_url) {
-      const { error: setUrlError } = await (supabase as any)
-        .from("instant_requests")
-        .update({ jitsi_meeting_url: jitsiMeetingUrl })
-        .eq("id", accepted.id);
-      if (setUrlError)
-        console.warn("[Instant] failed to set meeting url", setUrlError);
-    }
-
-    // Broadcast acceptance INCLUDING the canonical URL so students open the same room
-    try {
-      const { channel, ready } = getInstantSharedChannel();
-      await ready; // ensure SUBSCRIBED at least once
-      await channel.send({
-        type: "broadcast",
-        event: "accepted",
-        payload: { id: requestId, jitsi_meeting_url: jitsiMeetingUrl },
-      });
-    } catch (e) {
-      console.warn("[Instant] acceptance broadcast failed (non-fatal)", e);
-    }
-
-    // Create audit booking (best-effort)
-    const startIso = new Date().toISOString();
-    const endIso = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-    const { error: bookingError } = await (supabase as any)
-      .from("bookings")
-      .insert([
-        {
-          student_id: accepted.student_id,
-          teacher_id: tutorProfileId,
-          class_id: null,
-          booking_type: "consultation",
-          start_time: startIso,
-          end_time: endIso,
-          status: "confirmed",
-          jitsi_meeting_url: jitsiMeetingUrl,
-        },
-      ]);
-    if (bookingError) {
-      console.warn(
-        "Booking insert failed (will not block acceptance)",
-        bookingError
-      );
-    }
-
-    return {
-      ...(accepted as any),
-      jitsi_meeting_url: jitsiMeetingUrl,
-    } as InstantRequest;
-  },
 };
-
-export type { InstantRequest };

@@ -9,7 +9,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/lib/supabase";
+import apiClient from "@/lib/apiClient";
 import { getNoteSubjects, getStudyNoteById } from "@/lib/notes";
 import { NOTE_TITLE_MAX_LENGTH } from "@/constants/form";
 import toast from "react-hot-toast";
@@ -122,40 +122,23 @@ const CreateNotePage: React.FC = () => {
     try {
       if (isEditing) {
         // Update existing note
-        const { error } = await supabase
-          .from("study_notes")
-          .update({
-            title: formData.title.trim(),
-            description: formData.description.trim() || null,
-            content: formData.content.trim(),
-            subject_id: formData.subjectId,
-          })
-          .eq('id', noteId)
-          .eq('created_by', user.id);
-
-        if (error) {
-          console.error("Error updating note:", error);
-          toast.error("Failed to update note. Please try again.");
-          return;
-        }
+        await apiClient.put(`/api/study-notes/${noteId}`, {
+          title: formData.title.trim(),
+          description: formData.description.trim() || null,
+          content: formData.content.trim(),
+          subjectId: formData.subjectId,
+        });
 
         toast.success("Note updated successfully!");
       } else {
         // Create new note
-        const { error } = await supabase.from("study_notes").insert({
+        await apiClient.post("/api/study-notes", {
           title: formData.title.trim(),
           description: formData.description.trim() || null,
           content: formData.content.trim(),
-          subject_id: formData.subjectId,
-          created_by: user.id,
-          is_public: false,
+          subjectId: formData.subjectId,
+          isPublic: false,
         });
-
-        if (error) {
-          console.error("Error creating note:", error);
-          toast.error("Failed to create note. Please try again.");
-          return;
-        }
 
         toast.success("Note created successfully!");
       }

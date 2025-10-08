@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
@@ -63,10 +63,6 @@ const BookSessionPage: React.FC = () => {
   const [filterSubject, setFilterSubject] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  const getClassTypeName = (classTypeId: string) => {
-    const classType = classTypes.find((ct) => ct.id === classTypeId);
-    return classType ? classType.name : 'Unknown';
-  };
 
   useEffect(() => {
     loadSessions();
@@ -405,7 +401,7 @@ const BookSessionPage: React.FC = () => {
                         variant="secondary"
                         className="bg-primary hover:bg-primary text-primary-foreground flex items-center gap-1"
                       >
-                        {getClassTypeName('class')}
+                        {session.capacity > 1 ? 'Group Session' : 'One-on-One'}
                       </Badge>
                       <div className="text-right">
                         <Badge
@@ -438,7 +434,11 @@ const BookSessionPage: React.FC = () => {
                     {/* Tutor Info */}
                     <div className="flex items-center gap-3 p-3 rounded-lg">
                       <Avatar className="w-12 h-12">
-                        <AvatarFallback className="text-foreground font-semibold">
+                        <AvatarImage
+                          src={tutor.profileImageUrl}
+                          alt={tutor.full_name}
+                        />
+                        <AvatarFallback className="text-foreground font-semibold bg-primary/20">
                           {tutor.full_name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>

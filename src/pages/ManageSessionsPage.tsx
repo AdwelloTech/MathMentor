@@ -76,16 +76,9 @@ const ManageSessionsPage: React.FC = () => {
           const sessionDate = new Date(
             `${booking.class.date}T${booking.class.start_time}`
           );
-          // TEMPORARY: Allow joining anytime for testing
-          // OLD CODE (commented out):
-          // // Allow joining 1 hour before session for testing purposes
-          // const oneHourBeforeSession = new Date(
-          //   sessionDate.getTime() - 60 * 60 * 1000
-          // );
-          // const isNowJoinable = now >= oneHourBeforeSession;
 
-          // NEW TEMPORARY CODE: Allow joining anytime
-          const isNowJoinable = true;
+          // Only allow joining when tutor has started the session (status = 'in_progress')
+          const isNowJoinable = booking.class.status === "in_progress";
 
           newJoinability[booking.id] = isNowJoinable;
 
@@ -389,12 +382,12 @@ const ManageSessionsPage: React.FC = () => {
                                 size="lg"
                               >
                                 <Video className="w-5 h-5 mr-2" />
-                                {isJoinable ? "Join Now" : "Join Session"}
+                                {isJoinable ? "Join Now" : "Waiting for Tutor"}
                               </Button>
-                              {/* Countdown to session availability */}
-                              {!isJoinable && sessionCountdowns[booking.id] > 0 && (
+                              {/* Session status message */}
+                              {!isJoinable && (
                                 <div className="text-xs text-muted-foreground text-center">
-                                  Available in {sessionCountdowns[booking.id]} minutes
+                                  Waiting for tutor to start the session
                                   <br />
                                   <span className="text-xs text-muted-foreground">({formatTime(session.start_time)})</span>
                                 </div>
@@ -615,12 +608,12 @@ const ManageSessionsPage: React.FC = () => {
                             size="lg"
                           >
                             <Video className="w-5 h-5 mr-2" />
-                            {isSessionJoinable(selectedBooking) ? "Join Session Now" : "Available 5 Min Before Start"}
+                            {isSessionJoinable(selectedBooking) ? "Join Session Now" : "Waiting for Tutor to Start"}
                           </Button>
-                          {/* Countdown to session availability */}
-                          {!isSessionJoinable(selectedBooking) && sessionCountdowns[selectedBooking.id] > 0 && (
+                          {/* Session status message */}
+                          {!isSessionJoinable(selectedBooking) && (
                             <div className="text-sm text-muted-foreground text-center">
-                              Session will be available in {sessionCountdowns[selectedBooking.id]} minutes
+                              Waiting for tutor to start the session
                               <br />
                               <span className="text-sm text-muted-foreground">(Session starts at {selectedBooking.class && formatTime(selectedBooking.class.start_time)})</span>
                             </div>

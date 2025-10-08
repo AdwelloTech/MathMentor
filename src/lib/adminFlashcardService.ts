@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import apiClient from "./apiClient";
 import type { FlashcardSet } from "@/types/flashcards";
 
 export interface AdminFlashcardSet extends FlashcardSet {
@@ -24,51 +24,44 @@ export class AdminFlashcardService {
     try {
       console.log("Fetching all flashcard sets with admin service...");
 
-      const { data, error } = await supabase
-        .from("flashcard_sets")
-        .select(
-          `
-          *,
-          tutor:profiles(id, full_name, email)
-        `
-        )
-        .order("created_at", { ascending: false });
+      const data = await apiClient.get<any[]>("/api/flashcards");
 
-      if (error) {
-        console.error("Error fetching flashcard sets:", error);
-        throw error;
+      if (!data || !Array.isArray(data)) {
+        return [];
       }
 
-      if (!data) return [];
-
-      // Get card counts for each set using the known working table name
-      const setsWithCounts = await Promise.all(
-        data.map(async (set: any) => {
-          const { count, error: countError } = await supabase
-            .from("flashcards")
-            .select("*", { count: "exact", head: true })
-            .eq("set_id", (set as any).id);
-
-          if (countError) {
-            console.error(
-              "Error fetching card count for set:",
-              (set as any).id,
-              countError
-            );
-          }
-
-          return {
-            ...(set as any),
-            card_count: count || 0,
-          } as AdminFlashcardSet;
-        })
-      );
+      // Transform backend data to match expected format
+      const flashcardSets: AdminFlashcardSet[] = data.map((set: any) => ({
+        _id: set._id,
+        tutorId: set.tutorId,
+        title: set.title,
+        subject: set.subject,
+        topic: set.topic,
+        description: set.description,
+        difficulty: set.difficulty,
+        gradeLevelId: set.gradeLevelId,
+        isPublic: set.isPublic,
+        isActive: set.isActive,
+        tags: set.tags || [],
+        viewCount: set.viewCount || 0,
+        studyCount: set.studyCount || 0,
+        averageRating: set.averageRating,
+        totalRatings: set.totalRatings || 0,
+        createdAt: set.createdAt,
+        updatedAt: set.updatedAt,
+        tutor: set.tutor || {
+          id: set.tutorId,
+          full_name: 'Unknown',
+          email: ''
+        },
+        card_count: set.cardCount || 0
+      }));
 
       console.log(
         "Flashcard sets fetched with admin service:",
-        setsWithCounts.length
+        flashcardSets.length
       );
-      return setsWithCounts;
+      return flashcardSets;
     } catch (error) {
       console.error("Error in getAllFlashcardSets:", error);
       throw error;
@@ -78,33 +71,26 @@ export class AdminFlashcardService {
   // Get flashcard statistics
   static async getFlashcardStats(): Promise<FlashcardStats> {
     try {
-      // Get total sets and active/inactive counts
-      const { data: sets, error: setsError } = await supabase
-        .from("flashcard_sets")
-        .select("is_active, subject");
+      const sets = await this.getAllFlashcardSets();
 
-      if (setsError) throw setsError;
-
-      const total = sets?.length || 0;
-      const active = sets?.filter((s: any) => s.is_active).length || 0;
+      const total = sets.length;
+      const active = sets.filter(s => s.isActive).length;
       const inactive = total - active;
 
       // Count by subject
       const bySubject: Record<string, number> = {};
-      sets?.forEach((set: any) => {
+      sets.forEach(set => {
         bySubject[set.subject] = (bySubject[set.subject] || 0) + 1;
       });
 
-      // Get total cards across all sets
-      const { count: totalCards } = await supabase
-        .from("flashcards")
-        .select("*", { count: "exact", head: true });
+      // Total cards
+      const totalCards = sets.reduce((sum, set) => sum + (set.card_count || 0), 0);
 
       return {
         total,
         active,
         inactive,
-        total_cards: totalCards || 0,
+        total_cards: totalCards,
         by_subject: bySubject,
       };
     } catch (error) {
@@ -124,17 +110,9 @@ export class AdminFlashcardService {
     try {
       console.log("Starting flashcard set deletion for:", setId);
 
-      // Use admin RPC function to bypass RLS restrictions
-      const { error } = await supabase.rpc("admin_delete_flashcard_set", {
-        set_id_param: setId,
-      });
+      await apiClient.delete(`/api/flashcards/${setId}`);
 
-      if (error) {
-        console.error("Error deleting flashcard set via RPC:", error);
-        throw new Error(`Failed to delete flashcard set: ${error.message}`);
-      }
-
-      console.log("Flashcard set deleted successfully via admin function");
+      console.log("Flashcard set deleted successfully");
       return true;
     } catch (error) {
       console.error("Error in deleteFlashcardSet:", error);
@@ -147,29 +125,34 @@ export class AdminFlashcardService {
     setId: string
   ): Promise<AdminFlashcardSet | null> {
     try {
-      const { data, error } = await supabase
-        .from("flashcard_sets")
-        .select(
-          `
-          *,
-          tutor:profiles(id, full_name, email),
-          cards:flashcards(
-            id,
-            front_text,
-            back_text,
-            card_order
-          )
-        `
-        )
-        .eq("id", setId)
-        .single();
+      const data = await apiClient.get<any>(`/api/flashcards/${setId}`);
 
-      if (error) throw error;
       if (!data) return null;
 
       return {
-        ...(data as any),
-        card_count: (data as any).cards?.length || 0,
+        _id: data._id,
+        tutorId: data.tutorId,
+        title: data.title,
+        subject: data.subject,
+        topic: data.topic,
+        description: data.description,
+        difficulty: data.difficulty,
+        gradeLevelId: data.gradeLevelId,
+        isPublic: data.isPublic,
+        isActive: data.isActive,
+        tags: data.tags || [],
+        viewCount: data.viewCount || 0,
+        studyCount: data.studyCount || 0,
+        averageRating: data.averageRating,
+        totalRatings: data.totalRatings || 0,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        tutor: data.tutor || {
+          id: data.tutorId,
+          full_name: 'Unknown',
+          email: ''
+        },
+        card_count: data.cards?.length || 0
       } as AdminFlashcardSet;
     } catch (error) {
       console.error("Error getting flashcard set details:", error);

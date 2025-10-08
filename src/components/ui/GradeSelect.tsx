@@ -43,7 +43,7 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
   if (loading) {
     return (
       <Select disabled>
-        <SelectTrigger className={cn("text-gray-400", className, {
+        <SelectTrigger className={cn("text-muted-foreground", className, {
           'border-red-500': error,
         })}>
           <SelectValue>Loading grades...</SelectValue>
@@ -63,7 +63,7 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
         <Select disabled>
           <SelectTrigger
             className={cn(
-              "w-full border-red-300 focus-visible:ring-red-500 text-red-500",
+              "w-full border-red-500 focus-visible:ring-red-500 text-red-400",
               className
             )}
           >
@@ -75,7 +75,7 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
             </SelectItem>
           </SelectContent>
         </Select>
-        <p className="mt-1 text-sm text-yellow-600">
+        <p className="mt-1 text-sm text-amber-500">
           Couldn't load grade levels. Please try again later.
         </p>
       </div>
@@ -107,23 +107,23 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
           )}
           {gradeLevels.length > 0 ? (
             gradeLevels.map((grade) => (
-              <SelectItem 
-                key={grade.id} 
+              <SelectItem
+                key={grade.id}
                 value={String(grade.id)}
-                className="cursor-pointer hover:bg-gray-100"
+                className="cursor-pointer hover:bg-muted"
               >
                 {grade.display_name || `Grade ${grade.id}`}
               </SelectItem>
             ))
           ) : (
-            <div className="p-2 text-sm text-gray-500">
+            <div className="p-2 text-sm text-muted-foreground">
               No grade levels available
             </div>
           )}
         </SelectContent>
       </Select>
       {error && (
-        <p className="mt-1 text-sm text-red-500">
+        <p className="mt-1 text-sm text-red-400">
           {typeof error === 'string' ? error : 'Please select a valid grade level'}
         </p>
       )}

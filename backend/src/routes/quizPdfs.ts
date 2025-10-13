@@ -9,7 +9,7 @@ const router = express.Router();
 // Validation schemas
 const createQuizPdfSchema = Joi.object({
   fileName: Joi.string().min(1).max(255).required(),
-  filePath: Joi.string().min(1).max(500).required(),
+  filePath: Joi.string().min(1).max(5000000).required(), // Increased limit for base64 PDFs
   fileSize: Joi.number().integer().min(0).required(),
   gradeLevelId: Joi.string().optional(),
   subjectId: Joi.string().required(),
@@ -19,7 +19,7 @@ const createQuizPdfSchema = Joi.object({
 
 const updateQuizPdfSchema = Joi.object({
   fileName: Joi.string().min(1).max(255).optional(),
-  filePath: Joi.string().min(1).max(500).optional(),
+  filePath: Joi.string().min(1).max(5000000).optional(), // Increased limit for base64 PDFs
   fileSize: Joi.number().integer().min(0).optional(),
   gradeLevelId: Joi.string().optional(),
   subjectId: Joi.string().optional(),

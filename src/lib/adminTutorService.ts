@@ -1,3 +1,5 @@
+import apiClient from './apiClient';
+
 export interface Tutor {
   id: string;
   user_id: string;
@@ -79,27 +81,8 @@ export interface TutorClass {
 class AdminTutorService {
   async getAllTutors(): Promise<Tutor[]> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-      });
-
-      if (!response.ok) {
-        console.error('Failed to fetch tutors:', response.status, response.statusText);
-        // Return empty array instead of throwing
-        return [];
-      }
-
-      try {
-        const data = await response.json();
-        return data.data || [];
-      } catch (parseError) {
-        console.error('Error parsing tutor response:', parseError);
-        return [];
-      }
+      const tutors = await apiClient.get<Tutor[]>('/api/admin/tutors');
+      return tutors || [];
     } catch (error) {
       console.error('Error in getAllTutors:', error);
       return []; // Return empty array instead of throwing
@@ -108,25 +91,12 @@ class AdminTutorService {
 
   async getTutorById(tutorId: string): Promise<Tutor | null> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/${tutorId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch tutor');
+      const tutor = await apiClient.get<Tutor>(`/api/admin/tutors/${tutorId}`);
+      return tutor;
+    } catch (error: any) {
+      if (error.status === 404) {
+        return null;
       }
-
-      const data = await response.json();
-      return data.data;
-    } catch (error) {
       console.error('Error in getTutorById:', error);
       throw error;
     }
@@ -134,19 +104,7 @@ class AdminTutorService {
 
   async updateTutorStatus(tutorId: string, isActive: boolean): Promise<void> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/${tutorId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ is_active: isActive })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update tutor status');
-      }
+      await apiClient.put<void>(`/api/admin/tutors/${tutorId}/status`, { is_active: isActive });
     } catch (error) {
       console.error('Error in updateTutorStatus:', error);
       throw error;
@@ -155,18 +113,7 @@ class AdminTutorService {
 
   async deleteTutor(tutorId: string): Promise<void> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/${tutorId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete tutor');
-      }
+      await apiClient.delete<void>(`/api/admin/tutors/${tutorId}`);
     } catch (error) {
       console.error('Error in deleteTutor:', error);
       throw error;
@@ -175,26 +122,8 @@ class AdminTutorService {
 
   async getTutorClasses(tutorId: string): Promise<TutorClass[]> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/${tutorId}/classes`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-      });
-
-      if (!response.ok) {
-        console.error('Failed to fetch tutor classes:', response.status, response.statusText);
-        return []; // Return empty array instead of throwing
-      }
-
-      try {
-        const data = await response.json();
-        return data.data || [];
-      } catch (parseError) {
-        console.error('Error parsing classes response:', parseError);
-        return [];
-      }
+      const classes = await apiClient.get<TutorClass[]>(`/api/admin/tutors/${tutorId}/classes`);
+      return classes || [];
     } catch (error) {
       console.error('Error in getTutorClasses:', error);
       return []; // Return empty array instead of throwing
@@ -203,51 +132,16 @@ class AdminTutorService {
 
   async getTutorStats(): Promise<TutorStats> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutors/stats`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-      });
-
-      if (!response.ok) {
-        console.error('Failed to fetch tutor stats:', response.status, response.statusText);
-        // Return default values instead of throwing
-        return {
-          total: 0,
-          active: 0,
-          inactive: 0,
-          approved: 0,
-          pending: 0,
-          rejected: 0,
-          recentRegistrations: 0
-        };
-      }
-
-      try {
-        const data = await response.json();
-        return data.data || {
-          total: 0,
-          active: 0,
-          inactive: 0,
-          approved: 0,
-          pending: 0,
-          rejected: 0,
-          recentRegistrations: 0
-        };
-      } catch (parseError) {
-        console.error('Error parsing stats response:', parseError);
-        return {
-          total: 0,
-          active: 0,
-          inactive: 0,
-          approved: 0,
-          pending: 0,
-          rejected: 0,
-          recentRegistrations: 0
-        };
-      }
+      const stats = await apiClient.get<TutorStats>('/api/admin/tutors/stats');
+      return stats || {
+        total: 0,
+        active: 0,
+        inactive: 0,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+        recentRegistrations: 0
+      };
     } catch (error) {
       console.error('Error in getTutorStats:', error);
       return {
@@ -269,23 +163,11 @@ class AdminTutorService {
     adminNotes?: string
   ): Promise<void> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/tutor-applications/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          status,
-          rejection_reason: rejectionReason,
-          admin_notes: adminNotes
-        })
+      await apiClient.put<void>(`/api/admin/tutor-applications/${userId}`, {
+        status,
+        rejection_reason: rejectionReason,
+        admin_notes: adminNotes
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update application status');
-      }
     } catch (error) {
       console.error('Error in updateTutorApplication:', error);
       throw error;

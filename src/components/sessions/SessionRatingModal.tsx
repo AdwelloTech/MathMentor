@@ -90,7 +90,7 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
           key={starValue}
           type="button"
           className={`p-1 transition-all duration-200 ${
-            isFilled ? "text-yellow-400" : "text-gray-300"
+            isFilled ? "text-yellow-400" : "text-slate-500"
           } hover:scale-110`}
           onMouseEnter={() => setHoveredRating(starValue)}
           onMouseLeave={() => setHoveredRating(0)}
@@ -127,20 +127,20 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+            className="bg-slate-800 rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-slate-600"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b">
+            <div className="flex items-center justify-between p-6 border-b border-slate-600">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Star className="w-5 h-5 text-blue-600" />
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <Star className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-slate-200">
                     Rate Your Session
                   </h2>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-400">
                     How was your session with {session.tutor.full_name}?
                   </p>
                 </div>
@@ -148,28 +148,28 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
               <button
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                className="p-1 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
 
             {/* Content */}
             <div className="p-6 space-y-6">
               {/* Session Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-slate-700/50 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-slate-200">
                       {session.tutor.full_name}
                     </p>
-                    <p className="text-sm text-gray-600">{session.title}</p>
+                    <p className="text-sm text-slate-400">{session.title}</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-slate-400">
                   {new Date(session.date).toLocaleDateString()} •{" "}
                   {session.duration_minutes} minutes
                 </p>
@@ -177,12 +177,12 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
 
               {/* Rating Stars */}
               <div className="text-center space-y-3">
-                <Label className="text-sm font-medium text-gray-700">
+                <Label className="text-sm font-medium text-slate-300">
                   Rate your experience
                 </Label>
                 <div className="flex justify-center gap-1">{renderStars()}</div>
                 {rating > 0 && (
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-slate-200">
                     {getRatingText()}
                   </p>
                 )}
@@ -192,7 +192,7 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
               <div className="space-y-2">
                 <Label
                   htmlFor="review"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-slate-300"
                 >
                   Additional feedback (optional)
                 </Label>
@@ -202,7 +202,7 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
                   disabled={isSubmitting}
-                  className="min-h-[100px] resize-none"
+                  className="min-h-[100px] resize-none bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-primary"
                 />
               </div>
 
@@ -215,10 +215,11 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
                     setIsAnonymous(checked as boolean)
                   }
                   disabled={isSubmitting}
+                  className="border-slate-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <Label
                   htmlFor="anonymous"
-                  className="text-sm text-gray-700 cursor-pointer"
+                  className="text-sm text-slate-300 cursor-pointer"
                 >
                   Submit anonymously
                 </Label>
@@ -226,19 +227,19 @@ const SessionRatingModal: React.FC<SessionRatingModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex gap-3 p-6 border-t bg-gray-50">
+            <div className="flex gap-3 p-6 border-t border-slate-600 bg-slate-700/50">
               <Button
                 variant="outline"
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="flex-1"
+                className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-slate-200"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleRatingSubmit}
                 disabled={rating === 0 || isSubmitting}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">

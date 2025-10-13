@@ -144,9 +144,9 @@ const ManageSubjectsPage: React.FC = () => {
         {!creating ? (
           <button
             onClick={startCreate}
-            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium"
           >
-            <PlusIcon className="h-5 w-5 mr-2" /> New Subject
+            <PlusIcon className="h-4 w-4 mr-2" /> New Subject
           </button>
         ) : (
           <div className="flex items-center gap-2">
@@ -154,31 +154,35 @@ const ManageSubjectsPage: React.FC = () => {
               placeholder="Display Name"
               value={newDisplayName}
               onChange={(e) => setNewDisplayName(e.target.value)}
-              className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <input
               placeholder="Key (optional)"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <input
               placeholder="#Color (optional)"
               value={newColor}
               onChange={(e) => setNewColor(e.target.value)}
-              className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md p-2 w-40 focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-md px-3 py-2 w-40 focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <button
               onClick={submitCreate}
-              className="px-3 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+              className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 flex items-center gap-2 text-sm font-medium"
+              title="Create Subject"
             >
-              <CheckIcon className="h-5 w-5" />
+              <CheckIcon className="h-4 w-4" />
+              Create
             </button>
             <button
               onClick={cancelCreate}
-              className="px-3 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80"
+              className="px-4 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80 flex items-center gap-2 text-sm font-medium"
+              title="Cancel"
             >
-              <XMarkIcon className="h-5 w-5" />
+              <XMarkIcon className="h-4 w-4" />
+              Cancel
             </button>
           </div>
         )}
@@ -201,7 +205,7 @@ const ManageSubjectsPage: React.FC = () => {
               <button
                 onClick={loadSubjects}
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
               >
                 {loading ? (
                   <>
@@ -274,34 +278,38 @@ const ManageSubjectsPage: React.FC = () => {
                     <>
                       <button
                         onClick={submitEdit}
-                        className="px-2 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 flex items-center gap-2 text-sm font-medium"
                         title="Save"
                       >
-                        <CheckIcon className="h-5 w-5" />
+                        <CheckIcon className="h-4 w-4" />
+                        Save
                       </button>
                       <button
                         onClick={cancelEdit}
-                        className="px-2 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80"
+                        className="px-4 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80 flex items-center gap-2 text-sm font-medium"
                         title="Cancel"
                       >
-                        <XMarkIcon className="h-5 w-5" />
+                        <XMarkIcon className="h-4 w-4" />
+                        Cancel
                       </button>
                     </>
                   ) : (
                     <>
                       <button
                         onClick={() => startEdit(s)}
-                        className="px-2 py-2 bg-primary/10 text-primary rounded-md hover:bg-primary/20"
+                        className="px-4 py-2 bg-primary/10 text-primary rounded-md hover:bg-primary/20 flex items-center gap-2 text-sm font-medium"
                         title="Edit"
                       >
-                        <PencilIcon className="h-5 w-5" />
+                        <PencilIcon className="h-4 w-4" />
+                        Edit
                       </button>
                       <button
                         onClick={() => remove(s.id)}
-                        className="px-2 py-2 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20"
+                        className="px-4 py-2 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20 flex items-center gap-2 text-sm font-medium"
                         title="Delete"
                       >
-                        <TrashIcon className="h-5 w-5" />
+                        <TrashIcon className="h-4 w-4" />
+                        Delete
                       </button>
                     </>
                   )}

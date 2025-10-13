@@ -43,8 +43,8 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
   if (loading) {
     return (
       <Select disabled>
-        <SelectTrigger className={cn("text-muted-foreground", className, {
-          'border-red-500': error,
+        <SelectTrigger className={cn("bg-background text-muted-foreground border-input", className, {
+          'border-destructive': error,
         })}>
           <SelectValue>Loading grades...</SelectValue>
         </SelectTrigger>
@@ -63,7 +63,7 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
         <Select disabled>
           <SelectTrigger
             className={cn(
-              "w-full border-red-500 focus-visible:ring-red-500 text-red-400",
+              "w-full bg-background text-destructive border-destructive focus-visible:ring-destructive",
               className
             )}
           >
@@ -75,7 +75,7 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
             </SelectItem>
           </SelectContent>
         </Select>
-        <p className="mt-1 text-sm text-amber-500">
+        <p className="mt-1 text-sm text-warning">
           Couldn't load grade levels. Please try again later.
         </p>
       </div>
@@ -90,8 +90,8 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
         disabled={disabled || loading}
       >
         <SelectTrigger
-          className={cn("w-full", className, {
-            'border-red-500': error,
+          className={cn("w-full bg-background text-foreground border-input", className, {
+            'border-destructive': error,
             'opacity-70': loading,
           })}
         >
@@ -123,7 +123,7 @@ const GradeSelect: React.FC<GradeSelectProps> = ({
         </SelectContent>
       </Select>
       {error && (
-        <p className="mt-1 text-sm text-red-400">
+        <p className="mt-1 text-sm text-destructive">
           {typeof error === 'string' ? error : 'Please select a valid grade level'}
         </p>
       )}

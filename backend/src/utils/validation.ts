@@ -247,9 +247,9 @@ export const validate = <T>(schema: Joi.ObjectSchema<T>, data: any): { value: T;
  * Validate data and throw error if invalid
  */
 export const validateOrThrow = <T>(schema: Joi.ObjectSchema<T>, data: any): T => {
-  const { value, error } = validate(schema, data);
-  if (error) {
-    throw new Error(error.details.map(detail => detail.message).join(', '));
+  const result = schema.validate(data, { abortEarly: false, allowUnknown: true });
+  if (result.error) {
+    throw new Error(result.error.details.map(detail => detail.message).join(', '));
   }
-  return value;
+  return result.value;
 };

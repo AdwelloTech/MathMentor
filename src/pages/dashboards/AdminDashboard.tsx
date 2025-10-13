@@ -271,7 +271,7 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-green-100 p-6 relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)] pointer-events-none" />
         <div className="max-w-7xl mx-auto space-y-8 relative z-10">
           <div className="bg-white rounded-2xl p-8 shadow-xl shadow-gray-200/50">
             <Skeleton className="h-8 w-64 mb-4" />
@@ -300,7 +300,7 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated background elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)]"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)] pointer-events-none"></div>
 
       {/* Floating decorative elements - using the color palette from ADMIN_DASHBOARD_PLAN.md */}
       <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-green-600/10 to-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>

@@ -45,6 +45,79 @@ const ManageIDVerificationsPage: React.FC = () => {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showSensitiveData, setShowSensitiveData] = useState(true);
 
+  // State for image blobs
+  const [imageBlobs, setImageBlobs] = useState<{[key: string]: string}>({});
+
+  // Helper function to fetch authenticated image
+  const getAuthenticatedImage = async (imageUrl: string): Promise<string | undefined> => {
+    if (!imageUrl) return undefined;
+
+    // Check if we already have this image cached
+    if (imageBlobs[imageUrl]) {
+      return imageBlobs[imageUrl];
+    }
+
+    try {
+      // If it's already a full URL, construct the authenticated request
+      let requestUrl: string;
+      if (imageUrl.startsWith('http')) {
+        requestUrl = imageUrl;
+      } else {
+        // For relative URLs, we need to access them through the backend
+        const backendUrl = process.env.NODE_ENV === 'production'
+          ? 'https://72.60.20.140:5000'
+          : 'http://localhost:5000';
+        requestUrl = `${backendUrl}${imageUrl}`;
+      }
+
+      // Make authenticated request to get the image
+      const response = await fetch(requestUrl, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch image');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Cache the blob URL
+      setImageBlobs(prev => ({
+        ...prev,
+        [imageUrl]: blobUrl
+      }));
+
+      return blobUrl;
+    } catch (error) {
+      console.error('Error fetching authenticated image:', error);
+      return undefined;
+    }
+  };
+
+  // Effect to fetch images when modal opens
+  useEffect(() => {
+    const fetchImages = async () => {
+      if (selectedVerification && showDetailsModal) {
+        const images = [
+          selectedVerification.front_image_url,
+          selectedVerification.back_image_url,
+          selectedVerification.selfie_with_id_url
+        ].filter(Boolean) as string[];
+
+        for (const imageUrl of images) {
+          if (!imageBlobs[imageUrl]) {
+            await getAuthenticatedImage(imageUrl);
+          }
+        }
+      }
+    };
+
+    fetchImages();
+  }, [selectedVerification, showDetailsModal]);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -99,6 +172,16 @@ const ManageIDVerificationsPage: React.FC = () => {
   const handleViewDetails = (verification: IDVerification) => {
     setSelectedVerification(verification);
     setShowDetailsModal(true);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setShowDetailsModal(false);
+    setSelectedVerification(null);
+    // Clean up blob URLs to prevent memory leaks
+    Object.values(imageBlobs).forEach(blobUrl => {
+      URL.revokeObjectURL(blobUrl);
+    });
+    setImageBlobs({});
   };
 
   const handleAction = (
@@ -187,31 +270,31 @@ const ManageIDVerificationsPage: React.FC = () => {
     switch (status) {
       case "pending":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
             Pending
           </span>
         );
       case "approved":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30">
             Approved
           </span>
         );
       case "rejected":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
             Rejected
           </span>
         );
       case "expired":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300 border border-gray-500/30">
             Expired
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300 border border-gray-500/30">
             Unknown
           </span>
         );
@@ -270,11 +353,11 @@ const ManageIDVerificationsPage: React.FC = () => {
                 <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg border border-border h-[152px] w-[311px]">
                   <CardHeader className="pb-2">
                     <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                        <IdentificationIcon className="w-6 h-6 text-white" />
+                      <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                        <IdentificationIcon className="w-6 h-6 text-primary-foreground" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-foreground max-w-xs">
+                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
                           Total Verifications
                         </CardTitle>
                       </div>
@@ -282,7 +365,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="pl-0">
-                      <div className="text-3xl font-bold text-foreground ml-3">
+                      <div className="text-3xl font-bold text-card-foreground ml-3">
                         {stats.total_verifications}
                       </div>
                     </div>
@@ -298,11 +381,11 @@ const ManageIDVerificationsPage: React.FC = () => {
                 <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg border border-border h-[152px] w-[311px]">
                   <CardHeader className="pb-2">
                     <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                      <div className="bg-amber-500 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
                         <ClockIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-foreground max-w-xs">
+                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
                           Pending
                         </CardTitle>
                       </div>
@@ -310,7 +393,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="pl-0">
-                      <div className="text-3xl font-bold text-foreground ml-3">
+                      <div className="text-3xl font-bold text-card-foreground ml-3">
                         {stats.pending_verifications}
                       </div>
                     </div>
@@ -326,11 +409,11 @@ const ManageIDVerificationsPage: React.FC = () => {
                 <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg border border-border h-[152px] w-[311px]">
                   <CardHeader className="pb-2">
                     <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                      <div className="bg-emerald-500 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
                         <CheckCircleIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-foreground max-w-xs">
+                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
                           Approved
                         </CardTitle>
                       </div>
@@ -338,7 +421,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="pl-0">
-                      <div className="text-3xl font-bold text-foreground ml-3">
+                      <div className="text-3xl font-bold text-card-foreground ml-3">
                         {stats.approved_verifications}
                       </div>
                     </div>
@@ -354,11 +437,11 @@ const ManageIDVerificationsPage: React.FC = () => {
                 <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-lg border border-border h-[152px] w-[311px]">
                   <CardHeader className="pb-2">
                     <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                      <div className="bg-red-500 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
                         <ExclamationTriangleIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-foreground max-w-xs">
+                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
                           Rejected
                         </CardTitle>
                       </div>
@@ -366,7 +449,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="pl-0">
-                      <div className="text-3xl font-bold text-foreground ml-3">
+                      <div className="text-3xl font-bold text-card-foreground ml-3">
                         {stats.rejected_verifications}
                       </div>
                     </div>
@@ -426,8 +509,8 @@ const ManageIDVerificationsPage: React.FC = () => {
             <Card className="shadow-lg border border-border overflow-hidden">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                    <IdentificationIcon className="w-4 h-4 text-white" />
+                  <div className="bg-primary w-8 h-8 rounded-lg flex items-center justify-center">
+                    <IdentificationIcon className="w-4 h-4 text-primary-foreground" />
                   </div>
                   <span>ID Verifications ({filteredVerifications.length})</span>
                 </CardTitle>
@@ -435,8 +518,8 @@ const ManageIDVerificationsPage: React.FC = () => {
 
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-muted">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-muted/50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Applicant
@@ -469,7 +552,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                                   <UserIcon className="h-6 w-6 text-muted-foreground" />
                                 </div>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-foreground">
+                                  <div className="text-sm font-medium text-card-foreground">
                                     {profile?.full_name || "Unknown"}
                                   </div>
                                   <div className="text-sm text-muted-foreground">
@@ -479,7 +562,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-foreground">
+                              <div className="text-sm text-card-foreground">
                                 {formatIDType(verification.id_type)}
                               </div>
                               <div className="text-sm text-muted-foreground">
@@ -495,16 +578,16 @@ const ManageIDVerificationsPage: React.FC = () => {
                               {formatDate(verification.submitted_at)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex items-center space-x-3">
+                              <div className="flex items-center space-x-2">
                                 {/* View Details Button */}
                                 <button
                                   onClick={() =>
                                     handleViewDetails(verification)
                                   }
-                                  className="inline-flex items-center justify-center p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                  className="inline-flex items-center justify-center p-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-background"
                                   title="View Details"
                                 >
-                                  <EyeIcon className="h-5 w-5" />
+                                  <EyeIcon className="h-4 w-4" />
                                 </button>
 
                                 {/* Approve Button */}
@@ -514,10 +597,10 @@ const ManageIDVerificationsPage: React.FC = () => {
                                     onClick={() =>
                                       handleAction(verification, "approve")
                                     }
-                                    className="inline-flex items-center justify-center p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                    className="inline-flex items-center justify-center p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:text-green-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 focus:ring-offset-background"
                                     title="Approve"
                                   >
-                                    <CheckCircleIcon className="h-5 w-5" />
+                                    <CheckCircleIcon className="h-4 w-4" />
                                   </button>
                                 )}
 
@@ -528,10 +611,10 @@ const ManageIDVerificationsPage: React.FC = () => {
                                     onClick={() =>
                                       handleAction(verification, "reject")
                                     }
-                                    className="inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                    className="inline-flex items-center justify-center p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 focus:ring-offset-background"
                                     title="Reject"
                                   >
-                                    <XCircleIcon className="h-5 w-5" />
+                                    <XCircleIcon className="h-4 w-4" />
                                   </button>
                                 )}
 
@@ -543,7 +626,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                                   disabled={
                                     deletingVerification === verification.id
                                   }
-                                  className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
+                                  className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 focus:ring-offset-background ${
                                     deletingVerification === verification.id
                                       ? "opacity-50 cursor-not-allowed"
                                       : ""
@@ -553,7 +636,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                                   {deletingVerification === verification.id ? (
                                     <LoadingSpinner size="sm" />
                                   ) : (
-                                    <TrashIcon className="h-5 w-5" />
+                                    <TrashIcon className="h-4 w-4" />
                                   )}
                                 </button>
                               </div>
@@ -568,7 +651,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                 {filteredVerifications.length === 0 && (
                   <div className="text-center py-12">
                     <IdentificationIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-2 text-sm font-medium text-foreground">
+                    <h3 className="mt-2 text-sm font-medium text-card-foreground">
                       No verifications found
                     </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -614,7 +697,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                     ID Verification Details
                   </h2>
                   <button
-                    onClick={() => setShowDetailsModal(false)}
+                    onClick={handleCloseDetailsModal}
                     className="text-muted-foreground hover:text-foreground"
                   >
                     <XCircleIcon className="h-6 w-6" />
@@ -794,7 +877,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                           </label>
                           <div className="relative">
                             <img
-                              src={selectedVerification.front_image_url}
+                              src={imageBlobs[selectedVerification.front_image_url!] || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Mb2FkaW5nLi4uPC90ZXh0Pgo8L3N2Zz4="}
                               alt="ID Front"
                               className="w-full h-48 object-cover rounded-lg border border-border"
                               onError={(e) => {
@@ -808,10 +891,16 @@ const ManageIDVerificationsPage: React.FC = () => {
                             />
                             <div className="absolute top-2 right-2">
                               <a
-                                href={selectedVerification.front_image_url}
+                                href={imageBlobs[selectedVerification.front_image_url!] || "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
+                                onClick={(e) => {
+                                  if (!imageBlobs[selectedVerification.front_image_url!]) {
+                                    e.preventDefault();
+                                    toast.error("Image not yet loaded");
+                                  }
+                                }}
                               >
                                 Open
                               </a>
@@ -826,7 +915,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                           </label>
                           <div className="relative">
                             <img
-                              src={selectedVerification.back_image_url}
+                              src={imageBlobs[selectedVerification.back_image_url!] || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Mb2FkaW5nLi4uPC90ZXh0Pgo8L3N2Zz4="}
                               alt="ID Back"
                               className="w-full h-48 object-cover rounded-lg border border-border"
                               onError={(e) => {
@@ -840,10 +929,16 @@ const ManageIDVerificationsPage: React.FC = () => {
                             />
                             <div className="absolute top-2 right-2">
                               <a
-                                href={selectedVerification.back_image_url}
+                                href={imageBlobs[selectedVerification.back_image_url!] || "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
+                                onClick={(e) => {
+                                  if (!imageBlobs[selectedVerification.back_image_url!]) {
+                                    e.preventDefault();
+                                    toast.error("Image not yet loaded");
+                                  }
+                                }}
                               >
                                 Open
                               </a>
@@ -858,7 +953,7 @@ const ManageIDVerificationsPage: React.FC = () => {
                           </label>
                           <div className="relative">
                             <img
-                              src={selectedVerification.selfie_with_id_url}
+                              src={imageBlobs[selectedVerification.selfie_with_id_url!] || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Q0EzQUYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Mb2FkaW5nLi4uPC90ZXh0Pgo8L3N2Zz4="}
                               alt="Selfie with ID"
                               className="w-full h-48 object-cover rounded-lg border border-border"
                               onError={(e) => {
@@ -872,10 +967,16 @@ const ManageIDVerificationsPage: React.FC = () => {
                             />
                             <div className="absolute top-2 right-2">
                               <a
-                                href={selectedVerification.selfie_with_id_url}
+                                href={imageBlobs[selectedVerification.selfie_with_id_url!] || "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs hover:bg-opacity-70"
+                                onClick={(e) => {
+                                  if (!imageBlobs[selectedVerification.selfie_with_id_url!]) {
+                                    e.preventDefault();
+                                    toast.error("Image not yet loaded");
+                                  }
+                                }}
                               >
                                 Open
                               </a>
@@ -896,7 +997,7 @@ const ManageIDVerificationsPage: React.FC = () => {
 
                 <div className="flex items-center justify-end space-x-4 p-6 border-t border-border">
                   <button
-                    onClick={() => setShowDetailsModal(false)}
+                    onClick={handleCloseDetailsModal}
                     className="px-4 py-2 border border-border rounded-lg text-muted-foreground hover:bg-muted"
                   >
                     Close

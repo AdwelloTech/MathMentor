@@ -131,52 +131,97 @@ const ManageTutorApplicationsPage: React.FC = () => {
         return;
       }
 
-      // Extract bucket and path from URL
-      const urlMatch = cvUrl.match(
-        /\/storage\/v1\/object\/public\/([^\/]+)\/(.+)/
-      );
-      if (!urlMatch) {
-        toast.error("Invalid CV URL format");
-        return;
+      // Construct the full URL using the backend API URL if it's a relative path
+      let fullUrl = cvUrl;
+      if (cvUrl.startsWith('/uploads') || cvUrl.startsWith('./uploads') || cvUrl.startsWith('uploads/')) {
+        // It's a relative path, construct full URL using backend API URL
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        fullUrl = `${apiUrl}${cvUrl.startsWith('/') ? '' : '/'}${cvUrl}`;
       }
 
+      console.log('CV URL:', cvUrl, 'Full URL:', fullUrl);
+
       // Try direct URL fetch for file download
-      const response = await fetch(cvUrl);
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        mode: 'cors', // Try CORS first
+      });
 
       if (!response.ok) {
         if (response.status === 404) {
           toast.error(
             "CV file not found. The file may have been deleted or moved."
           );
+        } else if (response.status === 403 || response.status === 0) {
+          // CORS or network error - try opening in new tab instead
+          toast.success("Opening CV in new tab...");
+          window.open(fullUrl, '_blank', 'noopener,noreferrer');
+          return;
         } else {
           toast.error(`Failed to download CV. Error: ${response.status}`);
         }
         return;
       }
 
-      // Get the blob from the response
+      // Check if it's a PDF based on content type or filename
+      const contentType = response.headers.get('content-type');
+      const isPDF = contentType?.includes('pdf') || fileName?.toLowerCase().includes('.pdf');
+
+      if (isPDF) {
+        // For PDFs, try opening directly first, then fallback to blob download if needed
+        try {
+          toast.success("Opening PDF in new tab...");
+          window.open(fullUrl, '_blank', 'noopener,noreferrer');
+          return;
+        } catch (pdfError) {
+          console.warn("Direct PDF opening failed, trying download approach:", pdfError);
+          // Continue to blob download approach below
+        }
+      }
+
+      // For other file types, try the download approach
       const blob = await response.blob();
 
-      // Create a blob URL
-      const blobUrl = window.URL.createObjectURL(blob);
+      // Create a blob URL with explicit MIME type for PDFs
+      let blobUrl: string;
+      if (isPDF && !blob.type.includes('pdf')) {
+        // Recreate blob with correct MIME type for PDFs
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        blobUrl = window.URL.createObjectURL(pdfBlob);
+      } else {
+        blobUrl = window.URL.createObjectURL(blob);
+      }
 
       // Create a temporary anchor element
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = fileName || "cv.pdf";
+      link.style.display = 'none'; // Hide the link
 
       // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      // Clean up the blob URL
-      window.URL.revokeObjectURL(blobUrl);
+      // Clean up the blob URL after a short delay to ensure download starts
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+      }, 1000);
 
       toast.success("CV download started");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error downloading CV:", error);
-      toast.error("Failed to download CV. Please try again.");
+
+      // If it's a network error or any other error, try opening in new tab as fallback
+      console.warn("CV download failed, trying fallback:", error);
+      toast.success("Opening CV in new tab...");
+      // Construct the full URL for fallback too
+      let fallbackUrl = cvUrl;
+      if (cvUrl.startsWith('/uploads') || cvUrl.startsWith('./uploads') || cvUrl.startsWith('uploads/')) {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        fallbackUrl = `${apiUrl}${cvUrl.startsWith('/') ? '' : '/'}${cvUrl}`;
+      }
+      window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -239,28 +284,28 @@ const ManageTutorApplicationsPage: React.FC = () => {
     switch (status) {
       case "pending":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
             <ClockIcon className="h-3 w-3 mr-1" />
             Pending
           </span>
         );
       case "approved":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30">
             <CheckCircleIcon className="h-3 w-3 mr-1" />
             Approved
           </span>
         );
       case "rejected":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
             <XCircleIcon className="h-3 w-3 mr-1" />
             Rejected
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300 border border-gray-500/30">
             Unknown
           </span>
         );
@@ -333,10 +378,10 @@ const ManageTutorApplicationsPage: React.FC = () => {
     >
           {/* Header */}
           <div className="pt-6">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-3xl font-bold text-card-foreground">
               Manage Tutor Applications
             </h1>
-            <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">
+            <p className="mt-2 text-lg text-muted-foreground">
               Review and manage tutor applications submitted by potential
               educators.
             </p>
@@ -347,7 +392,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex flex-wrap justify-center gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-center"
           >
             {dashboardStats.map((stat, index) => (
               <motion.div
@@ -356,14 +401,14 @@ const ManageTutorApplicationsPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
               >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px] dark:bg-gray-800 dark:border-gray-700">
+                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px] dark:bg-card dark:border-border">
                   <CardHeader className="pb-2">
                     <div className="flex items-start space-x-3">
                       <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
                         <stat.icon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100 max-w-xs">
+                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
                           {stat.name}
                         </CardTitle>
                       </div>
@@ -372,14 +417,14 @@ const ManageTutorApplicationsPage: React.FC = () => {
                   <CardContent className="pt-0">
                     <div className="pl-0">
                       <div className="flex items-start space-x-2">
-                        <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 ml-3">
+                        <div className="text-3xl font-bold text-card-foreground ml-3">
                           {stat.value}
                         </div>
                         <div
                           className={`ml-2 flex items-baseline text-sm font-semibold ${
                             stat.changeType === "positive"
-                              ? "text-green-600"
-                              : "text-red-600"
+                              ? "text-green-400"
+                              : "text-red-400"
                           }`}
                         >
                           {stat.change}
@@ -398,7 +443,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
           >
-            <Card className="shadow-[0_2px_2px_0_#16803D] border-0 dark:bg-gray-800 dark:border-gray-700">
+            <Card className="shadow-[0_2px_2px_0_#16803D] border-0 dark:bg-card dark:border-border">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
@@ -413,13 +458,13 @@ const ManageTutorApplicationsPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-4 mb-6">
                   <div className="flex-1">
                     <div className="relative">
-                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <input
                         type="text"
                         placeholder="Search applications..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+                        className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
@@ -427,7 +472,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                      className="border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -439,32 +484,32 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                 {/* Applications Table */}
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-muted">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Applicant
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Subjects
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Submitted
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="bg-card divide-y divide-border">
                       {filteredApplications.length === 0 ? (
                         <tr>
                           <td
                             colSpan={5}
-                            className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
+                            className="px-6 py-4 text-center text-muted-foreground"
                           >
                             {applications.length === 0
                               ? "No applications found"
@@ -473,11 +518,11 @@ const ManageTutorApplicationsPage: React.FC = () => {
                         </tr>
                       ) : (
                         filteredApplications.map((application) => (
-                          <tr key={application.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <tr key={application.id} className="hover:bg-muted/50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                  <span className="text-sm font-medium text-muted-foreground">
                                     {application.full_name
                                       .split(" ")
                                       .map((n) => n[0])
@@ -485,13 +530,13 @@ const ManageTutorApplicationsPage: React.FC = () => {
                                   </span>
                                 </div>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  <div className="text-sm font-medium text-card-foreground">
                                     {application.full_name}
                                   </div>
-                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  <div className="text-sm text-muted-foreground">
                                     {application.applicant_email}
                                   </div>
-                                  <div className="text-xs text-gray-400 dark:text-gray-500">
+                                  <div className="text-xs text-muted-foreground">
                                     {application.phone_number}
                                   </div>
                                 </div>
@@ -504,20 +549,20 @@ const ManageTutorApplicationsPage: React.FC = () => {
                                   .map((subject, index) => (
                                     <span
                                       key={index}
-                                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
                                     >
                                       {subject}
                                     </span>
                                   ))}
                                 {application.subjects.length > 3 && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
                                     +{application.subjects.length - 3} more
                                   </span>
                                 )}
                               </div>
                               {application.specializes_learning_disabilities && (
                                 <div className="mt-1">
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
                                     Learning Disabilities Specialist
                                   </span>
                                 </div>
@@ -526,7 +571,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               {getStatusBadge(application.application_status)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                               {formatDate(application.submitted_at)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -548,7 +593,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                                       onClick={() =>
                                         handleApproveApplication(application)
                                       }
-                                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
                                       title="Approve Application"
                                     >
                                       <CheckIcon className="h-4 w-4 mr-1" />
@@ -558,7 +603,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                                       onClick={() =>
                                         handleRejectApplication(application)
                                       }
-                                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-500 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
                                       title="Reject Application"
                                     >
                                       <XMarkIcon className="h-4 w-4 mr-1" />
@@ -580,16 +625,16 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
           {/* Application Details Modal */}
           {showApplicationModal && selectedApplication && (
-            <div className="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-70 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800 dark:border-gray-700">
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+              <div className="relative top-8 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    <h3 className="text-lg font-medium text-card-foreground">
                       Application Details: {selectedApplication.full_name}
                     </h3>
                     <button
                       onClick={() => setShowApplicationModal(false)}
-                      className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <XMarkIcon className="h-6 w-6" />
                     </button>
@@ -598,34 +643,34 @@ const ManageTutorApplicationsPage: React.FC = () => {
                   <div className="space-y-6">
                     {/* Personal Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                      <h4 className="text-md font-medium text-card-foreground mb-3">
                         Personal Information
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="flex items-center">
-                          <UserGroupIcon className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>
+                          <UserGroupIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span className="text-card-foreground">
                             <strong>Name:</strong>{" "}
                             {selectedApplication.full_name}
                           </span>
                         </div>
                         <div className="flex items-center">
-                          <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>
+                          <EnvelopeIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span className="text-card-foreground">
                             <strong>Email:</strong>{" "}
                             {selectedApplication.applicant_email}
                           </span>
                         </div>
                         <div className="flex items-center">
-                          <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>
+                          <PhoneIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span className="text-card-foreground">
                             <strong>Phone:</strong>{" "}
                             {selectedApplication.phone_number}
                           </span>
                         </div>
                         <div className="flex items-center">
-                          <CalendarIcon className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>
+                          <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span className="text-card-foreground">
                             <strong>Submitted:</strong>{" "}
                             {formatDate(selectedApplication.submitted_at)}
                           </span>
@@ -635,7 +680,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                     {/* Teaching Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                      <h4 className="text-md font-medium text-card-foreground mb-3">
                         Teaching Information
                       </h4>
                       <div className="space-y-3">
@@ -646,7 +691,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                               (subject, index) => (
                                 <span
                                   key={index}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
                                 >
                                   {subject}
                                 </span>
@@ -722,9 +767,9 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                       {selectedApplication.past_experience && (
                         <div className="mt-4">
-                          <strong>Past Experience:</strong>
-                          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mt-2">
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong className="text-card-foreground">Past Experience:</strong>
+                          <div className="bg-muted p-3 rounded-lg mt-2">
+                            <p className="text-sm text-card-foreground">
                               {selectedApplication.past_experience}
                             </p>
                           </div>
@@ -733,9 +778,9 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                       {selectedApplication.weekly_availability && (
                         <div className="mt-4">
-                          <strong>Weekly Availability:</strong>
-                          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mt-2">
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong className="text-card-foreground">Weekly Availability:</strong>
+                          <div className="bg-muted p-3 rounded-lg mt-2">
+                            <p className="text-sm text-card-foreground">
                               {selectedApplication.weekly_availability}
                             </p>
                           </div>
@@ -745,16 +790,16 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                     {/* CV Information */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                      <h4 className="text-md font-medium text-card-foreground mb-3">
                         CV Information
                       </h4>
-                      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                      <div className="bg-muted p-4 rounded-lg">
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            <div className="text-sm font-medium text-card-foreground">
                               {selectedApplication.cv_file_name}
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                            <div className="text-sm text-muted-foreground">
                               Size:{" "}
                               {formatFileSize(selectedApplication.cv_file_size)}
                             </div>
@@ -778,11 +823,11 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     {/* Additional Notes */}
                     {selectedApplication.additional_notes && (
                       <div>
-                        <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                        <h4 className="text-md font-medium text-card-foreground mb-3">
                           Additional Notes
                         </h4>
-                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                          <p className="text-sm text-gray-700">
+                        <div className="bg-muted p-4 rounded-lg">
+                          <p className="text-sm text-card-foreground">
                             {selectedApplication.additional_notes}
                           </p>
                         </div>
@@ -791,32 +836,32 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                     {/* Application Status */}
                     <div>
-                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                      <h4 className="text-md font-medium text-card-foreground mb-3">
                         Application Status
                       </h4>
                       <div className="space-y-2">
                         <div className="flex items-center">
-                          <span className="mr-2">Status:</span>
+                          <span className="mr-2 text-card-foreground">Status:</span>
                           {getStatusBadge(
                             selectedApplication.application_status
                           )}
                         </div>
                         {selectedApplication.reviewed_at && (
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-muted-foreground">
                             Reviewed:{" "}
                             {formatDate(selectedApplication.reviewed_at)}
                           </div>
                         )}
                         {selectedApplication.rejection_reason && (
-                          <div className="text-sm text-gray-600">
-                            <strong>Rejection Reason:</strong>{" "}
-                            {selectedApplication.rejection_reason}
+                          <div className="text-sm text-muted-foreground">
+                            <strong className="text-card-foreground">Rejection Reason:</strong>{" "}
+                            <span className="text-card-foreground">{selectedApplication.rejection_reason}</span>
                           </div>
                         )}
                         {selectedApplication.admin_notes && (
-                          <div className="text-sm text-gray-600">
-                            <strong>Admin Notes:</strong>{" "}
-                            {selectedApplication.admin_notes}
+                          <div className="text-sm text-muted-foreground">
+                            <strong className="text-card-foreground">Admin Notes:</strong>{" "}
+                            <span className="text-card-foreground">{selectedApplication.admin_notes}</span>
                           </div>
                         )}
                       </div>
@@ -824,12 +869,12 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                     {/* Action Buttons */}
                     {selectedApplication.application_status === "pending" && (
-                      <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                      <div className="flex justify-end space-x-3 pt-4 border-t border-border">
                         <button
                           onClick={() =>
                             handleApproveApplication(selectedApplication)
                           }
-                          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#34A853] to-[#6DD47E] rounded-lg hover:from-[#2E8B47] hover:to-[#5BC06F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34A853] transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
+                          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
                         >
                           <CheckIcon className="h-4 w-4 mr-2" />
                           Approve Application
@@ -838,7 +883,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                           onClick={() =>
                             handleRejectApplication(selectedApplication)
                           }
-                          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
+                          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-500 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
                         >
                           <XMarkIcon className="h-4 w-4 mr-2" />
                           Reject Application
@@ -853,17 +898,17 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
           {/* Action Modal */}
           {showActionModal && selectedApplication && actionType && (
-            <div className="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-70 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800 dark:border-gray-700">
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+              <div className="relative top-8 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    <h3 className="text-lg font-medium text-card-foreground">
                       {actionType === "approve" ? "Approve" : "Reject"}{" "}
                       Application
                     </h3>
                     <button
                       onClick={() => setShowActionModal(false)}
-                      className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <XMarkIcon className="h-6 w-6" />
                     </button>
@@ -871,23 +916,23 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                        You are about to <strong>{actionType}</strong> the
+                      <p className="text-sm text-muted-foreground mb-4">
+                        You are about to <strong className="text-card-foreground">{actionType}</strong> the
                         application from{" "}
-                        <strong>{selectedApplication.full_name}</strong>.
+                        <strong className="text-card-foreground">{selectedApplication.full_name}</strong>.
                       </p>
                     </div>
 
                     {actionType === "reject" && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-card-foreground mb-2">
                           Rejection Reason *
                         </label>
                         <textarea
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
                           rows={3}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+                          className="w-full border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                           placeholder="Please provide a reason for rejection..."
                           required
                         />
@@ -895,32 +940,32 @@ const ManageTutorApplicationsPage: React.FC = () => {
                     )}
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-card-foreground mb-2">
                         Admin Notes (Optional)
                       </label>
                       <textarea
                         value={adminNotes}
                         onChange={(e) => setAdminNotes(e.target.value)}
                         rows={3}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
+                        className="w-full border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="Add any additional notes..."
                       />
                     </div>
 
-                    <div className="flex justify-end space-x-3 pt-4">
+                    <div className="flex justify-end space-x-3 pt-4 border-t border-border">
                       <button
                         onClick={() => setShowActionModal(false)}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                        className="px-4 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-lg hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-border transition-all duration-200"
                         disabled={processingAction}
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleActionSubmit}
-                        className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+                        className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105 ${
                           actionType === "approve"
-                            ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
-                            : "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                            ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 focus:ring-green-500"
+                            : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 focus:ring-red-500"
                         }`}
                         disabled={
                           processingAction ||

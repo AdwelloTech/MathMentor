@@ -415,9 +415,9 @@ const ManageStudentsPage: React.FC = () => {
 
           {/* Student Details Modal */}
           {showStudentModal && selectedStudent && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border border-border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-card">
-                <div className="mt-3">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-card border border-border rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-4rem)]">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-foreground">
                       Student Details: {selectedStudent.full_name}
@@ -682,7 +682,7 @@ const ManageStudentsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-end space-x-3 mt-6">
+                  <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-border">
                     <button
                       onClick={() => setShowStudentModal(false)}
                       className="px-4 py-2 border border-border rounded-lg text-muted-foreground hover:bg-muted"

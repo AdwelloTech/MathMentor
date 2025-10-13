@@ -10,15 +10,12 @@ import {
   ClockIcon,
   UserIcon,
   XCircleIcon,
-  DocumentIcon,
 } from "@heroicons/react/24/outline";
 import { AdminQuizService, AdminQuiz, AdminQuestion, AdminAnswer, QuizStats } from "@/lib/adminQuizService";
 import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ManageQuizPdfsPage from "./ManageQuizPdfsPage";
 
 const ManageQuizzesPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"quizzes" | "pdfs">("quizzes");
   const [quizzes, setQuizzes] = useState<AdminQuiz[]>([]);
   const [filteredQuizzes, setFilteredQuizzes] = useState<AdminQuiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<AdminQuiz | null>(null);
@@ -185,310 +182,270 @@ const ManageQuizzesPage: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="pt-6 mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
               Manage Quizzes & PDFs
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-muted-foreground">
               View and manage all quizzes created by tutors and PDFs for AI quiz
               generation
             </p>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="mb-8">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8">
-                <button
-                  onClick={() => setActiveTab("quizzes")}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === "quizzes"
-                      ? "border-[#16803D] text-[#16803D]"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <DocumentTextIcon className="w-5 h-5" />
-                    Quizzes
+
+          {/* Stats Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-primary/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="bg-primary w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                      <DocumentTextIcon className="w-7 h-7 text-primary-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground mb-1">
+                        Total Quizzes
+                      </p>
+                      <p className="text-3xl font-bold text-foreground">
+                        {stats.total}
+                      </p>
+                    </div>
                   </div>
-                </button>
-                <button
-                  onClick={() => setActiveTab("pdfs")}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === "pdfs"
-                      ? "border-[#16803D] text-[#16803D]"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <DocumentIcon className="w-5 h-5" />
-                    PDF Management
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-primary/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="bg-primary w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                      <ChartBarIcon className="w-7 h-7 text-primary-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground mb-1">
+                        Total Attempts
+                      </p>
+                      <p className="text-3xl font-bold text-foreground">
+                        {stats.total_attempts}
+                      </p>
+                    </div>
                   </div>
-                </button>
-              </nav>
-            </div>
-          </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
 
-          {/* Content based on active tab */}
-          {activeTab === "quizzes" ? (
-            <>
-              {/* Stats Cards */}
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"
-              >
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                >
-                  <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D]">
-                    <CardContent className="p-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="bg-[#16803D] w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                          <DocumentTextIcon className="w-7 h-7 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-500 mb-1">
-                            Total Quizzes
-                          </p>
-                          <p className="text-3xl font-bold text-gray-900">
-                            {stats.total}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+          {/* Filters */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Card className="shadow-primary/20 mb-6">
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                    <div className="relative flex-1">
+                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Search quizzes, tutors, or subjects..."
+                        className="pl-10 pr-4 py-2 w-full border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D]">
-                    <CardContent className="p-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="bg-[#16803D] w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                          <ChartBarIcon className="w-7 h-7 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-500 mb-1">
-                            Total Attempts
-                          </p>
-                          <p className="text-3xl font-bold text-gray-900">
-                            {stats.total_attempts}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </motion.div>
+                    <select
+                      className="px-4 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                      value={filterSubject}
+                      onChange={(e) => setFilterSubject(e.target.value)}
+                    >
+                      <option value="all">All Subjects</option>
+                      {uniqueSubjects.map((subject) => (
+                        <option key={subject} value={subject}>
+                          {subject}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-              {/* Filters */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 mb-6">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                      <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                        <div className="relative flex-1">
-                          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                          <input
-                            type="text"
-                            placeholder="Search quizzes, tutors, or subjects..."
-                            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                          />
-                        </div>
-
-                        <select
-                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
-                          value={filterSubject}
-                          onChange={(e) => setFilterSubject(e.target.value)}
+          {/* Quizzes Table */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <Card className="shadow-primary/20 overflow-hidden">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <div className="bg-primary w-8 h-8 rounded-lg flex items-center justify-center">
+                    <DocumentTextIcon className="w-4 h-4 text-primary-foreground" />
+                  </div>
+                  <span>Quizzes</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Quiz
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Tutor
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Subject
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Questions
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Attempts
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Created
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-card divide-y divide-border">
+                      {filteredQuizzes.map((quiz) => (
+                        <motion.tr
+                          key={quiz.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="hover:bg-muted/50"
                         >
-                          <option value="all">All Subjects</option>
-                          {uniqueSubjects.map((subject) => (
-                            <option key={subject} value={subject}>
-                              {subject}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Quizzes Table */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                <Card className="shadow-[0_2px_2px_0_#16803D] border-0 overflow-hidden">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                        <DocumentTextIcon className="w-4 h-4 text-white" />
-                      </div>
-                      <span>Quizzes</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Quiz
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Tutor
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Subject
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Questions
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Attempts
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Created
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {filteredQuizzes.map((quiz) => (
-                            <motion.tr
-                              key={quiz.id}
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="hover:bg-gray-50"
-                            >
-                              <td className="px-6 py-4">
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {quiz.title}
-                                  </div>
-                                  {quiz.description && (
-                                    <div className="text-sm text-gray-500 truncate max-w-xs">
-                                      {quiz.description}
-                                    </div>
-                                  )}
-                                  <div className="text-xs text-gray-400 flex items-center mt-1">
-                                    <ClockIcon className="h-3 w-3 mr-1" />
-                                    {quiz.time_limit_minutes} minutes
-                                  </div>
+                          <td className="px-6 py-4">
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                {quiz.title}
+                              </div>
+                              {quiz.description && (
+                                <div className="text-sm text-muted-foreground truncate max-w-xs">
+                                  {quiz.description}
                                 </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="flex items-center">
-                                  <UserIcon className="h-4 w-4 text-gray-400 mr-2" />
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">
-                                      {quiz.tutor.full_name}
-                                    </div>
-                                    <div className="text-sm text-gray-500">
-                                      {quiz.tutor.email}
-                                    </div>
-                                  </div>
+                              )}
+                              <div className="text-xs text-muted-foreground flex items-center mt-1">
+                                <ClockIcon className="h-3 w-3 mr-1" />
+                                {quiz.time_limit_minutes} minutes
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center">
+                              <UserIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                              <div>
+                                <div className="text-sm font-medium text-foreground">
+                                  {quiz.tutor.full_name}
                                 </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                  {quiz.subject}
-                                </span>
-                                {quiz.gradeLevelId && (
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    Grade: {typeof quiz.gradeLevelId === 'string' ? quiz.gradeLevelId : quiz.gradeLevelId.displayName}
-                                  </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {quiz.tutor.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                              {quiz.subject}
+                            </span>
+                            {quiz.gradeLevelId && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Grade: {typeof quiz.gradeLevelId === 'string' ? quiz.gradeLevelId : quiz.gradeLevelId.displayName}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-foreground">
+                            {quiz.total_questions} questions
+                            <div className="text-xs text-muted-foreground">
+                              {quiz.total_points} points
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-foreground">
+                            {quiz.total_attempts}
+                            {quiz.total_attempts > 0 && quiz.avg_score !== undefined && (
+                              <div className="text-xs text-muted-foreground">
+                                Avg: {quiz.avg_score.toFixed(1)}%
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-muted-foreground">
+                            {new Date(quiz.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm font-medium">
+                            <div className="flex justify-end space-x-2">
+                              <button
+                                onClick={() => handleViewQuiz(quiz)}
+                                disabled={viewingQuizId === quiz.id}
+                                className={`p-1 rounded-full transition-colors ${
+                                  viewingQuizId === quiz.id
+                                    ? "text-muted-foreground cursor-not-allowed"
+                                    : "text-primary hover:text-primary/80 hover:bg-primary/10"
+                                }`}
+                                title="View Details"
+                              >
+                                {viewingQuizId === quiz.id ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                                ) : (
+                                  <EyeIcon className="h-4 w-4" />
                                 )}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-900">
-                                {quiz.total_questions} questions
-                                <div className="text-xs text-gray-500">
-                                  {quiz.total_points} points
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-900">
-                                {quiz.total_attempts}
-                                {quiz.total_attempts > 0 && quiz.avg_score !== undefined && (
-                                  <div className="text-xs text-gray-500">
-                                    Avg: {quiz.avg_score.toFixed(1)}%
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-500">
-                                {new Date(quiz.created_at).toLocaleDateString()}
-                              </td>
-                              <td className="px-6 py-4 text-right text-sm font-medium">
-                                <div className="flex justify-end space-x-2">
-                                  <button
-                                    onClick={() => handleViewQuiz(quiz)}
-                                    disabled={viewingQuizId === quiz.id}
-                                    className={`p-1 rounded-full transition-colors ${
-                                      viewingQuizId === quiz.id
-                                        ? "text-gray-400 cursor-not-allowed"
-                                        : "text-green-600 hover:text-green-900 hover:bg-green-100"
-                                    }`}
-                                    title="View Details"
-                                  >
-                                    {viewingQuizId === quiz.id ? (
-                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                                    ) : (
-                                      <EyeIcon className="h-4 w-4" />
-                                    )}
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setDeletingId(quiz.id);
-                                      setShowDeleteModal(true);
-                                    }}
-                                    className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-100 transition-colors"
-                                    title="Delete Quiz"
-                                  >
-                                    <TrashIcon className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setDeletingId(quiz.id);
+                                  setShowDeleteModal(true);
+                                }}
+                                className="text-destructive hover:text-destructive/80 p-1 rounded-full hover:bg-destructive/10 transition-colors"
+                                title="Delete Quiz"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                    {filteredQuizzes.length === 0 && (
-                      <div className="text-center py-12">
-                        <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">
-                          No quizzes found
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          {searchTerm || filterSubject !== "all"
-                            ? "Try adjusting your search criteria."
-                            : "No quizzes have been created yet."}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </>
-          ) : (
-            <ManageQuizPdfsPage />
-          )}
+                {filteredQuizzes.length === 0 && (
+                  <div className="text-center py-12">
+                    <DocumentTextIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-2 text-sm font-medium text-foreground">
+                      No quizzes found
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {searchTerm || filterSubject !== "all"
+                        ? "Try adjusting your search criteria."
+                        : "No quizzes have been created yet."}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
         {showQuizModal && selectedQuiz && (
@@ -500,25 +457,25 @@ const ManageQuizzesPage: React.FC = () => {
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-card rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", damping: 25 }}
           >
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b border-border">
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-2xl font-bold text-card-foreground">
                     {selectedQuiz.title}
                   </h2>
-                  <p className="text-gray-600 mt-1">
+                  <p className="text-muted-foreground mt-1">
                     Created by {selectedQuiz.tutor.full_name}
                   </p>
                 </div>
                 <button
                   onClick={() => setShowQuizModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <XCircleIcon className="h-6 w-6" />
                 </button>
@@ -527,68 +484,68 @@ const ManageQuizzesPage: React.FC = () => {
 
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Subject</p>
-                  <p className="font-semibold">{selectedQuiz.subject}</p>
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Subject</p>
+                  <p className="font-semibold text-foreground">{selectedQuiz.subject}</p>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Questions</p>
-                  <p className="font-semibold">
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Questions</p>
+                  <p className="font-semibold text-foreground">
                     {selectedQuiz.total_questions}
                   </p>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Time Limit</p>
-                  <p className="font-semibold">
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Time Limit</p>
+                  <p className="font-semibold text-foreground">
                     {selectedQuiz.time_limit_minutes} min
                   </p>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Total Attempts</p>
-                  <p className="font-semibold">{selectedQuiz.total_attempts}</p>
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Total Attempts</p>
+                  <p className="font-semibold text-foreground">{selectedQuiz.total_attempts}</p>
                 </div>
               </div>
 
               {selectedQuiz.description && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-2">Description</h3>
-                  <p className="text-gray-700">{selectedQuiz.description}</p>
+                  <h3 className="text-lg font-semibold mb-2 text-foreground">Description</h3>
+                  <p className="text-foreground">{selectedQuiz.description}</p>
                 </div>
               )}
 
               {selectedQuiz.questions && selectedQuiz.questions.length > 0 ? (
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">
+                  <h3 className="text-lg font-semibold mb-4 text-foreground">
                     Questions ({selectedQuiz.questions.length})
                   </h3>
                   <div className="space-y-6">
                     {selectedQuiz.questions.map((question: AdminQuestion, index: number) => (
                       <div
                         key={question.id}
-                        className="border rounded-lg p-6 bg-gray-50"
+                        className="border rounded-lg p-6 bg-muted"
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center space-x-2">
-                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                            <span className="bg-secondary text-secondary-foreground text-xs font-medium px-2.5 py-0.5 rounded">
                               Question {index + 1}
                             </span>
-                            <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                            <span className="bg-accent text-accent-foreground text-xs font-medium px-2.5 py-0.5 rounded">
                               {question.question_type.replace("_", " ")}
                             </span>
                           </div>
-                          <span className="text-sm font-medium text-gray-600">
+                          <span className="text-sm font-medium text-muted-foreground">
                             {question.points}{" "}
                             {question.points === 1 ? "point" : "points"}
                           </span>
                         </div>
 
-                        <p className="text-gray-900 font-medium mb-4 text-base leading-relaxed">
+                        <p className="text-foreground font-medium mb-4 text-base leading-relaxed">
                           {question.question_text}
                         </p>
 
                         {question.answers && question.answers.length > 0 ? (
                           <div className="space-y-2">
-                            <h5 className="text-sm font-medium text-gray-700 mb-2">
+                            <h5 className="text-sm font-medium text-foreground mb-2">
                               Answer Options:
                             </h5>
                             {question.answers
@@ -598,11 +555,11 @@ const ManageQuizzesPage: React.FC = () => {
                                   key={answer.id}
                                   className={`flex items-start p-3 rounded-lg text-sm border-2 ${
                                     answer.is_correct
-                                      ? "bg-green-50 border-green-200 text-green-900"
-                                      : "bg-white border-gray-200 text-gray-700"
+                                      ? "bg-success/10 border-success text-success"
+                                      : "bg-card border-border text-foreground"
                                   }`}
                                 >
-                                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs font-medium flex items-center justify-center mr-3 mt-0.5">
+                                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-secondary text-secondary-foreground text-xs font-medium flex items-center justify-center mr-3 mt-0.5">
                                     {String.fromCharCode(65 + answerIndex)}
                                   </span>
                                   <div className="flex-1">
@@ -611,8 +568,8 @@ const ManageQuizzesPage: React.FC = () => {
                                     </p>
                                     {answer.is_correct && (
                                       <div className="flex items-center mt-1">
-                                        <CheckCircleIcon className="h-4 w-4 text-green-600 mr-1" />
-                                        <span className="text-xs font-medium text-green-600">
+                                        <CheckCircleIcon className="h-4 w-4 text-success mr-1" />
+                                        <span className="text-xs font-medium text-success">
                                           Correct Answer
                                         </span>
                                       </div>
@@ -622,7 +579,7 @@ const ManageQuizzesPage: React.FC = () => {
                               ))}
                           </div>
                         ) : (
-                          <div className="text-sm text-gray-500 italic">
+                          <div className="text-sm text-muted-foreground italic">
                             No answer options found for this question.
                           </div>
                         )}
@@ -632,11 +589,11 @@ const ManageQuizzesPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  <DocumentTextIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-2 text-sm font-medium text-foreground">
                     No Questions Found
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     This quiz doesn't have any questions yet, or there was an
                     error loading them.
                   </p>
@@ -650,14 +607,14 @@ const ManageQuizzesPage: React.FC = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div className="bg-card rounded-lg max-w-md w-full p-6 border">
             <div className="flex items-center mb-4">
-              <TrashIcon className="h-6 w-6 text-red-600 mr-3" />
-              <h3 className="text-lg font-semibold text-gray-900">
+              <TrashIcon className="h-6 w-6 text-destructive mr-3" />
+              <h3 className="text-lg font-semibold text-card-foreground">
                 Delete Quiz
               </h3>
             </div>
-            <p className="text-gray-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               Are you sure you want to delete this quiz? This action cannot be
               undone and will also delete all associated questions, answers, and
               student attempts.
@@ -668,13 +625,13 @@ const ManageQuizzesPage: React.FC = () => {
                   setShowDeleteModal(false);
                   setDeletingId(null);
                 }}
-                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-4 py-2 text-muted-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteQuiz}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors"
               >
                 Delete
               </button>

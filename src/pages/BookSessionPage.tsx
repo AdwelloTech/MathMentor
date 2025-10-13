@@ -51,6 +51,7 @@ const BookSessionPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [bookingLoading, setBookingLoading] = useState<string | null>(null);
   const [tutorRatings, setTutorRatings] = useState<Record<string, { avg: number; count: number }>>({});
+  const [completedBookings, setCompletedBookings] = useState<string[]>([]);
 
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -67,6 +68,7 @@ const BookSessionPage: React.FC = () => {
   useEffect(() => {
     loadSessions();
     loadClassTypes();
+    loadCompletedBookings();
   }, []);
 
   // Load tutor ratings whenever sessions change
@@ -130,6 +132,21 @@ const BookSessionPage: React.FC = () => {
     }
   };
 
+  const loadCompletedBookings = async () => {
+    if (!user?.id) return;
+
+    try {
+      const bookings = await classSchedulingService.bookings.getByStudentId(user.id);
+      // Filter for completed bookings and extract class IDs
+      const completedClassIds = bookings
+        .filter(booking => booking.status === 'completed' && booking.classId)
+        .map(booking => booking.classId as string);
+      setCompletedBookings(completedClassIds);
+    } catch (err) {
+      console.error("Error loading completed bookings:", err);
+    }
+  };
+
   const handleBookSession = (sessionResult: ClassSearchResult) => {
     if (!user) return;
 
@@ -151,8 +168,9 @@ const BookSessionPage: React.FC = () => {
         paymentIntentId
       );
 
-      // Refresh sessions to update available slots
+      // Refresh sessions to update available slots and completed bookings
       await loadSessions();
+      await loadCompletedBookings();
 
       // Close modal and show success message
       setShowPaymentModal(false);
@@ -206,6 +224,10 @@ const BookSessionPage: React.FC = () => {
     const isUpcoming = sessionDateTime > now;
 
     if (!isUpcoming) return false;
+
+    // Filter out sessions that the student has already completed
+    const hasAlreadyCompleted = completedBookings.includes(session._id);
+    if (hasAlreadyCompleted) return false;
 
     // For now, skip class type filtering since we don't have class types in the new backend
     const matchesType = filterType === "all";
@@ -406,7 +428,7 @@ const BookSessionPage: React.FC = () => {
                       <div className="text-right">
                         <Badge
                           variant="outline"
-                          className="border-yellow-400 border-2 text-yellow-700 text-lg font-bold px-3 py-1"
+                          className="border-primary border-2 text-primary text-lg font-bold px-3 py-1"
                         >
                           <DollarSign className="w-4 h-4 mr-1" />
                           {session.price}
@@ -447,7 +469,7 @@ const BookSessionPage: React.FC = () => {
                           {tutor.full_name}
                         </p>
                         <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <Star className="w-4 h-4 text-warning-500 fill-current" />
                           <span className="text-sm text-muted-foreground font-medium">
                             {(
                               tutorRatings[tutor.id]?.avg ?? tutor.rating ?? 0

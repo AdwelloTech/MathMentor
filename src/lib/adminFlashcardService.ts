@@ -46,12 +46,12 @@ export interface FlashcardStats {
 }
 
 export class AdminFlashcardService {
-  // Fetch all flashcard sets from all tutors
+  // Fetch all flashcard sets from all tutors (admin route)
   static async getAllFlashcardSets(): Promise<AdminFlashcardSet[]> {
     try {
       console.log("Fetching all flashcard sets with admin service...");
 
-      const data = await apiClient.get<any[]>("/api/flashcards");
+      const data = await apiClient.get<any[]>("/api/admin/flashcards/sets");
 
       if (!data || !Array.isArray(data)) {
         return [];
@@ -60,14 +60,14 @@ export class AdminFlashcardService {
       // Transform backend data to match expected format
       const flashcardSets: AdminFlashcardSet[] = data.map((set: any) => ({
         _id: set._id,
-        id: set._id,
+        id: set.id,
         tutor_id: set.tutorId,
         title: set.title,
         subject: set.subject,
         topic: set.topic,
         description: set.description,
         difficulty: set.difficulty,
-        grade_level: set.gradeLevelId,
+        grade_level: set.gradeLevelId?.displayName || '',
         is_public: set.isPublic,
         is_active: set.isActive,
         tags: set.tags || [],
@@ -82,7 +82,7 @@ export class AdminFlashcardService {
           full_name: 'Unknown',
           email: ''
         },
-        card_count: set.cardCount || 0
+        card_count: set.card_count || 0
       }));
 
       console.log(
@@ -133,12 +133,12 @@ export class AdminFlashcardService {
     }
   }
 
-  // Delete a flashcard set (and all its cards)
+  // Delete a flashcard set (and all its cards) - admin route
   static async deleteFlashcardSet(setId: string): Promise<boolean> {
     try {
       console.log("Starting flashcard set deletion for:", setId);
 
-      await apiClient.delete(`/api/flashcards/${setId}`);
+      await apiClient.delete(`/api/admin/flashcards/sets/${setId}`);
 
       console.log("Flashcard set deleted successfully");
       return true;
@@ -148,25 +148,25 @@ export class AdminFlashcardService {
     }
   }
 
-  // Get flashcard set details with cards
+  // Get flashcard set details with cards (admin route)
   static async getFlashcardSetDetails(
     setId: string
   ): Promise<AdminFlashcardSet | null> {
     try {
-      const data = await apiClient.get<any>(`/api/flashcards/${setId}`);
+      const data = await apiClient.get<any>(`/api/admin/flashcards/sets/${setId}`);
 
       if (!data) return null;
 
       return {
         _id: data._id,
-        id: data._id,
+        id: data.id,
         tutor_id: data.tutorId,
         title: data.title,
         subject: data.subject,
         topic: data.topic,
         description: data.description,
         difficulty: data.difficulty,
-        grade_level: data.gradeLevelId,
+        grade_level: data.gradeLevelId?.displayName || '',
         is_public: data.isPublic,
         is_active: data.isActive,
         tags: data.tags || [],
@@ -181,7 +181,7 @@ export class AdminFlashcardService {
           full_name: 'Unknown',
           email: ''
         },
-        card_count: data.cards?.length || 0,
+        card_count: data.card_count || 0,
         cards: data.cards || []
       };
     } catch (error) {

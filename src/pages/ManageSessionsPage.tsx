@@ -58,7 +58,7 @@ const ManageSessionsPage: React.FC = () => {
     }
   }, [user]);
 
-  // Real-time timer to update session joinability
+  // Real-time timer to update session joinability and fetch fresh data periodically
   useEffect(() => {
     const updateSessionStatus = () => {
       const newJoinability: Record<string, boolean> = {};
@@ -88,6 +88,80 @@ const ManageSessionsPage: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [upcomingBookings]);
+
+  // Periodic server data fetching to detect tutor session starts
+  useEffect(() => {
+    if (!user) return;
+
+    let pollingInterval: NodeJS.Timeout;
+
+    const fetchFreshData = async () => {
+      try {
+        const data = await classSchedulingService.bookings.getByStudentId(user.id);
+        const freshBookings = data || [];
+
+        // Check if any session status has changed to 'in_progress'
+        const hasStatusChange = freshBookings.some((freshBooking) => {
+          const existingBooking = upcomingBookings.find(b => b.id === freshBooking.id);
+          return existingBooking &&
+                 existingBooking.class?.status !== freshBooking.class?.status &&
+                 freshBooking.class?.status === 'in_progress';
+        });
+
+        // Update state with fresh data
+        setUpcomingBookings(freshBookings);
+
+        // If there was a status change to in_progress, show a brief success notification
+        if (hasStatusChange) {
+          toast.success("Session has started! You can now join.");
+        }
+      } catch (error) {
+        console.error("Error fetching fresh session data:", error);
+        // Don't show error toast for background polling
+      }
+    };
+
+    // Determine polling frequency based on session timing
+    const getPollingInterval = () => {
+      const now = new Date();
+      const upcomingSessions = upcomingBookings.filter(booking => {
+        if (!booking.class) return false;
+        const sessionDateTime = new Date(`${booking.class.date}T${booking.class.start_time}`);
+        const timeDiff = sessionDateTime.getTime() - now.getTime();
+        const minutesUntilStart = timeDiff / (1000 * 60);
+        return minutesUntilStart > 0 && minutesUntilStart <= 10; // Within 10 minutes
+      });
+
+      // If there are sessions starting soon, poll more frequently
+      return upcomingSessions.length > 0 ? 3000 : 12000; // 3 seconds vs 12 seconds
+    };
+
+    // Set up polling with dynamic interval
+    const setupPolling = () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+      pollingInterval = setInterval(fetchFreshData, getPollingInterval());
+    };
+
+    // Initial fetch
+    fetchFreshData();
+
+    // Start polling
+    setupPolling();
+
+    // Set up a separate interval to adjust polling frequency every minute
+    const adjustmentInterval = setInterval(() => {
+      setupPolling(); // Recalculate and restart polling with new frequency
+    }, 60000); // Adjust every minute
+
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+      clearInterval(adjustmentInterval);
+    };
+  }, [user, upcomingBookings]);
 
   const loadBookings = async () => {
     try {

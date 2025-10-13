@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
   PlusIcon,
   TrashIcon,
@@ -48,7 +47,7 @@ const ManageQuizPdfsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterGrade, setFilterGrade] = useState("all");
   const [filterSubject, setFilterSubject] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("active");
 
   // Form states
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -114,11 +113,11 @@ const ManageQuizPdfsPage: React.FC = () => {
     }
 
     if (filterGrade !== "all") {
-      filtered = filtered.filter((pdf) => pdf.grade_level_id === filterGrade);
+      filtered = filtered.filter((pdf) => pdf.grade_level_id && pdf.grade_level_id === filterGrade);
     }
 
     if (filterSubject !== "all") {
-      filtered = filtered.filter((pdf) => pdf.subject_id === filterSubject);
+      filtered = filtered.filter((pdf) => pdf.subject_id && pdf.subject_id === filterSubject);
     }
 
     if (filterStatus !== "all") {
@@ -137,6 +136,18 @@ const ManageQuizPdfsPage: React.FC = () => {
 
     if (!adminSession?.user?.id) {
       toast.error("Admin session not available. Please log in again.");
+      return;
+    }
+
+    // Validate that subject_id is a valid ObjectId format
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    if (!objectIdRegex.test(uploadForm.subject_id)) {
+      toast.error("Invalid subject selected. Please select a valid subject.");
+      return;
+    }
+
+    if (uploadForm.grade_level_id && !objectIdRegex.test(String(uploadForm.grade_level_id))) {
+      toast.error("Invalid grade level selected. Please select a valid grade level.");
       return;
     }
 
@@ -159,6 +170,7 @@ const ManageQuizPdfsPage: React.FC = () => {
         file_path: pdfBase64,
         file_size: fileSize,
         subject_id: uploadForm.subject_id,
+        uploaded_by: adminSession.user.id,
         is_active: true,
       };
 
@@ -167,12 +179,10 @@ const ManageQuizPdfsPage: React.FC = () => {
         pdfData.grade_level_id = uploadForm.grade_level_id;
       }
 
-      // Since uploaded_by is nullable in the database, we can omit it entirely
-      // This avoids any foreign key constraint issues
-
       // Debug: Log the data being sent
       console.log("Creating PDF with data:", pdfData);
       console.log("Admin session:", adminSession);
+      console.log("Admin user ID:", adminSession?.user?.id);
 
       const newPdf = await quizPdfService.create(pdfData);
 
@@ -180,9 +190,11 @@ const ManageQuizPdfsPage: React.FC = () => {
       setShowUploadModal(false);
       resetUploadForm();
       toast.success("PDF uploaded successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading PDF:", error);
-      toast.error("Failed to upload PDF");
+      console.error("Error details:", error?.response?.data || error?.message || error);
+      const errorMessage = error?.response?.data?.error || error?.message || 'Unknown error';
+      toast.error(`Failed to upload PDF: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -191,8 +203,27 @@ const ManageQuizPdfsPage: React.FC = () => {
   const handleEdit = async () => {
     if (!selectedPdf) return;
 
+    // Validate that subject_id is a valid ObjectId format
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    if (editForm.subject_id && !objectIdRegex.test(editForm.subject_id)) {
+      toast.error("Invalid subject selected. Please select a valid subject.");
+      return;
+    }
+
+    if (editForm.grade_level_id && !objectIdRegex.test(String(editForm.grade_level_id))) {
+      toast.error("Invalid grade level selected. Please select a valid grade level.");
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log("Updating PDF with data:", {
+        file_name: editForm.file_name,
+        grade_level_id: editForm.grade_level_id ? String(editForm.grade_level_id) : undefined,
+        subject_id: editForm.subject_id,
+        is_active: editForm.is_active,
+      });
+
       const updatedPdf = await quizPdfService.update(selectedPdf.id, {
         file_name: editForm.file_name,
         grade_level_id: editForm.grade_level_id ? String(editForm.grade_level_id) : undefined,
@@ -200,14 +231,19 @@ const ManageQuizPdfsPage: React.FC = () => {
         is_active: editForm.is_active,
       });
 
-      setPdfs((prev) =>
-        prev.map((pdf) => (pdf.id === selectedPdf.id ? updatedPdf : pdf))
-      );
+      console.log("Updated PDF response:", updatedPdf);
+      console.log("Available grade levels:", gradeLevels);
+      console.log("Available subjects:", subjects);
+
+      // Instead of updating local state, reload the data to get properly populated fields
+      await loadData();
       setShowEditModal(false);
       toast.success("PDF updated successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating PDF:", error);
-      toast.error("Failed to update PDF");
+      console.error("Error details:", error?.response?.data || error?.message || error);
+      const errorMessage = error?.response?.data?.error || error?.message || 'Unknown error';
+      toast.error(`Failed to update PDF: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -233,11 +269,10 @@ const ManageQuizPdfsPage: React.FC = () => {
 
   const handleToggleActive = async (pdf: QuizPdf) => {
     try {
-      const updatedPdf = await quizPdfService.toggleActive(pdf.id);
-      setPdfs((prev) => prev.map((p) => (p.id === pdf.id ? updatedPdf : p)));
-      toast.success(
-        `PDF ${updatedPdf.is_active ? "activated" : "deactivated"} successfully`
-      );
+      await quizPdfService.toggleActive(pdf.id);
+      // Reload data to get properly populated fields
+      await loadData();
+      toast.success("PDF status updated successfully");
     } catch (error) {
       console.error("Error toggling PDF status:", error);
       toast.error("Failed to update PDF status");
@@ -257,8 +292,8 @@ const ManageQuizPdfsPage: React.FC = () => {
     setSelectedPdf(pdf);
     setEditForm({
       file_name: pdf.file_name,
-      grade_level_id: pdf.grade_level_id,
-      subject_id: pdf.subject_id,
+      grade_level_id: pdf.grade_level_id || "",
+      subject_id: pdf.subject_id || "",
       is_active: pdf.is_active,
     });
     setShowEditModal(true);
@@ -273,12 +308,18 @@ const ManageQuizPdfsPage: React.FC = () => {
   };
 
   const getGradeDisplayName = (gradeId: string): string => {
+    console.log("getGradeDisplayName called with:", gradeId);
+    if (!gradeId) return "No Grade";
     const grade = gradeLevels.find((g) => g.id === gradeId);
+    console.log("Found grade:", grade);
     return grade?.display_name || "Unknown Grade";
   };
 
   const getSubjectDisplayName = (subjectId: string): string => {
+    console.log("getSubjectDisplayName called with:", subjectId);
+    if (!subjectId) return "No Subject";
     const subject = subjects.find((s) => s.id === subjectId);
+    console.log("Found subject:", subject);
     return subject?.display_name || "Unknown Subject";
   };
 
@@ -295,10 +336,10 @@ const ManageQuizPdfsPage: React.FC = () => {
     <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Manage Quiz PDFs
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Upload and manage PDFs that students can use for AI quiz generation
           </p>
         </div>
@@ -306,8 +347,12 @@ const ManageQuizPdfsPage: React.FC = () => {
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Button
-            onClick={() => setShowUploadModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+            onClick={() => {
+              console.log('Upload New PDF button clicked');
+              setShowUploadModal(true);
+            }}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2"
+            style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 10, position: 'relative' }}
           >
             <PlusIcon className="w-5 h-5 mr-2" />
             Upload New PDF
@@ -348,7 +393,7 @@ const ManageQuizPdfsPage: React.FC = () => {
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="All Status" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -362,23 +407,22 @@ const ManageQuizPdfsPage: React.FC = () => {
         {/* PDFs Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPdfs.map((pdf) => (
-            <motion.div
+            <div
               key={pdf.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden"
+              className="bg-card rounded-lg shadow-md border border-border overflow-hidden"
+              style={{ pointerEvents: 'auto' }}
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <DocumentIcon className="w-6 h-6 text-blue-600" />
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <DocumentIcon className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 text-lg">
+                      <h3 className="font-semibold text-card-foreground text-lg">
                         {pdf.file_name}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {formatFileSize(pdf.file_size)}
                       </p>
                     </div>
@@ -392,25 +436,32 @@ const ManageQuizPdfsPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-3 mb-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <AcademicCapIcon className="w-4 h-4" />
-                    {getGradeDisplayName(pdf.grade_level_id)}
+                    {pdf.grade_level ? pdf.grade_level.display_name : getGradeDisplayName(pdf.grade_level_id)}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <BookOpenIcon className="w-4 h-4" />
-                    {getSubjectDisplayName(pdf.subject_id)}
+                    {pdf.subject ? pdf.subject.display_name : getSubjectDisplayName(pdf.subject_id)}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    Uploaded: {new Date(pdf.created_at).toLocaleDateString()}
+                  <div className="text-xs text-muted-foreground">
+                    Uploaded: {pdf.created_at ? new Date(pdf.created_at).toLocaleDateString() : 'N/A'}
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2" style={{ pointerEvents: 'auto' }}>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => openEditModal(pdf)}
+                    onClick={() => {
+                      console.log('Edit button clicked for PDF:', pdf.id);
+                      console.log('PDF data:', pdf);
+                      console.log('Grade level object:', pdf.grade_level);
+                      console.log('Subject object:', pdf.subject);
+                      openEditModal(pdf);
+                    }}
                     className="flex-1"
+                    style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 10, position: 'relative' }}
                   >
                     <PencilIcon className="w-4 h-4 mr-1" />
                     Edit
@@ -418,12 +469,16 @@ const ManageQuizPdfsPage: React.FC = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleToggleActive(pdf)}
+                    onClick={() => {
+                      console.log('Toggle button clicked for PDF:', pdf.id);
+                      handleToggleActive(pdf);
+                    }}
                     className={`flex-1 ${
                       pdf.is_active
-                        ? "text-red-600 border-red-300 hover:bg-red-50"
-                        : "text-green-600 border-green-300 hover:bg-green-50"
+                        ? "text-destructive border-destructive/30 hover:bg-destructive/10"
+                        : "text-success border-success/30 hover:bg-success/10"
                     }`}
+                    style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 10, position: 'relative' }}
                   >
                     {pdf.is_active ? (
                       <XCircleIcon className="w-4 h-4 mr-1" />
@@ -436,26 +491,28 @@ const ManageQuizPdfsPage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
+                      console.log('Delete button clicked for PDF:', pdf.id);
                       setDeletingId(pdf.id);
                       setShowDeleteModal(true);
                     }}
-                    className="text-red-600 border-red-300 hover:bg-red-50"
+                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                    style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 10, position: 'relative' }}
                   >
                     <TrashIcon className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {filteredPdfs.length === 0 && !loading && (
           <div className="text-center py-12">
-            <DocumentIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <DocumentIcon className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               No PDFs found
             </h3>
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               {searchTerm || filterGrade !== "all" || filterSubject !== "all"
                 ? "Try adjusting your filters"
                 : "Upload your first PDF to get started"}
@@ -487,7 +544,7 @@ const ManageQuizPdfsPage: React.FC = () => {
               />
             </div>
             <div>
-              <Label htmlFor="file-name">Display Name <span className="text-red-500">*</span></Label>
+              <Label htmlFor="file-name">Display Name <span className="text-destructive">*</span></Label>
               <Input
                 type="text"
                 id="file-name"
@@ -504,7 +561,7 @@ const ManageQuizPdfsPage: React.FC = () => {
               />
             </div>
             <div className="w-full">
-              <Label htmlFor="grade-level">Grade Level <span className="text-red-500">*</span></Label>
+              <Label htmlFor="grade-level">Grade Level <span className="text-destructive">*</span></Label>
               <GradeSelect
                 value={uploadForm.grade_level_id ? String(uploadForm.grade_level_id) : ""}
                 onValueChange={(value) => {
@@ -519,7 +576,7 @@ const ManageQuizPdfsPage: React.FC = () => {
               />
             </div>
             <div>
-              <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
+              <Label htmlFor="subject">Subject <span className="text-destructive">*</span></Label>
               <Select
                 value={uploadForm.subject_id}
                 onValueChange={(value) =>
@@ -636,7 +693,7 @@ const ManageQuizPdfsPage: React.FC = () => {
                     is_active: e.target.checked,
                   }))
                 }
-                className="rounded"
+                className="rounded border-border"
               />
               <Label htmlFor="edit-active">Active</Label>
             </div>
@@ -662,7 +719,7 @@ const ManageQuizPdfsPage: React.FC = () => {
             <DialogTitle>Delete PDF</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Are you sure you want to delete this PDF? This action cannot be
               undone.
             </p>

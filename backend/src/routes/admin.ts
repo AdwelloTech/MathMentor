@@ -1,6 +1,9 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth';
 import { TutorService } from '../services/tutorService';
+import { ClassService } from '../services/classService';
+import { FlashcardService } from '../services/flashcardService';
+import { UserService } from '../services/userService';
 
 // For debugging purposes - temporary solution
 const debugAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -77,10 +80,45 @@ router.get('/tutors', debugAuth, async (req, res) => {
 router.get('/tutors/:tutorId/classes', debugAuth, async (req, res) => {
   try {
     const { tutorId } = req.params;
-    const classes = await TutorService.getTutorClasses(tutorId);
+    // Use the regular ClassService to get classes by teacher ID
+    const classes = await ClassService.getClassesByTeacher(tutorId);
+
+    // Transform IClass data to TutorClass format for frontend compatibility
+    const transformedClasses = classes.map(classItem => ({
+      id: classItem._id.toString(),
+      tutor_id: classItem.teacherId.toString(),
+      class_type_id: '1', // Default class type ID
+      title: classItem.title,
+      description: classItem.description || null,
+      date: classItem.startDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+      start_time: classItem.schedule.startTime,
+      end_time: classItem.schedule.endTime,
+      max_students: classItem.capacity,
+      current_students: classItem.enrolledCount,
+      price_per_session: classItem.price || 0,
+      is_recurring: false,
+      recurring_pattern: null,
+      recurring_end_date: null,
+      status: classItem.status || (classItem.isActive ? "scheduled" : "cancelled"),
+      created_at: classItem.createdAt.toISOString(),
+      updated_at: classItem.updatedAt.toISOString(),
+      class_type: {
+        id: '1',
+        name: 'Group Session', // Default class type
+        duration_minutes: classItem.schedule.duration,
+        description: null
+      },
+      jitsi_meeting: classItem.jitsiRoomName ? {
+        id: classItem._id.toString(),
+        room_name: classItem.jitsiRoomName,
+        meeting_url: classItem.meetingLink || `https://meet.jit.si/${classItem.jitsiRoomName}`,
+        start_url: classItem.meetingLink || `https://meet.jit.si/${classItem.jitsiRoomName}`
+      } : null
+    }));
+
     res.json({
       success: true,
-      data: classes
+      data: transformedClasses
     });
   } catch (error: any) {
     console.error('Error getting tutor classes:', error);
@@ -335,6 +373,191 @@ router.delete('/id-verifications/:verificationId', debugAuth, async (req, res) =
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete ID verification'
+    });
+  }
+});
+
+// Admin Student Routes
+
+// Get all students
+router.get('/students', debugAuth, async (req, res) => {
+  try {
+    console.log('GET /api/admin/students - Fetching all students for admin');
+    const students = await UserService.getAllStudents();
+    console.log(`GET /api/admin/students - Found ${students.length} students`);
+    return res.json({
+      success: true,
+      data: students
+    });
+  } catch (error: any) {
+    console.error('Error getting all students for admin:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get students'
+    });
+  }
+});
+
+// Get student statistics
+router.get('/students/stats', debugAuth, async (req, res) => {
+  try {
+    console.log('GET /api/admin/students/stats - Fetching student statistics');
+    const stats = await UserService.getStudentStats();
+    console.log('GET /api/admin/students/stats - Statistics retrieved successfully', stats);
+    return res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error: any) {
+    console.error('Error getting student stats:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get student stats'
+    });
+  }
+});
+
+// Get a specific student by ID
+router.get('/students/:studentId', debugAuth, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    console.log('GET /api/admin/students/:studentId - studentId:', studentId);
+
+    const student = await UserService.getStudentById(studentId);
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        error: 'Student not found'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: student
+    });
+  } catch (error: any) {
+    console.error('Error getting student details:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get student details'
+    });
+  }
+});
+
+// Update student
+router.put('/students/:studentId', debugAuth, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const updates = req.body;
+
+    console.log('PUT /api/admin/students/:studentId - studentId:', studentId);
+
+    const student = await UserService.updateStudent(studentId, updates);
+
+    res.json({
+      success: true,
+      data: student
+    });
+  } catch (error: any) {
+    console.error('Error updating student:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to update student'
+    });
+  }
+});
+
+// Delete student
+router.delete('/students/:studentId', debugAuth, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    console.log('DELETE /api/admin/students/:studentId - studentId:', studentId);
+
+    await UserService.deleteStudent(studentId);
+    res.json({
+      success: true,
+      data: { id: studentId }
+    });
+  } catch (error: any) {
+    console.error('Error deleting student:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to delete student'
+    });
+  }
+});
+
+// Admin Flashcard Routes
+
+// Get all flashcard sets for admin (bypasses access control)
+router.get('/flashcards/sets', debugAuth, async (req, res) => {
+  try {
+    console.log('GET /api/admin/flashcards/sets - Fetching all flashcard sets for admin');
+
+    // Get all sets without access control filtering
+    const sets = await FlashcardService.getAllSetsForAdmin();
+
+    console.log(`GET /api/admin/flashcards/sets - Found ${sets.length} flashcard sets`);
+    return res.json({
+      success: true,
+      data: sets
+    });
+  } catch (error: any) {
+    console.error('Error getting all flashcard sets for admin:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get flashcard sets'
+    });
+  }
+});
+
+// Get flashcard set details by ID for admin (bypasses access control)
+router.get('/flashcards/sets/:setId', debugAuth, async (req, res) => {
+  try {
+    const { setId } = req.params;
+    console.log('GET /api/admin/flashcards/sets/:setId - setId:', setId);
+
+    const set = await FlashcardService.getSetByIdForAdmin(setId);
+
+    if (!set) {
+      return res.status(404).json({
+        success: false,
+        error: 'Flashcard set not found'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: set
+    });
+  } catch (error: any) {
+    console.error('Error getting flashcard set details for admin:', error);
+    const statusCode = error.message.includes('not found') ? 404 : 500;
+    res.status(statusCode).json({
+      success: false,
+      error: error.message || 'Failed to get flashcard set details'
+    });
+  }
+});
+
+// Delete flashcard set for admin
+router.delete('/flashcards/sets/:setId', debugAuth, async (req, res) => {
+  try {
+    const { setId } = req.params;
+    console.log('DELETE /api/admin/flashcards/sets/:setId - setId:', setId);
+
+    await FlashcardService.deleteSetForAdmin(setId);
+    res.json({
+      success: true,
+      message: 'Flashcard set deleted successfully'
+    });
+  } catch (error: any) {
+    console.error('Error deleting flashcard set for admin:', error);
+    const statusCode = error.message.includes('not found') ? 404 : 500;
+    res.status(statusCode).json({
+      success: false,
+      error: error.message || 'Failed to delete flashcard set'
     });
   }
 });

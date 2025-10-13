@@ -16,7 +16,7 @@ import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
 import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
 import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
 import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
-import ManageQuizzesPage from "./pages/admin/ManageQuizzesPage";
+import ManageQuizPdfsPage from "./pages/admin/ManageQuizPdfsPage";
 import AdminManageFlashcardsPage from "./pages/admin/ManageFlashcardsPage";
 import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
 
@@ -164,7 +164,7 @@ function App() {
                   path="id-verifications"
                   element={<ManageIDVerificationsPage />}
                 />
-                <Route path="quizzes" element={<ManageQuizzesPage />} />
+                <Route path="quiz-pdfs" element={<ManageQuizPdfsPage />} />
                 <Route
                   path="flashcards"
                   element={<AdminManageFlashcardsPage />}

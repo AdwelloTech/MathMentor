@@ -9,7 +9,7 @@ import {
   SparklesIcon,
   CalendarDaysIcon,
   UserGroupIcon,
-  DocumentTextIcon,
+  DocumentIcon,
   UserIcon,
   IdentificationIcon,
   CreditCardIcon,
@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     {
       name: "Tutor Applications",
       href: "/admin/tutor-applications",
-      icon: DocumentTextIcon,
+      icon: DocumentIcon,
     },
     {
       name: "ID Verifications",
@@ -69,14 +69,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: UserGroupIcon 
     },
     {
-      name: "Content Management",
-      href: "/admin/quizzes",
-      icon: DocumentTextIcon,
-      subItems: [
-        { name: "Quiz PDFs", href: "/admin/quiz-pdfs" },
-        { name: "Manage Quizzes", href: "/admin/quizzes" },
-        { name: "Flashcard Sets", href: "/admin/flashcards" },
-      ]
+      name: "Quiz PDFs",
+      href: "/admin/quiz-pdfs",
+      icon: DocumentIcon,
+    },
+    {
+      name: "Flashcard Sets",
+      href: "/admin/flashcards",
+      icon: BookOpenIcon,
     },
     {
       name: "System Settings",
@@ -84,8 +84,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: Cog6ToothIcon,
       subItems: [
         { name: "Subjects", href: "/admin/subjects" },
-        { name: "Grade Levels", href: "/admin/grade-levels" },
-        { name: "System Config", href: "/admin/settings" },
+        // { name: "Grade Levels", href: "/admin/grade-levels" },
+        // { name: "System Config", href: "/admin/settings" },
       ]
     },
     {
@@ -106,11 +106,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const tutorNavigationItems = [
     { name: "Schedule Class", href: "/schedule-class", icon: CalendarDaysIcon },
     { name: "Manage Classes", href: "/manage-classes", icon: CalendarDaysIcon },
-    { name: "Quizzes", href: "/quizzes", icon: DocumentTextIcon },
+    { name: "Quizzes", href: "/quizzes", icon: DocumentIcon },
     {
       name: "Manage Flash Cards",
       href: "/tutor/flashcards",
-      icon: DocumentTextIcon,
+      icon: BookOpenIcon,
     },
     {
       name: "ID Verification",
@@ -120,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     {
       name: "Manage Materials",
       href: "/tutor/manage-materials",
-      icon: DocumentTextIcon,
+      icon: DocumentIcon,
     },
   ];
 
@@ -172,7 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {
           name: "Quizzes",
           href: "/student/quizzes",
-          icon: DocumentTextIcon,
+          icon: DocumentIcon,
         },
         {
           name: "Flash Cards",

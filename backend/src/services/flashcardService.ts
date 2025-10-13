@@ -1,5 +1,7 @@
 import { FlashcardSet, Flashcard, User } from '../models';
 import { Types } from 'mongoose';
+import InstantSession from '../models/InstantSession';
+import Booking from '../models/Booking';
 
 export interface CreateFlashcardSetData {
   title: string;
@@ -36,6 +38,39 @@ export interface StudySessionResult {
 }
 
 export class FlashcardService {
+  /**
+   * Get all tutor IDs that a student has interacted with
+   * via instant sessions or bookings
+   */
+  static async getInteractedTutorIds(studentId: string): Promise<Types.ObjectId[]> {
+    try {
+      const studentObjectId = new Types.ObjectId(studentId);
+      
+      // Get tutor IDs from instant sessions (accepted, in_progress, completed statuses)
+      const instantSessions = await InstantSession.find({
+        studentId: studentObjectId,
+        status: { $in: ['accepted', 'in_progress', 'completed'] },
+        tutorId: { $exists: true, $ne: null }
+      }).distinct('tutorId');
+
+      // Get tutor IDs from bookings (confirmed, completed statuses)
+      const bookings = await Booking.find({
+        studentId: studentObjectId,
+        status: { $in: ['confirmed', 'completed'] },
+        teacherId: { $exists: true, $ne: null }
+      }).distinct('teacherId');
+
+      // Combine and deduplicate tutor IDs
+      const allTutorIds = [...instantSessions, ...bookings];
+      const uniqueTutorIds = Array.from(new Set(allTutorIds.map(id => id.toString())))
+        .map(id => new Types.ObjectId(id));
+
+      return uniqueTutorIds;
+    } catch (error) {
+      console.error('Error getting interacted tutor IDs:', error);
+      return [];
+    }
+  }
   /**
    * Create a new flashcard set with flashcards
    */
@@ -487,9 +522,22 @@ export class FlashcardService {
 
   /**
    * Get available flashcard sets for a student
+   * Only returns flashcard sets from tutors the student has interacted with
    */
   static async getAvailableSetsForStudent(studentId: string, subject?: string): Promise<any[]> {
-    const query: any = { isActive: true, isPublic: true };
+    // Get tutors the student has interacted with
+    const interactedTutorIds = await this.getInteractedTutorIds(studentId);
+
+    // If student hasn't interacted with any tutors, return empty array
+    if (interactedTutorIds.length === 0) {
+      return [];
+    }
+
+    const query: any = { 
+      isActive: true, 
+      isPublic: true,
+      tutorId: { $in: interactedTutorIds } // Only show flashcards from tutors student has interacted with
+    };
 
     if (subject) {
       query.subject = new RegExp(subject, 'i');
@@ -528,5 +576,124 @@ export class FlashcardService {
     );
 
     return setsWithCount;
+  }
+
+  /**
+   * Admin method: Get all flashcard sets (bypasses access control)
+   */
+  static async getAllSetsForAdmin(): Promise<any[]> {
+    const sets = await FlashcardSet.find({ isActive: true })
+      .populate('tutorId', 'firstName lastName fullName email')
+      .populate('gradeLevelId', 'displayName')
+      .sort({ createdAt: -1 });
+
+    // Add flashcard count to each set
+    const setsWithCount = await Promise.all(
+      sets.map(async (set) => {
+        const count = await Flashcard.countDocuments({ setId: set._id });
+        const setObj = set.toObject();
+        return {
+          _id: setObj._id,
+          id: setObj._id.toString(),
+          tutorId: setObj.tutorId,
+          title: setObj.title,
+          subject: setObj.subject,
+          topic: setObj.topic,
+          description: setObj.description,
+          difficulty: setObj.difficulty,
+          gradeLevelId: setObj.gradeLevelId,
+          isPublic: setObj.isPublic,
+          isActive: setObj.isActive,
+          tags: setObj.tags || [],
+          viewCount: setObj.viewCount || 0,
+          studyCount: setObj.studyCount || 0,
+          averageRating: setObj.averageRating,
+          totalRatings: setObj.totalRatings || 0,
+          createdAt: setObj.createdAt,
+          updatedAt: setObj.updatedAt,
+          tutor: setObj.tutorId && typeof setObj.tutorId === 'object' && 'fullName' in setObj.tutorId ? {
+            id: (setObj.tutorId as any)._id?.toString() || setObj.tutorId.toString(),
+            full_name: (setObj.tutorId as any).fullName || `${(setObj.tutorId as any).firstName} ${(setObj.tutorId as any).lastName}`,
+            email: (setObj.tutorId as any).email
+          } : undefined,
+          card_count: count
+        };
+      })
+    );
+
+    return setsWithCount;
+  }
+
+  /**
+   * Admin method: Get flashcard set by ID (bypasses access control)
+   */
+  static async getSetByIdForAdmin(setId: string): Promise<any> {
+    const set = await FlashcardSet.findById(setId)
+      .populate('tutorId', 'firstName lastName fullName email')
+      .populate('gradeLevelId', 'displayName');
+
+    if (!set) {
+      throw new Error('Flashcard set not found');
+    }
+
+    const flashcards = await Flashcard.find({ setId: set._id })
+      .sort({ cardOrder: 1 });
+
+    const setObj = set.toObject();
+    return {
+      _id: setObj._id,
+      id: setObj._id.toString(),
+      tutorId: setObj.tutorId,
+      title: setObj.title,
+      subject: setObj.subject,
+      topic: setObj.topic,
+      description: setObj.description,
+      difficulty: setObj.difficulty,
+      gradeLevelId: setObj.gradeLevelId,
+      isPublic: setObj.isPublic,
+      isActive: setObj.isActive,
+      tags: setObj.tags || [],
+      viewCount: setObj.viewCount || 0,
+      studyCount: setObj.studyCount || 0,
+      averageRating: setObj.averageRating,
+      totalRatings: setObj.totalRatings || 0,
+      createdAt: setObj.createdAt,
+      updatedAt: setObj.updatedAt,
+      tutor: setObj.tutorId && typeof setObj.tutorId === 'object' && 'fullName' in setObj.tutorId ? {
+        id: (setObj.tutorId as any)._id?.toString() || setObj.tutorId.toString(),
+        full_name: (setObj.tutorId as any).fullName || `${(setObj.tutorId as any).firstName} ${(setObj.tutorId as any).lastName}`,
+        email: (setObj.tutorId as any).email
+      } : undefined,
+      card_count: flashcards.length,
+      cards: flashcards.map(card => ({
+        id: card._id.toString(),
+        set_id: card.setId.toString(),
+        front_text: card.frontText,
+        back_text: card.backText,
+        card_order: card.cardOrder,
+        created_at: card.createdAt
+      }))
+    };
+  }
+
+  /**
+   * Admin method: Delete flashcard set (bypasses ownership checks)
+   */
+  static async deleteSetForAdmin(setId: string): Promise<void> {
+    const set = await FlashcardSet.findById(setId);
+
+    if (!set) {
+      throw new Error('Flashcard set not found');
+    }
+
+    // Soft delete
+    set.isActive = false;
+    await set.save();
+
+    // Also deactivate all flashcards in the set
+    await Flashcard.updateMany(
+      { setId: set._id },
+      { isActive: false }
+    );
   }
 }

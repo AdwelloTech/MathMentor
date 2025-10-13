@@ -24,7 +24,7 @@ export default defineConfig({
     open: false,
     proxy: {
       "/api": {
-        target: "http://72.60.20.140:5000",
+        target: "http://localhost:5000",
         changeOrigin: true,
       },
       "/api/ai": {

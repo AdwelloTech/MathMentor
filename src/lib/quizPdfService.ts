@@ -78,16 +78,16 @@ export const quizPdfService = {
         display_name: item.gradeLevelId.displayName || item.gradeLevelId.display_name,
         code: item.gradeLevelId.code,
       } : undefined,
-      subject: {
+      subject: item.subjectId ? {
         id: item.subjectId._id || item.subjectId.id,
         display_name: item.subjectId.displayName || item.subjectId.display_name,
         name: item.subjectId.name,
-      },
-      uploaded_by_profile: {
+      } : undefined,
+      uploaded_by_profile: item.uploadedBy ? {
         id: item.uploadedBy._id || item.uploadedBy.id,
         full_name: item.uploadedBy.fullName || item.uploadedBy.full_name || `${item.uploadedBy.firstName || ''} ${item.uploadedBy.lastName || ''}`.trim(),
         email: item.uploadedBy.email,
-      },
+      } : undefined,
     }));
   },
 
@@ -115,11 +115,11 @@ export const quizPdfService = {
         display_name: item.gradeLevelId.displayName || item.gradeLevelId.display_name,
         code: item.gradeLevelId.code,
       } : undefined,
-      subject: {
+      subject: item.subjectId ? {
         id: item.subjectId._id || item.subjectId.id,
         display_name: item.subjectId.displayName || item.subjectId.display_name,
         name: item.subjectId.name,
-      },
+      } : undefined,
     }));
   },
 
@@ -191,16 +191,16 @@ export const quizPdfService = {
         display_name: data.gradeLevelId.displayName || data.gradeLevelId.display_name,
         code: data.gradeLevelId.code,
       } : undefined,
-      subject: {
+      subject: data.subjectId ? {
         id: data.subjectId._id || data.subjectId.id,
         display_name: data.subjectId.displayName || data.subjectId.display_name,
         name: data.subjectId.name,
-      },
-      uploaded_by_profile: {
+      } : undefined,
+      uploaded_by_profile: data.uploadedBy ? {
         id: data.uploadedBy._id || data.uploadedBy.id,
         full_name: data.uploadedBy.fullName || data.uploadedBy.full_name || `${data.uploadedBy.firstName || ''} ${data.uploadedBy.lastName || ''}`.trim(),
         email: data.uploadedBy.email,
-      },
+      } : undefined,
     };
   },
 

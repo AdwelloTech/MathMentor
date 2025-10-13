@@ -2,10 +2,47 @@ import mongoose from 'mongoose';
 import TutorNote from '../models/TutorNote';
 import User from '../models/User';
 import Subject from '../models/Subject';
+import InstantSession from '../models/InstantSession';
+import Booking from '../models/Booking';
 
 export class TutorNotesService {
   /**
+   * Get all tutor IDs that a student has interacted with
+   * via instant sessions or bookings
+   */
+  static async getInteractedTutorIds(studentId: string): Promise<mongoose.Types.ObjectId[]> {
+    try {
+      const studentObjectId = new mongoose.Types.ObjectId(studentId);
+      
+      // Get tutor IDs from instant sessions (accepted, in_progress, completed statuses)
+      const instantSessions = await InstantSession.find({
+        studentId: studentObjectId,
+        status: { $in: ['accepted', 'in_progress', 'completed'] },
+        tutorId: { $exists: true, $ne: null }
+      }).distinct('tutorId');
+
+      // Get tutor IDs from bookings (confirmed, completed statuses)
+      const bookings = await Booking.find({
+        studentId: studentObjectId,
+        status: { $in: ['confirmed', 'completed'] },
+        teacherId: { $exists: true, $ne: null }
+      }).distinct('teacherId');
+
+      // Combine and deduplicate tutor IDs
+      const allTutorIds = [...instantSessions, ...bookings];
+      const uniqueTutorIds = Array.from(new Set(allTutorIds.map(id => id.toString())))
+        .map(id => new mongoose.Types.ObjectId(id));
+
+      return uniqueTutorIds;
+    } catch (error) {
+      console.error('Error getting interacted tutor IDs:', error);
+      return [];
+    }
+  }
+
+  /**
    * Get tutor materials for a student with search and filtering
+   * Only returns materials from tutors the student has interacted with
    */
   static async getStudentTutorMaterials(
     studentId: string,
@@ -32,8 +69,19 @@ export class TutorNotesService {
 
       const hasPremiumAccess = student.package === 'gold' || student.package === 'silver';
 
+      // Get tutors the student has interacted with
+      const interactedTutorIds = await this.getInteractedTutorIds(studentId);
+
+      // If student hasn't interacted with any tutors, return empty array
+      if (interactedTutorIds.length === 0) {
+        return [];
+      }
+
       // Build query
-      const query: any = { isActive: true };
+      const query: any = { 
+        isActive: true,
+        createdBy: { $in: interactedTutorIds } // Only show materials from tutors student has interacted with
+      };
 
       // Search functionality
       if (searchTerm && searchTerm.trim()) {

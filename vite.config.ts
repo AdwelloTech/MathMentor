@@ -23,11 +23,11 @@ export default defineConfig({
     open: true,
     proxy: {
       "/api": {
-        target: "http://72.60.20.140/:5001",
+        target: "http://localhost:5000",
         changeOrigin: true,
       },
       "/api/ai": {
-        target: "http://localhost:4000",
+        target: "http://localhost:5000",
         changeOrigin: true,
       },
     },

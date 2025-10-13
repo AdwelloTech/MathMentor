@@ -135,6 +135,8 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
         base: {
           fontSize: "16px",
           color: isDark ? "#F1F5F9" : "#111827", // foreground color
+          iconColor: isDark ? "#CBD5E1" : "#6B7280",
+          caretColor: isDark ? "#F1F5F9" : "#111827",
           "::placeholder": {
             color: isDark ? "#94A3B8" : "#6B7280", // muted-foreground color
           },
@@ -153,11 +155,11 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
         animate={{ opacity: 1, scale: 1 }}
         className="text-center py-8"
       >
-        <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+        <CheckCircleIcon className="h-16 w-16 text-success-500 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-foreground mb-2">
           Payment Successful!
         </h3>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Your session with {tutorName} has been booked successfully.
         </p>
       </motion.div>
@@ -170,7 +172,7 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
         {/* Header */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center mb-3">
-            <CreditCardIcon className="h-8 w-8 text-primary-600" />
+            <CreditCardIcon className="h-8 w-8 text-primary" />
           </div>
           <h3 className="text-xl font-semibold text-foreground">
             Complete Your Session Payment
@@ -209,7 +211,7 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
               Card Number
             </label>
             <div className="mt-1 relative">
-              <div className="input px-3 py-3 border border-border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:border-ring">
+              <div className="input px-3 py-3 border border-border rounded-md bg-input text-foreground focus-within:ring-2 focus-within:ring-ring focus-within:border-ring">
                 <CardNumberElement options={getCardElementOptions()} />
               </div>
             </div>
@@ -222,7 +224,7 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
                 Expiry Date
               </label>
               <div className="mt-1">
-                <div className="input px-3 py-3 border border-border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:border-ring">
+                <div className="input px-3 py-3 border border-border rounded-md bg-input text-foreground focus-within:ring-2 focus-within:ring-ring focus-within:border-ring">
                   <CardExpiryElement options={getCardElementOptions()} />
                 </div>
               </div>
@@ -233,7 +235,7 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
                 CVC
               </label>
               <div className="mt-1">
-                <div className="input px-3 py-3 border border-border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:border-ring">
+                <div className="input px-3 py-3 border border-border rounded-md bg-input text-foreground focus-within:ring-2 focus-within:ring-ring focus-within:border-ring">
                   <CardCvcElement options={getCardElementOptions()} />
                 </div>
               </div>
@@ -245,10 +247,10 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center p-3 bg-red-50 border border-red-200 rounded-lg"
+              className="flex items-center p-3 bg-destructive/10 border border-destructive/20 rounded-lg"
             >
-              <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
-              <p className="text-sm text-red-600">{errorMessage}</p>
+              <ExclamationTriangleIcon className="h-5 w-5 text-destructive mr-2" />
+              <p className="text-sm text-destructive">{errorMessage}</p>
             </motion.div>
           )}
 

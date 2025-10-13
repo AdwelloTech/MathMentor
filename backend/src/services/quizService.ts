@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import { Quiz, IQuiz, QuizAttempt, IQuizAttempt } from '../models/Quiz';
 import { Question, IQuestion, IAnswer } from '../models/Question';
 import { User } from '../models/User';
+import InstantSession from '../models/InstantSession';
+import Booking from '../models/Booking';
 
 export interface CreateQuizData {
   title: string;
@@ -46,6 +48,39 @@ export interface QuizFilters {
 }
 
 export class QuizService {
+  /**
+   * Get all tutor IDs that a student has interacted with
+   * via instant sessions or bookings
+   */
+  static async getInteractedTutorIds(studentId: string): Promise<mongoose.Types.ObjectId[]> {
+    try {
+      const studentObjectId = new mongoose.Types.ObjectId(studentId);
+      
+      // Get tutor IDs from instant sessions (accepted, in_progress, completed statuses)
+      const instantSessions = await InstantSession.find({
+        studentId: studentObjectId,
+        status: { $in: ['accepted', 'in_progress', 'completed'] },
+        tutorId: { $exists: true, $ne: null }
+      }).distinct('tutorId');
+
+      // Get tutor IDs from bookings (confirmed, completed statuses)
+      const bookings = await Booking.find({
+        studentId: studentObjectId,
+        status: { $in: ['confirmed', 'completed'] },
+        teacherId: { $exists: true, $ne: null }
+      }).distinct('teacherId');
+
+      // Combine and deduplicate tutor IDs
+      const allTutorIds = [...instantSessions, ...bookings];
+      const uniqueTutorIds = Array.from(new Set(allTutorIds.map(id => id.toString())))
+        .map(id => new mongoose.Types.ObjectId(id));
+
+      return uniqueTutorIds;
+    } catch (error) {
+      console.error('Error getting interacted tutor IDs:', error);
+      return [];
+    }
+  }
   // Helper function to check if a quiz attempt has expired
   private static async isAttemptExpired(attempt: any): Promise<boolean> {
     if (!attempt || !attempt.started_at) return false;
@@ -367,13 +402,25 @@ export class QuizService {
 
   // Get available quizzes for a student (from tutors they've had sessions with OR quizzes created by the student)
   static async getAvailableQuizzesForStudent(studentId: string, subject?: string): Promise<any[]> {
-    // Include both public quizzes from tutors AND quizzes created by the student themselves
+    // Get tutors the student has interacted with
+    const interactedTutorIds = await this.getInteractedTutorIds(studentId);
+
+    // Build query conditions
+    const orConditions: any[] = [
+      { createdBy: new mongoose.Types.ObjectId(studentId) } // Quizzes created by the student
+    ];
+
+    // Only add public quizzes from tutors if student has interacted with any tutors
+    if (interactedTutorIds.length > 0) {
+      orConditions.push({
+        isPublic: true,
+        createdBy: { $in: interactedTutorIds } // Public quizzes from tutors student has interacted with
+      });
+    }
+
     const query: any = {
       isActive: true,
-      $or: [
-        { isPublic: true }, // Public quizzes from tutors
-        { createdBy: new mongoose.Types.ObjectId(studentId) } // Quizzes created by the student
-      ]
+      $or: orConditions
     };
 
     if (subject) {

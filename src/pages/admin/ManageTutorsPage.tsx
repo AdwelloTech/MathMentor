@@ -200,7 +200,7 @@ const ManageTutorsPage: React.FC = () => {
   const getStatusBadge = (tutor: Tutor) => {
     if (!tutor.is_active) {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
           Inactive
         </span>
       );
@@ -208,7 +208,7 @@ const ManageTutorsPage: React.FC = () => {
 
     if (!tutor.application_status) {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300 border border-gray-500/30">
           No Application
         </span>
       );
@@ -217,25 +217,25 @@ const ManageTutorsPage: React.FC = () => {
     switch (tutor.application_status) {
       case "approved":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30">
             Approved
           </span>
         );
       case "pending":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
             Pending
           </span>
         );
       case "rejected":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
             Rejected
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300 border border-gray-500/30">
             Unknown
           </span>
         );
@@ -414,7 +414,7 @@ const ManageTutorsPage: React.FC = () => {
                         placeholder="Search tutors by name, email, or phone..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background"
                       />
                     </div>
                   </div>
@@ -424,7 +424,7 @@ const ManageTutorsPage: React.FC = () => {
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent"
+                      className="border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background"
                     >
                       <option value="all">All Status</option>
                       <option value="active">Active</option>
@@ -458,7 +458,7 @@ const ManageTutorsPage: React.FC = () => {
 
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
+                  <table className="min-w-full divide-y divide-border">
                     <thead className="bg-muted">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -514,7 +514,7 @@ const ManageTutorsPage: React.FC = () => {
                             <div className="text-sm text-card-foreground">
                               {tutor.email}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-muted-foreground">
                               {tutor.phone || "No phone"}
                             </div>
                           </td>
@@ -529,7 +529,7 @@ const ManageTutorsPage: React.FC = () => {
                               {/* View Details Button */}
                               <button
                                 onClick={() => handleViewTutor(tutor)}
-                                className="inline-flex items-center justify-center p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                className="inline-flex items-center justify-center p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 border border-blue-500/20"
                                 title="View Details"
                               >
                                 <EyeIcon className="h-5 w-5" />
@@ -538,7 +538,7 @@ const ManageTutorsPage: React.FC = () => {
                               {/* View Classes Button */}
                               <button
                                 onClick={() => handleViewClasses(tutor)}
-                                className="inline-flex items-center justify-center p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                className="inline-flex items-center justify-center p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 border border-green-500/20"
                                 title="View Classes"
                               >
                                 <CalendarDaysIcon className="h-5 w-5" />
@@ -550,10 +550,10 @@ const ManageTutorsPage: React.FC = () => {
                                   handleUpdateStatus(tutor.id || tutor.user_id, !tutor.is_active)
                                 }
                                 disabled={updatingStatus === (tutor.id || tutor.user_id)}
-                                className={`inline-flex items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                                className={`inline-flex items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 border ${
                                   tutor.is_active
-                                    ? "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
-                                    : "bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 focus:ring-green-500"
+                                    ? "bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 focus:ring-red-500/50 border-red-500/20"
+                                    : "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 focus:ring-green-500/50 border-green-500/20"
                                 } ${
                                   updatingStatus === (tutor.id || tutor.user_id)
                                     ? "opacity-50 cursor-not-allowed"
@@ -576,7 +576,7 @@ const ManageTutorsPage: React.FC = () => {
                               <button
                                 onClick={() => handleDeleteTutor(tutor.id || tutor.user_id)}
                                 disabled={deletingTutor === (tutor.id || tutor.user_id)}
-                                className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
+                                className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 border border-red-500/20 ${
                                   deletingTutor === (tutor.id || tutor.user_id)
                                     ? "opacity-50 cursor-not-allowed"
                                     : ""
@@ -616,9 +616,9 @@ const ManageTutorsPage: React.FC = () => {
 
           {/* Tutor Details Modal */}
           {showTutorModal && selectedTutor && (
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <div className="bg-card rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+              <div className="relative top-8 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-6 border-b border-border">
                   <h2 className="text-xl font-semibold text-card-foreground">
                     Tutor Details
                   </h2>
@@ -630,7 +630,7 @@ const ManageTutorsPage: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="overflow-y-auto max-h-[calc(90vh-120px)] p-6">
+                <div className="overflow-y-auto max-h-[calc(85vh-120px)]">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Basic Information */}
                     <div className="space-y-4">
@@ -773,18 +773,18 @@ const ManageTutorsPage: React.FC = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <span className="text-sm font-medium text-gray-500">
+                          <span className="text-sm font-medium text-muted-foreground">
                             Profile Completed:
                           </span>
-                          <p className="text-sm text-gray-900">
+                          <p className="text-sm text-card-foreground">
                             {selectedTutor.profile_completed ? "Yes" : "No"}
                           </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-500">
+                          <span className="text-sm font-medium text-muted-foreground">
                             Last Login:
                           </span>
-                          <p className="text-sm text-gray-900">
+                          <p className="text-sm text-card-foreground">
                             {formatDate(selectedTutor.last_login)}
                           </p>
                         </div>
@@ -798,9 +798,9 @@ const ManageTutorsPage: React.FC = () => {
 
           {/* Tutor Classes Modal */}
           {showClassesModal && selectedTutor && (
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+              <div className="relative top-8 mx-auto p-5 border w-full max-w-6xl shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-4 border-b border-border pb-4">
                   <h2 className="text-xl font-semibold text-card-foreground">
                     Classes by {selectedTutor.full_name}
                   </h2>
@@ -812,7 +812,7 @@ const ManageTutorsPage: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="overflow-y-auto max-h-[calc(90vh-120px)] p-6">
+                <div className="overflow-y-auto max-h-[calc(85vh-120px)]">
                   {tutorClasses.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {tutorClasses.map((classItem) => (
@@ -826,11 +826,13 @@ const ManageTutorsPage: React.FC = () => {
                             </h3>
                             <span
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                classItem.status === "active"
-                                  ? "bg-green-100 text-green-800"
+                                classItem.status === "active" || classItem.status === "in_progress" || classItem.status === "scheduled"
+                                  ? "bg-green-500/20 text-green-300 border border-green-500/30"
                                   : classItem.status === "cancelled"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-gray-100 text-gray-800"
+                                  ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                                  : classItem.status === "completed"
+                                  ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                                  : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
                               }`}
                             >
                               {classItem.status}
@@ -868,7 +870,7 @@ const ManageTutorsPage: React.FC = () => {
                           </div>
 
                           {classItem.jitsi_meeting && (
-                            <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="mt-3 pt-3 border-t border-border">
                               <div className="flex items-center space-x-1 text-sm text-muted-foreground">
                                 <VideoCameraIcon className="h-4 w-4" />
                                 <span>Jitsi Meeting Available</span>
@@ -877,7 +879,7 @@ const ManageTutorsPage: React.FC = () => {
                                 href={classItem.jitsi_meeting.meeting_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm mt-1"
+                                className="inline-flex items-center space-x-1 text-blue-400 hover:text-blue-300 text-sm mt-1 transition-colors"
                               >
                                 <LinkIcon className="h-4 w-4" />
                                 <span>Join Meeting</span>

@@ -4,6 +4,11 @@
  */
 
 import type { ApiResponse } from "@/types/auth";
+import {
+  shouldUseEncryption,
+  encryptRequest,
+  decryptResponse
+} from "@/utils/encryption";
 
 export interface ApiError {
   message: string;
@@ -29,6 +34,7 @@ export class ApiClientError extends Error {
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
   retries?: number;
+  encrypt?: boolean; // Enable encryption for this request
 }
 
 interface Tokens {
@@ -163,10 +169,35 @@ class ApiClient {
     options: RequestOptions = {},
     retryCount = 0
   ): Promise<T> {
-    const { skipAuth = false, retries = 1, ...fetchOptions } = options;
+    const { skipAuth = false, retries = 1, encrypt: shouldEncrypt = false, ...fetchOptions } = options;
 
     // Prepare headers
     const headers: Record<string, string> = {};
+
+    // Check if we should encrypt this request
+    const useEncryption = shouldEncrypt || shouldUseEncryption();
+
+    // Handle request body encryption
+    let requestBody = fetchOptions.body;
+    if (useEncryption && requestBody && !(requestBody instanceof FormData)) {
+      try {
+        // Parse the JSON body
+        const bodyData = typeof requestBody === 'string' ? JSON.parse(requestBody) : requestBody;
+        
+        // Encrypt the body
+        const encryptedData = await encryptRequest(bodyData);
+        
+        // Replace body with encrypted data
+        requestBody = JSON.stringify(encryptedData);
+        
+        // Set encryption header
+        headers['X-Encrypted'] = 'true';
+        headers['X-Request-Encryption'] = 'true';
+      } catch (error) {
+        console.error('Request encryption failed:', error);
+        // Fall back to unencrypted request
+      }
+    }
 
     // Don't set Content-Type for FormData (let browser set it with boundary)
     if (!(fetchOptions.body instanceof FormData)) {
@@ -186,6 +217,7 @@ class ApiClient {
     try {
       const response = await fetch(url, {
         ...fetchOptions,
+        body: requestBody,
         headers,
       });
 
@@ -236,6 +268,26 @@ class ApiClient {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data: ApiResponse<T> = await response.json();
+
+        // Check if response is encrypted
+        const xEncryptedHeader = response.headers.get('X-Encrypted') || response.headers.get('x-encrypted');
+        const isEncrypted = xEncryptedHeader === 'true';
+
+        if (isEncrypted && useEncryption) {
+          try {
+            // Decrypt the response
+            const decryptedData = await decryptResponse(data as any);
+
+            if (!decryptedData.success) {
+              throw new ApiClientError(decryptedData.error || 'Request failed', response.status);
+            }
+
+            return decryptedData.data!;
+          } catch (error) {
+            console.error('Response decryption failed:', error);
+            throw new ApiClientError('Failed to decrypt response', response.status);
+          }
+        }
 
         if (!data.success) {
           throw new ApiClientError(data.error || 'Request failed', response.status);

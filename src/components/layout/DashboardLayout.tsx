@@ -55,7 +55,7 @@ const DashboardLayout: React.FC = () => {
           setSubjects(subjectsMap);
         }
       } catch (error) {
-        console.error("Error loading subjects:", error);
+        // Silently handle subjects loading errors
       }
     };
 
@@ -140,9 +140,8 @@ const DashboardLayout: React.FC = () => {
       try {
         // For now, we'll skip the initial fetch since the API isn't implemented yet
         // This can be implemented later when the instant requests API is ready
-        console.log("[Instant] initial fetch skipped - API not implemented yet");
       } catch (e) {
-        console.error("[Instant] initial fetch exception", e);
+        // Silently handle initial fetch errors
       }
     })();
 
@@ -151,22 +150,10 @@ const DashboardLayout: React.FC = () => {
     const poll = setInterval(async () => {
       try {
         // Skip polling for now - implement when instant requests API is ready
-        console.log("[Instant] polling skipped - API not implemented yet");
       } catch (_) {}
     }, 10000);
-
-    console.log(
-      "[Realtime] Subscribing to instant_requests for tutor",
-      profile?.id
-    );
     const unsubscribe = instantSessionService.subscribeToPending(
       ({ new: req, eventType }) => {
-        console.log(
-          "[Realtime] instant_requests event",
-          eventType,
-          req?.id,
-          req?.status
-        );
         const isFresh =
           Date.now() - new Date((req as any).created_at).getTime() <=
           FRESH_WINDOW_MS;
@@ -192,7 +179,6 @@ const DashboardLayout: React.FC = () => {
     );
 
     return () => {
-      console.log("[Realtime] Unsubscribe instant_requests");
       clearInterval(poll);
       unsubscribe?.();
     };

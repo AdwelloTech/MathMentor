@@ -1,15 +1,29 @@
+// Load environment variables FIRST - before any other imports
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import 'express-async-errors';
-import dotenv from 'dotenv';
 
 // Import configuration and middleware
 import { connectDB } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 import { requestLogger } from './middleware/requestLogger';
+import { 
+  advancedSecurityHeaders, 
+  securityContext, 
+  sanitizeHeaders,
+  preventParameterPollution,
+  requestSizeLimiter
+} from './middleware/securityHeaders';
+import { apiLimiter } from './middleware/rateLimiter';
+import { decryptRequest, encryptResponse } from './middleware/encryption';
+import { cacheMiddleware, invalidateCacheOnMutation } from './middleware/cache';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -36,19 +50,33 @@ import ratingsRoutes from './routes/ratings';
 import instantSessionsRoutes from './routes/instantSessions';
 import parentsRoutes from './routes/parents';
 
-// Load environment variables
-dotenv.config();
-
 const app = express();
 const PORT = parseInt(process.env.PORT || '5000');
 
 // Connect to MongoDB
 connectDB();
 
-// Security middleware
+// Security middleware - Order matters!
+// 1. Basic security headers from helmet
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false // We'll handle this with our custom middleware
 }));
+
+// 2. Advanced security headers
+app.use(advancedSecurityHeaders);
+
+// 3. Security context
+app.use(securityContext);
+
+// 4. Sanitize headers
+app.use(sanitizeHeaders);
+
+// 5. Prevent parameter pollution
+app.use(preventParameterPollution);
+
+// 6. Request size limiter
+app.use(requestSizeLimiter(10 * 1024 * 1024)); // 10MB limit
 
 // CORS configuration
 app.use(cors({
@@ -86,7 +114,8 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Encrypted', 'X-Request-Encryption'],
+  exposedHeaders: ['X-Encrypted']
 }));
 
 // Compression middleware
@@ -105,32 +134,42 @@ app.use('/uploads', express.static('uploads', {
 // Request logging
 app.use(requestLogger);
 
-// Health check route
+// Global rate limiting (applies to all API routes)
+app.use('/api/', apiLimiter);
+
+// Cache invalidation on mutations
+app.use('/api/', invalidateCacheOnMutation);
+
+// Encryption middleware (optional - only for clients that request it)
+app.use(decryptRequest);
+app.use(encryptResponse);
+
+// Health check route (no rate limiting on health checks)
 app.use('/api/health', healthRoutes);
 
-// API routes
+// API routes with selective caching
 app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/packages', packagesRoutes);
-app.use('/api/flashcards', flashcardRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/quizzes', quizRoutes);
-app.use('/api/study-notes', studyNotesRoutes);
-app.use('/api/messaging', messagingRoutes);
-app.use('/api/files', filesRoutes);
-app.use('/api/quiz-pdfs', quizPdfsRoutes);
-app.use('/api/classes', classesRoutes);
-app.use('/api/bookings', bookingsRoutes);
-app.use('/api/subjects', subjectsRoutes);
-app.use('/api/grade-levels', gradeLevelsRoutes);
-app.use('/api/tutorial', tutorialRoutes);
-app.use('/api/tutor-materials', tutorMaterialsRoutes);
-app.use('/api/profile-images', profileImagesRoutes);
-app.use('/api/tutors', tutorRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/ratings', ratingsRoutes);
-app.use('/api/instant-sessions', instantSessionsRoutes);
-app.use('/api/parents', parentsRoutes);
+app.use('/api/dashboard', cacheMiddleware(60000), dashboardRoutes); // 1 min cache
+app.use('/api/packages', cacheMiddleware(300000), packagesRoutes); // 5 min cache
+app.use('/api/flashcards', cacheMiddleware(120000), flashcardRoutes); // 2 min cache
+app.use('/api/ai', aiRoutes); // No cache for AI
+app.use('/api/quizzes', cacheMiddleware(60000), quizRoutes); // 1 min cache
+app.use('/api/study-notes', cacheMiddleware(60000), studyNotesRoutes); // 1 min cache
+app.use('/api/messaging', messagingRoutes); // No cache for messaging
+app.use('/api/files', filesRoutes); // No cache for file uploads
+app.use('/api/quiz-pdfs', cacheMiddleware(300000), quizPdfsRoutes); // 5 min cache
+app.use('/api/classes', cacheMiddleware(60000), classesRoutes); // 1 min cache
+app.use('/api/bookings', cacheMiddleware(30000), bookingsRoutes); // 30 sec cache
+app.use('/api/subjects', cacheMiddleware(600000), subjectsRoutes); // 10 min cache
+app.use('/api/grade-levels', cacheMiddleware(600000), gradeLevelsRoutes); // 10 min cache
+app.use('/api/tutorial', cacheMiddleware(300000), tutorialRoutes); // 5 min cache
+app.use('/api/tutor-materials', cacheMiddleware(120000), tutorMaterialsRoutes); // 2 min cache
+app.use('/api/profile-images', profileImagesRoutes); // No cache for images
+app.use('/api/tutors', cacheMiddleware(120000), tutorRoutes); // 2 min cache
+app.use('/api/admin', cacheMiddleware(30000), adminRoutes); // 30 sec cache
+app.use('/api/ratings', cacheMiddleware(120000), ratingsRoutes); // 2 min cache
+app.use('/api/instant-sessions', instantSessionsRoutes); // No cache for real-time sessions
+app.use('/api/parents', cacheMiddleware(60000), parentsRoutes); // 1 min cache
 
 // 404 handler
 app.use(notFound);

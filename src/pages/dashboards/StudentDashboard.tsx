@@ -39,7 +39,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import type { StudentDashboardStats } from "@/lib/dashboardService";
 import type { Quiz } from "@/types/quiz";
 import type { FlashcardSet } from "@/types/flashcards";
@@ -345,7 +344,6 @@ const StudentDashboard: React.FC = () => {
                     Student Dashboard
                   </h1>
                   <div className="flex items-center space-x-3">
-                    <ThemeToggle className="text-foreground hover:bg-muted" />
                     <button
                       onClick={handleLogout}
                       className="p-2 hover:bg-muted rounded-lg transition-colors duration-200"

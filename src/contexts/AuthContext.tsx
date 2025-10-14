@@ -5,6 +5,8 @@ import {
   useState,
   ReactNode,
   useRef,
+  useMemo,
+  useCallback,
 } from "react";
 import toast from "react-hot-toast";
 import AuthService from "@/lib/authService";
@@ -121,7 +123,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Tab visibility handling removed - no need to refresh auth when switching tabs
 
   // Clear auth state
-  const clearAuthState = () => {
+  const clearAuthState = useCallback(() => {
     if (mounted.current) {
       setUser(null);
       setProfile(null);
@@ -130,7 +132,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isProcessingAuth.current = false;
     lastProcessedUserId.current = null;
     lastProcessedAt.current = 0;
-  };
+  }, []);
 
   // Handle auth state changes with better error handling
   const handleAuthStateChange = async (
@@ -227,7 +229,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Sign in function with better error handling
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       setLoading(true);
       console.log("Attempting sign in for:", email);
@@ -251,10 +253,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(false);
       throw error;
     }
-  };
+  }, []);
 
   // Sign up function with OTP verification
-  const signUp = async (email: string, password: string, userData: any) => {
+  const signUp = useCallback(async (email: string, password: string, userData: any) => {
     try {
       setLoading(true);
       console.log(
@@ -296,10 +298,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Sign out function
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await AuthService.logout();
     } catch (error: any) {
@@ -310,10 +312,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Always clear local state - this is the most important part
     clearAuthState();
     toast.success("Signed out successfully");
-  };
+  }, [clearAuthState]);
 
   // Update profile function
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+  const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
     if (!user) throw new Error("No user logged in");
 
     try {
@@ -330,19 +332,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       handleAuthError(error);
       throw error;
     }
-  };
+  }, [user]);
 
   // Update package function (convenience method for package updates)
-  const updatePackage = async (newPackage: StudentPackage) => {
+  const updatePackage = useCallback(async (newPackage: StudentPackage) => {
     return updateProfile({ package: newPackage });
-  };
+  }, [updateProfile]);
 
   // Reset password function (request password reset OTP)
   const resetPassword = async (email: string): Promise<void> => {
     try {
       // This is now handled in ForgotPasswordPage directly via apiClient
       // Keeping this for backward compatibility
-      await apiClient.post<{ success: boolean; message: string }>('/auth/forgot-password', { email });
+      await apiClient.post<{ success: boolean; message: string }>('/api/auth/forgot-password', { email });
     } catch (error: any) {
       console.error("Reset password error:", error);
       handleAuthError(error);
@@ -383,8 +385,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
   };
 
-  // Context value
-  const value: AuthContextType = {
+  // Context value memoized for performance
+  const value: AuthContextType = useMemo(() => ({
     user,
     profile,
     loading,
@@ -398,7 +400,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     hasRole: hasRoleAccess,
     hasPackage: hasPackageAccess,
     canAccess,
-  };
+  }), [user, profile, loading, signIn, signUp, signOut, updateProfile, updatePackage]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

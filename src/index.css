@@ -5,6 +5,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent theme flash - force dark theme initially */
+:root {
+  color-scheme: dark;
+}
+
 /* Import Clash Display font (proper CSS import) */
 
 /* Custom base styles */

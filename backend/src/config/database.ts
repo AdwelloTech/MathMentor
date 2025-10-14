@@ -13,14 +13,29 @@ export const connectDB = async (): Promise<void> => {
     }
 
     const options = {
-      maxPoolSize: 10, // Maintain up to 10 socket connections
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      maxPoolSize: 50, // Increased pool size for better concurrency
+      minPoolSize: 10, // Maintain minimum connections
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
+      retryWrites: true,
+      retryReads: true,
+      compressors: ['zlib'], // Enable compression for network traffic
+      zlibCompressionLevel: 6,
+      readPreference: 'primaryPreferred', // Read from primary, fall back to secondary
+      directConnection: false,
+      connectTimeoutMS: 10000,
+      family: 4, // Use IPv4
     };
 
+    // Set mongoose global options for better performance
+    mongoose.set('strictQuery', false);
+    mongoose.set('autoIndex', process.env.NODE_ENV === 'development');
+    
     const conn = await mongoose.connect(mongoURI, options);
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`Connection pool size: ${options.maxPoolSize}`);
 
     // Initialize default data
     try {

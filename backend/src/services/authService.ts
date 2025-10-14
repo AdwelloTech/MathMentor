@@ -163,21 +163,32 @@ export class AuthService {
    */
   static async login(data: LoginData): Promise<AuthTokens> {
     const { email, password } = data;
+    console.log('Auth service login attempt for:', email);
 
     // Find user by email
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    console.log('User found?', !!user);
+    
     if (!user) {
+      console.log('No user found with email:', email.toLowerCase());
       throw new Error('Invalid email or password');
     }
 
+    console.log('User ID:', user._id.toString(), 'Role:', user.role);
+
     // Check if user is active
     if (!user.isActive) {
+      console.log('User account is deactivated');
       throw new Error('Account is deactivated');
     }
 
     // Verify password
+    console.log('Verifying password...');
     const isPasswordValid = await user.comparePassword(password);
+    console.log('Password valid?', isPasswordValid);
+    
     if (!isPasswordValid) {
+      console.log('Invalid password for user:', email);
       throw new Error('Invalid email or password');
     }
 

@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import apiClient from "@/lib/apiClient";
 
 // API service functions
@@ -452,14 +451,13 @@ const AdminDashboard: React.FC = () => {
                     <BellAlertIcon className="w-6 h-6 text-slate-300" />
                   </Button>
                 </div>
-                <ThemeToggle className="text-slate-300 hover:bg-slate-700/50" />
                 <Button
                   variant="outline"
                   size="lg"
                   className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
                   onClick={async () => {
                     await logoutAdmin();
-                    navigate("/admin-login");
+                    navigate("/admin/login");
                   }}
                 >
                   <ArrowRightOnRectangleIcon className="w-5 h-5 mr-2" />

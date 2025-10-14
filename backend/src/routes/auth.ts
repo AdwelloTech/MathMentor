@@ -4,11 +4,17 @@ import { AuthService, RegisterData, LoginData } from '../services/authService';
 import { authenticate } from '../middleware/auth';
 import { registerSchema, loginSchema, validateOrThrow } from '../utils/validation';
 import { User } from '../models';
+import { 
+  authLimiter, 
+  passwordResetLimiter, 
+  otpLimiter,
+  emailLimiter 
+} from '../middleware/rateLimiter';
 
 const router = express.Router();
 
 // Register new user - sends OTP to email
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   try {
     // Validate input
     const validatedData = validateOrThrow(registerSchema, req.body) as RegisterData;
@@ -30,7 +36,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Verify email OTP
-router.post('/verify-email', async (req, res) => {
+router.post('/verify-email', otpLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -179,7 +185,7 @@ router.get('/verify-email-link', async (req, res) => {
 });
 
 // Resend verification OTP
-router.post('/resend-verification-otp', async (req, res) => {
+router.post('/resend-verification-otp', emailLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -205,7 +211,7 @@ router.post('/resend-verification-otp', async (req, res) => {
 });
 
 // Login user
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     // Validate input
     const { email, password } = validateOrThrow(loginSchema, req.body) as LoginData;
@@ -238,7 +244,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Login with email verification (for unverified accounts)
-router.post('/login-with-verification', async (req, res) => {
+router.post('/login-with-verification', authLimiter, async (req, res) => {
   try {
     const { email, password, otp } = req.body;
 
@@ -438,7 +444,7 @@ router.put('/profile', authenticate, async (req, res) => {
 });
 
 // Admin login
-router.post('/admin/login', async (req, res) => {
+router.post('/admin/login', authLimiter, async (req, res) => {
   try {
     // Validate input
     const { email, password } = validateOrThrow(loginSchema, req.body) as LoginData;
@@ -452,6 +458,7 @@ router.post('/admin/login', async (req, res) => {
       data: result
     });
   } catch (error: any) {
+    console.error('Admin login error:', error.message);
     res.status(401).json({
       success: false,
       error: error.message
@@ -539,7 +546,7 @@ router.get('/admin/validate-session', authenticate, async (req, res) => {
 });
 
 // Request password reset - sends OTP to email
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', passwordResetLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -565,7 +572,7 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // Verify password reset OTP
-router.post('/verify-reset-otp', async (req, res) => {
+router.post('/verify-reset-otp', otpLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -591,7 +598,7 @@ router.post('/verify-reset-otp', async (req, res) => {
 });
 
 // Reset password with OTP
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', passwordResetLimiter, async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
 
@@ -624,7 +631,7 @@ router.post('/reset-password', async (req, res) => {
 });
 
 // Resend password reset OTP
-router.post('/resend-reset-otp', async (req, res) => {
+router.post('/resend-reset-otp', emailLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 

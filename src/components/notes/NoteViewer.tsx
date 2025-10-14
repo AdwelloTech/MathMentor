@@ -11,6 +11,7 @@ import {
   getSubjectColor,
   incrementNoteViewCount,
 } from "@/lib/notes";
+import { formatMarkdownSafe } from "@/utils/sanitize";
 
 type StudyNoteWithDetails =
   Database["public"]["Functions"]["search_study_notes"]["Returns"][0];
@@ -111,7 +112,7 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ note, isOpen, onClose }) => {
                   <div
                     className="text-gray-800 leading-relaxed"
                     dangerouslySetInnerHTML={{
-                      __html: formatNoteContent(note.content),
+                      __html: formatMarkdownSafe(note.content),
                     }}
                   />
                 </div>
@@ -123,75 +124,5 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ note, isOpen, onClose }) => {
     </AnimatePresence>
   );
 };
-
-/**
- * Format markdown content for display
- */
-function formatNoteContent(content: string): string {
-  // Enhanced markdown to HTML conversion
-  let html = content
-    // Headers
-    .replace(
-      /^### (.*$)/gim,
-      '<h3 class="text-lg font-semibold text-gray-900 mb-2 mt-4">$1</h3>'
-    )
-    .replace(
-      /^## (.*$)/gim,
-      '<h2 class="text-xl font-semibold text-gray-900 mb-3 mt-6">$1</h2>'
-    )
-    .replace(
-      /^# (.*$)/gim,
-      '<h1 class="text-2xl font-bold text-gray-900 mb-4 mt-8">$1</h1>'
-    )
-
-    // Bold and italic
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-
-    // Inline code
-    .replace(
-      /`(.*?)`/g,
-      '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800">$1</code>'
-    )
-
-    // Code blocks
-    .replace(
-      /```([\s\S]*?)```/g,
-      '<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm font-mono text-gray-800">$1</code></pre>'
-    )
-
-    // Links
-    .replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>'
-    )
-
-    // Quotes
-    .replace(
-      /^> (.*$)/gim,
-      '<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4">$1</blockquote>'
-    )
-
-    // Lists
-    .replace(/^- (.*$)/gim, '<li class="ml-4 mb-1">$1</li>')
-    .replace(/^(\d+)\. (.*$)/gim, '<li class="ml-4 mb-1">$2</li>')
-
-    // Wrap lists in ul/ol tags
-    .replace(
-      /(<li.*?<\/li>)/gs,
-      '<ul class="list-disc list-inside mb-4">$1</ul>'
-    )
-
-    // Paragraphs
-    .replace(/\n\n/g, '</p><p class="mb-4 leading-relaxed">')
-    .replace(/\n/g, "<br>");
-
-  // Wrap in paragraph tags if not already wrapped
-  if (!html.startsWith("<")) {
-    html = '<p class="mb-4 leading-relaxed">' + html + "</p>";
-  }
-
-  return html;
-}
 
 export default NoteViewer;

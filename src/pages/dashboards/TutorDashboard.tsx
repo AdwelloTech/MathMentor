@@ -37,7 +37,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateDocumentFile } from "@/constants/form";
 import toast from "react-hot-toast";
 import OnlineStatusToggle from "@/components/tutor/OnlineStatusToggle";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import ActiveSessionFloatingButton from "@/components/tutor/dashboard/ActiveSessionFloatingButton";
 import ActiveInstantSessionButton from "@/components/tutor/dashboard/ActiveInstantSessionButton";
 import InstantSessionRequestPopup from "@/components/tutor/InstantSessionRequestPopup";
@@ -133,9 +132,6 @@ const TutorDashboard: React.FC = () => {
       application?.application_status === "approved" &&
       idVerification?.verification_status === "approved";
     if (!isEnabled) {
-      console.log(
-        "[TutorDashboard] Subscription not enabled - tutor features disabled"
-      );
       return;
     }
 
@@ -144,31 +140,12 @@ const TutorDashboard: React.FC = () => {
     const poll = setInterval(async () => {
       try {
         // Skip polling for now - implement when instant requests API is ready
-        console.log("[TutorDashboard] polling skipped - API not implemented yet");
       } catch (_) {}
     }, 10000);
-
-    console.log(
-      "[TutorDashboard] Setting up subscription for tutor:",
-      profile?.id,
-      "enabled:",
-      isEnabled,
-      "application status:",
-      application?.application_status,
-      "id verification status:",
-      idVerification?.verification_status
-    );
     let unsubscribe: (() => void) | undefined;
     try {
       unsubscribe = instantSessionService.subscribeToPending(
         ({ new: req, eventType }) => {
-          console.log(
-            "[TutorDashboard] Event received:",
-            eventType,
-            (req as any).id,
-            "status:",
-            (req as any).id
-          );
           if (eventType === "INSERT") {
             const isFresh =
               Date.now() - new Date((req as any).created_at).getTime() <=
@@ -182,21 +159,11 @@ const TutorDashboard: React.FC = () => {
             });
           }
           if (eventType === "UPDATE") {
-            console.log("[TutorDashboard] UPDATE event received:", {
-              requestId: (req as any).id,
-              status: (req as any).status,
-              currentRequests: instantRequests.length,
-            });
             setInstantRequests((prev) => {
               const newList =
                 (req as any).status !== "pending"
                   ? prev.filter((r) => r.id !== (req as any).id)
                   : prev;
-              console.log("[TutorDashboard] After UPDATE filter:", {
-                beforeCount: prev.length,
-                afterCount: newList.length,
-                removed: prev.length - newList.length,
-              });
               return newList;
             });
           }
@@ -208,10 +175,6 @@ const TutorDashboard: React.FC = () => {
       console.error("[TutorDashboard] Error setting up subscription:", error);
     }
     return () => {
-      console.log(
-        "[TutorDashboard] Cleaning up subscription for tutor:",
-        profile?.id
-      );
       clearInterval(poll);
       if (unsubscribe) {
         try {
@@ -705,9 +668,6 @@ const TutorDashboard: React.FC = () => {
 
             {/* Action Buttons - Right Side */}
             <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
-                  <ThemeToggle className="text-gray-600 hover:bg-gray-100" />
-                </div>
               <Button
                 id="schedule-class-button"
                 onClick={() => navigate("/schedule-class")}

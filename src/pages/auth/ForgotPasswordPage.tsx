@@ -27,7 +27,7 @@ const ForgotPasswordPage: React.FC = () => {
     try {
       setIsLoading(true);
       
-      const response = await apiClient.post<{ message: string }>('/auth/forgot-password', {
+      const response = await apiClient.post<{ message: string }>('/api/auth/forgot-password', {
         email: data.email
       });
 

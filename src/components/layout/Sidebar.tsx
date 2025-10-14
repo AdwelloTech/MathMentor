@@ -575,7 +575,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                   ? profile.full_name.charAt(0).toUpperCase()
                   : "U"}
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-secondary rounded-full border-2 border-background shadow-sm" />
+              <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background shadow-sm ${
+                profile?.role === 'tutor' && profile?.is_online
+                  ? 'bg-green-500'
+                  : 'bg-secondary'
+              }`} />
             </motion.div>
 
             {/* Profile Details */}

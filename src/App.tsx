@@ -1,73 +1,80 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import { useAdmin } from "./contexts/AdminContext";
-import GameLoadingAnimation from "./components/ui/GameLoadingAnimation";
+import Math3DSpinner from "./components/ui/Math3DSpinner";
+
+// Auth pages - load immediately as they're entry points
 import LoginPage from "./pages/auth/LoginPage";
 import AdminLoginPage from "./pages/auth/AdminLoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import VerifyEmailPage from "./pages/auth/VerifyEmailPage";
+
+// Layouts - load immediately
 import DashboardLayout from "./components/layout/DashboardLayout";
-import ProfilePage from "./pages/ProfilePage";
-
-import AdminDashboard from "./pages/dashboards/AdminDashboard";
-import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
-import ManageTutorsPage from "./pages/admin/ManageTutorsPage";
-import ManageTutorApplicationsPage from "./pages/admin/ManageTutorApplicationsPage";
-import ManageIDVerificationsPage from "./pages/admin/ManageIDVerificationsPage";
-import ManageQuizPdfsPage from "./pages/admin/ManageQuizPdfsPage";
-import AdminManageFlashcardsPage from "./pages/admin/ManageFlashcardsPage";
-import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
-
 import AdminLayout from "./components/layout/AdminLayout";
-import PrincipalDashboard from "./pages/dashboards/PrincipalDashboard";
-import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
-import ScheduleClassPage from "./components/classScheduling/ClassSchedulingPage";
-import TutorManageClassesPage from "./pages/TutorManageClassesPage";
-
-import QuizManagementPage from "./pages/quiz/QuizManagementPage";
-import CreateQuizPage from "./pages/quiz/CreateQuizPage";
-import QuizViewPage from "./pages/quiz/QuizViewPage";
-import EditQuizPage from "./pages/quiz/EditQuizPage";
-import QuizResponsesPage from "./pages/quiz/QuizResponsesPage";
-import QuizAttemptReviewPage from "./pages/quiz/QuizAttemptReviewPage";
-import StudentQuizDashboard from "./pages/student/StudentQuizDashboard";
-import StudentAIGenerateQuizPage from "./pages/student/StudentAIGenerateQuizPage";
-import TakeQuizPage from "./pages/student/TakeQuizPage";
-import QuizResultsPage from "./pages/student/QuizResultsPage";
-
-import ManageMaterialsPage from "./pages/tutor/ManageMaterialsPage";
-import ManageFlashcardsPage from "./pages/tutor/ManageFlashcardsPage";
-import CreateEditFlashcardSetPage from "./pages/tutor/CreateEditFlashcardSetPage";
-import TutorRatingsPage from "./pages/tutor/TutorRatingsPage";
-import FlashcardsListPage from "./pages/student/FlashcardsListPage";
-import FlashcardStudyPage from "./pages/student/FlashcardStudyPage";
-
 import StudentLayout from "./components/layout/StudentLayout";
-import StudentDashboard from "./pages/dashboards/StudentDashboard";
-import BookSessionPage from "./pages/BookSessionPage";
-import BookConsultationPage from "./pages/BookConsultationPage";
-import ManageSessionsPage from "./pages/ManageSessionsPage";
-import InstantSessionPage from "./pages/student/InstantSessionPage";
-import PackagesPage from "./pages/PackagesPage";
-import NotesPage from "./pages/notes/NotesPage";
-import CreateNotePage from "./pages/notes/CreateNotePage";
-import TutorMaterialsPage from "./pages/student/TutorMaterialsPage";
 import ParentLayout from "./components/layout/ParentLayout";
-import ParentDashboardOverview from "./pages/parent/ParentDashboardOverview";
-import ParentQuizProgress from "./pages/parent/ParentQuizProgress";
-import ParentSessionProgress from "./pages/parent/ParentSessionProgress";
-import ParentManageStudents from "./pages/parent/ParentManageStudents";
-import HRDashboard from "./pages/dashboards/HRDashboard";
-import FinanceDashboard from "./pages/dashboards/FinanceDashboard";
-import SupportDashboard from "./pages/dashboards/SupportDashboard";
-import NotFoundPage from "./pages/NotFoundPage";
-import UnauthorizedPage from "./pages/UnauthorizedPage";
-import TutorApplicationPage from "./pages/TutorApplicationPage";
-import IDVerificationPage from "./pages/IDVerificationPage";
 import TutorLayout from "./components/layout/TutorLayout";
+
+// Lazy load all other pages for code splitting
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const AdminDashboard = lazy(() => import("./pages/dashboards/AdminDashboard"));
+const ManageStudentsPage = lazy(() => import("./pages/admin/ManageStudentsPage"));
+const ManageTutorsPage = lazy(() => import("./pages/admin/ManageTutorsPage"));
+const ManageTutorApplicationsPage = lazy(() => import("./pages/admin/ManageTutorApplicationsPage"));
+const ManageIDVerificationsPage = lazy(() => import("./pages/admin/ManageIDVerificationsPage"));
+const ManageQuizPdfsPage = lazy(() => import("./pages/admin/ManageQuizPdfsPage"));
+const AdminManageFlashcardsPage = lazy(() => import("./pages/admin/ManageFlashcardsPage"));
+const ManageSubjectsPage = lazy(() => import("./pages/admin/ManageSubjectsPage"));
+
+const PrincipalDashboard = lazy(() => import("./pages/dashboards/PrincipalDashboard"));
+const TeacherDashboard = lazy(() => import("./pages/dashboards/TeacherDashboard"));
+const ScheduleClassPage = lazy(() => import("./components/classScheduling/ClassSchedulingPage"));
+const TutorManageClassesPage = lazy(() => import("./pages/TutorManageClassesPage"));
+
+const QuizManagementPage = lazy(() => import("./pages/quiz/QuizManagementPage"));
+const CreateQuizPage = lazy(() => import("./pages/quiz/CreateQuizPage"));
+const QuizViewPage = lazy(() => import("./pages/quiz/QuizViewPage"));
+const EditQuizPage = lazy(() => import("./pages/quiz/EditQuizPage"));
+const QuizResponsesPage = lazy(() => import("./pages/quiz/QuizResponsesPage"));
+const QuizAttemptReviewPage = lazy(() => import("./pages/quiz/QuizAttemptReviewPage"));
+const StudentQuizDashboard = lazy(() => import("./pages/student/StudentQuizDashboard"));
+const StudentAIGenerateQuizPage = lazy(() => import("./pages/student/StudentAIGenerateQuizPage"));
+const TakeQuizPage = lazy(() => import("./pages/student/TakeQuizPage"));
+const QuizResultsPage = lazy(() => import("./pages/student/QuizResultsPage"));
+
+const ManageMaterialsPage = lazy(() => import("./pages/tutor/ManageMaterialsPage"));
+const ManageFlashcardsPage = lazy(() => import("./pages/tutor/ManageFlashcardsPage"));
+const CreateEditFlashcardSetPage = lazy(() => import("./pages/tutor/CreateEditFlashcardSetPage"));
+const TutorRatingsPage = lazy(() => import("./pages/tutor/TutorRatingsPage"));
+const FlashcardsListPage = lazy(() => import("./pages/student/FlashcardsListPage"));
+const FlashcardStudyPage = lazy(() => import("./pages/student/FlashcardStudyPage"));
+
+const StudentDashboard = lazy(() => import("./pages/dashboards/StudentDashboard"));
+const BookSessionPage = lazy(() => import("./pages/BookSessionPage"));
+const BookConsultationPage = lazy(() => import("./pages/BookConsultationPage"));
+const ManageSessionsPage = lazy(() => import("./pages/ManageSessionsPage"));
+const InstantSessionPage = lazy(() => import("./pages/student/InstantSessionPage"));
+const PackagesPage = lazy(() => import("./pages/PackagesPage"));
+const NotesPage = lazy(() => import("./pages/notes/NotesPage"));
+const CreateNotePage = lazy(() => import("./pages/notes/CreateNotePage"));
+const TutorMaterialsPage = lazy(() => import("./pages/student/TutorMaterialsPage"));
+
+const ParentDashboardOverview = lazy(() => import("./pages/parent/ParentDashboardOverview"));
+const ParentQuizProgress = lazy(() => import("./pages/parent/ParentQuizProgress"));
+const ParentSessionProgress = lazy(() => import("./pages/parent/ParentSessionProgress"));
+const ParentManageStudents = lazy(() => import("./pages/parent/ParentManageStudents"));
+
+const HRDashboard = lazy(() => import("./pages/dashboards/HRDashboard"));
+const FinanceDashboard = lazy(() => import("./pages/dashboards/FinanceDashboard"));
+const SupportDashboard = lazy(() => import("./pages/dashboards/SupportDashboard"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const UnauthorizedPage = lazy(() => import("./pages/UnauthorizedPage"));
+const TutorApplicationPage = lazy(() => import("./pages/TutorApplicationPage"));
+const IDVerificationPage = lazy(() => import("./pages/IDVerificationPage"));
 
 function App() {
   const { user, loading, profile } = useAuth();
@@ -81,7 +88,7 @@ function App() {
   if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <GameLoadingAnimation size="lg" />
+        <Math3DSpinner size="xl" text="Loading..." />
       </div>
     );
   }
@@ -99,7 +106,12 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      <Routes>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Math3DSpinner size="xl" text="Loading page..." />
+        </div>
+      }>
+        <Routes>
         {/* Public routes - always accessible */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -341,7 +353,8 @@ function App() {
             />
           </>
         )}
-      </Routes>
+        </Routes>
+      </Suspense>
     </div>
   );
 }
@@ -357,7 +370,7 @@ function DashboardRoute() {
   if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <GameLoadingAnimation size="lg" />
+        <Math3DSpinner size="xl" text="Loading dashboard..." />
       </div>
     );
   }
@@ -375,7 +388,7 @@ function DashboardRoute() {
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <GameLoadingAnimation size="lg" />
+        <Math3DSpinner size="xl" text="Loading profile..." />
       </div>
     );
   }
@@ -434,7 +447,7 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <GameLoadingAnimation size="lg" />
+        <Math3DSpinner size="xl" text="Verifying access..." />
       </div>
     );
   }
@@ -451,7 +464,7 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <GameLoadingAnimation size="lg" />
+        <Math3DSpinner size="xl" text="Verifying access..." />
       </div>
     );
   }

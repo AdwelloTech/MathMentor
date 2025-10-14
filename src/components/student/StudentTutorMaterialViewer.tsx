@@ -7,7 +7,7 @@ import {
   EyeIcon,
   BookOpenIcon,
 } from "@heroicons/react/24/outline";
-import DOMPurify from "dompurify";
+import { sanitizeHTML } from "@/utils/sanitize";
 import {
   formatFileSize,
   type StudentTutorMaterial,
@@ -311,7 +311,7 @@ const StudentTutorMaterialViewer: React.FC<StudentTutorMaterialViewerProps> = ({
                         <div
                           className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed"
                           dangerouslySetInnerHTML={{
-                            __html: DOMPurify.sanitize(material.content || ""),
+                            __html: sanitizeHTML(material.content || "", true),
                           }}
                         />
                       </CardContent>

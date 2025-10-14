@@ -28,8 +28,6 @@ export type InstantRequest = {
 export const instantSessionService = {
   // Student creates a new instant request (fixed 15 minutes)
   createRequest: async (_studentProfileId: string, subjectId: string): Promise<InstantRequest> => {
-    console.log('[Instant] Creating instant session request');
-
     const response = await apiClient.post<InstantRequest>('/api/instant-sessions/request', {
       subjectId
     });
@@ -43,8 +41,6 @@ export const instantSessionService = {
 
   // Get all pending requests (for tutors)
   getPendingRequests: async (subjectId?: string): Promise<InstantRequest[]> => {
-    console.log('[Instant] Fetching pending requests');
-
     const params: any = {};
     if (subjectId) {
       params.subjectId = subjectId;
@@ -66,7 +62,6 @@ export const instantSessionService = {
 
   // Student cancels their pending request
   cancelRequest: async (requestId: string, _studentProfileId: string): Promise<InstantRequest> => {
-    console.log('[Instant] Cancelling request:', requestId);
 
     const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/cancel`, {});
 
@@ -78,7 +73,6 @@ export const instantSessionService = {
 
   // Tutor rejects a pending request (local dismissal - just cancel)
   rejectRequest: async (requestId: string, _tutorProfileId: string): Promise<InstantRequest> => {
-    console.log('[Instant] Tutor rejecting request:', requestId);
 
     const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/cancel`, {
       reason: 'Rejected by tutor'
@@ -92,7 +86,6 @@ export const instantSessionService = {
 
   // Atomic accept: only succeeds if still pending
   acceptRequest: async (requestId: string, _tutorProfileId: string): Promise<InstantRequest> => {
-    console.log('[Instant] Tutor accepting request:', requestId);
 
     const response = await apiClient.post<InstantRequest>(`/api/instant-sessions/${requestId}/accept`, {});
 
@@ -191,10 +184,7 @@ export const instantSessionService = {
     subjectId?: string,
     isOnline: boolean = false
   ) => {
-    console.log('[Instant] Setting up polling subscription for pending requests');
-
     if (!isOnline) {
-      console.log('[Instant] Tutor is offline, skipping subscription');
       return () => {};
     }
 
@@ -212,7 +202,6 @@ export const instantSessionService = {
           const reqId = req.id || req._id;
           if (!lastRequestIds.has(reqId)) {
             // New request found
-            console.log('[Instant] New request detected:', reqId);
             callback({
               new: req,
               old: null,
@@ -225,7 +214,6 @@ export const instantSessionService = {
         lastRequestIds.forEach(oldId => {
           if (!currentRequestIds.has(oldId)) {
             // Request was removed (likely accepted or cancelled)
-            console.log('[Instant] Request removed from pending:', oldId);
             callback({
               new: { id: oldId, status: 'accepted' } as InstantRequest,
               old: null,
@@ -242,7 +230,6 @@ export const instantSessionService = {
 
     // Return cleanup function
     return () => {
-      console.log('[Instant] Cleaning up polling subscription');
       clearInterval(pollInterval);
     };
   },

@@ -97,7 +97,7 @@ const VerifyEmailPage: React.FC = () => {
         accessToken: string;
         refreshToken: string;
         user: any;
-      }>('/auth/verify-email', {
+      }>('/api/auth/verify-email', {
         email,
         otp: otpValue
       });
@@ -122,7 +122,7 @@ const VerifyEmailPage: React.FC = () => {
     try {
       setIsResending(true);
 
-      const response = await apiClient.post<{ message: string }>('/auth/resend-verification-otp', { email });
+      const response = await apiClient.post<{ message: string }>('/api/auth/resend-verification-otp', { email });
 
       if (response.message) {
         toast.success('New OTP sent to your email!');

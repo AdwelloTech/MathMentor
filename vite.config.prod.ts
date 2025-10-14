@@ -24,11 +24,11 @@ export default defineConfig({
     open: false,
     proxy: {
       "/api": {
-        target: "https://scenario-sbjct-pursuit-language.trycloudflare.com",
+        target: "https://offline-coal-difference-luggage.trycloudflare.com",
         changeOrigin: true,
       },
       "/api/ai": {
-        target: "https://scenario-sbjct-pursuit-language.trycloudflare.com",
+        target: "https://offline-coal-difference-luggage.trycloudflare.com",
         changeOrigin: true,
       },
     },

@@ -24,11 +24,11 @@ export default defineConfig({
     open: false,
     proxy: {
       "/api": {
-        target: "http://localhost:5000",
+        target: "http://localhost:5001",
         changeOrigin: true,
       },
       "/api/ai": {
-        target: "http://72.60.20.140:5000",
+        target: "http://localhost:5001",
         changeOrigin: true,
       },
     },
@@ -38,5 +38,37 @@ export default defineConfig({
   },
   build: {
     outDir: "dist-dev",
+    target: 'esnext',
+    minify: 'esbuild',
+    cssMinify: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['framer-motion', '@radix-ui/react-dialog', '@radix-ui/react-select'],
+          'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
+          'vendor-forms': ['react-hook-form'],
+          'vendor-toast': ['react-hot-toast'],
+        },
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    },
+    chunkSizeWarningLimit: 1000,
+    reportCompressedSize: false,
   },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'framer-motion',
+      'react-hot-toast',
+    ],
+    exclude: ['@vite/client', '@vite/env']
+  },
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
+  }
 });

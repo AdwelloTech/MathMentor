@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import loginIllustration from "@/assets/student-login.png";
-import apiClient from "@/lib/apiClient";
 
 const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);

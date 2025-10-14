@@ -194,7 +194,7 @@ router.post('/resend-verification-otp', async (req, res) => {
 
     res.json({
       success: true,
-      message
+      data: { message }
     });
   } catch (error: any) {
     res.status(400).json({
@@ -554,7 +554,7 @@ router.post('/forgot-password', async (req, res) => {
 
     res.json({
       success: true,
-      message
+      data: { message }
     });
   } catch (error: any) {
     res.status(500).json({
@@ -613,7 +613,7 @@ router.post('/reset-password', async (req, res) => {
 
     res.json({
       success: true,
-      message
+      data: { message }
     });
   } catch (error: any) {
     res.status(400).json({

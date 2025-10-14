@@ -14,6 +14,7 @@ import {
 } from "@/utils/permissions";
 import { PACKAGE_PRICING_DISPLAY } from "@/lib/stripe";
 import PaymentForm from "@/components/payment/PaymentForm";
+import toast from "react-hot-toast";
 import type { RegisterFormData, UserRole, StudentPackage } from "@/types/auth";
 
 import { Button } from "@/components/ui/button";

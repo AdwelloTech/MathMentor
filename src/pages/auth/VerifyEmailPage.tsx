@@ -9,7 +9,7 @@ import GameLoadingAnimation from '@/components/ui/GameLoadingAnimation';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import toast from 'react-hot-toast';
 import apiClient from '@/lib/apiClient';
-import { useAuth } from '@/contexts/AuthContext';
+// import { useAuth } from '@/contexts/AuthContext';
 
 const VerifyEmailPage: React.FC = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -20,7 +20,6 @@ const VerifyEmailPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { signIn } = useAuth();
 
   const email = (location.state as any)?.email;
 
@@ -94,20 +93,22 @@ const VerifyEmailPage: React.FC = () => {
     try {
       setIsLoading(true);
 
-      const response = await apiClient.post('/auth/verify-email', {
+      const response = await apiClient.post<{
+        accessToken: string;
+        refreshToken: string;
+        user: any;
+      }>('/auth/verify-email', {
         email,
         otp: otpValue
       });
 
-      if (response.data.success) {
-        toast.success('Email verified successfully!');
-        
-        const { accessToken, refreshToken, user } = response.data.data;
-        apiClient.setTokens(accessToken, refreshToken);
+      toast.success('Email verified successfully!');
 
-        await new Promise(resolve => setTimeout(resolve, 500));
-        navigate('/dashboard', { replace: true });
-      }
+      const { accessToken, refreshToken } = response;
+      apiClient.setTokens(accessToken, refreshToken);
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Invalid OTP. Please try again.');
       setOtp(['', '', '', '', '', '']);
@@ -121,9 +122,9 @@ const VerifyEmailPage: React.FC = () => {
     try {
       setIsResending(true);
 
-      const response = await apiClient.post('/auth/resend-verification-otp', { email });
+      const response = await apiClient.post<{ message: string }>('/auth/resend-verification-otp', { email });
 
-      if (response.data.success) {
+      if (response.message) {
         toast.success('New OTP sent to your email!');
         setCanResend(false);
         setResendTimer(60);

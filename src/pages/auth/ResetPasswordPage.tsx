@@ -44,13 +44,13 @@ const ResetPasswordPage: React.FC = () => {
     try {
       setIsLoading(true);
 
-      const response = await apiClient.post('/auth/reset-password', {
+      const response = await apiClient.post<{ message: string }>('/auth/reset-password', {
         email,
         otp: data.otp,
         newPassword: data.newPassword
       });
 
-      if (response.data.success) {
+      if (response.message) {
         toast.success('Password reset successful! Please login with your new password.');
         navigate('/login', { replace: true });
       }

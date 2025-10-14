@@ -27,11 +27,11 @@ const ForgotPasswordPage: React.FC = () => {
     try {
       setIsLoading(true);
       
-      const response = await apiClient.post('/auth/forgot-password', {
+      const response = await apiClient.post<{ message: string }>('/auth/forgot-password', {
         email: data.email
       });
 
-      if (response.data.success) {
+      if (response.message) {
         toast.success('Password reset code sent to your email!');
         navigate('/reset-password', { state: { email: data.email } });
       }

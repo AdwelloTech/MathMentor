@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,10 +23,6 @@ import {
 import { Star } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import TutorApplicationForm from "@/components/forms/TutorApplicationForm";
-import {
-  instantSessionService,
-  type InstantRequest,
-} from "@/lib/instantSessionService";
 import { idVerificationService } from "@/lib/idVerificationService";
 import apiClient from "@/lib/apiClient";
 import DashboardService from "@/lib/dashboardService";
@@ -51,64 +47,12 @@ const TutorDashboard: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dashboardStats, setDashboardStats] =
     useState<TutorDashboardStats | null>(null);
-  const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
-  const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
-
-  // Audio notification setup (unlocked on first user interaction)
-  const audioCtxRef = useRef<any>(null);
-  const [audioEnabled, setAudioEnabled] = useState(false);
 
 
 
 
-  // Audio notification setup
-  useEffect(() => {
-    const unlock = () => {
-      try {
-        const AC =
-          (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (!AC) return;
-        if (!audioCtxRef.current) audioCtxRef.current = new AC();
-        if (audioCtxRef.current.state !== "running") {
-          audioCtxRef.current.resume();
-        }
-        setAudioEnabled(true);
-      } catch (_) {}
-      document.removeEventListener("click", unlock);
-      document.removeEventListener("keydown", unlock);
-      document.removeEventListener("touchstart", unlock);
-    };
-    document.addEventListener("click", unlock);
-    document.addEventListener("keydown", unlock);
-    document.addEventListener("touchstart", unlock);
-    return () => {
-      document.removeEventListener("click", unlock);
-      document.removeEventListener("keydown", unlock);
-      document.removeEventListener("touchstart", unlock);
-    };
-  }, []);
 
-  const playNotificationSound = () => {
-    if (!audioEnabled || !audioCtxRef.current) return;
-    try {
-      const oscillator = audioCtxRef.current.createOscillator();
-      const gainNode = audioCtxRef.current.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtxRef.current.destination);
-      oscillator.frequency.setValueAtTime(800, audioCtxRef.current.currentTime);
-      oscillator.frequency.setValueAtTime(
-        600,
-        audioCtxRef.current.currentTime + 0.1
-      );
-      gainNode.gain.setValueAtTime(0.1, audioCtxRef.current.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(
-        0.01,
-        audioCtxRef.current.currentTime + 0.2
-      );
-      oscillator.start(audioCtxRef.current.currentTime);
-      oscillator.stop(audioCtxRef.current.currentTime + 0.2);
-    } catch (_) {}
-  };
+
 
   // Check for existing application and ID verification on mount
   useEffect(() => {
@@ -126,73 +70,6 @@ const TutorDashboard: React.FC = () => {
     }
   }, [application, idVerification]);
 
-  // Subscribe to instant requests when tutor features enabled
-  useEffect(() => {
-    const isEnabled =
-      application?.application_status === "approved" &&
-      idVerification?.verification_status === "approved";
-    if (!isEnabled) {
-      return;
-    }
-
-    // Polling mechanism to fetch pending requests every 10 seconds
-    // For now, we'll skip polling since the API isn't implemented yet
-    const poll = setInterval(async () => {
-      try {
-        // Skip polling for now - implement when instant requests API is ready
-      } catch (_) {}
-    }, 10000);
-    let unsubscribe: (() => void) | undefined;
-    try {
-      unsubscribe = instantSessionService.subscribeToPending(
-        ({ new: req, eventType }) => {
-          if (eventType === "INSERT") {
-            const isFresh =
-              Date.now() - new Date((req as any).created_at).getTime() <=
-              FRESH_WINDOW_MS;
-            if (!isFresh) return; // ignore stale backlog
-            playNotificationSound();
-            setInstantRequests((prev) => {
-              const exists = prev.some((r) => r.id === (req as any).id);
-              if (exists) return prev;
-              return [req as InstantRequest, ...prev];
-            });
-          }
-          if (eventType === "UPDATE") {
-            setInstantRequests((prev) => {
-              const newList =
-                (req as any).status !== "pending"
-                  ? prev.filter((r) => r.id !== (req as any).id)
-                  : prev;
-              return newList;
-            });
-          }
-        },
-        undefined,
-        profile?.is_online || false
-      );
-    } catch (error) {
-      console.error("[TutorDashboard] Error setting up subscription:", error);
-    }
-    return () => {
-      clearInterval(poll);
-      if (unsubscribe) {
-        try {
-          unsubscribe();
-        } catch (error) {
-          console.error(
-            "[TutorDashboard] Error cleaning up subscription:",
-            error
-          );
-        }
-      }
-    };
-  }, [
-    application?.application_status,
-    idVerification?.verification_status,
-    profile?.id,
-    profile?.is_online,
-  ]);
 
   const checkApplication = async () => {
     if (!user) {

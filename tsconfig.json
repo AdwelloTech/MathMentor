@@ -33,7 +33,7 @@
       "@/contexts/*": ["src/contexts/*"],
       "@/assets/*": ["src/assets/*"]
     },
-    "typeRoots": ["./node_modules/@types"]
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src", "old-backend"],
   "references": [{ "path": "./tsconfig.node.json" }]

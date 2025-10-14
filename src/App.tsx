@@ -8,6 +8,7 @@ import AdminLoginPage from "./pages/auth/AdminLoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import VerifyEmailPage from "./pages/auth/VerifyEmailPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProfilePage from "./pages/ProfilePage";
 
@@ -54,7 +55,11 @@ import PackagesPage from "./pages/PackagesPage";
 import NotesPage from "./pages/notes/NotesPage";
 import CreateNotePage from "./pages/notes/CreateNotePage";
 import TutorMaterialsPage from "./pages/student/TutorMaterialsPage";
-import ParentDashboard from "./pages/dashboards/ParentDashboard";
+import ParentLayout from "./components/layout/ParentLayout";
+import ParentDashboardOverview from "./pages/parent/ParentDashboardOverview";
+import ParentQuizProgress from "./pages/parent/ParentQuizProgress";
+import ParentSessionProgress from "./pages/parent/ParentSessionProgress";
+import ParentManageStudents from "./pages/parent/ParentManageStudents";
 import HRDashboard from "./pages/dashboards/HRDashboard";
 import FinanceDashboard from "./pages/dashboards/FinanceDashboard";
 import SupportDashboard from "./pages/dashboards/SupportDashboard";
@@ -97,6 +102,7 @@ function App() {
       <Routes>
         {/* Public routes - always accessible */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
 
         {/* Handle authentication-based routing */}
@@ -271,10 +277,16 @@ function App() {
                 path="parent/*"
                 element={
                   <ProtectedRoute requiredRole="parent">
-                    <ParentDashboard />
+                    <ParentLayout />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route index element={<Navigate to="/parent/dashboard" replace />} />
+                <Route path="dashboard" element={<ParentDashboardOverview />} />
+                <Route path="quiz-progress" element={<ParentQuizProgress />} />
+                <Route path="session-progress" element={<ParentSessionProgress />} />
+                <Route path="manage" element={<ParentManageStudents />} />
+              </Route>
 
               {/* HR routes */}
               <Route

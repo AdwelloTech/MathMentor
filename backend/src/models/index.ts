@@ -21,6 +21,8 @@ export { Message, IMessage } from './Message';
 export { Conversation, IConversation } from './Conversation';
 export { Notification, INotification } from './Notification';
 export { InstantSession, IInstantSession } from './InstantSession';
+export { ParentStudent, IParentStudent } from './ParentStudent';
+export { OTP, IOTP } from './OTP';
 
 // Re-export mongoose for convenience
 export { default as mongoose } from 'mongoose';

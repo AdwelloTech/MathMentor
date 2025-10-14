@@ -112,16 +112,11 @@ const RegisterPage: React.FC = () => {
 
       await signUp(data.email, data.password, registrationData);
 
-      // Give a brief moment for the user to be created before redirecting
-      setTimeout(() => {
-        navigate("/login", {
-          state: {
-            message:
-              "Registration successful! Please sign in with your credentials.",
-            email: data.email,
-          },
-        });
-      }, 1000);
+      // Redirect to email verification page
+      toast.success("Registration successful! Please verify your email.");
+      navigate("/verify-email", {
+        state: { email: data.email },
+      });
     } catch (error: any) {
       console.error("Registration error:", error);
       setError("root", {

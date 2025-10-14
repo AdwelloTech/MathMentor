@@ -1,5 +1,7 @@
 import { User, RefreshToken } from '../models';
 import { generateTokenPair, verifyRefreshToken } from '../utils/jwt';
+import { generateUniqueStudentCode } from '../utils/studentCode';
+import { EmailService } from './emailService';
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
 
@@ -39,9 +41,9 @@ export interface AuthTokens {
 
 export class AuthService {
   /**
-   * Register a new user
+   * Register a new user - Step 1: Create user and send OTP
    */
-  static async register(data: RegisterData): Promise<AuthTokens> {
+  static async register(data: RegisterData): Promise<{ message: string; email: string }> {
     const { firstName, lastName, email, password, role, phone, package: studentPackage, subjects, experience, qualification } = data;
 
     // Check if user already exists
@@ -60,12 +62,17 @@ export class AuthService {
       password,
       role,
       phone,
-      isActive: true
+      isActive: true,
+      emailVerified: false
     };
 
     // Add role-specific fields
-    if (role === 'student' && studentPackage) {
-      userData.package = studentPackage;
+    if (role === 'student') {
+      if (studentPackage) {
+        userData.package = studentPackage;
+      }
+      // Generate unique student code for parent linking
+      userData.studentCode = await generateUniqueStudentCode();
     }
 
     if (role === 'tutor') {
@@ -86,7 +93,32 @@ export class AuthService {
     }
 
     const user = new User(userData);
+    await user.save();
 
+    // Send verification email
+    await EmailService.sendVerificationEmail(email, firstName);
+
+    return {
+      message: 'Registration successful. Please check your email for verification code.',
+      email: email.toLowerCase()
+    };
+  }
+
+  /**
+   * Verify email and complete registration - Step 2: Verify OTP and activate account
+   */
+  static async verifyEmail(email: string, otp: string): Promise<AuthTokens> {
+    // Verify OTP
+    await EmailService.verifyOTP(email, otp, 'email_verification');
+
+    // Find user and update verification status
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    user.emailVerified = true;
+    user.emailVerifiedAt = new Date();
     await user.save();
 
     // Generate tokens
@@ -111,6 +143,22 @@ export class AuthService {
   }
 
   /**
+   * Resend verification OTP
+   */
+  static async resendVerificationOTP(email: string): Promise<string> {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.emailVerified) {
+      throw new Error('Email already verified');
+    }
+
+    return EmailService.resendOTP(email, 'email_verification', user.firstName);
+  }
+
+  /**
    * Login user
    */
   static async login(data: LoginData): Promise<AuthTokens> {
@@ -132,6 +180,66 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new Error('Invalid email or password');
     }
+
+    // Check email verification - if not verified, send verification link automatically
+    if (!user.emailVerified) {
+      // Send verification link
+      await EmailService.sendVerificationLinkEmail(email, user.firstName);
+
+      const error: any = new Error('Email not verified');
+      error.code = 'EMAIL_NOT_VERIFIED';
+      error.email = email;
+      throw error;
+    }
+
+    // Generate tokens
+    const tokens = generateTokenPair(user._id, user.email, user.role);
+
+    // Save refresh token
+    await this.saveRefreshToken(user._id, tokens.tokenId, tokens.refreshToken);
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user._id.toString(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        avatarUrl: user.avatarUrl
+      }
+    };
+  }
+
+  /**
+   * Login with email verification - complete login after OTP verification
+   */
+  static async loginWithVerification(email: string, password: string, otp: string): Promise<AuthTokens> {
+    // Verify OTP first
+    await EmailService.verifyOTP(email, otp, 'email_verification');
+
+    // Find user
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    if (!user) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Verify password again
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Mark email as verified
+    user.emailVerified = true;
+    user.emailVerifiedAt = new Date();
+    await user.save();
 
     // Generate tokens
     const tokens = generateTokenPair(user._id, user.email, user.role);
@@ -274,6 +382,64 @@ export class AuthService {
 
     user.password = newPassword;
     await user.save();
+  }
+
+  /**
+   * Request password reset - sends OTP to email
+   */
+  static async requestPasswordReset(email: string): Promise<string> {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      // Don't reveal that user doesn't exist for security
+      return 'If an account exists with this email, you will receive a password reset code.';
+    }
+
+    await EmailService.sendPasswordResetEmail(email, user.firstName);
+    return 'Password reset code sent to your email.';
+  }
+
+  /**
+   * Verify password reset OTP
+   */
+  static async verifyPasswordResetOTP(email: string, otp: string): Promise<string> {
+    await EmailService.verifyOTP(email, otp, 'password_reset');
+    return 'OTP verified successfully. You can now reset your password.';
+  }
+
+  /**
+   * Reset password with verified OTP
+   */
+  static async resetPassword(email: string, otp: string, newPassword: string): Promise<string> {
+    // Verify OTP again for security
+    await EmailService.verifyOTP(email, otp, 'password_reset');
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    // Revoke all existing tokens for this user for security
+    await RefreshToken.updateMany(
+      { userId: user._id, isRevoked: false },
+      { isRevoked: true }
+    );
+
+    return 'Password reset successful. Please login with your new password.';
+  }
+
+  /**
+   * Resend password reset OTP
+   */
+  static async resendPasswordResetOTP(email: string): Promise<string> {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return 'If an account exists with this email, you will receive a password reset code.';
+    }
+
+    return EmailService.resendOTP(email, 'password_reset', user.firstName);
   }
 
   /**

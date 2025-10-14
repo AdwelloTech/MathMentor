@@ -220,10 +220,10 @@ class ApiClient {
         let errorDetails: any;
 
         try {
-          const errorData: ApiResponse<any> = await response.json();
+          const errorData: any = await response.json();
           errorMessage = errorData.error || errorMessage;
-          // Note: code and details are not part of ApiResponse interface
-          // They might be added later if needed
+          errorCode = errorData.code;
+          errorDetails = errorData;
         } catch {
           // If response is not JSON, use status text
           errorMessage = response.statusText || errorMessage;
@@ -283,6 +283,17 @@ class ApiClient {
     return this.makeRequest<T>(endpoint, {
       ...options,
       method: 'PUT',
+      body: data instanceof FormData ? data : (data ? JSON.stringify(data) : undefined),
+    });
+  }
+
+  /**
+   * PATCH request
+   */
+  async patch<T>(endpoint: string, data?: any, options?: RequestOptions): Promise<T> {
+    return this.makeRequest<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
       body: data instanceof FormData ? data : (data ? JSON.stringify(data) : undefined),
     });
   }

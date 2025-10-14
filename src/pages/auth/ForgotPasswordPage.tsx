@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { AcademicCapIcon, EnvelopeIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
-import { useAuth } from '@/contexts/AuthContext';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import GameLoadingAnimation from '@/components/ui/GameLoadingAnimation';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import toast from 'react-hot-toast';
+import apiClient from '@/lib/apiClient';
 import type { PasswordResetFormData } from '@/types/auth';
 
 const ForgotPasswordPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const { resetPassword } = useAuth();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -22,145 +26,142 @@ const ForgotPasswordPage: React.FC = () => {
   const onSubmit = async (data: PasswordResetFormData) => {
     try {
       setIsLoading(true);
-      await resetPassword(data.email);
-      setIsSuccess(true);
+      
+      const response = await apiClient.post('/auth/forgot-password', {
+        email: data.email
+      });
+
+      if (response.data.success) {
+        toast.success('Password reset code sent to your email!');
+        navigate('/reset-password', { state: { email: data.email } });
+      }
     } catch (error: any) {
       setError('root', {
-        message: error.message || 'Failed to send reset email',
+        message: error.response?.data?.error || 'Failed to send reset email',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <div className="flex justify-center mb-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl blur opacity-30 animate-pulse"></div>
-              <div className="relative bg-white p-3 rounded-2xl shadow-lg">
-                <AcademicCapIcon className="h-8 w-8 text-primary-600" />
-              </div>
-            </div>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Forgot Password?
-          </h2>
-          <p className="text-gray-600">
-            No worries! Enter your email and we'll send you a reset link.
-          </p>
-        </motion.div>
-
-        {/* Reset Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="card"
-        >
-          <div className="card-body">
-            {!isSuccess ? (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Email Field */}
-                <div className="form-group">
-                  <label htmlFor="email" className="form-label">
-                    Email Address
-                  </label>
-                  <input
-                    {...register('email', {
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                        message: 'Please enter a valid email address',
-                      },
-                    })}
-                    type="email"
-                    id="email"
-                    placeholder="Enter your email"
-                    className={`input ${errors.email ? 'input-error' : ''}`}
-                  />
-                  {errors.email && (
-                    <p className="form-error">{errors.email.message}</p>
-                  )}
-                </div>
-
-                {/* Error Message */}
-                {errors.root && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="p-3 bg-red-50 border border-red-200 rounded-lg"
-                  >
-                    <p className="text-sm text-red-600">{errors.root.message}</p>
-                  </motion.div>
-                )}
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="btn btn-primary w-full btn-lg hover-lift"
-                >
-                  {isLoading ? (
-                    <LoadingSpinner size="sm" />
-                  ) : (
-                    <>
-                      <EnvelopeIcon className="h-5 w-5 mr-2" />
-                      Send Reset Link
-                    </>
-                  )}
-                </button>
-              </form>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-                className="text-center py-6"
-              >
-                <div className="mb-4">
-                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-                    <EnvelopeIcon className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Reset Link Sent!
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  We've sent a password reset link to your email. Please check your inbox and follow the instructions to reset your password.
-                </p>
-                <p className="text-sm text-gray-500">
-                  Didn't receive the email? Check your spam folder or try again.
-                </p>
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Back to Login Link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-center"
-        >
-          <Link
-            to="/login"
-            className="inline-flex items-center text-primary-600 hover:text-primary-500 font-medium"
-          >
-            <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Back to Login
-          </Link>
-        </motion.div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+      <div className="absolute top-6 right-6 z-50">
+        <ThemeToggle className="text-foreground hover:bg-muted shadow-lg" />
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="max-w-md w-full"
+      >
+        <div className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+            className="inline-block mb-4"
+          >
+            <div className="bg-primary/10 p-4 rounded-full">
+              <AcademicCapIcon className="h-12 w-12 text-primary" />
+            </div>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-3xl font-bold text-foreground mb-2"
+          >
+            Forgot Password?
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-muted-foreground"
+          >
+            No worries! We'll send you a reset code.
+          </motion.p>
+        </div>
+
+        <motion.form
+          onSubmit={handleSubmit(onSubmit)}
+          initial="hidden"
+          animate="visible"
+          variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+          className="space-y-6 bg-card border border-border rounded-2xl p-8 shadow-xl"
+        >
+          <motion.div variants={fadeInUp} className="space-y-2">
+            <Label htmlFor="email" className="text-card-foreground font-medium">
+              Email Address
+            </Label>
+            <Input
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'Please enter a valid email address',
+                },
+              })}
+              type="email"
+              id="email"
+              placeholder="Enter your email"
+              className={`bg-input border-border text-foreground placeholder:text-muted-foreground ${
+                errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''
+              }`}
+            />
+            {errors.email && (
+              <p className="text-sm text-destructive font-medium">{errors.email.message}</p>
+            )}
+          </motion.div>
+
+          {errors.root && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg"
+            >
+              <p className="text-sm text-destructive font-medium">{errors.root.message}</p>
+            </motion.div>
+          )}
+
+          <motion.div variants={fadeInUp}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+              size="lg"
+            >
+              {isLoading ? (
+                <GameLoadingAnimation size="sm" />
+              ) : (
+                <>
+                  <EnvelopeIcon className="h-5 w-5 mr-2" />
+                  Send Reset Code
+                </>
+              )}
+            </Button>
+          </motion.div>
+
+          <motion.div variants={fadeInUp} className="text-center pt-4">
+            <Link
+              to="/login"
+              className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeftIcon className="h-4 w-4 mr-2" />
+              Back to Login
+            </Link>
+          </motion.div>
+        </motion.form>
+      </motion.div>
     </div>
   );
 };

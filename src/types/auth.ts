@@ -74,6 +74,7 @@ export interface UserProfile {
 
   // Student specific fields
   student_id?: string;
+  student_code?: string; // Unique code for parent linking (e.g., ABC-123-XYZ)
   package?: StudentPackage;
   class_id?: string;
   age?: number;

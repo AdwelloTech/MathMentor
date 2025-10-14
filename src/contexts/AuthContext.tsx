@@ -204,6 +204,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Handle auth errors with specific messages
   const handleAuthError = (error: ApiClientError) => {
+    // Don't show toast for EMAIL_NOT_VERIFIED errors - let the LoginPage handle them
+    if (error.code === 'EMAIL_NOT_VERIFIED') {
+      return;
+    }
+
     if (error.status === 500) {
       toast.error("Server error. Please try again later.");
     } else if (error.status === 401) {
@@ -248,7 +253,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Sign up function with better error handling
+  // Sign up function with OTP verification
   const signUp = async (email: string, password: string, userData: any) => {
     try {
       setLoading(true);
@@ -265,7 +270,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const registrationData: RegisterFormData = {
         email,
         password,
-        confirmPassword: userData.confirmPassword || password, // Assuming confirmPassword is provided
+        confirmPassword: userData.confirmPassword || password,
         firstName: userData.first_name || userData.firstName,
         lastName: userData.last_name || userData.lastName,
         role: userData.role,
@@ -277,17 +282,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         agreesToTerms: userData.agreesToTerms || true,
       };
 
-      // Register the user
-      const result = await AuthService.register(registrationData);
+      // Register the user (this will send OTP to email)
+      await AuthService.register(registrationData);
 
-      console.log("Registration successful for:", result.user.email);
+      console.log("Registration initiated for:", email);
 
-      // Show success message
-      toast.success(
-        "Registration successful! Please check your email to verify your account before signing in."
-      );
-
-      // Note: Backend handles auto-confirmation, so we don't need to check email_confirmed_at
+      // Don't show toast here - let the RegisterPage handle the navigation and toast
+      // The user will be redirected to verify their email
     } catch (error: any) {
       console.error("Sign up error:", error);
       handleAuthError(error);
@@ -336,11 +337,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return updateProfile({ package: newPackage });
   };
 
-  // Reset password function
-  const resetPassword = async (email: string) => {
+  // Reset password function (request password reset OTP)
+  const resetPassword = async (email: string): Promise<void> => {
     try {
-      await AuthService.resetPassword(email);
-      toast.success("Password reset email sent");
+      // This is now handled in ForgotPasswordPage directly via apiClient
+      // Keeping this for backward compatibility
+      await apiClient.post<{ success: boolean; message: string }>('/auth/forgot-password', { email });
     } catch (error: any) {
       console.error("Reset password error:", error);
       handleAuthError(error);

@@ -17,6 +17,7 @@ import {
   ArrowRightOnRectangleIcon,
   Cog6ToothIcon,
   ChartBarIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -183,6 +184,29 @@ const Sidebar: React.FC<SidebarProps> = ({
           name: "Packages",
           href: "/student/packages",
           icon: CreditCardIcon,
+        },
+        { name: "Profile", href: "/profile", icon: UserCircleIcon },
+      ];
+    }
+
+    // Parent-specific navigation
+    if (profile?.role === "parent") {
+      return [
+        { name: "Dashboard", href: "/parent/dashboard", icon: AcademicCapIcon },
+        {
+          name: "Quiz Progress",
+          href: "/parent/quiz-progress",
+          icon: ClipboardDocumentListIcon,
+        },
+        {
+          name: "Session Progress",
+          href: "/parent/session-progress",
+          icon: CalendarDaysIcon,
+        },
+        {
+          name: "Manage Students",
+          href: "/parent/manage",
+          icon: UserGroupIcon,
         },
         { name: "Profile", href: "/profile", icon: UserCircleIcon },
       ];

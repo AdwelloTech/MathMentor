@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { BookOpenIcon } from "@heroicons/react/24/solid";
+import { BookOpenIcon, ShieldCheckIcon, ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { useAuth } from "@/contexts/AuthContext";
 import GameLoadingAnimation from "@/components/ui/GameLoadingAnimation";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -14,10 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import loginIllustration from "@/assets/student-login.png";
+import apiClient from "@/lib/apiClient";
 
 const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,6 +46,7 @@ const LoginPage: React.FC = () => {
     }
   }, [location.state, setValue]);
 
+
   // animations similar to RegisterPage
   const fadeInUp = {
     hidden: { opacity: 0, y: 16 },
@@ -60,15 +64,31 @@ const LoginPage: React.FC = () => {
     try {
       setIsLoading(true);
       await signIn(data.email, data.password);
+
+      // Wait a bit for the profile to be loaded in AuthContext
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const to = (location.state as any)?.from?.pathname || "/dashboard";
       navigate(to, { replace: true });
     } catch (error: any) {
-      setError("root", {
-        message: error.message || "Invalid email or password",
-      });
+      // Check if error is due to email not being verified
+      if (error.code === 'EMAIL_NOT_VERIFIED') {
+        setVerificationEmail(data.email);
+        setVerificationSent(true);
+        toast.success('Verification link sent to your email!');
+      } else {
+        setError("root", {
+          message: error.message || "Invalid email or password",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBackToLogin = () => {
+    setVerificationSent(false);
+    setVerificationEmail('');
   };
 
   return (
@@ -353,7 +373,42 @@ const LoginPage: React.FC = () => {
           initial="hidden"
           animate="visible"
         >
-          {/* Email */}
+          {verificationSent ? (
+            <>
+              {/* Email Verification Section */}
+              <motion.div variants={fadeInUp} className="text-center mb-6">
+                <div className="inline-block mb-4">
+                  <div className="bg-primary/10 p-3 rounded-full">
+                    <ShieldCheckIcon className="h-10 w-10 text-primary" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  Check Your Email
+                </h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  We've sent a verification link to
+                  <br />
+                  <span className="font-semibold text-foreground">{verificationEmail}</span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Click the link in your email to verify your account and complete login.
+                </p>
+              </motion.div>
+
+              <motion.div variants={fadeInUp} className="text-center pt-4">
+                <button
+                  type="button"
+                  onClick={handleBackToLogin}
+                  className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                  Back to Login
+                </button>
+              </motion.div>
+            </>
+          ) : (
+            <>
+              {/* Email */}
           <motion.div className="space-y-2" variants={fadeInUp}>
             <Label htmlFor="email" className="text-card-foreground font-medium">
               Email Address
@@ -491,6 +546,8 @@ const LoginPage: React.FC = () => {
               </Link>
             </p>
           </motion.div>
+            </>
+          )}
         </motion.form>
       </motion.div>
     </div>

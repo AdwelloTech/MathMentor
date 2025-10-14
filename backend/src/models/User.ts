@@ -14,12 +14,12 @@ export interface IUser extends Document {
   phone?: string;
   address?: string;
   dateOfBirth?: Date;
-  age?: number | null;
   gender?: 'male' | 'female' | 'other';
   emergencyContact?: string;
 
   // Student specific fields
   studentId?: string;
+  studentCode?: string; // Unique code for parent linking (e.g., ABC-123-XYZ)
   package?: 'free' | 'silver' | 'gold';
   enrollmentDate?: Date;
   classId?: mongoose.Types.ObjectId;
@@ -74,6 +74,10 @@ export interface IUser extends Document {
   isOnline?: boolean;
   lastLogin?: Date;
 
+  // Email verification fields
+  emailVerified: boolean;
+  emailVerifiedAt?: Date;
+
   // Tutorial system fields
   tutorialCompleted: boolean;
   tutorialDismissedCount: number;
@@ -85,6 +89,9 @@ export interface IUser extends Document {
 
   // Instance methods
   comparePassword(candidatePassword: string): Promise<boolean>;
+
+  // Virtual fields
+  age?: number | null;
 }
 
 // Pre-save middleware to hash password
@@ -110,6 +117,7 @@ const userSchema = new Schema<IUser>(
 
     // Student specific fields
     studentId: { type: String, sparse: true },
+    studentCode: { type: String, unique: true, sparse: true }, // Unique code for parent linking
     package: { type: String, enum: ['free', 'silver', 'gold'] },
     enrollmentDate: { type: Date },
     classId: { type: Schema.Types.ObjectId, ref: 'Class' },
@@ -163,6 +171,10 @@ const userSchema = new Schema<IUser>(
     isActive: { type: Boolean, default: true },
     isOnline: { type: Boolean, default: false },
     lastLogin: { type: Date },
+
+    // Email verification fields
+    emailVerified: { type: Boolean, default: false },
+    emailVerifiedAt: { type: Date },
 
     // Tutorial system fields
     tutorialCompleted: { type: Boolean, default: false },

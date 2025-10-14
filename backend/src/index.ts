@@ -34,6 +34,7 @@ import tutorRoutes from './routes/tutors';
 import adminRoutes from './routes/admin';
 import ratingsRoutes from './routes/ratings';
 import instantSessionsRoutes from './routes/instantSessions';
+import parentsRoutes from './routes/parents';
 
 // Load environment variables
 dotenv.config();
@@ -129,6 +130,7 @@ app.use('/api/tutors', tutorRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ratings', ratingsRoutes);
 app.use('/api/instant-sessions', instantSessionsRoutes);
+app.use('/api/parents', parentsRoutes);
 
 // 404 handler
 app.use(notFound);

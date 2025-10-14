@@ -15,6 +15,7 @@ export class UserService {
         full_name: student.fullName,
         email: student.email,
         student_id: student.studentId || '',
+        student_code: student.studentCode || '',
         package: student.package || 'free',
         is_active: student.isActive,
         last_login: student.lastLogin?.toISOString() || null,

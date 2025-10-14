@@ -58,9 +58,9 @@ export interface BackendUser {
 
 class AuthService {
   /**
-   * Register a new user
+   * Register a new user (sends OTP to email)
    */
-  static async register(data: RegisterFormData): Promise<AuthTokens> {
+  static async register(data: RegisterFormData): Promise<{ message: string; email: string }> {
     // Transform frontend data to match backend schema
     const registrationData = {
       firstName: data.firstName,
@@ -84,9 +84,22 @@ class AuthService {
       password: '[REDACTED]',
       confirmPassword: '[REDACTED]'
     });
-    console.log('AuthService.register - subjects specifically:', registrationData.subjects, 'type:', typeof registrationData.subjects, 'isArray:', Array.isArray(registrationData.subjects));
 
-    const result = await apiClient.post<AuthTokens>('/api/auth/register', registrationData, {
+    const response = await apiClient.post<{ message: string; email: string }>('/api/auth/register', registrationData, {
+      skipAuth: true,
+    });
+
+    return response;
+  }
+
+  /**
+   * Verify email with OTP
+   */
+  static async verifyEmail(email: string, otp: string): Promise<AuthTokens> {
+    const result = await apiClient.post<AuthTokens>('/api/auth/verify-email', {
+      email,
+      otp
+    }, {
       skipAuth: true,
     });
 

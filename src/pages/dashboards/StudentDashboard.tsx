@@ -393,6 +393,44 @@ const StudentDashboard: React.FC = () => {
               </Card>
             </motion.div>
 
+            {/* Student Code Card */}
+            {profile?.student_code && (
+              <motion.div variants={itemVariants}>
+                <Card className="border-border shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div className="space-y-2">
+                        <CardTitle className="text-lg font-semibold text-primary">
+                          Your Student Code
+                        </CardTitle>
+                        <p className="text-muted-foreground text-sm">
+                          Share this code with your parent to link accounts
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-primary/10 rounded-lg px-6 py-3 border border-primary/20">
+                          <span className="text-2xl font-mono font-bold text-primary tracking-wider">
+                            {profile.student_code}
+                          </span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-primary/30 text-primary hover:bg-primary/10"
+                          onClick={() => {
+                            navigator.clipboard.writeText(profile.student_code || '');
+                            alert('Student code copied to clipboard!');
+                          }}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             <motion.div variants={itemVariants}>
               <Card className="border-border shadow-lg bg-card">
                 <CardContent className="p-6">

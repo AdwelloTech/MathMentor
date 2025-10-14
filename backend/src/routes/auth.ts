@@ -1,23 +1,200 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { AuthService, RegisterData, LoginData } from '../services/authService';
 import { authenticate } from '../middleware/auth';
 import { registerSchema, loginSchema, validateOrThrow } from '../utils/validation';
+import { User } from '../models';
 
 const router = express.Router();
 
-// Register new user
+// Register new user - sends OTP to email
 router.post('/register', async (req, res) => {
   try {
     // Validate input
     const validatedData = validateOrThrow(registerSchema, req.body) as RegisterData;
 
-    // Register user
+    // Register user (this will send OTP)
     const result = await AuthService.register(validatedData);
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: result.message,
+      data: { email: result.email }
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Verify email OTP
+router.post('/verify-email', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and OTP are required'
+      });
+    }
+
+    const result = await AuthService.verifyEmail(email, otp);
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully',
       data: result
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Verify email via link (GET route for email links)
+router.get('/verify-email-link', async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    console.log('Email verification link clicked, token:', token ? 'present' : 'missing');
+
+    if (!token || typeof token !== 'string') {
+      console.log('Invalid token format');
+      return res.status(400).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Email Verification Failed</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+            .error { color: #dc3545; }
+          </style>
+        </head>
+        <body>
+          <h1 class="error">Invalid Verification Link</h1>
+          <p>The verification link is invalid or has expired.</p>
+          <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login">Go to Login</a></p>
+        </body>
+        </html>
+      `);
+    }
+
+    // Verify the JWT token
+    console.log('Verifying JWT token...');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    console.log('Decoded token:', { email: decoded.email, type: decoded.type });
+
+    if (!decoded.email || decoded.type !== 'email_verification') {
+      console.log('Invalid token content');
+      throw new Error('Invalid token');
+    }
+
+    // Find and update the user
+    console.log('Looking for user with email:', decoded.email.toLowerCase());
+    const user = await User.findOne({ email: decoded.email.toLowerCase() });
+    console.log('User found:', user ? 'yes' : 'no');
+
+    if (!user) {
+      console.log('User not found');
+      throw new Error('User not found');
+    }
+
+    console.log('User emailVerified status:', user.emailVerified);
+
+    if (user.emailVerified) {
+      console.log('Email already verified, showing already verified page');
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Email Already Verified</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+            .success { color: #28a745; }
+          </style>
+        </head>
+        <body>
+          <h1 class="success">Email Already Verified</h1>
+          <p>Your email has already been verified.</p>
+          <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login">Go to Login</a></p>
+        </body>
+        </html>
+      `);
+    }
+
+    // Mark email as verified
+    console.log('Updating user emailVerified to true');
+    user.emailVerified = true;
+    user.lastLogin = new Date();
+    await user.save();
+    console.log('User saved successfully');
+
+    // Send success response
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Email Verified Successfully</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+          .success { color: #28a745; }
+          .button { display: inline-block; background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <h1 class="success">Email Verified Successfully!</h1>
+        <p>Welcome to MathMentor! Your email has been verified.</p>
+        <p>You can now log in to your account.</p>
+        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login" class="button">Go to Login</a>
+      </body>
+      </html>
+    `);
+
+  } catch (error: any) {
+    console.error('Email verification link error:', error);
+    res.status(400).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Email Verification Failed</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+          .error { color: #dc3545; }
+        </style>
+      </head>
+      <body>
+        <h1 class="error">Verification Failed</h1>
+        <p>The verification link is invalid or has expired.</p>
+        <p>Please try logging in again to receive a new verification link.</p>
+        <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login">Go to Login</a></p>
+      </body>
+      </html>
+    `);
+  }
+});
+
+// Resend verification OTP
+router.post('/resend-verification-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required'
+      });
+    }
+
+    const message = await AuthService.resendVerificationOTP(email);
+
+    res.json({
+      success: true,
+      message
     });
   } catch (error: any) {
     res.status(400).json({
@@ -35,6 +212,44 @@ router.post('/login', async (req, res) => {
 
     // Login user
     const result = await AuthService.login({ email, password });
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: result
+    });
+  } catch (error: any) {
+    // Handle email not verified error specially
+    if (error.code === 'EMAIL_NOT_VERIFIED') {
+      return res.status(403).json({
+        success: false,
+        error: 'Email not verified',
+        code: 'EMAIL_NOT_VERIFIED',
+        message: 'Please verify your email. We have sent a verification code to your email.',
+        email: error.email
+      });
+    }
+    
+    res.status(401).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Login with email verification (for unverified accounts)
+router.post('/login-with-verification', async (req, res) => {
+  try {
+    const { email, password, otp } = req.body;
+
+    if (!email || !password || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email, password, and OTP are required'
+      });
+    }
+
+    const result = await AuthService.loginWithVerification(email, password, otp);
 
     res.json({
       success: true,
@@ -151,6 +366,7 @@ router.get('/me', authenticate, async (req, res) => {
         email: user.email,
         role: user.role,
         package: user.package, // Include package for students
+        student_code: user.studentCode, // Include student code for parent linking
         avatar_url: user.avatarUrl,
         phone: user.phone,
         address: user.address,
@@ -313,6 +529,117 @@ router.get('/admin/validate-session', authenticate, async (req, res) => {
         admin_id: user._id.toString(),
         admin_email: user.email
       }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Request password reset - sends OTP to email
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required'
+      });
+    }
+
+    const message = await AuthService.requestPasswordReset(email);
+
+    res.json({
+      success: true,
+      message
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Verify password reset OTP
+router.post('/verify-reset-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and OTP are required'
+      });
+    }
+
+    const message = await AuthService.verifyPasswordResetOTP(email, otp);
+
+    res.json({
+      success: true,
+      message
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Reset password with OTP
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email, OTP, and new password are required'
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters'
+      });
+    }
+
+    const message = await AuthService.resetPassword(email, otp, newPassword);
+
+    res.json({
+      success: true,
+      message
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Resend password reset OTP
+router.post('/resend-reset-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required'
+      });
+    }
+
+    const message = await AuthService.resendPasswordResetOTP(email);
+
+    res.json({
+      success: true,
+      message
     });
   } catch (error: any) {
     res.status(500).json({

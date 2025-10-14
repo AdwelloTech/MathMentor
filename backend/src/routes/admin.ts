@@ -5,18 +5,6 @@ import { ClassService } from '../services/classService';
 import { FlashcardService } from '../services/flashcardService';
 import { UserService } from '../services/userService';
 
-// For debugging purposes - temporary solution
-const debugAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  // Bypass authentication for development
-  console.log('DEBUG: Using mock authentication');
-  req.user = {
-    id: 'admin-debug-id',
-    email: 'admin@example.com',
-    role: 'admin'
-  };
-  next();
-};
-
 const router = express.Router();
 
 // Admin routes - require authentication and admin role
@@ -39,7 +27,7 @@ const adminGuard = (req: express.Request, res: express.Response, next: express.N
 };
 
 // Get tutor statistics
-router.get('/tutors/stats', debugAuth, async (req, res) => {
+router.get('/tutors/stats', authenticate, adminGuard, async (req, res) => {
   try {
     console.log('GET /api/admin/tutors/stats - Fetching tutor statistics');
     const stats = await TutorService.getTutorStats();
@@ -58,7 +46,7 @@ router.get('/tutors/stats', debugAuth, async (req, res) => {
 });
 
 // Get all tutors with their applications
-router.get('/tutors', debugAuth, async (req, res) => {
+router.get('/tutors', authenticate, adminGuard, async (req, res) => {
   try {
     console.log('GET /api/admin/tutors - Fetching all tutors for admin');
     const tutors = await TutorService.getAllTutorsForAdmin();
@@ -77,7 +65,7 @@ router.get('/tutors', debugAuth, async (req, res) => {
 });
 
 // Get classes for a specific tutor
-router.get('/tutors/:tutorId/classes', debugAuth, async (req, res) => {
+router.get('/tutors/:tutorId/classes', authenticate, adminGuard, async (req, res) => {
   try {
     const { tutorId } = req.params;
     // Use the regular ClassService to get classes by teacher ID
@@ -130,7 +118,7 @@ router.get('/tutors/:tutorId/classes', debugAuth, async (req, res) => {
 });
 
 // Update tutor status (activate/deactivate)
-router.put('/tutors/:tutorId/status', debugAuth, async (req, res) => {
+router.put('/tutors/:tutorId/status', authenticate, adminGuard, async (req, res) => {
   try {
     const { tutorId } = req.params;
     const { is_active } = req.body;
@@ -157,7 +145,7 @@ router.put('/tutors/:tutorId/status', debugAuth, async (req, res) => {
 });
 
 // Delete a tutor
-router.delete('/tutors/:tutorId', debugAuth, async (req, res) => {
+router.delete('/tutors/:tutorId', authenticate, adminGuard, async (req, res) => {
   try {
     const { tutorId } = req.params;
     await TutorService.deleteTutor(tutorId);
@@ -175,7 +163,7 @@ router.delete('/tutors/:tutorId', debugAuth, async (req, res) => {
 });
 
 // Get a specific tutor by ID
-router.get('/tutors/:tutorId', debugAuth, async (req, res) => {
+router.get('/tutors/:tutorId', authenticate, adminGuard, async (req, res) => {
   try {
     const { tutorId } = req.params;
     console.log('GET /api/admin/tutors/:tutorId - tutorId:', tutorId);
@@ -212,7 +200,7 @@ router.get('/tutors/:tutorId', debugAuth, async (req, res) => {
 });
 
 // Get all tutor applications
-router.get('/tutor-applications', debugAuth, async (req, res) => {
+router.get('/tutor-applications', authenticate, adminGuard, async (req, res) => {
   try {
     console.log('GET /api/admin/tutor-applications - Fetching all tutor applications');
     const applications = await TutorService.getAllTutorApplications();
@@ -231,7 +219,7 @@ router.get('/tutor-applications', debugAuth, async (req, res) => {
 });
 
 // Get tutor application statistics
-router.get('/tutor-applications/stats', debugAuth, async (req, res) => {
+router.get('/tutor-applications/stats', authenticate, adminGuard, async (req, res) => {
   try {
     console.log('GET /api/admin/tutor-applications/stats - Fetching application statistics');
     const stats = await TutorService.getTutorApplicationStats();
@@ -250,7 +238,7 @@ router.get('/tutor-applications/stats', debugAuth, async (req, res) => {
 });
 
 // Update tutor application status
-router.put('/tutor-applications/:userId', debugAuth, async (req, res) => {
+router.put('/tutor-applications/:userId', authenticate, adminGuard, async (req, res) => {
   try {
     const { userId } = req.params;
     const { status, rejection_reason, admin_notes } = req.body;
@@ -284,7 +272,7 @@ router.put('/tutor-applications/:userId', debugAuth, async (req, res) => {
 });
 
 // Get all ID verifications
-router.get('/id-verifications', debugAuth, async (req, res) => {
+router.get('/id-verifications', authenticate, adminGuard, async (req, res) => {
   try {
     console.log('GET /api/admin/id-verifications - Fetching all ID verifications');
     const verifications = await TutorService.getAllIDVerifications();
@@ -303,7 +291,7 @@ router.get('/id-verifications', debugAuth, async (req, res) => {
 });
 
 // Get ID verification statistics
-router.get('/id-verifications/stats', debugAuth, async (req, res) => {
+router.get('/id-verifications/stats', authenticate, adminGuard, async (req, res) => {
   try {
     console.log('GET /api/admin/id-verifications/stats - Fetching ID verification statistics');
     const stats = await TutorService.getIDVerificationStats();
@@ -322,7 +310,7 @@ router.get('/id-verifications/stats', debugAuth, async (req, res) => {
 });
 
 // Update an ID verification status
-router.put('/id-verifications/:verificationId', debugAuth, async (req, res) => {
+router.put('/id-verifications/:verificationId', authenticate, adminGuard, async (req, res) => {
   try {
     const { verificationId } = req.params;
     const { status, admin_notes, rejection_reason } = req.body;
@@ -358,7 +346,7 @@ router.put('/id-verifications/:verificationId', debugAuth, async (req, res) => {
 });
 
 // Delete an ID verification
-router.delete('/id-verifications/:verificationId', debugAuth, async (req, res) => {
+router.delete('/id-verifications/:verificationId', authenticate, adminGuard, async (req, res) => {
   try {
     const { verificationId } = req.params;
     console.log('DELETE /api/admin/id-verifications/:verificationId - verificationId:', verificationId);
@@ -380,7 +368,7 @@ router.delete('/id-verifications/:verificationId', debugAuth, async (req, res) =
 // Admin Student Routes
 
 // Get all students
-router.get('/students', debugAuth, async (req, res) => {
+router.get('/students', authenticate, adminGuard, async (req, res) => {
   try {
     console.log('GET /api/admin/students - Fetching all students for admin');
     const students = await UserService.getAllStudents();
@@ -399,7 +387,7 @@ router.get('/students', debugAuth, async (req, res) => {
 });
 
 // Get student statistics
-router.get('/students/stats', debugAuth, async (req, res) => {
+router.get('/students/stats', authenticate, adminGuard, async (req, res) => {
   try {
     console.log('GET /api/admin/students/stats - Fetching student statistics');
     const stats = await UserService.getStudentStats();
@@ -418,7 +406,7 @@ router.get('/students/stats', debugAuth, async (req, res) => {
 });
 
 // Get a specific student by ID
-router.get('/students/:studentId', debugAuth, async (req, res) => {
+router.get('/students/:studentId', authenticate, adminGuard, async (req, res) => {
   try {
     const { studentId } = req.params;
     console.log('GET /api/admin/students/:studentId - studentId:', studentId);
@@ -446,7 +434,7 @@ router.get('/students/:studentId', debugAuth, async (req, res) => {
 });
 
 // Update student
-router.put('/students/:studentId', debugAuth, async (req, res) => {
+router.put('/students/:studentId', authenticate, adminGuard, async (req, res) => {
   try {
     const { studentId } = req.params;
     const updates = req.body;
@@ -469,7 +457,7 @@ router.put('/students/:studentId', debugAuth, async (req, res) => {
 });
 
 // Delete student
-router.delete('/students/:studentId', debugAuth, async (req, res) => {
+router.delete('/students/:studentId', authenticate, adminGuard, async (req, res) => {
   try {
     const { studentId } = req.params;
     console.log('DELETE /api/admin/students/:studentId - studentId:', studentId);
@@ -491,7 +479,7 @@ router.delete('/students/:studentId', debugAuth, async (req, res) => {
 // Admin Flashcard Routes
 
 // Get all flashcard sets for admin (bypasses access control)
-router.get('/flashcards/sets', debugAuth, async (req, res) => {
+router.get('/flashcards/sets', authenticate, adminGuard, async (req, res) => {
   try {
     console.log('GET /api/admin/flashcards/sets - Fetching all flashcard sets for admin');
 
@@ -513,7 +501,7 @@ router.get('/flashcards/sets', debugAuth, async (req, res) => {
 });
 
 // Get flashcard set details by ID for admin (bypasses access control)
-router.get('/flashcards/sets/:setId', debugAuth, async (req, res) => {
+router.get('/flashcards/sets/:setId', authenticate, adminGuard, async (req, res) => {
   try {
     const { setId } = req.params;
     console.log('GET /api/admin/flashcards/sets/:setId - setId:', setId);
@@ -542,7 +530,7 @@ router.get('/flashcards/sets/:setId', debugAuth, async (req, res) => {
 });
 
 // Delete flashcard set for admin
-router.delete('/flashcards/sets/:setId', debugAuth, async (req, res) => {
+router.delete('/flashcards/sets/:setId', authenticate, adminGuard, async (req, res) => {
   try {
     const { setId } = req.params;
     console.log('DELETE /api/admin/flashcards/sets/:setId - setId:', setId);
@@ -558,6 +546,60 @@ router.delete('/flashcards/sets/:setId', debugAuth, async (req, res) => {
     res.status(statusCode).json({
       success: false,
       error: error.message || 'Failed to delete flashcard set'
+    });
+  }
+});
+
+// Get recent tutor applications for dashboard
+router.get('/dashboard/recent-applications', authenticate, adminGuard, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 5;
+    const applications = await TutorService.getRecentTutorApplications(limit);
+    return res.json({
+      success: true,
+      data: applications
+    });
+  } catch (error: any) {
+    console.error('Error getting recent applications:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get recent applications'
+    });
+  }
+});
+
+// Get recent ID verifications for dashboard
+router.get('/dashboard/recent-verifications', authenticate, adminGuard, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 5;
+    const verifications = await TutorService.getRecentIDVerifications(limit);
+    return res.json({
+      success: true,
+      data: verifications
+    });
+  } catch (error: any) {
+    console.error('Error getting recent verifications:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get recent verifications'
+    });
+  }
+});
+
+// Get recent student signups for dashboard
+router.get('/dashboard/recent-students', authenticate, adminGuard, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 5;
+    const students = await UserService.getRecentStudentSignups(limit);
+    return res.json({
+      success: true,
+      data: students
+    });
+  } catch (error: any) {
+    console.error('Error getting recent students:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get recent students'
     });
   }
 });

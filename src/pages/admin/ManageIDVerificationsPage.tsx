@@ -64,18 +64,12 @@ const ManageIDVerificationsPage: React.FC = () => {
         requestUrl = imageUrl;
       } else {
         // For relative URLs, we need to access them through the backend
-        const backendUrl = process.env.NODE_ENV === 'production'
-          ? 'https://72.60.20.140:5000'
-          : 'http://localhost:5000';
+        const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         requestUrl = `${backendUrl}${imageUrl}`;
       }
 
-      // Make authenticated request to get the image
-      const response = await fetch(requestUrl, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      // Make request to get the image (uploads are served statically)
+      const response = await fetch(requestUrl);
 
       if (!response.ok) {
         throw new Error('Failed to fetch image');

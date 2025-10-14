@@ -7,7 +7,6 @@ import {
   UserGroupIcon,
   DocumentTextIcon,
   IdentificationIcon,
-  ClockIcon,
   CheckCircleIcon,
   ArrowRightIcon,
   CloudArrowUpIcon,
@@ -25,46 +24,163 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import apiClient from "@/lib/apiClient";
 
-// Mock data for UI (Phase 1 - No Backend)
-const mockStats = {
-  pendingApplications: 5,
-  pendingIDVerifications: 3,
-  totalStudents: 142,
-  activeTutors: 28,
-  totalQuizzes: 87,
-  totalPDFs: 45,
-  totalFlashcards: 156,
-  recentSignups: 12,
+// API service functions
+const fetchAdminStats = async () => {
+  try {
+    const result = await apiClient.get('/api/dashboard/admin/stats') as { data: any };
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    throw error;
+  }
 };
 
-const mockRecentActivity = {
-  applications: [
-    { id: 1, name: "John Doe", subject: "Mathematics", status: "pending", date: "2 hours ago" },
-    { id: 2, name: "Jane Smith", subject: "Physics", status: "pending", date: "5 hours ago" },
-    { id: 3, name: "Mike Johnson", subject: "Chemistry", status: "approved", date: "1 day ago" },
-  ],
-  verifications: [
-    { id: 1, name: "Sarah Wilson", type: "Driver's License", status: "pending", date: "1 hour ago" },
-    { id: 2, name: "Tom Brown", type: "Passport", status: "pending", date: "3 hours ago" },
-    { id: 3, name: "Emily Davis", type: "ID Card", status: "approved", date: "6 hours ago" },
-  ],
-  students: [
-    { id: 1, name: "Alex Thompson", grade: "Grade 10", package: "Gold", date: "30 mins ago" },
-    { id: 2, name: "Lisa Chen", grade: "Grade 9", package: "Silver", date: "2 hours ago" },
-    { id: 3, name: "David Lee", grade: "Grade 11", package: "Free", date: "4 hours ago" },
-  ],
+const fetchRecentApplications = async () => {
+  try {
+    const result = await apiClient.get('/api/admin/dashboard/recent-applications?limit=5') as { data: any[] };
+    return result.data.map((app: any) => ({
+      id: app._id,
+      name: app.full_name,
+      subject: app.subjects?.[0] || 'Various',
+      status: app.application_status,
+      date: getRelativeTime(new Date(app.submitted_at)),
+    }));
+  } catch (error) {
+    console.error('Error fetching recent applications:', error);
+    return [];
+  }
+};
+
+const fetchRecentVerifications = async () => {
+  try {
+    const result = await apiClient.get('/api/admin/dashboard/recent-verifications?limit=5') as { data: any[] };
+    return result.data.map((ver: any) => ({
+      id: ver._id,
+      name: ver.full_name,
+      type: getIDTypeLabel(ver.id_type),
+      status: ver.status || 'pending',
+      date: getRelativeTime(new Date(ver.created_at)),
+    }));
+  } catch (error) {
+    console.error('Error fetching recent verifications:', error);
+    return [];
+  }
+};
+
+const fetchRecentStudents = async () => {
+  try {
+    const result = await apiClient.get('/api/admin/dashboard/recent-students?limit=5') as { data: any[] };
+    return result.data.map((student: any) => ({
+      id: student.id,
+      name: student.name,
+      grade: student.grade || 'Not specified',
+      package: capitalizeFirstLetter(student.package),
+      date: student.date,
+    }));
+  } catch (error) {
+    console.error('Error fetching recent students:', error);
+    return [];
+  }
+};
+
+const getIDTypeLabel = (idType: string) => {
+  const labels: { [key: string]: string } = {
+    'national_id': 'National ID',
+    'passport': 'Passport',
+    'drivers_license': 'Driver\'s License',
+    'student_id': 'Student ID',
+    'other': 'Other',
+  };
+  return labels[idType] || 'ID Document';
+};
+
+const getRelativeTime = (date: Date) => {
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} mins ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours} hours ago`;
+  } else if (diffInDays === 1) {
+    return '1 day ago';
+  } else {
+    return `${diffInDays} days ago`;
+  }
+};
+
+const capitalizeFirstLetter = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 const AdminDashboard: React.FC = () => {
-  const { adminSession, logoutAdmin } = useAdmin();
+  const { adminSession, logoutAdmin, isAdminLoggedIn, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  // Simulate loading
+  const [stats, setStats] = useState<any>(null);
+  const [recentApplications, setRecentApplications] = useState<any[]>([]);
+  const [recentVerifications, setRecentVerifications] = useState<any[]>([]);
+  const [recentStudents, setRecentStudents] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  // Redirect to login if not logged in as admin (only after admin context has loaded)
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!adminLoading && !isAdminLoggedIn) {
+      navigate('/admin/login');
+      return;
+    }
+  }, [isAdminLoggedIn, adminLoading, navigate]);
+
+  // Fetch all dashboard data only when admin is logged in
+  useEffect(() => {
+    // Don't fetch if not logged in (redirect will happen)
+    if (!isAdminLoggedIn) {
+      return;
+    }
+
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const [statsData, applicationsData, verificationsData, studentsData] = await Promise.all([
+          fetchAdminStats(),
+          fetchRecentApplications(),
+          fetchRecentVerifications(),
+          fetchRecentStudents(),
+        ]);
+
+        setStats(statsData);
+        setRecentApplications(applicationsData);
+        setRecentVerifications(verificationsData);
+        setRecentStudents(studentsData);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again.');
+        // Set fallback data
+        setStats({
+          total_students: 0,
+          active_tutors: 0,
+          total_quizzes: 0,
+          total_quiz_pdfs: 0,
+          total_flashcard_sets: 0,
+          recent_signups: 0,
+        });
+        setRecentApplications([]);
+        setRecentVerifications([]);
+        setRecentStudents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [isAdminLoggedIn]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -76,89 +192,69 @@ const AdminDashboard: React.FC = () => {
     visible: { opacity: 1, y: 0 },
   };
 
-  // Stats configuration
-  const statsCards = [
-    {
-      name: "Pending Applications",
-      value: mockStats.pendingApplications,
-      icon: ClockIcon,
-      color: "bg-orange-600",
-      description: "Tutor applications to review",
-      change: "+2 today",
-      changeType: "warning",
-      link: "/admin/tutor-applications",
-    },
-    {
-      name: "ID Verifications",
-      value: mockStats.pendingIDVerifications,
-      icon: IdentificationIcon,
-      color: "bg-blue-600",
-      description: "Pending verifications",
-      change: "+1 today",
-      changeType: "info",
-      link: "/admin/id-verifications",
-    },
+  // Stats configuration - only show stats that are available from backend
+  const statsCards = stats ? [
     {
       name: "Total Students",
-      value: mockStats.totalStudents,
+      value: stats.total_students || 0,
       icon: UsersIcon,
       color: "bg-green-600",
-      description: "Active students",
-      change: `+${mockStats.recentSignups} this week`,
-      changeType: "positive",
+      description: "Registered students",
+      change: `${stats.recent_signups || 0} this week`,
+      changeType: "positive" as const,
       link: "/admin/students",
     },
     {
       name: "Active Tutors",
-      value: mockStats.activeTutors,
+      value: stats.active_tutors || 0,
       icon: AcademicCapIcon,
       color: "bg-purple-600",
       description: "Approved tutors",
-      change: "+3 this month",
-      changeType: "positive",
+      change: `${stats.total_tutors || 0} total`,
+      changeType: "positive" as const,
       link: "/admin/tutors",
     },
     {
       name: "Total Quizzes",
-      value: mockStats.totalQuizzes,
+      value: stats.total_quizzes || 0,
       icon: DocumentTextIcon,
       color: "bg-yellow-600",
       description: "Available quizzes",
-      change: "+5 this week",
-      changeType: "positive",
+      change: "Available",
+      changeType: "positive" as const,
       link: "/admin/quizzes",
     },
     {
       name: "Quiz PDFs",
-      value: mockStats.totalPDFs,
+      value: stats.total_quiz_pdfs || 0,
       icon: CloudArrowUpIcon,
       color: "bg-indigo-600",
       description: "Uploaded materials",
-      change: "+2 this week",
-      changeType: "positive",
+      change: "Available",
+      changeType: "positive" as const,
       link: "/admin/quiz-pdfs",
     },
     {
       name: "Flashcard Sets",
-      value: mockStats.totalFlashcards,
+      value: stats.total_flashcard_sets || 0,
       icon: BookOpenIcon,
       color: "bg-pink-600",
       description: "Total flashcard sets",
-      change: "+8 this week",
-      changeType: "positive",
+      change: "Available",
+      changeType: "positive" as const,
       link: "/admin/flashcards",
     },
     {
       name: "Recent Sign-ups",
-      value: mockStats.recentSignups,
+      value: stats.recent_signups || 0,
       icon: UserGroupIcon,
       color: "bg-teal-600",
       description: "Last 7 days",
-      change: "+4 from last week",
-      changeType: "positive",
+      change: "New students",
+      changeType: "positive" as const,
       link: "/admin/students",
     },
-  ];
+  ] : [];
 
   // Management sections
   const managementSections = [
@@ -168,9 +264,9 @@ const AdminDashboard: React.FC = () => {
       icon: AcademicCapIcon,
       color: "from-green-600 to-green-700",
       actions: [
-        { label: "Review Applications", count: mockStats.pendingApplications, link: "/admin/tutor-applications" },
-        { label: "ID Verifications", count: mockStats.pendingIDVerifications, link: "/admin/id-verifications" },
-        { label: "Manage Tutors", count: mockStats.activeTutors, link: "/admin/tutors" },
+        { label: "Review Applications", count: null, link: "/admin/tutor-applications" },
+        { label: "ID Verifications", count: null, link: "/admin/id-verifications" },
+        { label: "Manage Tutors", count: stats?.active_tutors || 0, link: "/admin/tutors" },
       ],
     },
     {
@@ -179,8 +275,8 @@ const AdminDashboard: React.FC = () => {
       icon: UsersIcon,
       color: "from-blue-600 to-blue-700",
       actions: [
-        { label: "All Students", count: mockStats.totalStudents, link: "/admin/students" },
-        { label: "Recent Sign-ups", count: mockStats.recentSignups, link: "/admin/students?filter=recent" },
+        { label: "All Students", count: stats?.total_students || 0, link: "/admin/students" },
+        { label: "Recent Sign-ups", count: stats?.recent_signups || 0, link: "/admin/students?filter=recent" },
         { label: "Package Management", count: null, link: "/packages" },
       ],
     },
@@ -190,9 +286,9 @@ const AdminDashboard: React.FC = () => {
       icon: DocumentTextIcon,
       color: "from-purple-600 to-purple-700",
       actions: [
-        { label: "Upload Quiz PDFs", count: mockStats.totalPDFs, link: "/admin/quiz-pdfs" },
-        { label: "Manage Quizzes", count: mockStats.totalQuizzes, link: "/admin/quizzes" },
-        { label: "Flashcard Sets", count: mockStats.totalFlashcards, link: "/admin/flashcards" },
+        { label: "Upload Quiz PDFs", count: stats?.total_quiz_pdfs || 0, link: "/admin/quiz-pdfs" },
+        { label: "Manage Quizzes", count: stats?.total_quizzes || 0, link: "/admin/quizzes" },
+        { label: "Flashcard Sets", count: stats?.total_flashcard_sets || 0, link: "/admin/flashcards" },
       ],
     },
     {
@@ -215,14 +311,14 @@ const AdminDashboard: React.FC = () => {
       description: "Check tutor applications",
       icon: CheckCircleIcon,
       link: "/admin/tutor-applications",
-      badge: mockStats.pendingApplications,
+      badge: null,
     },
     {
       title: "Verify IDs",
       description: "Process ID verifications",
       icon: IdentificationIcon,
       link: "/admin/id-verifications",
-      badge: mockStats.pendingIDVerifications,
+      badge: null,
     },
     {
       title: "Upload Quiz PDF",
@@ -268,7 +364,7 @@ const AdminDashboard: React.FC = () => {
     },
   ];
 
-  if (loading) {
+  if (adminLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-green-100 p-6 relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.03),transparent_50%)] pointer-events-none" />
@@ -354,9 +450,6 @@ const AdminDashboard: React.FC = () => {
                     onClick={() => navigate("/admin/notifications")}
                   >
                     <BellAlertIcon className="w-6 h-6 text-slate-300" />
-                    {(mockStats.pendingApplications + mockStats.pendingIDVerifications) > 0 && (
-                      <span className="absolute top-1 right-1 w-3 h-3 bg-[#EA580C] rounded-full"></span>
-                    )}
                   </Button>
                 </div>
                 <ThemeToggle className="text-slate-300 hover:bg-slate-700/50" />
@@ -376,27 +469,26 @@ const AdminDashboard: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Urgent Actions Alert */}
-          {(mockStats.pendingApplications > 0 || mockStats.pendingIDVerifications > 0) && (
+          {/* Error Alert */}
+          {error && (
             <motion.div variants={itemVariants}>
-              <Card className="bg-gradient-to-r from-[#EA580C]/20 to-[#FBBF24]/20 border-[#EA580C]/30 backdrop-blur-sm">
+              <Card className="bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-500/30 backdrop-blur-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-3">
-                    <BellAlertIcon className="h-6 w-6 text-[#FBBF24]" />
+                    <BellAlertIcon className="h-6 w-6 text-red-400" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-[#FCD34D]">
-                        Action Required: {mockStats.pendingApplications} tutor applications and{" "}
-                        {mockStats.pendingIDVerifications} ID verifications awaiting review
+                      <p className="text-sm font-medium text-red-300">
+                        {error}
                       </p>
                     </div>
                     <Button
                       size="sm"
-                      className="bg-[#EA580C] hover:bg-[#EA580C]/80 text-white"
-                      onClick={() => navigate("/admin/tutor-applications")}
+                      className="bg-red-500 hover:bg-red-500/80 text-white"
+                      onClick={() => window.location.reload()}
                     >
-                      Review Now
+                      Retry
                     </Button>
-          </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -557,7 +649,7 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {mockRecentActivity.applications.map((app) => (
+                  {recentApplications.length > 0 ? recentApplications.map((app) => (
                     <div
                       key={app.id}
                       className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
@@ -566,7 +658,7 @@ const AdminDashboard: React.FC = () => {
                       <div className="flex-1">
                         <p className="text-sm font-medium text-white">{app.name}</p>
                         <p className="text-xs text-slate-400">{app.subject}</p>
-                    </div>
+                      </div>
                       <div className="text-right">
                         <Badge
                           variant={app.status === "approved" ? "default" : "secondary"}
@@ -581,8 +673,12 @@ const AdminDashboard: React.FC = () => {
                         <p className="text-xs text-slate-500 mt-1">{app.date}</p>
                       </div>
                     </div>
-                  ))}
-                        </div>
+                  )) : (
+                    <div className="text-center py-6 text-slate-400">
+                      <p className="text-sm">No recent applications</p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -602,7 +698,7 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {mockRecentActivity.verifications.map((ver) => (
+                  {recentVerifications.length > 0 ? recentVerifications.map((ver) => (
                     <div
                       key={ver.id}
                       className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
@@ -611,7 +707,7 @@ const AdminDashboard: React.FC = () => {
                       <div className="flex-1">
                         <p className="text-sm font-medium text-white">{ver.name}</p>
                         <p className="text-xs text-slate-400">{ver.type}</p>
-                        </div>
+                      </div>
                       <div className="text-right">
                         <Badge
                           variant={ver.status === "approved" ? "default" : "secondary"}
@@ -626,8 +722,12 @@ const AdminDashboard: React.FC = () => {
                         <p className="text-xs text-slate-500 mt-1">{ver.date}</p>
                       </div>
                     </div>
-                              ))}
-                            </div>
+                  )) : (
+                    <div className="text-center py-6 text-slate-400">
+                      <p className="text-sm">No recent verifications</p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -647,7 +747,7 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {mockRecentActivity.students.map((student) => (
+                  {recentStudents.length > 0 ? recentStudents.map((student) => (
                     <div
                       key={student.id}
                       className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
@@ -673,7 +773,11 @@ const AdminDashboard: React.FC = () => {
                         <p className="text-xs text-slate-500 mt-1">{student.date}</p>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-center py-6 text-slate-400">
+                      <p className="text-sm">No recent students</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -14,6 +14,7 @@ export interface IUser extends Document {
   phone?: string;
   address?: string;
   dateOfBirth?: Date;
+  age?: number | null;
   gender?: 'male' | 'female' | 'other';
   emergencyContact?: string;
 

@@ -205,4 +205,44 @@ export class UserService {
       throw new Error('Failed to delete student');
     }
   }
+
+  static async getRecentStudentSignups(limit: number = 5): Promise<any[]> {
+    try {
+      const students = await User.find({ role: 'student' })
+        .select('-password') // Exclude password field
+        .sort({ createdAt: -1 })
+        .limit(limit);
+
+      // Transform the data to match dashboard expectations
+      return students.map(student => ({
+        id: student._id.toString(),
+        name: student.fullName,
+        grade: student.currentGrade,
+        package: student.package || 'free',
+        date: this.getRelativeTime(student.createdAt),
+        created_at: student.createdAt.toISOString(),
+      }));
+    } catch (error) {
+      console.error('Error fetching recent students:', error);
+      throw new Error('Failed to fetch recent students');
+    }
+  }
+
+  static getRelativeTime(date: Date): string {
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} mins ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hours ago`;
+    } else if (diffInDays < 7) {
+      return `${diffInDays} days ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  }
 }

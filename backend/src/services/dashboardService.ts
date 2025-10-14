@@ -32,8 +32,11 @@ export interface AdminDashboardStats {
   total_users: number;
   total_students: number;
   total_tutors: number;
+  active_tutors: number;
   total_sessions: number;
   total_quizzes: number;
+  total_quiz_pdfs: number;
+  total_flashcard_sets: number;
   total_revenue: number;
   recent_signups: number;
   active_sessions_today: number;
@@ -154,17 +157,65 @@ export class DashboardService {
    */
   static async getAdminStats(): Promise<AdminDashboardStats> {
     try {
-      // This would need to be implemented based on the actual models
-      // For now, return placeholder data
+      // Get user statistics
+      const totalUsers = await User.countDocuments();
+      const totalStudents = await User.countDocuments({ role: 'student' });
+      const totalTutors = await User.countDocuments({ role: 'tutor' });
+      const activeTutors = await User.countDocuments({
+        role: 'tutor',
+        isActive: true
+      });
+
+      // Get recent signups (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const recentSignups = await User.countDocuments({
+        createdAt: { $gte: sevenDaysAgo },
+        role: 'student'
+      });
+
+      // Get content statistics
+      const { Quiz } = await import('../models/Quiz');
+      const totalQuizzes = await Quiz.countDocuments();
+
+      const { QuizPdf } = await import('../models/QuizPdf');
+      const totalQuizPdfs = await QuizPdf.countDocuments();
+
+      const totalFlashcardSets = await FlashcardSet.countDocuments();
+
+      // Get session statistics
+      const totalSessions = await Booking.countDocuments({ status: 'completed' });
+
+      // Get active sessions today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const activeSessionsToday = await Booking.countDocuments({
+        status: 'confirmed',
+        createdAt: { $gte: today, $lt: tomorrow }
+      });
+
+      // Calculate total revenue from completed bookings
+      const revenueResult = await Booking.aggregate([
+        { $match: { paymentStatus: 'paid' } },
+        { $group: { _id: null, total: { $sum: '$price' } } }
+      ]);
+      const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
+
       return {
-        total_users: 0,
-        total_students: 0,
-        total_tutors: 0,
-        total_sessions: 0,
-        total_quizzes: 0,
-        total_revenue: 0,
-        recent_signups: 0,
-        active_sessions_today: 0,
+        total_users: totalUsers,
+        total_students: totalStudents,
+        total_tutors: totalTutors,
+        active_tutors: activeTutors,
+        total_sessions: totalSessions,
+        total_quizzes: totalQuizzes,
+        total_quiz_pdfs: totalQuizPdfs,
+        total_flashcard_sets: totalFlashcardSets,
+        total_revenue: totalRevenue,
+        recent_signups: recentSignups,
+        active_sessions_today: activeSessionsToday,
       };
     } catch (error) {
       console.error('Error getting admin stats:', error);

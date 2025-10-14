@@ -979,4 +979,48 @@ export class TutorService {
       await client.close();
     }
   }
+
+  static async getRecentTutorApplications(limit: number = 5): Promise<TutorApplication[]> {
+    const client = this.getClient();
+
+    try {
+      await client.connect();
+      const db = client.db(DB_NAME);
+
+      const applications = await db.collection('tutor_applications')
+        .find({})
+        .sort({ submitted_at: -1 })
+        .limit(limit)
+        .toArray();
+
+      return applications.map(app => ({
+        ...app,
+        _id: app._id.toString()
+      })) as unknown as TutorApplication[];
+    } finally {
+      await client.close();
+    }
+  }
+
+  static async getRecentIDVerifications(limit: number = 5): Promise<IDVerification[]> {
+    const client = this.getClient();
+
+    try {
+      await client.connect();
+      const db = client.db(DB_NAME);
+
+      const verifications = await db.collection('id_verifications')
+        .find({})
+        .sort({ created_at: -1 })
+        .limit(limit)
+        .toArray();
+
+      return verifications.map(verification => ({
+        ...verification,
+        _id: verification._id.toString()
+      })) as unknown as IDVerification[];
+    } finally {
+      await client.close();
+    }
+  }
 }

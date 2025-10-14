@@ -12,7 +12,7 @@ export const connectDB = async (): Promise<void> => {
       return;
     }
 
-    const options = {
+    const options: any = {
       maxPoolSize: 50, // Increased pool size for better concurrency
       minPoolSize: 10, // Maintain minimum connections
       serverSelectionTimeoutMS: 5000,
@@ -20,7 +20,7 @@ export const connectDB = async (): Promise<void> => {
       maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
       retryWrites: true,
       retryReads: true,
-      compressors: ['zlib'], // Enable compression for network traffic
+      compressors: 'zlib' as const, // Enable compression for network traffic
       zlibCompressionLevel: 6,
       readPreference: 'primaryPreferred', // Read from primary, fall back to secondary
       directConnection: false,

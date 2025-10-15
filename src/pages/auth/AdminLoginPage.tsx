@@ -112,7 +112,7 @@ const AdminLoginPage: React.FC = () => {
                 })}
                 type="email"
                 id="email"
-                placeholder="admin@mathmentor.com"
+                placeholder="Enter admin email"
                 className={`w-full px-4 py-3 bg-slate-700/50 border rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 ${
                   errors.email ? 'border-red-500' : 'border-slate-600'
                 }`}
@@ -187,26 +187,6 @@ const AdminLoginPage: React.FC = () => {
               )}
             </button>
           </form>
-        </motion.div>
-
-        {/* Admin Credentials */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="bg-slate-800/40 border border-red-500/20 backdrop-blur-sm rounded-xl p-6 shadow-lg"
-        >
-          <h3 className="text-sm font-medium text-orange-300 mb-3">Admin Credentials</h3>
-          <div className="text-sm text-slate-300 space-y-2">
-            <div className="flex justify-between">
-              <span className="font-medium">Email:</span>
-              <span className="text-orange-300">admin@mathmentor.com</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium">Password:</span>
-              <span className="text-orange-300">admin123</span>
-            </div>
-          </div>
         </motion.div>
 
         {/* Back to Regular Login */}

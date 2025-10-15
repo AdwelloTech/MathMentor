@@ -27,7 +27,7 @@ export const apiLimiter = rateLimit({
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: 500,
   skipSuccessfulRequests: true, // Don't count successful auth attempts
   message: {
     success: false,
@@ -52,7 +52,7 @@ export const authLimiter = rateLimit({
  */
 export const uploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 1000,
   message: {
     success: false,
     error: 'Too many file uploads. Please try again later.'
@@ -67,7 +67,7 @@ export const uploadLimiter = rateLimit({
  */
 export const passwordResetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3,
+  max: 30,
   message: {
     success: false,
     error: 'Too many password reset attempts. Please try again in an hour.'
@@ -97,7 +97,7 @@ export const otpLimiter = rateLimit({
  */
 export const emailLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: 50,
   message: {
     success: false,
     error: 'Too many email requests. Please try again later.'

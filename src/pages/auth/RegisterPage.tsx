@@ -609,16 +609,16 @@ const RegisterPage: React.FC = () => {
                     />
 
                     {pkg === "gold" && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <span className="bg-accent text-accent-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                        <span className="bg-accent text-accent-foreground text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
                           Most Popular
                         </span>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <span className="font-bold text-card-foreground text-lg">
+                    <div className="flex items-center justify-between mb-3 pt-2">
+                      <div className="flex-1">
+                        <span className="font-bold text-card-foreground text-lg block">
                           {getPackageDisplayName(pkg)}
                         </span>
                         <div className="text-2xl font-bold text-primary mt-1">
@@ -827,7 +827,7 @@ const RegisterPage: React.FC = () => {
                   })}
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirmPassword"
-                  placeholder="Confirm your password"
+                  placeholder="Confirm password"
                   className={`pr-10 bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                     errors.confirmPassword
                       ? "border-red-500 focus-visible:ring-red-500"

@@ -441,7 +441,7 @@ const RegisterPage: React.FC = () => {
         initial={{ x: 24, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-background max-w-full flex flex-col justify-center items-center p-6 md:p-10 relative border-l border-border"
+        className="bg-background max-w-full flex flex-col justify-start items-center p-6 md:p-10 relative border-l border-border overflow-y-auto"
       >
         <div className="mb-8 text-center">
           <h2 className="text-4xl font-bold text-foreground mb-4 tracking-tight">
@@ -452,7 +452,7 @@ const RegisterPage: React.FC = () => {
 
         <motion.form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6 w-full max-w-md bg-card border border-border rounded-2xl p-8 shadow-xl"
+          className="space-y-6 w-full max-w-4xl bg-card border border-border rounded-2xl p-8 shadow-xl mb-8"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -585,16 +585,16 @@ const RegisterPage: React.FC = () => {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              <Label className="text-card-foreground font-medium">Select Package</Label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Label className="text-card-foreground font-medium text-base">Select Package</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {availablePackages.map((pkg) => (
                   <label
                     key={pkg}
-                    className={`relative flex flex-col p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                    className={`relative flex flex-col p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 min-h-[320px] ${
                       watchedPackage === pkg
-                        ? "border-primary bg-primary/10 shadow-lg"
+                        ? "border-primary bg-primary/10 shadow-lg scale-[1.02]"
                         : "border-border hover:border-muted-foreground hover:shadow-md"
-                    } ${pkg === "gold" ? "ring-2 ring-accent" : ""}`}
+                    } ${pkg === "gold" ? "ring-2 ring-accent/50" : ""}`}
                   >
                     <input
                       {...register("package", {
@@ -610,52 +610,49 @@ const RegisterPage: React.FC = () => {
 
                     {pkg === "gold" && (
                       <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                        <span className="bg-accent text-accent-foreground text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+                        <span className="bg-accent text-accent-foreground text-xs font-semibold px-3 py-1 rounded-full shadow-lg whitespace-nowrap">
                           Most Popular
                         </span>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between mb-3 pt-2">
-                      <div className="flex-1">
-                        <span className="font-bold text-card-foreground text-lg block">
-                          {getPackageDisplayName(pkg)}
-                        </span>
-                        <div className="text-2xl font-bold text-primary mt-1">
-                          {PACKAGE_PRICING_DISPLAY[pkg]}
-                        </div>
-                      </div>
-                      <span
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          watchedPackage === pkg
-                            ? "border-primary bg-primary"
-                            : "border-muted-foreground"
-                        }`}
-                      >
-                        {watchedPackage === pkg && (
-                          <span className="w-2 h-2 bg-white rounded-full"></span>
-                        )}
-                      </span>
-                    </div>
+                    <span
+                      className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        watchedPackage === pkg
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground"
+                      }`}
+                    >
+                      {watchedPackage === pkg && (
+                        <span className="w-2 h-2 bg-white rounded-full"></span>
+                      )}
+                    </span>
 
-                    <div className="text-sm text-muted-foreground space-y-2 flex-grow">
+                    <div className="mb-4 pt-2">
+                      <h3 className="font-bold text-card-foreground text-lg mb-2">
+                        {getPackageDisplayName(pkg)}
+                      </h3>
+                      <div className="text-2xl font-bold text-primary">
+                        {PACKAGE_PRICING_DISPLAY[pkg]}
+                      </div>
+                    </div>
+                     <div className="text-sm text-muted-foreground space-y-2.5 flex-grow mb-4">
                       {getPackageFeatures(pkg).map((feature, index) => (
-                        <div key={index} className="flex items-start">
-                          <span className="text-primary mr-2 mt-0.5 text-xs">
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="text-primary text-base flex-shrink-0 leading-none mt-0.5">
                             ✓
                           </span>
-                          <span className="flex-1">{feature}</span>
+                          <span className="flex-1 leading-relaxed">{feature}</span>
                         </div>
                       ))}
                     </div>
+                   
 
                     {pkg !== "free" && (
-                      <div className="mt-4 pt-3 border-t border-border">
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <span className="bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-                            Secure Payment Required
-                          </span>
-                        </div>
+                      <div className="mt-auto pt-3 border-t border-border">
+                        <span className="inline-block bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full font-medium text-xs">
+                          Secure Payment Required
+                        </span>
                       </div>
                     )}
                   </label>

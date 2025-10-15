@@ -340,7 +340,9 @@ const PackagesPage: React.FC = () => {
                           >
                             <div className="flex-shrink-0 mt-0.5">
                               <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                                <CheckCircle className="w-3.5 h-3.5 text-white" />
+                                <div className="w-3.5 h-3.5 text-white">
+                                  {getFeatureIcon(feature)}
+                                </div>
                               </div>
                             </div>
                             <span className="text-slate-200 text-sm leading-relaxed">

@@ -76,7 +76,7 @@ export class AuthService {
     }
 
     if (role === 'tutor') {
-      if (subjects) userData.subjects = subjects;
+      if (subjects) userData.specializations = subjects;
       if (qualification) userData.qualification = qualification;
       if (experience) {
         // Convert experience string to number

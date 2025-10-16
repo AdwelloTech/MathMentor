@@ -843,9 +843,24 @@ Requirements:
       ? hostValue
       : `http://${hostValue}`;
 
-    // Use GPT-3.5-turbo for reliable and fast quiz generation
-    const modelId = 'openai/gpt-3.5-turbo';
-    console.log('- Using model:', modelId, '(fast and reliable)');
+    // Check for environment variable override first
+    const envModel = process.env.AI_MODEL;
+    let modelId: string;
+    if (envModel) {
+      modelId = envModel;
+      console.log(`- Using model from environment: ${modelId}`);
+    } else {
+      // Use GPT-4 for math subjects (higher accuracy), GPT-3.5-turbo for others
+      const isMathSubject = subject.toLowerCase().includes('math') ||
+                           subject.toLowerCase().includes('algebra') ||
+                           subject.toLowerCase().includes('geometry') ||
+                           subject.toLowerCase().includes('calculus') ||
+                           subject.toLowerCase().includes('trigonometry') ||
+                           subject.toLowerCase().includes('statistics');
+
+      modelId = isMathSubject ? 'openai/gpt-4o-mini' : 'openai/gpt-3.5-turbo';
+      console.log(`- Using model: ${modelId} (${isMathSubject ? 'math accuracy optimized' : 'fast and reliable'})`);
+    }
 
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -1487,9 +1502,24 @@ ${contextLine}${pdfContext}
       ? hostValue
       : `http://${hostValue}`;
 
-    // Use GPT-3.5-turbo for reliable and fast quiz generation
-    const modelId = 'openai/gpt-3.5-turbo';
-    console.log('- Using model:', modelId, '(fast and reliable)');
+    // Check for environment variable override first
+    const envModel = process.env.AI_MODEL;
+    let modelId: string;
+    if (envModel) {
+      modelId = envModel;
+      console.log(`- Using model from environment: ${modelId}`);
+    } else {
+      // Use GPT-4 for math subjects (higher accuracy), GPT-3.5-turbo for others
+      const isMathSubject = subject.toLowerCase().includes('math') ||
+                           subject.toLowerCase().includes('algebra') ||
+                           subject.toLowerCase().includes('geometry') ||
+                           subject.toLowerCase().includes('calculus') ||
+                           subject.toLowerCase().includes('trigonometry') ||
+                           subject.toLowerCase().includes('statistics');
+
+      modelId = isMathSubject ? 'openai/gpt-4o-mini' : 'openai/gpt-3.5-turbo';
+      console.log(`- Using model: ${modelId} (${isMathSubject ? 'math accuracy optimized' : 'fast and reliable'})`);
+    }
 
     try {
       const resp = await fetch(

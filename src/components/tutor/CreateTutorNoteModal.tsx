@@ -150,6 +150,7 @@ const CreateTutorNoteModal: React.FC<CreateTutorNoteModalProps> = ({
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "text/plain",
       "image/jpeg",
+      "image/jpg",
       "image/png",
       "image/gif",
     ];

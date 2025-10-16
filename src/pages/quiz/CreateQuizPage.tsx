@@ -722,11 +722,21 @@ const CreateQuizPage: React.FC = () => {
                           }
 
                           const result = await uploadPdfForAI(files);
-                          const added = (result.pdfs || []).map((p: any) => ({
+                          console.log("📄 PDF upload result:", result);
+
+                          // Defensive check: ensure result has the expected structure
+                          if (!result || !result.pdfs || !Array.isArray(result.pdfs)) {
+                            console.error("📄 Invalid result structure:", result);
+                            toast.error("Failed to process PDF upload - invalid response format");
+                            return;
+                          }
+
+                          const added = result.pdfs.map((p: any) => ({
                             pdfBase64: p.pdfBase64,
                             fileName: p.fileName,
                             fileSize: p.fileSize,
                           }));
+
                           if (added.length > 0) {
                             const last = added[added.length - 1];
                             setPdfBase64(last.pdfBase64);
@@ -745,9 +755,11 @@ const CreateQuizPage: React.FC = () => {
                                 } added to AI context (Total: ${newTotal}/10)`
                               );
                             }
+                          } else {
+                            toast.error("No valid PDFs were processed");
                           }
                         } catch (err: any) {
-                          console.error(err);
+                          console.error("📄 PDF upload error:", err);
                           toast.error(err?.message || "Failed to read PDF");
                         }
                       }}

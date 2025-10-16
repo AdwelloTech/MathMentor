@@ -110,7 +110,10 @@ tutorNoteSchema.index({ createdAt: -1 });
 
 // Validation: ensure either content or fileUrl is provided
 tutorNoteSchema.pre('save', function(next) {
-  if (!this.content && !this.fileUrl) {
+  const hasContent = this.content && typeof this.content === 'string' && this.content.trim().length > 0;
+  const hasFile = this.fileUrl && typeof this.fileUrl === 'string' && this.fileUrl.trim().length > 0;
+
+  if (!hasContent && !hasFile) {
     return next(new Error('Tutor note must have either content or fileUrl'));
   }
   next();

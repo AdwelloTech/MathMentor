@@ -369,6 +369,11 @@ export class TutorNotesService {
         const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2)}${fileExt}`;
         const filePath = path.join(uploadsDir, uniqueName);
 
+        // Check if file.buffer exists
+        if (!file.buffer) {
+          throw new Error('File buffer is empty or undefined');
+        }
+
         // Move file to uploads directory
         await fs.writeFile(filePath, file.buffer);
 
@@ -378,13 +383,49 @@ export class TutorNotesService {
         fileSize = file.size;
       }
 
+      // Validate and convert ObjectIds
+      let subjectObjectId = null;
+      let gradeLevelObjectId = null;
+
+      try {
+        subjectObjectId = subjectId && subjectId.trim() ? new mongoose.Types.ObjectId(subjectId.trim()) : null;
+      } catch (error) {
+        console.error('Invalid subjectId:', subjectId);
+        throw new Error(`Invalid subject ID: ${subjectId}`);
+      }
+
+      try {
+        gradeLevelObjectId = gradeLevelId && gradeLevelId.trim() ? new mongoose.Types.ObjectId(gradeLevelId.trim()) : null;
+      } catch (error) {
+        console.error('Invalid gradeLevelId:', gradeLevelId);
+        throw new Error(`Invalid grade level ID: ${gradeLevelId}`);
+      }
+
+      // Validate tutorId
+      let tutorObjectId;
+      try {
+        tutorObjectId = new mongoose.Types.ObjectId(tutorId);
+      } catch (error) {
+        console.error('Invalid tutorId:', tutorId);
+        throw new Error(`Invalid tutor ID: ${tutorId}`);
+      }
+
+      // Ensure either content or fileUrl is provided
+      const finalContent = content && content.trim() ? content.trim() : null;
+      const hasContent = finalContent && finalContent.length > 0;
+      const hasFile = !!fileUrl;
+
+      if (!hasContent && !hasFile) {
+        throw new Error('Tutor note must have either content or a file');
+      }
+
       const newNote = new TutorNote({
-        title,
-        description,
-        content,
-        subjectId: subjectId ? new mongoose.Types.ObjectId(subjectId) : null,
-        gradeLevelId: gradeLevelId ? new mongoose.Types.ObjectId(gradeLevelId) : null,
-        createdBy: new mongoose.Types.ObjectId(tutorId),
+        title: title.trim(),
+        description: description && description.trim() ? description.trim() : null,
+        content: finalContent,
+        subjectId: subjectObjectId,
+        gradeLevelId: gradeLevelObjectId,
+        createdBy: tutorObjectId,
         isPremium: isPremium || false,
         isActive: true,
         viewCount: 0,
@@ -425,6 +466,7 @@ export class TutorNotesService {
       };
     } catch (error) {
       console.error('Error in createTutorMaterial:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       throw error;
     }
   }

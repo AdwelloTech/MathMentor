@@ -31,7 +31,24 @@ const updateSubjectSchema = Joi.object({
   isActive: Joi.boolean().optional(),
 });
 
-// Get all active subjects
+// Get all active subjects (public for registration)
+router.get('/public', async (req, res) => {
+  try {
+    const subjects = await SubjectService.getActiveSubjects();
+
+    res.json({
+      success: true,
+      data: subjects,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Get all active subjects (authenticated)
 router.get('/', authenticate, async (req, res) => {
   try {
     const subjects = await SubjectService.getActiveSubjects();

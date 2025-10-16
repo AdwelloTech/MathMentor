@@ -19,7 +19,6 @@ import type { RegisterFormData, UserRole, StudentPackage } from "@/types/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,6 +29,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import registerIllustration from "@/assets/student-register.png";
+import MultiSelect from "@/components/ui/multi-select";
+import { subjectsService } from "@/lib/subjects";
+import type { Subject } from "@/types/subject";
 
 
 const RegisterPage: React.FC = () => {
@@ -51,6 +53,10 @@ const RegisterPage: React.FC = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [pendingRegistration, setPendingRegistration] =
     useState<RegisterFormData | null>(null);
+
+  // Subjects for tutor registration
+  const [availableSubjects, setAvailableSubjects] = useState<Subject[]>([]);
+  const [subjectsLoading, setSubjectsLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -66,7 +72,35 @@ const RegisterPage: React.FC = () => {
   const watchedRole = watch("role");
   const watchedPackage = watch("package");
 
+  // Load available subjects when tutor role is selected
+  React.useEffect(() => {
+    const loadSubjects = async () => {
+      if (watchedRole === "tutor" && availableSubjects.length === 0) {
+        try {
+          setSubjectsLoading(true);
+          const subjects = await subjectsService.listActivePublic();
+          setAvailableSubjects(subjects);
+        } catch (error) {
+          console.error("Failed to load subjects:", error);
+          setAvailableSubjects([]);
+        } finally {
+          setSubjectsLoading(false);
+        }
+      }
+    };
+
+    loadSubjects();
+  }, [watchedRole, availableSubjects.length]);
+
   const onSubmit = async (data: RegisterFormData) => {
+    // Validate tutor subjects
+    if (data.role === "tutor" && (!data.subjects || data.subjects.length === 0)) {
+      setError("subjects", {
+        message: "Please select at least one subject you can teach"
+      });
+      return;
+    }
+
     // Check if payment is required for the selected package
     const requiresPayment =
       data.role === "student" &&
@@ -103,7 +137,7 @@ const RegisterPage: React.FC = () => {
         ...(data.role === "student" && { package: data.package }),
         // Tutor-specific fields
         ...(data.role === "tutor" && {
-          subjects: data.subjects ? data.subjects.split(",").map((s) => s.trim()).filter(Boolean) : [],
+          subjects: data.subjects || [], // subjects is already an array from MultiSelect
           experience: data.experience,
           qualification: data.qualification,
         }),
@@ -684,22 +718,32 @@ const RegisterPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="subjects" className="text-card-foreground font-medium">Subjects You Can Teach</Label>
-                  <Textarea
-                    {...register("subjects", {
-                      required:
-                        watchedRole === "tutor"
-                          ? "Please specify subjects you can teach"
-                          : false,
-                    })}
-                    id="subjects"
-                    rows={3}
-                    placeholder="e.g., Mathematics, Physics, Chemistry..."
-                    className={`bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
-                      errors.subjects
-                        ? "border-red-500 focus-visible:ring-red-500"
-                        : ""
-                    }`}
-                  />
+                  {subjectsLoading ? (
+                    <div className="h-12 rounded-2xl border border-border flex items-center px-4 bg-muted">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                      <span className="text-muted-foreground">Loading subjects...</span>
+                    </div>
+                  ) : (
+                    <div>
+                      <MultiSelect
+                        options={availableSubjects.map(subject => ({
+                          value: subject.name,
+                          label: subject.display_name,
+                          color: subject.color || undefined
+                        }))}
+                        value={watch("subjects") || []}
+                        onChange={(value) => {
+                          setValue("subjects", value, { shouldValidate: true });
+                        }}
+                        placeholder="Select subjects you can teach..."
+                      />
+                    </div>
+                  )}
+                  {availableSubjects.length === 0 && !subjectsLoading && (
+                    <p className="text-xs text-muted-foreground">
+                      No subjects available. Please contact support.
+                    </p>
+                  )}
                   {errors.subjects && (
                     <p className="text-sm text-destructive font-medium">
                       {errors.subjects.message}

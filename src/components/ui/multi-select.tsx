@@ -62,29 +62,29 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   );
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <div ref={containerRef} className={cn("relative w-full", className)}>
       {/* Trigger */}
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={cn(
-          "flex min-h-12 w-full items-center justify-between rounded-2xl border-2 border-slate-600 bg-slate-600/50 px-4 py-3 text-left text-slate-200 shadow-sm transition-all duration-200",
-          "hover:border-green-500/50 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 focus:outline-none",
+          "flex min-h-12 w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-2.5 text-left text-foreground shadow-sm transition-all duration-200",
+          "hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
           disabled && "cursor-not-allowed opacity-50",
           !disabled && "cursor-pointer"
         )}
       >
-        <div className="flex flex-1 flex-wrap gap-1">
+        <div className="flex flex-1 flex-wrap gap-1.5">
           {selectedOptions.length === 0 ? (
-            <span className="text-slate-400">{placeholder}</span>
+            <span className="text-muted-foreground">{placeholder}</span>
           ) : (
             selectedOptions.map((option) => (
               <span
                 key={option.value}
-                className="inline-flex items-center gap-1 rounded-lg bg-green-600/20 px-2 py-1 text-sm text-green-300"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 text-sm text-primary border border-primary/20"
               >
                 {option.color && (
                   <div
-                    className="h-2 w-2 rounded-full"
+                    className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: option.color }}
                   />
                 )}
@@ -96,9 +96,9 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                       e.stopPropagation();
                       removeOption(option.value);
                     }}
-                    className="ml-1 hover:text-red-300"
+                    className="ml-0.5 hover:text-destructive transition-colors"
                   >
-                    <XMarkIcon className="h-3 w-3" />
+                    <XMarkIcon className="h-3.5 w-3.5" />
                   </button>
                 )}
               </span>
@@ -107,7 +107,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         </div>
         <ChevronDownIcon
           className={cn(
-            "h-5 w-5 text-slate-400 transition-transform duration-200",
+            "h-5 w-5 text-muted-foreground transition-transform duration-200 flex-shrink-0 ml-2",
             isOpen && "rotate-180"
           )}
         />
@@ -117,12 +117,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 mt-2 w-full rounded-2xl border-2 border-slate-600 bg-slate-700 shadow-xl"
+          className="absolute z-50 mt-2 w-full rounded-2xl border border-border bg-card shadow-xl"
           style={{ maxHeight }}
         >
-          <div className="overflow-auto p-2">
+          <div className="overflow-auto p-2" style={{ maxHeight }}>
             {options.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-slate-400">
+              <div className="px-3 py-2 text-sm text-muted-foreground">
                 No options available
               </div>
             ) : (
@@ -133,25 +133,25 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                     key={option.value}
                     onClick={() => toggleOption(option.value)}
                     className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors",
-                      "hover:bg-slate-600/50",
-                      isSelected && "bg-green-600/20"
+                      "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
+                      "hover:bg-accent",
+                      isSelected && "bg-primary/10"
                     )}
                   >
-                    <div className="flex h-4 w-4 items-center justify-center">
+                    <div className="flex h-5 w-5 items-center justify-center flex-shrink-0 rounded border border-border">
                       {isSelected && (
-                        <CheckIcon className="h-3 w-3 text-green-400" />
+                        <CheckIcon className="h-3.5 w-3.5 text-primary" />
                       )}
                     </div>
                     {option.color && (
                       <div
-                        className="h-3 w-3 rounded-full"
+                        className="h-3 w-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: option.color }}
                       />
                     )}
                     <span className={cn(
                       "flex-1",
-                      isSelected ? "text-green-300" : "text-slate-200"
+                      isSelected ? "text-foreground font-medium" : "text-foreground"
                     )}>
                       {option.label}
                     </span>

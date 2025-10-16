@@ -421,6 +421,10 @@ class ApiClient {
 
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
 
+    // Check if encryption should be used
+    const shouldEncrypt = headers['X-Encrypted'] === 'true';
+    const useEncryption = shouldEncrypt || shouldUseEncryption();
+
     const response = await fetch(url, {
       method,
       headers,
@@ -438,7 +442,35 @@ class ApiClient {
       throw new ApiClientError(errorMessage, response.status);
     }
 
-    const data: ApiResponse<T> = await response.json();
+    let data: any;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      console.error('Failed to parse response JSON:', parseError);
+      throw new ApiClientError('Invalid JSON response from server', response.status);
+    }
+
+    // Check if response is encrypted
+    const xEncryptedHeader = response.headers.get('X-Encrypted') || response.headers.get('x-encrypted');
+    const isEncrypted = xEncryptedHeader === 'true';
+
+    if (isEncrypted && useEncryption) {
+      try {
+        // Decrypt the response
+        const decryptedData = await decryptResponse(data);
+
+        if (!decryptedData.success) {
+          throw new ApiClientError(decryptedData.error || 'Upload failed', response.status);
+        }
+
+        return decryptedData.data!;
+      } catch (error) {
+        console.error('Response decryption failed:', error);
+        throw new ApiClientError('Failed to decrypt response', response.status);
+      }
+    }
+
+    // Handle unencrypted response
     if (!data.success) {
       throw new ApiClientError(data.error || 'Upload failed', response.status);
     }

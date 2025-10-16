@@ -18,6 +18,7 @@ const upload = multer({
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'text/plain',
       'image/jpeg',
+      'image/jpg',
       'image/png',
       'image/gif',
       'video/mp4',

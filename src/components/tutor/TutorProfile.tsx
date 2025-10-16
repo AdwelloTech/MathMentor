@@ -705,7 +705,6 @@ const TutorProfile: React.FC = () => {
                     value={formData.specializations}
                     onChange={(value) => setFormData(prev => ({ ...prev, specializations: value }))}
                     placeholder="Select subjects you specialize in..."
-                    className="h-12 rounded-2xl border-slate-600 bg-slate-600/50 text-slate-200 focus:border-green-500 focus:ring-green-500"
                   />
                   <p className="mt-1 text-xs text-slate-400">
                     Choose the subjects you are qualified to tutor in

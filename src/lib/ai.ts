@@ -1,4 +1,5 @@
 import apiClient from "@/lib/apiClient";
+import { decryptResponse } from "@/utils/encryption";
 
 export interface GenerateAIRequest {
   subject: string;
@@ -181,7 +182,25 @@ export async function extractTextFromPdf(files: File | File[]): Promise<{
     throw new Error(err?.error || "Failed to extract text from PDFs");
   }
 
-  const responseData = await res.json();
+  let responseData = await res.json();
+  console.log("📄 Raw response data:", responseData);
+
+  // Check if response is encrypted
+  if (responseData.encrypted && responseData.iv && responseData.authTag) {
+    console.log("📄 Response is encrypted, decrypting...");
+    try {
+      responseData = await decryptResponse({
+        encrypted: responseData.encrypted,
+        iv: responseData.iv,
+        authTag: responseData.authTag
+      });
+      console.log("📄 Decrypted response data:", responseData);
+    } catch (decryptError) {
+      console.error("📄 Failed to decrypt response:", decryptError);
+      throw new Error("Failed to decrypt server response");
+    }
+  }
+
   // The backend returns { success: true, data: { pdfs: [...], totalFiles: number } }
   return responseData.data;
 }
@@ -253,7 +272,26 @@ export async function uploadPdfForAI(files: File | File[]): Promise<{
     throw new Error(err?.error || "Failed to upload PDFs");
   }
 
-  const responseData = await res.json();
+  let responseData = await res.json();
+  console.log("📄 Raw response data:", responseData);
+
+  // Check if response is encrypted
+  if (responseData.encrypted && responseData.iv && responseData.authTag) {
+    console.log("📄 Response is encrypted, decrypting...");
+    try {
+      responseData = await decryptResponse({
+        encrypted: responseData.encrypted,
+        iv: responseData.iv,
+        authTag: responseData.authTag
+      });
+      console.log("📄 Decrypted response data:", responseData);
+    } catch (decryptError) {
+      console.error("📄 Failed to decrypt response:", decryptError);
+      throw new Error("Failed to decrypt server response");
+    }
+  }
+
   // The backend returns { success: true, data: { pdfs: [...], totalFiles: number } }
+  console.log("📄 Returning data:", responseData.data);
   return responseData.data;
 }

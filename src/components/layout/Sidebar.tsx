@@ -615,6 +615,29 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
+  // Get all navigation items for mobile bottom nav (same as desktop)
+  type MobileNavItem = {
+    name: string;
+    href: string;
+    icon: any;
+    disabled?: boolean;
+    onClick?: () => void;
+  };
+
+  const getMobileNavItems = (): MobileNavItem[] => {
+    // Use the same navigation as desktop, but convert to MobileNavItem format
+    const desktopNav = getNavigation();
+
+    return desktopNav.map(item => ({
+      name: item.name,
+      href: item.href,
+      icon: item.icon,
+      disabled: 'disabled' in item ? (item as any).disabled : false,
+    }));
+  };
+
+  const mobileNavItems = getMobileNavItems();
+
   return (
     <>
       {/* Mobile sidebar */}
@@ -677,6 +700,105 @@ const Sidebar: React.FC<SidebarProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mobile Bottom Navigation Bar - Scrollable */}
+      <motion.nav
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-xl border-t border-border shadow-2xl"
+      >
+        <div className="safe-area-inset-bottom">
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex items-center px-2 py-2 min-w-max">
+              {mobileNavItems.map((item, index) => {
+                const active = isActive(item.href);
+                const isDisabled = item.disabled;
+
+                return (
+                  <motion.div
+                    key={item.name}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: index * 0.03, duration: 0.3 }}
+                    className="flex-shrink-0 w-16 mx-1"
+                  >
+                    {item.onClick ? (
+                      <button
+                        onClick={item.onClick}
+                        className={cn(
+                          "flex flex-col items-center justify-center w-full py-2 px-1 rounded-xl transition-all duration-300 min-h-[56px] active:scale-95",
+                          active
+                            ? "bg-primary text-primary-foreground shadow-lg"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        )}
+                      >
+                        <item.icon className={cn(
+                          "h-5 w-5 mb-1 transition-transform duration-300",
+                          active && "scale-110"
+                        )} />
+                        <span className={cn(
+                          "text-[10px] font-medium text-center leading-tight",
+                          active && "font-semibold"
+                        )}>
+                          {item.name}
+                        </span>
+                        {active && (
+                          <motion.div
+                            layoutId="mobile-nav-indicator"
+                            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-1 bg-primary-foreground rounded-t-full"
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                          />
+                        )}
+                      </button>
+                    ) : (
+                      <Link
+                        to={item.href}
+                        onClick={(e) => {
+                          if (isDisabled) {
+                            e.preventDefault();
+                          }
+                        }}
+                        className={cn(
+                          "flex flex-col items-center justify-center w-full py-2 px-1 rounded-xl transition-all duration-300 min-h-[56px] active:scale-95 relative",
+                          isDisabled && "opacity-50 cursor-not-allowed",
+                          active && !isDisabled
+                            ? "bg-primary text-primary-foreground shadow-lg"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        )}
+                        title={isDisabled ? getTooltipMessage() : undefined}
+                      >
+                        <div className="relative">
+                          <item.icon className={cn(
+                            "h-5 w-5 mb-1 transition-transform duration-300",
+                            active && "scale-110"
+                          )} />
+                          {isDisabled && (
+                            <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-warning rounded-full" />
+                          )}
+                        </div>
+                        <span className={cn(
+                          "text-[10px] font-medium text-center leading-tight",
+                          active && "font-semibold"
+                        )}>
+                          {item.name}
+                        </span>
+                        {active && !isDisabled && (
+                          <motion.div
+                            layoutId="mobile-nav-indicator"
+                            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-1 bg-primary-foreground rounded-t-full"
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                          />
+                        )}
+                      </Link>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </motion.nav>
 
       {/* Collapsible sidebar for desktop */}
       <div id="sidebar-navigation" className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col">

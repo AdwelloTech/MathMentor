@@ -624,3 +624,48 @@
     font-family: 'Clash Display', 'Inter', system-ui, sans-serif;
   }
 }
+
+/* Mobile Navigation Safe Area Insets */
+@layer utilities {
+  /* Safe area support for mobile devices with notches/home indicators */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  
+  /* Mobile bottom navigation improvements */
+  @media (max-width: 1023px) {
+    /* Ensure content doesn't hide behind mobile nav */
+    .mobile-content-spacing {
+      padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0));
+    }
+  }
+  
+  /* Touch target improvements for mobile */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent text selection on interactive elements */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Hide scrollbars for mobile navigation */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

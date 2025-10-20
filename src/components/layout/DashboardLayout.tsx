@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Bars3Icon,
   SparklesIcon,
   ClockIcon,
   UserGroupIcon,
@@ -325,22 +324,9 @@ const DashboardLayout: React.FC = () => {
       <div className="lg:pl-20">
         {/* Header removed - keeping design clean and minimal */}
 
-        {/* Main content */}
-        <main className={profile?.role === "student" ? "pt-10" : "py-10"}>
+        {/* Main content with bottom padding for mobile nav */}
+        <main className={profile?.role === "student" ? "pt-10 pb-24 lg:pb-10" : "py-10 pb-24 lg:pb-10"}>
           <div className="px-4 sm:px-6 lg:px-8">
-            {/* Mobile menu button */}
-            <div className="lg:hidden mb-4">
-              <motion.button
-                type="button"
-                className="-m-2.5 p-2.5 text-gray-700 hover:bg-blue-100 rounded-lg transition-colors duration-200"
-                onClick={() => setSidebarOpen(true)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Bars3Icon className="h-6 w-6" />
-              </motion.button>
-            </div>
-
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

@@ -1,0 +1,246 @@
+/* Landing Footer Styles */
+.landing-footer {
+  position: relative;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 4rem 2rem 2rem;
+  z-index: 2;
+}
+
+.landing-footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  margin-bottom: 2rem;
+}
+
+.landing-footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.landing-footer-logo img {
+  width: clamp(60px, 10vw, 96px);
+  height: clamp(60px, 10vw, 96px);
+  object-fit: cover;
+}
+
+.landing-footer-tagline {
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: white;
+  max-width: 254px;
+}
+
+.landing-footer-links {
+  display: flex;
+  justify-content: space-between;
+}
+
+.landing-footer-column h4 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 1.75rem;
+  line-height: 1.07;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.landing-social-links {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.landing-social-link {
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+  cursor: pointer;
+}
+
+.landing-social-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.landing-contact-email {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 1.75rem;
+  line-height: 1.07;
+  color: white;
+}
+
+.landing-footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.landing-footer-divider {
+  height: 1px;
+  background: #787878;
+  margin-bottom: 2rem;
+}
+
+.landing-footer-copyright {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  color: white;
+  text-align: center;
+}
+
+.landing-footer-copyright a {
+  color: white !important;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.landing-footer-copyright a:hover {
+  color: #FF6300 !important;
+}
+
+/* Colored separator between Privacy and Terms */
+.landing-footer-separator {
+  color: #FF6300;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .landing-footer {
+    padding: 3rem 1.5rem 2rem;
+  }
+
+  .landing-footer-content {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    text-align: center;
+  }
+
+  .landing-footer-left {
+    align-items: center;
+    text-align: center;
+  }
+
+  .landing-footer-tagline {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .landing-footer-links {
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+    width: 100%;
+  }
+
+  .landing-footer-column {
+    text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .landing-footer-column h4 {
+    font-size: 1.5rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .landing-contact-email {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  .landing-footer-copyright {
+    font-size: 1.25rem;
+  }
+
+  .landing-social-links {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-footer {
+    padding: 2.5rem 1rem 1.5rem;
+  }
+
+  .landing-footer-content {
+    gap: 2.5rem;
+  }
+
+  .landing-footer-column h4 {
+    font-size: 1.25rem;
+  }
+
+  .landing-contact-email {
+    font-size: 1.25rem;
+  }
+
+  .landing-footer-copyright {
+    font-size: 1rem;
+  }
+
+  .landing-social-links {
+    gap: 0.8rem;
+    justify-content: center;
+  }
+
+  .landing-social-link {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Hover effects for links */
+.landing-footer-column a {
+  color: white !important;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.landing-footer-column a:hover {
+  color: #FF6300 !important;
+}
+
+.landing-social-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Remove any default focus or active blue highlighting */
+.landing-footer-column a:focus,
+.landing-footer-column a:active,
+.landing-footer-copyright a:focus,
+.landing-footer-copyright a:active,
+.landing-social-link:focus,
+.landing-social-link:active {
+  color: white !important;
+  outline: none;
+  background: none;
+}
+
+/* Ensure social links maintain white icons */
+.landing-social-link svg {
+  color: white !important;
+  fill: white !important;
+}
+
+.landing-social-link:hover svg {
+  color: white !important;
+  fill: white !important;
+}
+

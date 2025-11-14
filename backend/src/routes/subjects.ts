@@ -4,6 +4,7 @@ import { SubjectService } from '../services/subjectService';
 import { User } from '../models/User';
 import { authenticate, authorize } from '../middleware/auth';
 import { validateOrThrow } from '../utils/validation';
+import { cache } from '../middleware/cache.js';
 
 const router = express.Router();
 
@@ -31,8 +32,8 @@ const updateSubjectSchema = Joi.object({
   isActive: Joi.boolean().optional(),
 });
 
-// Get all active subjects (public for registration)
-router.get('/public', async (req, res) => {
+// Get all active subjects (public for registration) - cached for 10 minutes
+router.get('/public', cache(600), async (req, res) => {
   try {
     const subjects = await SubjectService.getActiveSubjects();
 
@@ -48,8 +49,8 @@ router.get('/public', async (req, res) => {
   }
 });
 
-// Get all active subjects (authenticated)
-router.get('/', authenticate, async (req, res) => {
+// Get all active subjects (authenticated) - cached for 10 minutes
+router.get('/', authenticate, cache(600), async (req, res) => {
   try {
     const subjects = await SubjectService.getActiveSubjects();
 
@@ -65,8 +66,8 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// Get subjects available for instant sessions (subjects that have online tutors)
-router.get('/available', authenticate, async (req, res) => {
+// Get subjects available for instant sessions (subjects that have online tutors) - cached for 2 minutes
+router.get('/available', authenticate, cache(120), async (req, res) => {
   try {
     // Get all online tutors with their specializations
     const onlineTutors = await User.find({

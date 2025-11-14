@@ -368,10 +368,9 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
               <div className="space-y-4">
                 {previews.front_image ? (
                   <div className="relative">
-                    <img
-                      src={previews.front_image}
+                    <img src={previews.front_image}
                       alt="Front ID"
-                      className="w-full h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-lg"
+                      className="w-full h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-lg" loading="lazy"
                     />
                     <button
                       type="button"
@@ -417,10 +416,9 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
               <div className="space-y-4">
                 {previews.back_image ? (
                   <div className="relative">
-                    <img
-                      src={previews.back_image}
+                    <img src={previews.back_image}
                       alt="Back ID"
-                      className="w-full h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-lg"
+                      className="w-full h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-lg" loading="lazy"
                     />
                     <button
                       type="button"
@@ -466,10 +464,9 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
               <div className="space-y-4">
                 {previews.selfie_with_id ? (
                   <div className="relative">
-                    <img
-                      src={previews.selfie_with_id}
+                    <img src={previews.selfie_with_id}
                       alt="Selfie with ID"
-                      className="w-full h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-lg"
+                      className="w-full h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-lg" loading="lazy"
                     />
                     <button
                       type="button"

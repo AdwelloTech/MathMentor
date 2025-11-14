@@ -1,10 +1,11 @@
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { cache } from '../middleware/cache.js';
 
 const router = express.Router();
 
-// Health check endpoint
-router.get('/', async (req: Request, res: Response) => {
+// Health check endpoint - cached for 30 seconds
+router.get('/', cache(30), async (req: Request, res: Response) => {
   try {
     // Check MongoDB connection
     const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';

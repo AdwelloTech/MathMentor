@@ -1,0 +1,106 @@
+/* Landing Navbar Styles */
+.landing-navbar {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  padding: 1.5rem 0;
+}
+
+.landing-navbar-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 2rem;
+}
+
+.landing-navbar-list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 3rem;
+  align-items: center;
+}
+
+.landing-navbar-list li {
+  margin: 0;
+}
+
+.landing-navbar-list a {
+  font-family: "ClashOfClans", sans-serif;
+  font-size: 1.25rem;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.landing-navbar-list a:hover {
+  color: #FFD700;
+  transform: scale(1.15);
+}
+
+.my-account-button {
+  font-family: "ClashOfClans", sans-serif;
+  font-size: 1.25rem;
+  color: white;
+  background: rgba(255, 215, 0, 0.2);
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: normal;
+}
+
+.my-account-button:hover {
+  background: #FFD700;
+  color: #0D0D0D;
+  transform: scale(1.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .landing-navbar {
+    padding: 1rem 0;
+  }
+
+  .landing-navbar-content {
+    padding: 0 1rem;
+  }
+
+  .landing-navbar-list {
+    gap: 1.5rem;
+  }
+
+  .landing-navbar-list a,
+  .my-account-button {
+    font-size: 1rem;
+  }
+
+  .my-account-button {
+    padding: 0.4rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-navbar-list {
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .landing-navbar-list a,
+  .my-account-button {
+    font-size: 0.9rem;
+  }
+
+  .my-account-button {
+    padding: 0.3rem 0.8rem;
+  }
+}
+

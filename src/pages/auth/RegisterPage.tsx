@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import registerIllustration from "@/assets/student-register.png";
+import registerIllustration from "@/assets/student-register.webp";
 import MultiSelect from "@/components/ui/multi-select";
 import { subjectsService } from "@/lib/subjects";
 import type { Subject } from "@/types/subject";

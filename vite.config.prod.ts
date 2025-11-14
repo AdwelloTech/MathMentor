@@ -1,10 +1,37 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { imagetools } from 'vite-imagetools';
+import viteCompression from 'vite-plugin-compression';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    imagetools({
+      defaultDirectives: (url) => {
+        if (url.searchParams.has('url')) {
+          return new URLSearchParams({
+            format: 'webp',
+            quality: '85',
+          });
+        }
+        return new URLSearchParams();
+      },
+    }),
+    viteCompression({
+      algorithm: 'brotliCompress',
+      ext: '.br',
+      threshold: 10240,
+      deleteOriginFile: false,
+    }),
+    viteCompression({
+      algorithm: 'gzip',
+      ext: '.gz',
+      threshold: 10240,
+      deleteOriginFile: false,
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -41,6 +68,7 @@ export default defineConfig({
     target: 'esnext',
     minify: 'esbuild',
     cssMinify: true,
+    sourcemap: false, // No source maps in production for smaller bundle
     rollupOptions: {
       output: {
         manualChunks: {
@@ -50,14 +78,27 @@ export default defineConfig({
           'vendor-forms': ['react-hook-form'],
           'vendor-toast': ['react-hot-toast'],
         },
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name?.match(/\.(png|jpe?g|svg|gif|tiff|bmp|ico|webp)$/i)) {
+            return 'assets/images/[name]-[hash].[ext]';
+          }
+          if (assetInfo.name?.match(/\.(woff2?|eot|ttf|otf)$/i)) {
+            return 'assets/fonts/[name]-[hash].[ext]';
+          }
+          if (assetInfo.name?.match(/\.css$/i)) {
+            return 'assets/css/[name]-[hash].[ext]';
+          }
+          return 'assets/[name]-[hash].[ext]';
+        }
       }
     },
     chunkSizeWarningLimit: 1000,
-    reportCompressedSize: false,
+    reportCompressedSize: true,
+    assetsInlineLimit: 4096, // Inline small assets
   },
+  publicDir: 'public', // Copy service worker and other public files
   optimizeDeps: {
     include: [
       'react',

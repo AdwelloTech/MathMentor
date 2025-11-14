@@ -305,10 +305,10 @@ const ManageStudentsPage: React.FC = () => {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   {student.profile_image_url ? (
-                                    <img
-                                      src={student.profile_image_url}
+                                    <img src={student.profile_image_url}
                                       alt={`${student.full_name}'s profile`}
                                       className="h-10 w-10 rounded-full object-cover border-2 border-border"
+                                      loading="lazy"
                                       onError={(e) => {
                                         // Fallback to initials if image fails to load
                                         const target =
@@ -433,10 +433,10 @@ const ManageStudentsPage: React.FC = () => {
                   {/* Profile Image Section */}
                   <div className="flex justify-center mb-6">
                     {selectedStudent.profile_image_url ? (
-                      <img
-                        src={selectedStudent.profile_image_url}
+                      <img src={selectedStudent.profile_image_url}
                         alt={`${selectedStudent.full_name}'s profile`}
                         className="h-24 w-24 rounded-full object-cover border-4 border-border shadow-lg"
+                        loading="lazy"
                         onError={(e) => {
                           // Fallback to initials if image fails to load
                           const target = e.target as HTMLImageElement;

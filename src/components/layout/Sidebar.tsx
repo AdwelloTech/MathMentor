@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import logoUrl from "@/assets/math-mentor-logo.png";
+import logoUrl from "@/assets/math-mentor-logo.webp";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -290,10 +290,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex h-16 shrink-0 items-center mb-6 justify-center lg:justify-start">
         <div className="flex items-center">
           <div className="relative">
-            <img
-              src={logoUrl}
+            <img src={logoUrl}
               alt="IEMS Logo"
-              className="h-8 w-8 text-primary text-center mx-auto"
+              className="h-8 w-8 text-primary text-center mx-auto" loading="lazy"
             />
           </div>
         </div>

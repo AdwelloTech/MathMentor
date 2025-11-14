@@ -17,7 +17,9 @@
     "start:both": "concurrently -n dev-web,dev-api,prod-web,prod-api -c blue,magenta,green,yellow \"npm run start:dev\" \"npm run start:prod\"",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "optimize-images": "node scripts/convert-images-to-webp.js",
+    "update-to-webp": "node scripts/update-to-webp.js"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -85,11 +87,15 @@
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "glob": "^11.0.3",
     "postcss": "^8.4.32",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.3.6",
     "tsx": "^4.20.3",
     "typescript": "^5.2.2",
-    "vite": "^5.0.8"
+    "vite": "^5.0.8",
+    "vite-imagetools": "^9.0.0",
+    "vite-plugin-compression": "^0.5.1"
   },
   "engines": {
     "node": ">=18.0.0",

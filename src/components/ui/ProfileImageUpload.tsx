@@ -162,16 +162,14 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
           {/* Image Preview/Current */}
           <div className="w-32 h-32 rounded-full overflow-hidden bg-secondary border-4 border-background shadow-lg">
             {previewUrl ? (
-              <img
-                src={previewUrl}
+              <img src={previewUrl}
                 alt="Preview"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover" loading="lazy"
               />
             ) : currentImageUrl ? (
-              <img
-                src={currentImageUrl}
+              <img src={currentImageUrl}
                 alt="Profile"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover" loading="lazy"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">

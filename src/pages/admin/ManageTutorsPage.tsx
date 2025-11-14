@@ -485,10 +485,9 @@ const ManageTutorsPage: React.FC = () => {
                             <div className="flex items-center">
                               <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
                                 {tutor.profile_image_url ? (
-                                  <img
-                                    src={tutor.profile_image_url}
+                                  <img src={tutor.profile_image_url}
                                     alt={tutor.full_name}
-                                    className="h-10 w-10 rounded-full object-cover"
+                                    className="h-10 w-10 rounded-full object-cover" loading="lazy"
                                   />
                                 ) : (
                                   <span className="text-sm font-medium text-card-foreground">
@@ -641,10 +640,9 @@ const ManageTutorsPage: React.FC = () => {
                       <div className="flex items-center space-x-3">
                         <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
                           {selectedTutor.profile_image_url ? (
-                            <img
-                              src={selectedTutor.profile_image_url}
+                            <img src={selectedTutor.profile_image_url}
                               alt={selectedTutor.full_name}
-                              className="h-16 w-16 rounded-full object-cover"
+                              className="h-16 w-16 rounded-full object-cover" loading="lazy"
                             />
                           ) : (
                             <span className="text-lg font-medium text-card-foreground">

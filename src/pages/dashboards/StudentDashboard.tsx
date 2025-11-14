@@ -43,7 +43,7 @@ import type { StudentDashboardStats } from "@/lib/dashboardService";
 import type { Quiz } from "@/types/quiz";
 import type { FlashcardSet } from "@/types/flashcards";
 
-import logoutIcon from "../../assets/logout.png";
+import logoutIcon from "../../assets/logout.webp";
 
 interface DashboardData {
   stats: StudentDashboardStats | null;
@@ -349,7 +349,7 @@ const StudentDashboard: React.FC = () => {
                       className="p-2 hover:bg-muted rounded-lg transition-colors duration-200"
                       title="Sign out"
                     >
-                      <img src={logoutIcon} alt="Logout" className="w-6 h-6" />
+                      <img src={logoutIcon} alt="Logout" className="w-6 h-6" loading="lazy" />
                     </button>
                   </div>
                 </div>
@@ -742,10 +742,9 @@ const StudentDashboard: React.FC = () => {
                         >
                             <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
                               {session.tutorProfileImage ? (
-                                <img
-                                  src={session.tutorProfileImage}
+                                <img src={session.tutorProfileImage}
                                   alt={session.tutor}
-                                  className="w-10 h-10 rounded-full object-cover"
+                                  className="w-10 h-10 rounded-full object-cover" loading="lazy"
                                 />
                               ) : (
                                 <span className="text-primary font-semibold text-sm">

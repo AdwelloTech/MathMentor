@@ -19,6 +19,12 @@ import StudentLayout from "./components/layout/StudentLayout";
 import ParentLayout from "./components/layout/ParentLayout";
 import TutorLayout from "./components/layout/TutorLayout";
 
+// Landing pages - load immediately as they're entry points
+import LandingHome from "./pages/landing/LandingHome";
+import LandingAbout from "./pages/landing/LandingAbout";
+import LandingStudent from "./pages/landing/LandingStudent";
+import LandingTutor from "./pages/landing/LandingTutor";
+
 // Lazy load all other pages for code splitting
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const AdminDashboard = lazy(() => import("./pages/dashboards/AdminDashboard"));
@@ -112,28 +118,46 @@ function App() {
         </div>
       }>
         <Routes>
-        {/* Public routes - always accessible */}
+        {/* Public Landing Page routes - always accessible */}
+        <Route path="/" element={<LandingHome />} />
+        <Route path="/about" element={<LandingAbout />} />
+        <Route path="/for-students" element={<LandingStudent />} />
+        <Route path="/for-tutors" element={<LandingTutor />} />
+        
+        {/* Public auth routes - always accessible */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
 
-        {/* Handle authentication-based routing */}
+        {/* Handle authentication-based routing for protected routes */}
         {!isUserAuthenticated && !isAdminLoggedIn ? (
-          // Show auth pages when no user is logged in
+          // Redirect to login for protected routes when no user is logged in
           <>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            {/* Redirect any other route to login */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/login" replace />} />
+            <Route path="/admin/*" element={<Navigate to="/admin/login" replace />} />
+            <Route path="/student/*" element={<Navigate to="/login" replace />} />
+            <Route path="/tutor/*" element={<Navigate to="/login" replace />} />
+            <Route path="/parent/*" element={<Navigate to="/login" replace />} />
+            <Route path="/teacher/*" element={<Navigate to="/login" replace />} />
+            <Route path="/principal/*" element={<Navigate to="/login" replace />} />
+            <Route path="/hr/*" element={<Navigate to="/login" replace />} />
+            <Route path="/finance/*" element={<Navigate to="/login" replace />} />
+            <Route path="/support/*" element={<Navigate to="/login" replace />} />
+            {/* Allow 404 for other routes */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </>
         ) : (
           // Show protected routes when user is authenticated
           <>
             {/* Main application routes */}
-            <Route path="/" element={<DashboardLayout />}>
+            <Route path="/dashboard-app" element={<DashboardLayout />}>
               <Route index element={<DashboardRoute />} />
-              <Route path="dashboard" element={<DashboardRoute />} />
+            </Route>
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route index element={<DashboardRoute />} />
               <Route path="schedule-class" element={<ScheduleClassPage />} />
               <Route
                 path="manage-classes"
@@ -335,22 +359,10 @@ function App() {
 
               {/* Error routes */}
               <Route path="unauthorized" element={<UnauthorizedPage />} />
-              <Route path="*" element={<NotFoundPage />} />
             </Route>
 
-            {/* Redirect auth routes to dashboard when already logged in */}
-            <Route
-              path="/login"
-              element={<Navigate to="/dashboard" replace />}
-            />
-            <Route
-              path="/register"
-              element={<Navigate to="/dashboard" replace />}
-            />
-            <Route
-              path="/forgot-password"
-              element={<Navigate to="/dashboard" replace />}
-            />
+            {/* Standalone error route */}
+            <Route path="*" element={<NotFoundPage />} />
           </>
         )}
         </Routes>

@@ -30,7 +30,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import logoutIcon from '../../assets/logout.png';
+import logoutIcon from '../../assets/logout.webp';
 
 const ParentDashboard: React.FC = () => {
   const { profile, signOut, user } = useAuth();
@@ -222,7 +222,7 @@ const ParentDashboard: React.FC = () => {
                     className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-200"
                     title="Sign out"
                   >
-                    <img src={logoutIcon} alt="Logout" className="w-6 h-6" />
+                    <img src={logoutIcon} alt="Logout" className="w-6 h-6" loading="lazy" />
                   </button>
                 </div>
               </div>

@@ -4,7 +4,7 @@ import { useTutorial } from '@/contexts/TutorialContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { PlayIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import mathMentorLogo from '@/assets/math-mentor-logo.png';
+import mathMentorLogo from '@/assets/math-mentor-logo.webp';
 
 const TutorialPrompt: React.FC = () => {
   const { shouldShowTutorial, startTutorial, skipTutorial } = useTutorial();
@@ -36,10 +36,9 @@ const TutorialPrompt: React.FC = () => {
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 flex items-center justify-center">
-            <img 
-              src={mathMentorLogo} 
+            <img src={mathMentorLogo} 
               alt="MathMentor Logo" 
-              className="w-6 h-6 object-contain"
+              className="w-6 h-6 object-contain" loading="lazy"
             />
           </div>
           <h3 className="text-lg font-semibold text-gray-900">

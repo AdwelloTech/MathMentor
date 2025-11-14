@@ -671,10 +671,10 @@ export default function InstantSessionPage() {
                                 <div className="p-3 flex flex-col items-center gap-2 min-w-[90px]">
                                   {/* Avatar with image */}
                                   <div className="relative w-14 h-14 rounded-full overflow-hidden shadow-lg ring-2 ring-background">
-                                    <img 
-                                      src={tutor.imageUrl} 
+                                    <img src={tutor.imageUrl} 
                                       alt={tutor.subject}
                                       className="w-full h-full object-cover"
+                                      loading="lazy"
                                       onError={(e) => {
                                         // Fallback to gradient with initials if image fails to load
                                         const target = e.target as HTMLImageElement;

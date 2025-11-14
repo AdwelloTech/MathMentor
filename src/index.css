@@ -1,6 +1,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.cdnfonts.com/css/clash-display');
 
+/* Clash of Clans Fonts */
+@font-face {
+  font-family: "ClashOfClans";
+  src: url("/fonts/Clash_Regular.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ClashOfClans-Bold";
+  src: url("/fonts/Clash_Bold.otf") format("opentype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Clash font utility classes */
+.font-clash {
+  font-family: "ClashOfClans", sans-serif !important;
+}
+
+.font-clash-bold {
+  font-family: "ClashOfClans-Bold", sans-serif !important;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

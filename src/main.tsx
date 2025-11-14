@@ -9,6 +9,32 @@ import { TutorialProvider } from "./contexts/TutorialContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import "./index.css";
 
+// Service Worker Registration for Offline Support and Performance
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('SW registered: ', registration);
+
+        // Check for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New content is available, notify user
+                console.log('New content is available and will be used when all tabs for this page are closed.');
+              }
+            });
+          }
+        });
+      })
+      .catch(registrationError => {
+        console.log('SW registration failed: ', registrationError);
+      });
+  });
+}
+
 // Create root element
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

@@ -1,114 +1,111 @@
 import { Request, Response, NextFunction } from 'express';
+import { createClient } from 'redis';
 
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-}
+// Redis client configuration
+const redisClient = createClient({
+  url: process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'}`,
+  password: process.env.REDIS_PASSWORD || undefined,
+});
 
-class CacheManager {
-  private cache: Map<string, CacheEntry>;
-  private maxSize: number;
-  private defaultTTL: number;
+// Redis connection events
+redisClient.on('error', (err) => {
+  console.error('Redis Client Error:', err);
+});
 
-  constructor(maxSize: number = 1000, defaultTTL: number = 300000) {
-    this.cache = new Map();
-    this.maxSize = maxSize;
-    this.defaultTTL = defaultTTL;
-  }
+redisClient.on('connect', () => {
+  console.log('✅ Redis connected successfully');
+});
 
-  get(key: string): any | null {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
+// Connect to Redis
+redisClient.connect().catch(console.error);
 
-    const now = Date.now();
-    if (now - entry.timestamp > this.defaultTTL) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return entry.data;
-  }
-
-  set(key: string, data: any): void {
-    if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) {
-        this.cache.delete(firstKey);
-      }
-    }
-
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now()
-    });
-  }
-
-  delete(key: string): void {
-    this.cache.delete(key);
-  }
-
-  clear(): void {
-    this.cache.clear();
-  }
-
-  invalidatePattern(pattern: RegExp): void {
-    const keysToDelete: string[] = [];
-    
-    for (const key of this.cache.keys()) {
-      if (pattern.test(key)) {
-        keysToDelete.push(key);
-      }
-    }
-
-    keysToDelete.forEach(key => this.cache.delete(key));
-  }
-}
-
-const cacheManager = new CacheManager();
-
-export const cacheMiddleware = (ttl?: number) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Cache middleware for GET requests
+ * Caches responses for a specified duration
+ */
+export function cache(duration: number = 300) { // Default 5 minutes
+  return async (req: Request, res: Response, next: NextFunction) => {
+    // Only cache GET requests
     if (req.method !== 'GET') {
       return next();
     }
 
-    const cacheKey = `${req.originalUrl || req.url}:${req.headers.authorization || 'anon'}`;
-    const cachedData = cacheManager.get(cacheKey);
+    const key = `cache:${req.originalUrl}`;
 
-    if (cachedData) {
-      res.setHeader('X-Cache', 'HIT');
-      return res.json(cachedData);
-    }
-
-    res.setHeader('X-Cache', 'MISS');
-
-    const originalJson = res.json.bind(res);
-    res.json = function(data: any) {
-      if (res.statusCode === 200) {
-        cacheManager.set(cacheKey, data);
+    try {
+      // Check if response is cached
+      const cachedResponse = await redisClient.get(key);
+      if (cachedResponse) {
+        console.log(`📋 Cache hit for: ${req.originalUrl}`);
+        const parsedResponse = JSON.parse(cachedResponse);
+        return res.json(parsedResponse);
       }
-      return originalJson(data);
-    };
 
-    next();
+      // Store original json method
+      const originalJson = res.json;
+
+      // Override res.json to cache the response
+      res.json = function(data: any) {
+        // Cache the response
+        redisClient.setEx(key, duration, JSON.stringify(data))
+          .then(() => console.log(`💾 Cached response for: ${req.originalUrl}`))
+          .catch(err => console.error('Redis cache error:', err));
+
+        // Call original json method
+        return originalJson.call(this, data);
+      };
+
+      next();
+    } catch (error) {
+      console.error('Cache middleware error:', error);
+      next();
+    }
   };
-};
+}
 
-export const invalidateCache = (pattern?: RegExp) => {
-  if (pattern) {
-    cacheManager.invalidatePattern(pattern);
-  } else {
-    cacheManager.clear();
+/**
+ * Clear cache for specific patterns
+ */
+export async function clearCache(pattern: string) {
+  try {
+    const keys = await redisClient.keys(`cache:${pattern}`);
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+      console.log(`🗑️ Cleared ${keys.length} cache entries for pattern: ${pattern}`);
+    }
+  } catch (error) {
+    console.error('Clear cache error:', error);
   }
-};
+}
 
-export const invalidateCacheOnMutation = (req: Request, res: Response, next: NextFunction) => {
-  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
-    const path = req.path.split('/')[1];
-    invalidateCache(new RegExp(`^\\/api\\/${path}`));
+/**
+ * Cache statistics
+ */
+export async function getCacheStats() {
+  try {
+    const info = await redisClient.info('memory');
+    const keys = await redisClient.keys('cache:*');
+    return {
+      totalKeys: keys.length,
+      memory: info,
+    };
+  } catch (error) {
+    console.error('Cache stats error:', error);
+    return null;
   }
-  next();
-};
+}
 
-export default cacheManager;
+/**
+ * Health check for Redis
+ */
+export async function checkRedisHealth() {
+  try {
+    await redisClient.ping();
+    return true;
+  } catch (error) {
+    console.error('Redis health check failed:', error);
+    return false;
+  }
+}
 
+export default redisClient;

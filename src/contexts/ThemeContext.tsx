@@ -21,25 +21,9 @@ const applyTheme = (theme: ThemeMode) => {
   }
 };
 
-// Force dark theme for admin and dashboard contexts
+// Force dark mode on all screens
 const getDefaultTheme = (): ThemeMode => {
-  // Check if we're in an admin context
-  if (typeof window !== 'undefined') {
-    const path = window.location.pathname;
-    if (path.startsWith('/admin') || path.includes('dashboard')) {
-      return 'dark';
-    }
-  }
-
-  // Check stored preference
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
-  if (stored === 'light' || stored === 'dark') {
-    return stored;
-  }
-
-  // Check system preference
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  return prefersDark ? 'dark' : 'light';
+  return 'dark';
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

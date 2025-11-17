@@ -884,7 +884,7 @@ const StudentProfile: React.FC = () => {
                         className="resize-none rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
                       />
                       <p className="text-sm text-muted-foreground">
-                        This information will help us provide personalized
+                        This information will help us provide Personalised
                         learning support and accommodations.
                       </p>
                     </motion.div>

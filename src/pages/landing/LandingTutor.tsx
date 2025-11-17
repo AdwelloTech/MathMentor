@@ -117,11 +117,13 @@ function LandingTutor() {
                 className="mt-4 sm:mt-6 md:mt-14 lg:mt-8 xl:mt-10 2xl:mt-12"
                 style={{ transform: "translateY(-30px)" }}
               >
-                <img
-                  src="/tutor/tutor-hero-button.webp"
-                  alt="Become a Tutor button"
-                  className="w-auto h-auto max-w-[180px] sm:max-w-[220px] md:max-w-[260px] xl:max-w-[300px] 2xl:max-w-[340px] cursor-pointer hover:scale-105 transition-transform duration-200"
-                />
+                <a href="/register" aria-label="Become a Tutor">
+                  <img
+                    src="/tutor/tutor-hero-button.webp"
+                    alt="Become a Tutor button"
+                    className="w-auto h-auto max-w-[180px] sm:max-w-[220px] md:max-w-[260px] xl:max-w-[300px] 2xl:max-w-[340px] cursor-pointer hover:scale-105 transition-transform duration-200"
+                  />
+                </a>
               </div>
             </div>
           </div>

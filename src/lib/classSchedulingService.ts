@@ -77,7 +77,7 @@ export const classSchedulingService = {
           _id: '1',
           id: '1',
           name: 'One-on-One',
-          description: 'Personalized 1-on-1 tutoring session',
+          description: 'Personalised 1-on-1 tutoring session',
           duration_minutes: 60,
           max_students: 1,
           price_per_session: 50,

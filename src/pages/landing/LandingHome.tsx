@@ -119,12 +119,12 @@ function LandingHome() {
                     textShadow: "1px 1px 2px #FFFFFF",
                   }}
                 >
-                  personalized learning experiences.
+                  Personalised learning experiences.
                 </p>
               </div>
               {/* CTA button anchored under board */}
               <a
-                href="#start"
+                href="/register"
                 aria-label="Start Free Trial"
                 className="absolute left-1/2 transform -translate-x-1/2 hover:scale-105 transition-transform duration-200 bottom-[-15%] sm:bottom-[-3%]"
               >
@@ -168,11 +168,11 @@ function LandingHome() {
 
               {/* Desktop Layout - 3 cards in a row */}
               <div className="hidden lg:flex lg:flex-row justify-center items-stretch gap-4 xl:gap-6 2xl:gap-8 w-full">
-                {/* Card 1 - Personalized Learning Paths */}
+                {/* Card 1 - Personalised Learning Paths */}
                 <div className="relative w-full flex-1 lg:w-[35%] xl:w-[36%] 2xl:w-[38%] hover:scale-105 transition-transform duration-200">
                   <img
                     src="/home/section2.webp"
-                    alt="Personalized Learning Paths"
+                    alt="Personalised Learning Paths"
                     className="w-full h-auto object-contain"
                     loading="lazy"
                   />
@@ -181,7 +181,7 @@ function LandingHome() {
                       className="text-xl xl:text-2xl 2xl:text-4xl font-clash-bold text-center mt-6 leading-tight"
                       style={{ color: "#A25B2B" }}
                     >
-                      Personalized<br />Learning<br />Paths
+                      Personalised<br />Learning<br />Paths
                     </h3>
                   </div>
                 </div>
@@ -225,11 +225,11 @@ function LandingHome() {
 
               {/* Tablet Layout - Single column with smaller cards */}
               <div className="hidden md:flex lg:hidden flex-col items-center gap-20">
-                {/* Card 1 - Personalized Learning Paths */}
+                {/* Card 1 - Personalised Learning Paths */}
                 <div className="relative w-full max-w-[500px]">
                   <img
                     src="/home/section2.webp"
-                    alt="Personalized Learning Paths"
+                    alt="Personalised Learning Paths"
                     className="w-full h-auto object-contain scale-110"
                     loading="lazy"
                   />
@@ -238,7 +238,7 @@ function LandingHome() {
                       className="text-base font-clash-bold text-center mb-3"
                       style={{ color: "#A25B2B" }}
                     >
-                      Personalized<br />Learning<br />Paths
+                      Personalised<br />Learning<br />Paths
                     </h3>
                   </div>
                 </div>
@@ -278,10 +278,10 @@ function LandingHome() {
 
               {/* Mobile Layout - Single column */}
               <div className="md:hidden flex flex-col items-center gap-24 sm:gap-28">
-                {/* Card 1 - Personalized Learning Paths */}
+                {/* Card 1 - Personalised Learning Paths */}
                 <div className="relative w-full max-w-[350px] sm:max-w-[400px]">
                   <img src="/home/section2.webp"
-                    alt="Personalized Learning Paths"
+                    alt="Personalised Learning Paths"
                     className="w-full h-auto object-contain" loading="lazy"
                   />
                   <div className="absolute inset-0 flex flex-col justify-center items-center p-6 sm:p-8 testimonial-content">
@@ -289,7 +289,7 @@ function LandingHome() {
                       className="text-lg sm:text-xl font-clash-bold text-center mb-2 sm:mb-3 leading-tight"
                       style={{ color: "#A25B2B" }}
                     >
-                      Personalized<br />Learning<br />Paths
+                      Personalised<br />Learning<br />Paths
                     </h3>
                   </div>
                 </div>
@@ -1092,15 +1092,17 @@ function LandingHome() {
 
               {/* See More Button */}
               <div className="flex justify-center mt-6 sm:mt-8 md:mt-10">
-                <div className="relative hover:scale-105 transition-transform duration-200">
-                  <img src="/home/seemore.webp"
-                    alt="See More button"
-                    className="w-auto h-auto max-w-[160px] sm:max-w-[200px] md:max-w-[220px] lg:max-w-[240px] xl:max-w-[260px] 2xl:max-w-[280px]" loading="lazy"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-white font-bold font-clash text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl">See More</span>
+                <a href="/about" className="hover:scale-105 transition-transform duration-200">
+                  <div className="relative">
+                    <img src="/home/seemore.webp"
+                      alt="See More button"
+                      className="w-auto h-auto max-w-[160px] sm:max-w-[200px] md:max-w-[220px] lg:max-w-[240px] xl:max-w-[260px] 2xl:max-w-[280px]" loading="lazy"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-white font-bold font-clash text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl">See More</span>
+                    </div>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
           </div>

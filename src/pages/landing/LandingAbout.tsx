@@ -113,7 +113,7 @@ function LandingAbout() {
                   className="text-sm sm:text-base md:text-base xl:text-base 2xl:text-lg 3xl:text-xl font-clash text-white leading-tight"
                   style={{ textShadow: "2px 2px 4px rgba(0, 0, 0, 0.8)" }}
                 >
-                  personalized learning
+                  Personalised learning
                 </p>
                 <p
                   className="text-sm sm:text-base md:text-base xl:text-base 2xl:text-lg 3xl:text-xl font-clash text-white leading-tight"
@@ -162,7 +162,7 @@ function LandingAbout() {
                     className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-xl font-clash-bold text-center mb-2 sm:mb-3 md:mb-4 leading-tight"
                     style={{ color: "#A25B2B" }}
                   >
-                    Personalized Learning Paths
+                    Personalised Learning Paths
                   </h3>
                   <p
                     className="text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-sans text-center leading-relaxed"
@@ -250,7 +250,7 @@ function LandingAbout() {
                     }}
                   >
                     Learn from experienced math educators who provide
-                    personalized support and mentorship
+                    Personalised support and mentorship
                   </p>
                 </div>
               </div>
@@ -524,7 +524,8 @@ function LandingAbout() {
                 </div>
 
                 {/* Button */}
-                <button
+                <a href="/register"
+                  aria-label="Start Free Trial"
                   className="about-master-math-button mt-120 relative cursor-pointer hover:scale-105 transition-transform duration-200 2xl:mt-200"
                   style={{
                     marginBottom: "-2.5rem",
@@ -538,7 +539,7 @@ function LandingAbout() {
                     className="w-auto h-auto max-w-[280px] md:max-w-[380px] lg:max-w-[360px]"
                     style={{ minWidth: "160px" }} loading="lazy"
                   />
-                </button>
+                </a>
               </div>
             </div>
           </div>
@@ -599,7 +600,8 @@ function LandingAbout() {
                 </div>
 
                 {/* Button - Larger for all tablets, positioned lower */}
-                <button
+                <a href="/register"
+                  aria-label="Start Free Trial"
                   className="absolute left-1/2 transform -translate-x-1/2 cursor-pointer hover:scale-105 transition-transform duration-200"
                   style={{
                     bottom: "2%",
@@ -613,7 +615,7 @@ function LandingAbout() {
                     className="w-auto h-auto max-w-[200px] md:max-w-[240px]"
                     style={{ minWidth: "160px" }} loading="lazy"
                   />
-                </button>
+                </a>
               </div>
             </div>
           </div>
@@ -657,10 +659,12 @@ function LandingAbout() {
 
                 {/* Button */}
                 <div className="mt-4 sm:mt-[-50px] [@media(max-width:420px)]:mt-[-60px] [@media(max-width:348px)]:mt-[-300px] ">
-                  <img src="/About/modern-card-button.webp"
-                    alt="Start Free Trial button"
-                    className="w-auto h-auto max-w-[160px] sm:max-w-[200px]" loading="lazy"
-                  />
+                  <a href="/register" aria-label="Start Free Trial">
+                    <img src="/About/modern-card-button.webp"
+                      alt="Start Free Trial button"
+                      className="w-auto h-auto max-w-[160px] sm:max-w-[200px] cursor-pointer hover:scale-105 transition-transform duration-200" loading="lazy"
+                    />
+                  </a>
                 </div>
               </div>
             </div>

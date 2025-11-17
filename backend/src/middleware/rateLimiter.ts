@@ -14,6 +14,8 @@ export const apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Trust proxy configuration for production deployments
+  trustProxy: true,
   // Skip rate limiting for certain IPs (optional - for testing)
   skip: (req: Request) => {
     // Skip if from trusted proxy or internal network (optional)
@@ -36,6 +38,7 @@ export const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: true,
   handler: (req: Request, res: Response) => {
     res.status(429).json({
       success: false,
@@ -58,7 +61,8 @@ export const uploadLimiter = rateLimit({
     error: 'Too many file uploads. Please try again later.'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  trustProxy: true
 });
 
 /**
@@ -73,7 +77,8 @@ export const passwordResetLimiter = rateLimit({
     error: 'Too many password reset attempts. Please try again in an hour.'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  trustProxy: true
 });
 
 /**
@@ -88,7 +93,8 @@ export const otpLimiter = rateLimit({
     error: 'Too many verification attempts. Please try again later.'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  trustProxy: true
 });
 
 /**
@@ -103,7 +109,8 @@ export const emailLimiter = rateLimit({
     error: 'Too many email requests. Please try again later.'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  trustProxy: true
 });
 
 /**
@@ -122,7 +129,8 @@ export const createRateLimiter = (
       error: message
     },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    trustProxy: true
   });
 };
 

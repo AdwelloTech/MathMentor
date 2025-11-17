@@ -148,7 +148,7 @@ console.log('Current step:', currentStep);
 
 ## Future Enhancements
 - A/B testing for different tutorial flows
-- Personalized tutorial content based on user preferences
+- Personalised tutorial content based on user preferences
 - Tutorial analytics and completion rates
 - Multi-language support
 - Video tutorial integration

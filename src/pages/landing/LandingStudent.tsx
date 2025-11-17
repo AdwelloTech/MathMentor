@@ -237,7 +237,7 @@ const LandingStudent: React.FC = () => {
                   </li>
                 </ul>
               </div>
-              <div className="plan-btn absolute bottom-[20.5%] left-[49%] text-white font-clash-bold cursor-pointer text-xs sm:text-sm md:text-base lg:text-lg xl:text-base" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)', transform: 'translateX(-50%)', pointerEvents: 'auto', zIndex: 5 }}>Get Started Free</div>
+              <a href="/register" className="plan-btn absolute bottom-[20.5%] left-[49%] text-white font-clash-bold cursor-pointer text-xs sm:text-sm md:text-base lg:text-lg xl:text-base hover:text-yellow-300 transition-colors" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)', transform: 'translateX(-50%)', pointerEvents: 'auto', zIndex: 5 }}>Get Started Free</a>
             </div>
             {/* Standard Plan Card */}
             <div className="relative w-full flex justify-center items-center">
@@ -265,7 +265,7 @@ const LandingStudent: React.FC = () => {
                   </li>
                 </ul>
               </div>
-              <div className="plan-btn absolute bottom-[20.5%] left-[50%] text-white font-clash-bold cursor-pointer text-xs sm:text-sm md:text-base lg:text-lg xl:text-base" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)', transform: 'translateX(-50%)', pointerEvents: 'auto', zIndex: 5 }}>Choose Standard</div>
+              <a href="/register" className="plan-btn absolute bottom-[20.5%] left-[50%] text-white font-clash-bold cursor-pointer text-xs sm:text-sm md:text-base lg:text-lg xl:text-base hover:text-yellow-300 transition-colors" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)', transform: 'translateX(-50%)', pointerEvents: 'auto', zIndex: 5 }}>Choose Standard</a>
             </div>
             {/* Premium Plan Card */}
             <div className="relative w-full flex justify-center items-center">
@@ -290,7 +290,7 @@ const LandingStudent: React.FC = () => {
                   </li>
                 </ul>
               </div>
-              <div className="plan-btn absolute bottom-[20.5%] left-[55%] text-white font-clash-bold cursor-pointer text-xs sm:text-sm md:text-base lg:text-lg xl:text-base" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)', transform: 'translateX(-50%)', pointerEvents: 'auto', zIndex: 5 }}>Go Premium</div>
+              <a href="/register" className="plan-btn absolute bottom-[20.5%] left-[55%] text-white font-clash-bold cursor-pointer text-xs sm:text-sm md:text-base lg:text-lg xl:text-base hover:text-yellow-300 transition-colors" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)', transform: 'translateX(-50%)', pointerEvents: 'auto', zIndex: 5 }}>Go Premium</a>
             </div>
           </div>
         </div>

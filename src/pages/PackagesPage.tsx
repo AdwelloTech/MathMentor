@@ -446,7 +446,7 @@ const PackagesPage: React.FC = () => {
                       One-to-One Sessions
                     </h4>
                     <p className="text-slate-300 text-sm">
-                      Personalized attention from expert tutors
+                      Personalised attention from expert tutors
                     </p>
                   </div>
                 </div>

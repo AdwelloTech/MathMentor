@@ -355,7 +355,7 @@ const StudentAIGenerateQuizPage: React.FC = () => {
                 AI Quiz Generator
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Generate personalized quizzes using AI with context from
+                Generate Personalised quizzes using AI with context from
                 admin-uploaded PDFs
               </p>
             </motion.div>

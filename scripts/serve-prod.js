@@ -9,11 +9,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.argv[2] || 3001;
 
-// Proxy API requests to the backend
+// Proxy API requests to the production backend
 app.use('/api', createProxyMiddleware({
-  target: 'http://localhost:5001',
+  target: 'https://mathmentor.co.uk/api',
   changeOrigin: true,
-  pathRewrite: (path, req) => `/api${path}` // Prepend /api to maintain full path
+  secure: true,
+  pathRewrite: (path, req) => path.replace(/^\/api/, '') // Strip /api prefix since backend is mounted at /api
 }));
 
 // Serve static files from the production build directory

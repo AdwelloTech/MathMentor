@@ -201,7 +201,7 @@ const AdminDashboard: React.FC = () => {
       description: "Registered students",
       change: `${stats.recent_signups || 0} this week`,
       changeType: "positive" as const,
-      link: "/dashboard/admin/students",
+      link: "/admin/students",
     },
     {
       name: "Active Tutors",
@@ -211,7 +211,7 @@ const AdminDashboard: React.FC = () => {
       description: "Approved tutors",
       change: `${stats.total_tutors || 0} total`,
       changeType: "positive" as const,
-      link: "/dashboard/admin/tutors",
+      link: "/admin/tutors",
     },
     {
       name: "Total Quizzes",
@@ -221,7 +221,7 @@ const AdminDashboard: React.FC = () => {
       description: "Available quizzes",
       change: "Available",
       changeType: "positive" as const,
-      link: "/dashboard/admin/quizzes",
+      link: "/admin/quizzes",
     },
     {
       name: "Quiz PDFs",
@@ -231,7 +231,7 @@ const AdminDashboard: React.FC = () => {
       description: "Uploaded materials",
       change: "Available",
       changeType: "positive" as const,
-      link: "/dashboard/admin/quiz-pdfs",
+      link: "/admin/quiz-pdfs",
     },
     {
       name: "Flashcard Sets",
@@ -241,7 +241,7 @@ const AdminDashboard: React.FC = () => {
       description: "Total flashcard sets",
       change: "Available",
       changeType: "positive" as const,
-      link: "/dashboard/admin/flashcards",
+      link: "/admin/flashcards",
     },
     {
       name: "Recent Sign-ups",
@@ -251,7 +251,7 @@ const AdminDashboard: React.FC = () => {
       description: "Last 7 days",
       change: "New students",
       changeType: "positive" as const,
-      link: "/dashboard/admin/students",
+      link: "/admin/students",
     },
   ] : [];
 
@@ -263,9 +263,9 @@ const AdminDashboard: React.FC = () => {
       icon: AcademicCapIcon,
       color: "from-green-600 to-green-700",
       actions: [
-        { label: "Review Applications", count: null, link: "/dashboard/admin/tutor-applications" },
-        { label: "ID Verifications", count: null, link: "/dashboard/admin/id-verifications" },
-        { label: "Manage Tutors", count: stats?.active_tutors || 0, link: "/dashboard/admin/tutors" },
+        { label: "Review Applications", count: null, link: "/admin/tutor-applications" },
+        { label: "ID Verifications", count: null, link: "/admin/id-verifications" },
+        { label: "Manage Tutors", count: stats?.active_tutors || 0, link: "/admin/tutors" },
       ],
     },
     {
@@ -274,8 +274,8 @@ const AdminDashboard: React.FC = () => {
       icon: UsersIcon,
       color: "from-blue-600 to-blue-700",
       actions: [
-        { label: "All Students", count: stats?.total_students || 0, link: "/dashboard/admin/students" },
-        { label: "Recent Sign-ups", count: stats?.recent_signups || 0, link: "/dashboard/admin/students?filter=recent" },
+        { label: "All Students", count: stats?.total_students || 0, link: "/admin/students" },
+        { label: "Recent Sign-ups", count: stats?.recent_signups || 0, link: "/admin/students?filter=recent" },
         { label: "Package Management", count: null, link: "/packages" },
       ],
     },
@@ -285,9 +285,9 @@ const AdminDashboard: React.FC = () => {
       icon: DocumentTextIcon,
       color: "from-purple-600 to-purple-700",
       actions: [
-        { label: "Upload Quiz PDFs", count: stats?.total_quiz_pdfs || 0, link: "/dashboard/admin/quiz-pdfs" },
-        { label: "Manage Quizzes", count: stats?.total_quizzes || 0, link: "/dashboard/admin/quizzes" },
-        { label: "Flashcard Sets", count: stats?.total_flashcard_sets || 0, link: "/dashboard/admin/flashcards" },
+        { label: "Upload Quiz PDFs", count: stats?.total_quiz_pdfs || 0, link: "/admin/quiz-pdfs" },
+        { label: "Manage Quizzes", count: stats?.total_quizzes || 0, link: "/admin/quizzes" },
+        { label: "Flashcard Sets", count: stats?.total_flashcard_sets || 0, link: "/admin/flashcards" },
       ],
     },
     {
@@ -296,9 +296,9 @@ const AdminDashboard: React.FC = () => {
       icon: Cog6ToothIcon,
       color: "from-gray-600 to-gray-700",
       actions: [
-        { label: "Manage Subjects", count: null, link: "/dashboard/admin/subjects" },
-        { label: "Grade Levels", count: null, link: "/dashboard/admin/grade-levels" },
-        { label: "System Config", count: null, link: "/dashboard/admin/settings" },
+        { label: "Manage Subjects", count: null, link: "/admin/subjects" },
+        { label: "Grade Levels", count: null, link: "/admin/grade-levels" },
+        { label: "System Config", count: null, link: "/admin/settings" },
       ],
     },
   ];
@@ -309,56 +309,56 @@ const AdminDashboard: React.FC = () => {
       title: "Review Applications",
       description: "Check tutor applications",
       icon: CheckCircleIcon,
-      link: "/dashboard/admin/tutor-applications",
+      link: "/admin/tutor-applications",
       badge: null,
     },
     {
       title: "Verify IDs",
       description: "Process ID verifications",
       icon: IdentificationIcon,
-      link: "/dashboard/admin/id-verifications",
+      link: "/admin/id-verifications",
       badge: null,
     },
     {
       title: "Upload Quiz PDF",
       description: "Add new quiz materials",
       icon: CloudArrowUpIcon,
-      link: "/dashboard/admin/quiz-pdfs",
+      link: "/admin/quiz-pdfs",
       badge: null,
     },
     {
       title: "Manage Students",
       description: "View student accounts",
       icon: UsersIcon,
-      link: "/dashboard/admin/students",
+      link: "/admin/students",
       badge: null,
     },
     {
       title: "Create Flashcards",
       description: "Add flashcard sets",
       icon: BookOpenIcon,
-      link: "/dashboard/admin/flashcards",
+      link: "/admin/flashcards",
       badge: null,
     },
     {
       title: "Manage Tutors",
       description: "View active tutors",
       icon: AcademicCapIcon,
-      link: "/dashboard/admin/tutors",
+      link: "/admin/tutors",
       badge: null,
     },
     {
       title: "View Reports",
       description: "Analytics and insights",
       icon: ChartBarIcon,
-      link: "/dashboard/admin/reports",
+      link: "/admin/reports",
       badge: null,
     },
     {
       title: "System Settings",
       description: "Configure platform",
       icon: Cog6ToothIcon,
-      link: "/dashboard/admin/settings",
+      link: "/admin/settings",
       badge: null,
     },
   ];
@@ -436,7 +436,7 @@ const AdminDashboard: React.FC = () => {
                   variant="outline"
                   size="lg"
                   className="border-[#16803D] text-[#34A853] hover:bg-green-50/10"
-                  onClick={() => navigate("/dashboard/admin/reports")}
+                  onClick={() => navigate("/admin/reports")}
                 >
                   <ChartBarIcon className="w-5 h-5 mr-2" />
                   View Reports
@@ -446,7 +446,7 @@ const AdminDashboard: React.FC = () => {
                     variant="ghost"
                     size="lg"
                     className="relative"
-                    onClick={() => navigate("/dashboard/admin/notifications")}
+                    onClick={() => navigate("/admin/notifications")}
                   >
                     <BellAlertIcon className="w-6 h-6 text-slate-300" />
                   </Button>
@@ -639,7 +639,7 @@ const AdminDashboard: React.FC = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate("/dashboard/admin/tutor-applications")}
+                    onClick={() => navigate("/admin/tutor-applications")}
                   >
                     View All
                   </Button>
@@ -651,7 +651,7 @@ const AdminDashboard: React.FC = () => {
                     <div
                       key={app.id}
                       className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
-                      onClick={() => navigate("/dashboard/admin/tutor-applications")}
+                      onClick={() => navigate("/admin/tutor-applications")}
                     >
                       <div className="flex-1">
                         <p className="text-sm font-medium text-white">{app.name}</p>
@@ -688,7 +688,7 @@ const AdminDashboard: React.FC = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate("/dashboard/admin/id-verifications")}
+                    onClick={() => navigate("/admin/id-verifications")}
                   >
                     View All
                   </Button>
@@ -700,7 +700,7 @@ const AdminDashboard: React.FC = () => {
                     <div
                       key={ver.id}
                       className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
-                      onClick={() => navigate("/dashboard/admin/id-verifications")}
+                      onClick={() => navigate("/admin/id-verifications")}
                     >
                       <div className="flex-1">
                         <p className="text-sm font-medium text-white">{ver.name}</p>
@@ -749,7 +749,7 @@ const AdminDashboard: React.FC = () => {
                     <div
                       key={student.id}
                       className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
-                      onClick={() => navigate("/dashboard/admin/students")}
+                      onClick={() => navigate("/admin/students")}
                     >
                       <div className="flex-1">
                         <p className="text-sm font-medium text-white">{student.name}</p>

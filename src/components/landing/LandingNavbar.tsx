@@ -11,7 +11,7 @@ export const LandingNavbar = () => {
   const handleMyAccountClick = () => {
     // Check if admin is logged in
     if (isAdminLoggedIn) {
-      navigate('/admin');
+      navigate('/dashboard/admin');
       return;
     }
 
@@ -21,7 +21,7 @@ export const LandingNavbar = () => {
       const userRole = profile?.role || user.role;
       switch (userRole) {
         case 'admin':
-          navigate('/admin');
+          navigate('/dashboard/admin');
           break;
         case 'principal':
           navigate('/principal');

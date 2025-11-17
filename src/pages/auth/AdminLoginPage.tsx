@@ -30,7 +30,7 @@ const AdminLoginPage: React.FC = () => {
       
       const success = await loginAsAdmin(data.email, data.password);
       if (success) {
-        navigate('/admin');
+        navigate('/dashboard/admin');
       } else {
         setError('root', {
           message: 'Invalid admin credentials',

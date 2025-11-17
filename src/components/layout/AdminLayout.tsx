@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   AcademicCapIcon,
   UserIcon,
@@ -20,22 +20,22 @@ const AdminLayout: React.FC = () => {
 
   // Admin navigation items for mobile
   const adminNavigation = [
-    { name: "Dashboard", href: "/admin", icon: AcademicCapIcon },
-    { name: "Tutors", href: "/admin/tutors", icon: UserIcon },
-    { name: "Apps", href: "/admin/tutor-applications", icon: DocumentIcon },
-    { name: "ID Verify", href: "/admin/id-verifications", icon: IdentificationIcon },
-    { name: "Students", href: "/admin/students", icon: UserGroupIcon },
-    { name: "Quiz PDFs", href: "/admin/quiz-pdfs", icon: DocumentIcon },
-    { name: "Flashcards", href: "/admin/flashcards", icon: BookOpenIcon },
-    { name: "Settings", href: "/admin/settings", icon: Cog6ToothIcon },
-    { name: "Reports", href: "/admin/reports", icon: ChartBarIcon },
-    { name: "Profile", href: "/profile", icon: UserCircleIcon },
+    { name: "Dashboard", href: "/dashboard/admin", icon: AcademicCapIcon },
+    { name: "Tutors", href: "/dashboard/admin/tutors", icon: UserIcon },
+    { name: "Apps", href: "/dashboard/admin/tutor-applications", icon: DocumentIcon },
+    { name: "ID Verify", href: "/dashboard/admin/id-verifications", icon: IdentificationIcon },
+    { name: "Students", href: "/dashboard/admin/students", icon: UserGroupIcon },
+    { name: "Quiz PDFs", href: "/dashboard/admin/quiz-pdfs", icon: DocumentIcon },
+    { name: "Flashcards", href: "/dashboard/admin/flashcards", icon: BookOpenIcon },
+    { name: "Settings", href: "/dashboard/admin/settings", icon: Cog6ToothIcon },
+    { name: "Reports", href: "/dashboard/admin/reports", icon: ChartBarIcon },
+    { name: "Profile", href: "/dashboard/profile", icon: UserCircleIcon },
   ];
 
   const isActive = (href: string) => location.pathname === href;
 
   // If we're on the main admin route, show the dashboard
-  if (location.pathname === "/admin" || location.pathname === "/admin/") {
+  if (location.pathname === "/dashboard/admin" || location.pathname === "/dashboard/admin/") {
     return (
       <div className="relative">
         <AdminDashboard />

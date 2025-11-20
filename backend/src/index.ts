@@ -102,6 +102,8 @@ app.use(cors({
       'https://72.60.20.140:5001',
       'https://offline-coal-difference-luggage.trycloudflare.com',
       'https://scenario-sbjct-pursuit-language.trycloudflare.com',
+      'https://mathmentor.co.uk',
+      'https://www.mathmentor.co.uk',
       process.env.FRONTEND_URL
     ].filter(Boolean);
 

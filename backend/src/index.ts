@@ -104,6 +104,8 @@ app.use(cors({
       'https://scenario-sbjct-pursuit-language.trycloudflare.com',
       'https://mathmentor.co.uk',
       'https://www.mathmentor.co.uk',
+      'mathmentor.co.uk',
+      'www.mathmentor.co.uk',
       process.env.FRONTEND_URL
     ].filter(Boolean);
 

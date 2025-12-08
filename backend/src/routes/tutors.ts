@@ -4,6 +4,12 @@ import { authenticate } from '../middleware/auth';
 import { TutorService } from '../services/tutorService';
 import { uploadInstances, FileUploadService } from '../services/fileUploadService';
 
+console.log('🎯 TUTORS ROUTES LOADED - Available routes:');
+console.log('  GET /api/tutors/applications');
+console.log('  POST /api/tutors/applications');
+console.log('  PUT /api/tutors/applications/:userId');
+console.log('  POST /api/tutors/id-verification');
+
 // Validation schema for tutor application
 const tutorApplicationSchema = Joi.object({
   user_id: Joi.string().required(),
@@ -72,15 +78,34 @@ router.post('/applications', authenticate, async (req, res) => {
 
 // Get tutor application by user ID
 router.get('/applications', authenticate, async (req, res) => {
+  console.log('🚨 TUTORS GET /applications ROUTE CALLED!');
+  console.log('📨 Request details:', {
+    method: req.method,
+    url: req.originalUrl,
+    headers: {
+      authorization: req.headers.authorization ? 'Bearer [TOKEN]' : 'No auth header',
+      'user-agent': req.headers['user-agent']
+    }
+  });
+
   try {
     if (!req.user) {
+      console.log('❌ API: No req.user - authentication failed');
       return res.status(401).json({
         success: false,
         error: 'Authentication required'
       });
     }
 
+    console.log('✅ API: Authentication passed');
+    console.log(`🔍 API: Tutor checking application status - User ID: ${req.user.id} (Length: ${req.user.id?.length})`);
+    console.log('👤 API: Full req.user object:', {
+      id: req.user.id,
+      email: req.user.email,
+      role: req.user.role
+    });
     const applications = await TutorService.getTutorApplications(req.user.id);
+    console.log(`📊 API: Found ${applications.length} applications for user ${req.user.id}`);
 
     res.json({
       success: true,

@@ -76,7 +76,7 @@ const ManageTutorsPage: React.FC = () => {
         toast.error("Failed to load tutor statistics");
         setStats({
           total: 0,
-          active: 0,
+          online: 0,
           inactive: 0,
           approved: 0,
           pending: 0,
@@ -324,7 +324,7 @@ const ManageTutorsPage: React.FC = () => {
                       </div>
                       <div>
                         <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
-                          Active
+                          Online
                         </CardTitle>
                       </div>
                     </div>
@@ -332,7 +332,7 @@ const ManageTutorsPage: React.FC = () => {
                   <CardContent className="pt-0">
                     <div className="pl-0">
                       <div className="text-3xl font-bold text-card-foreground ml-3">
-                        {stats.active}
+                        {stats.online}
                       </div>
                     </div>
                   </CardContent>

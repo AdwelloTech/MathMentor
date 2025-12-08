@@ -131,6 +131,12 @@ export const classSchedulingService = {
         if (filters?.class_type) queryParams.append('class_type', filters.class_type);
 
         const response = await apiClient.get<any[]>(`/api/classes/available?${queryParams}`);
+        
+        // Handle case where response might not be an array
+        if (!Array.isArray(response)) {
+          console.error('Expected array but got:', typeof response, response);
+          return [];
+        }
 
         // Transform backend response to match ClassSearchResult format
         return response.map((result: any): ClassSearchResult => ({

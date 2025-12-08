@@ -154,8 +154,9 @@ const RegisterPage: React.FC = () => {
       });
     } catch (error: any) {
       console.error("Registration error:", error);
+      // Set form error as backup - the AuthContext handleAuthError should show toast
       setError("root", {
-        message: error.message || "Registration failed",
+        message: error.message || "Registration failed. Please check the details above.",
       });
     } finally {
       setIsLoading(false);
@@ -576,7 +577,7 @@ const RegisterPage: React.FC = () => {
               })}
               type="tel"
               id="phone"
-              placeholder="Enter your phone number"
+              placeholder="e.g., +44 7123 456789"
               className={`bg-input border-border text-foreground placeholder:text-muted-foreground focus:ring-primary ${
                 errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""
               }`}

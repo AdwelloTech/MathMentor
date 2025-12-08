@@ -38,8 +38,24 @@ import ActiveInstantSessionButton from "@/components/tutor/dashboard/ActiveInsta
 import InstantSessionRequestPopup from "@/components/tutor/InstantSessionRequestPopup";
 
 const TutorDashboard: React.FC = () => {
+  console.log('🎯 TUTOR DASHBOARD COMPONENT MOUNTED');
   const navigate = useNavigate();
   const { user, profile, updateProfile } = useAuth();
+
+  // Debug user object
+  console.log('👤 USER OBJECT DEBUG:', {
+    user: user ? {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      idLength: user.id?.length
+    } : 'NULL',
+    profile: profile ? {
+      id: profile.id,
+      user_id: profile.user_id,
+      role: profile.role
+    } : 'NULL'
+  });
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<TutorApplication | null>(null);
   const [idVerification, setIdVerification] = useState<any>(null);
@@ -56,6 +72,7 @@ const TutorDashboard: React.FC = () => {
 
   // Check for existing application and ID verification on mount
   useEffect(() => {
+    console.log('🎓 TUTOR LOGGED IN - User ID:', user?.id, 'Email:', user?.email, 'Role:', profile?.role);
     checkApplication();
     checkIDVerification();
   }, [user]);
@@ -72,19 +89,28 @@ const TutorDashboard: React.FC = () => {
 
 
   const checkApplication = async () => {
+    console.log('🚀 CHECK APPLICATION FUNCTION CALLED');
     if (!user) {
+      console.log('❌ CHECK APPLICATION: No user object, exiting');
       setLoading(false);
       return;
     }
 
+    console.log('👤 CHECK APPLICATION: User found - ID:', user.id, 'Email:', user.email, 'ID Length:', user.id?.length);
     try {
+      console.log('🔍 Checking application status for user:', user.id);
+
+      // Debug: Log what we're about to send
+      console.log('📡 ABOUT TO MAKE API CALL to /api/tutors/applications');
       // Use apiClient for consistent URL handling
       const result = await apiClient.get<any[]>('/api/tutors/applications');
       if (result && result.length > 0) {
         // Get the most recent application
         const mostRecentApplication = result[0];
+        console.log('📄 Application found - Status:', mostRecentApplication.application_status);
         setApplication(mostRecentApplication);
       } else {
+        console.log('❌ No application found for user:', user.id);
         setApplication(null);
       }
     } catch (error: any) {

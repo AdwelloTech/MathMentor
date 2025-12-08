@@ -296,14 +296,13 @@ const ActiveSessionFloatingButton: React.FC<ActiveSessionFloatingButtonProps> = 
                                 dateOnly = dateStr;
                               }
 
-                              // Try the formatted version first
+                              // Try the formatted version first (uses GMT)
                               try {
                                 return sessionUtils.formatSessionTime(dateOnly, timeStr);
                               } catch (formatError) {
                                 console.error("Session utils format error:", formatError);
-                                // Fallback to simple date/time display
-                                const date = new Date(dateOnly);
-                                return `${date.toLocaleDateString()} at ${timeStr}`;
+                                // Fallback to simple date/time display (GMT)
+                                return `${dateOnly} at ${timeStr} GMT`;
                               }
                             }
                             return "Time not available";

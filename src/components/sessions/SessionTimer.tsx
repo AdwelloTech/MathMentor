@@ -216,11 +216,22 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
     }
   }, [isSessionEnded, showRatingModal, ratingSubmitted, hasRated, ratingModalShown]);
 
-  // Format time display
+  // Format time display (MM:SS format for active sessions)
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
+
+  // Format time in countdown clock format (HH:MM:SS)
+  const formatTimeCountdown = (seconds: number): string => {
+    if (seconds <= 0) return "00:00:00";
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Handle session cancellation (before session starts)
@@ -461,7 +472,12 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
           <div className="flex items-center justify-between">
             {/* Timer Display */}
             <div className="text-xl font-bold text-gray-900 font-mono">
-              {isSessionCancelled ? "0:00" : formatTime(timeRemaining)}
+              {isSessionCancelled 
+                ? "00:00:00" 
+                : !isSessionActive && timeRemaining > 0
+                  ? formatTimeCountdown(timeRemaining)
+                  : formatTime(timeRemaining)
+              }
             </div>
 
             {/* Action Button - Show Cancel before session starts, End Session when active */}

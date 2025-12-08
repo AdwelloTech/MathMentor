@@ -3,7 +3,7 @@ import { generateTokenPair, verifyRefreshToken } from '../utils/jwt';
 import { generateUniqueStudentCode } from '../utils/studentCode';
 import { EmailService } from './emailService';
 import bcrypt from 'bcryptjs';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 
 export interface RegisterData {
   firstName: string;
@@ -62,7 +62,6 @@ export class AuthService {
       password,
       role,
       phone,
-      isActive: true,
       emailVerified: false
     };
 
@@ -564,6 +563,10 @@ export class AuthService {
     // Apply updates
     console.log('Applying updates:', updateData);
     Object.assign(user, updateData);
+
+    // Mark profile as completed
+    user.profileCompleted = true;
+
     console.log('Saving user...');
     try {
       await user.save();
@@ -571,6 +574,51 @@ export class AuthService {
     } catch (saveError: any) {
       console.error('Error saving user:', saveError);
       throw saveError;
+    }
+
+    // Create or update profile record in profiles collection
+    console.log('Creating/updating profile record...');
+    const db = mongoose.connection.db!;
+    const profileData = {
+      user_id: user._id.toString(),
+      email: user.email,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      full_name: user.fullName,
+      role: user.role,
+      avatar_url: user.avatarUrl,
+      profile_image_url: user.profileImageUrl,
+      phone: user.phone,
+      address: user.address,
+      date_of_birth: user.dateOfBirth,
+      gender: user.gender,
+      is_active: user.isActive,
+      last_login: user.lastLogin,
+      created_at: user.createdAt,
+      updated_at: new Date(),
+      qualification: user.qualification,
+      experience_years: user.experienceYears,
+      hourly_rate: user.hourlyRate,
+      availability: user.availability,
+      bio: user.bio,
+      subjects: user.subjects,
+      specializations: user.specializations,
+      languages: user.languages,
+      certifications: user.certifications,
+      profile_completed: true
+    };
+
+    try {
+      await db.collection('profiles').updateOne(
+        { user_id: user._id.toString() },
+        { $set: profileData },
+        { upsert: true } // Create if doesn't exist, update if exists
+      );
+      console.log('Profile record created/updated successfully');
+    } catch (profileError: any) {
+      console.error('Error saving profile:', profileError);
+      // Don't throw here - user update succeeded, profile update failed
+      // This prevents profile completion from failing if profile save fails
     }
 
       return {

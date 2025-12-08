@@ -164,7 +164,7 @@ const AdminDashboard: React.FC = () => {
         // Set fallback data
         setStats({
           total_students: 0,
-          active_tutors: 0,
+          online_users: 0,
           total_quizzes: 0,
           total_quiz_pdfs: 0,
           total_flashcard_sets: 0,
@@ -205,7 +205,7 @@ const AdminDashboard: React.FC = () => {
     },
     {
       name: "Active Tutors",
-      value: stats.active_tutors || 0,
+      value: stats.online_users || 0,
       icon: AcademicCapIcon,
       color: "bg-purple-600",
       description: "Approved tutors",
@@ -265,7 +265,7 @@ const AdminDashboard: React.FC = () => {
       actions: [
         { label: "Review Applications", count: null, link: "/admin/tutor-applications" },
         { label: "ID Verifications", count: null, link: "/admin/id-verifications" },
-        { label: "Manage Tutors", count: stats?.active_tutors || 0, link: "/admin/tutors" },
+        { label: "Manage Tutors", count: stats?.online_users || 0, link: "/admin/tutors" },
       ],
     },
     {
@@ -342,7 +342,7 @@ const AdminDashboard: React.FC = () => {
     },
     {
       title: "Manage Tutors",
-      description: "View active tutors",
+      description: "Manage tutors and view online users",
       icon: AcademicCapIcon,
       link: "/admin/tutors",
       badge: null,

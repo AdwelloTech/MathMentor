@@ -3,6 +3,8 @@
 # Change to the project root directory
 cd "$(dirname "$0")/.."
 
+# Backend is now always built automatically
+
 echo "Starting MathMentor Production Environment..."
 echo "Frontend: http://localhost:3001"
 echo "Backend: http://localhost:5001"
@@ -14,6 +16,10 @@ cp backend/.env.prod backend/.env 2>/dev/null || echo "Warning: backend/.env.pro
 
 # Build the production frontend
 npm run build:prod
+
+# Build the backend
+echo "Building backend..."
+npm run --prefix backend build
 
 # Start production environment
 npx concurrently -n web,api -c green,yellow "node scripts/serve-prod.js 3001" "npm run --prefix backend start"

@@ -16,11 +16,18 @@ const router = express.Router();
 // Register new user - sends OTP to email
 router.post('/register', authLimiter, async (req, res) => {
   try {
+    console.log('🔍 REGISTRATION: Received registration request');
+    console.log('🔍 REGISTRATION: Request body:', JSON.stringify(req.body, null, 2));
+
     // Validate input
     const validatedData = validateOrThrow(registerSchema, req.body) as RegisterData;
 
+    console.log('🔍 REGISTRATION: Validation passed, registering user');
+
     // Register user (this will send OTP)
     const result = await AuthService.register(validatedData);
+
+    console.log('🔍 REGISTRATION: User registration successful:', result.email);
 
     res.status(201).json({
       success: true,
@@ -28,6 +35,10 @@ router.post('/register', authLimiter, async (req, res) => {
       data: { email: result.email }
     });
   } catch (error: any) {
+    console.log('❌ REGISTRATION: Error occurred:', error.message);
+    console.log('❌ REGISTRATION: Full error:', error);
+    console.log('❌ REGISTRATION: Request body that caused error:', JSON.stringify(req.body, null, 2));
+
     res.status(400).json({
       success: false,
       error: error.message
@@ -219,6 +230,12 @@ router.post('/login', authLimiter, async (req, res) => {
     // Login user
     const result = await AuthService.login({ email, password });
 
+    // AGGRESSIVE CACHE PREVENTION - Multiple headers to ensure no caching
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Cache-Prevent', 'true'); // Custom header to verify
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -360,6 +377,12 @@ router.get('/me', authenticate, async (req, res) => {
         error: 'User not found'
       });
     }
+
+    // AGGRESSIVE CACHE PREVENTION for /me endpoint
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Cache-Prevent', 'true');
 
     res.json({
       success: true,

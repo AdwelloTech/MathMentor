@@ -445,6 +445,7 @@ function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
 
   // Wait for both auth contexts to finish loading
   if (loading || adminLoading) {
+    console.log('⏳ PROTECTED ROUTE: Still loading auth - loading:', loading, 'adminLoading:', adminLoading, 'requiredRole:', requiredRole);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Math3DSpinner size="xl" text="Verifying access..." />

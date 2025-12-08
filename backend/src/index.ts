@@ -53,6 +53,10 @@ import parentsRoutes from './routes/parents';
 const app = express();
 const PORT = parseInt(process.env.PORT || '5000');
 
+// Trust proxy for reverse proxy setups (nginx, load balancers)
+// Set to 1 to trust only the first proxy (nginx), not unlimited proxies
+app.set('trust proxy', 1);
+
 // Connect to MongoDB
 connectDB();
 
@@ -112,7 +116,17 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static file serving for uploads
+// Static file serving for uploads with logging
+app.use('/uploads', (req, res, next) => {
+  console.log(`📁 UPLOADS REQUEST: ${req.method} ${req.originalUrl}`);
+  console.log(`📁 Headers:`, {
+    'user-agent': req.get('user-agent'),
+    'authorization': req.get('authorization') ? 'Bearer [PRESENT]' : 'NONE',
+    'referer': req.get('referer'),
+    'x-forwarded-for': req.get('x-forwarded-for')
+  });
+  next();
+});
 app.use('/uploads', express.static('uploads', {
   maxAge: '1d', // Cache for 1 day
   etag: true
@@ -144,19 +158,19 @@ app.use('/api/quizzes', cacheMiddleware(60000), quizRoutes); // 1 min cache
 app.use('/api/study-notes', cacheMiddleware(60000), studyNotesRoutes); // 1 min cache
 app.use('/api/messaging', messagingRoutes); // No cache for messaging
 app.use('/api/files', filesRoutes); // No cache for file uploads
-app.use('/api/quiz-pdfs', cacheMiddleware(300000), quizPdfsRoutes); // 5 min cache
-app.use('/api/classes', cacheMiddleware(60000), classesRoutes); // 1 min cache
-app.use('/api/bookings', cacheMiddleware(30000), bookingsRoutes); // 30 sec cache
-app.use('/api/subjects', cacheMiddleware(600000), subjectsRoutes); // 10 min cache
-app.use('/api/grade-levels', cacheMiddleware(600000), gradeLevelsRoutes); // 10 min cache
-app.use('/api/tutorial', cacheMiddleware(300000), tutorialRoutes); // 5 min cache
-app.use('/api/tutor-materials', cacheMiddleware(120000), tutorMaterialsRoutes); // 2 min cache
+app.use('/api/quiz-pdfs', quizPdfsRoutes);
+app.use('/api/classes', classesRoutes);
+app.use('/api/bookings', bookingsRoutes);
+app.use('/api/subjects', subjectsRoutes);
+app.use('/api/grade-levels', gradeLevelsRoutes);
+app.use('/api/tutorial', tutorialRoutes);
+app.use('/api/tutor-materials', tutorMaterialsRoutes);
 app.use('/api/profile-images', profileImagesRoutes); // No cache for images
-app.use('/api/tutors', cacheMiddleware(120000), tutorRoutes); // 2 min cache
-app.use('/api/admin', cacheMiddleware(30000), adminRoutes); // 30 sec cache
-app.use('/api/ratings', cacheMiddleware(120000), ratingsRoutes); // 2 min cache
+app.use('/api/tutors', tutorRoutes); // Removed 2 min cache
+app.use('/api/admin', adminRoutes);
+app.use('/api/ratings', ratingsRoutes);
 app.use('/api/instant-sessions', instantSessionsRoutes); // No cache for real-time sessions
-app.use('/api/parents', cacheMiddleware(60000), parentsRoutes); // 1 min cache
+app.use('/api/parents', parentsRoutes);
 
 // 404 handler
 app.use(notFound);

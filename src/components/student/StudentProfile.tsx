@@ -627,7 +627,7 @@ const StudentProfile: React.FC = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      placeholder="Enter your phone number"
+                      placeholder="e.g., +44 7123 456789"
                       maxLength={20}
                       showCharCount
                       className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
@@ -647,7 +647,7 @@ const StudentProfile: React.FC = () => {
                       type="tel"
                       value={formData.emergencyContact}
                       onChange={handleInputChange}
-                      placeholder="Emergency contact number"
+                      placeholder="e.g., +44 7123 456789"
                       maxLength={20}
                       showCharCount
                       className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"
@@ -786,7 +786,7 @@ const StudentProfile: React.FC = () => {
                       type="tel"
                       value={formData.parentPhone}
                       onChange={handleInputChange}
-                      placeholder="Enter parent/guardian phone number"
+                      placeholder="e.g., +44 7123 456789"
                       maxLength={20}
                       showCharCount
                       className="h-12 rounded-2xl border-border focus:border-primary focus:ring-primary bg-background text-foreground"

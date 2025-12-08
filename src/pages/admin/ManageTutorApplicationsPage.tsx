@@ -20,6 +20,7 @@ import {
   TutorApplication,
   ApplicationStats,
 } from "@/lib/adminTutorApplicationService";
+import apiClient from "@/lib/apiClient";
 import { useAdmin } from "@/contexts/AdminContext";
 import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -141,9 +142,12 @@ const ManageTutorApplicationsPage: React.FC = () => {
 
       console.log('CV URL:', cvUrl, 'Full URL:', fullUrl);
 
-      // Try direct URL fetch for file download
+      // Try direct URL fetch for file download with authentication
       const response = await fetch(fullUrl, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiClient.getAccessToken()}`,
+        },
         mode: 'cors', // Try CORS first
       });
 
@@ -212,16 +216,47 @@ const ManageTutorApplicationsPage: React.FC = () => {
     } catch (error: any) {
       console.error("Error downloading CV:", error);
 
-      // If it's a network error or any other error, try opening in new tab as fallback
-      console.warn("CV download failed, trying fallback:", error);
-      toast.success("Opening CV in new tab...");
-      // Construct the full URL for fallback too
-      let fallbackUrl = cvUrl;
-      if (cvUrl.startsWith('/uploads') || cvUrl.startsWith('./uploads') || cvUrl.startsWith('uploads/')) {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        fallbackUrl = `${apiUrl}${cvUrl.startsWith('/') ? '' : '/'}${cvUrl}`;
+      // If it's a network error or any other error, try authenticated fetch as fallback
+      console.warn("CV download failed, trying authenticated fetch fallback:", error);
+      toast.success("Downloading CV...");
+
+      try {
+        // Construct the full URL for fallback too
+        let fallbackUrl = cvUrl;
+        if (cvUrl.startsWith('/uploads') || cvUrl.startsWith('./uploads') || cvUrl.startsWith('uploads/')) {
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          fallbackUrl = `${apiUrl}${cvUrl.startsWith('/') ? '' : '/'}${cvUrl}`;
+        }
+
+        // Try fetch with authentication again
+        const fallbackResponse = await fetch(fallbackUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiClient.getAccessToken()}`,
+          },
+        });
+
+        if (fallbackResponse.ok) {
+          const fallbackBlob = await fallbackResponse.blob();
+          const fallbackBlobUrl = window.URL.createObjectURL(fallbackBlob);
+          const fallbackLink = document.createElement("a");
+          fallbackLink.href = fallbackBlobUrl;
+          fallbackLink.download = fileName || "cv.pdf";
+          fallbackLink.style.display = 'none';
+          document.body.appendChild(fallbackLink);
+          fallbackLink.click();
+          document.body.removeChild(fallbackLink);
+          setTimeout(() => {
+            window.URL.revokeObjectURL(fallbackBlobUrl);
+          }, 1000);
+          toast.success("CV downloaded successfully!");
+        } else {
+          throw new Error(`Fallback fetch failed: ${fallbackResponse.status}`);
+        }
+      } catch (fallbackError) {
+        console.error("Fallback download also failed:", fallbackError);
+        toast.error("Failed to download CV. Please try again later.");
       }
-      window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -237,12 +272,14 @@ const ManageTutorApplicationsPage: React.FC = () => {
       let success = false;
 
       if (actionType === "approve") {
+        console.log('✅ ADMIN APPROVING TUTOR APPLICATION - User ID:', selectedApplication.user_id, 'Application ID:', selectedApplication.id);
         success = await AdminTutorApplicationService.approveApplication(
           selectedApplication.id,
           adminNotes || undefined
         );
 
         if (success) {
+          console.log('🎉 TUTOR APPLICATION APPROVED - User ID:', selectedApplication.user_id);
           toast.success("Application approved successfully");
         } else {
           toast.error("Failed to approve application");

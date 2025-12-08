@@ -4,9 +4,11 @@ import TutorDashboard from "@/pages/dashboards/TutorDashboard";
 
 const TutorLayout: React.FC = () => {
   const location = useLocation();
+  console.log('🏗️ TUTOR LAYOUT: Rendering for path:', location.pathname);
 
   // If we're on the main tutor route, show the dashboard
   if (location.pathname === "/tutor" || location.pathname === "/tutor/") {
+    console.log('📊 TUTOR LAYOUT: Rendering TutorDashboard for /tutor');
     return <TutorDashboard />;
   }
 

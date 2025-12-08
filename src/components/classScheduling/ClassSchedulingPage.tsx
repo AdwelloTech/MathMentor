@@ -25,6 +25,7 @@ import type {
 import type { Subject } from "@/types/subject";
 import toast from "react-hot-toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { GMTTooltip } from "@/components/ui/GMTTooltip";
 
 const ClassSchedulingPage: React.FC = () => {
   const { user, profile } = useAuth();
@@ -49,7 +50,7 @@ const ClassSchedulingPage: React.FC = () => {
   const isActiveTutor = profile?.is_active !== false; // Default to true if not set
 
   // Form state
-  const [formData, setFormData] = useState<CreateClassFormData>({
+  const [formData, setFormData] = useState<CreateClassFormData & { duration_minutes?: number }>({
     class_type_id: "",
     subject_id: undefined,
     grade_level_id: undefined,
@@ -61,6 +62,7 @@ const ClassSchedulingPage: React.FC = () => {
     max_students: 1,
     price_per_session: 0,
     is_recurring: false,
+    duration_minutes: 60, // Default to 60 minutes
   });
 
   // If tutor is inactive, show error message
@@ -179,7 +181,7 @@ const ClassSchedulingPage: React.FC = () => {
     setCalendarDays(days);
   };
 
-  const generateTimeSlots = (classType: ClassType, date: string) => {
+  const generateTimeSlots = (date: string) => {
     const slots: TimeSlot[] = [];
     const startHour = 7; // 7 AM - earlier start for early birds
     const endHour = 22; // 10 PM - later end for evening classes
@@ -199,10 +201,11 @@ const ClassSchedulingPage: React.FC = () => {
             c.status !== "cancelled"
         );
 
-        // Check if time slot fits the class duration
+        // Check if time slot fits the maximum possible duration (60 minutes)
+        // This ensures slots are available for all duration options (15, 30, 45, 60)
         const slotEndTime = new Date(`2000-01-01T${timeString}`);
         slotEndTime.setMinutes(
-          slotEndTime.getMinutes() + (classType.duration_minutes || 60)
+          slotEndTime.getMinutes() + 60 // Use max duration for conflict checking
         );
         const slotEndString = slotEndTime.toTimeString().slice(0, 5);
 
@@ -249,6 +252,7 @@ const ClassSchedulingPage: React.FC = () => {
         price_per_session: selectedClassType.price_per_session || 0,
         title: `${selectedClassType.name} Session`,
         description: selectedClassType.description || "",
+        duration_minutes: prev.duration_minutes || 60, // Keep existing or default to 60
       }));
     }
   }, [showClassForm, selectedClassType]);
@@ -265,7 +269,7 @@ const ClassSchedulingPage: React.FC = () => {
       }))
     );
 
-    generateTimeSlots(selectedClassType, date);
+    generateTimeSlots(date);
     setShowTimeSelection(true);
   };
 
@@ -278,11 +282,20 @@ const ClassSchedulingPage: React.FC = () => {
       }))
     );
 
+    // Calculate end time based on selected duration
+    const duration = formData.duration_minutes || 60;
+    const startTime = new Date(`2000-01-01T${time}`);
+    const endTime = new Date(
+      startTime.getTime() + duration * 60000
+    );
+    const endTimeString = endTime.toTimeString().slice(0, 5);
+
     // Use the current selectedDate state directly
     setFormData((prev) => ({
       ...prev,
       date: selectedDate,
       start_time: time,
+      end_time: endTimeString,
     }));
   };
 
@@ -317,11 +330,11 @@ const ClassSchedulingPage: React.FC = () => {
     try {
       setLoading(true);
 
-      // Calculate end time
+      // Calculate end time using selected duration
+      const duration = formData.duration_minutes || 60;
       const startTime = new Date(`2000-01-01T${selectedTime}`);
       const endTime = new Date(
-        startTime.getTime() +
-          (selectedClassType?.duration_minutes || 60) * 60000
+        startTime.getTime() + duration * 60000
       );
       const endTimeString = endTime.toTimeString().slice(0, 5);
 
@@ -356,6 +369,7 @@ const ClassSchedulingPage: React.FC = () => {
         max_students: 1,
         price_per_session: 0,
         is_recurring: false,
+        duration_minutes: 60, // Reset to default
       });
 
       // Reload data
@@ -450,8 +464,9 @@ const ClassSchedulingPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h1 className="text-3xl font-bold text-green-400 mb-4">
+          <h1 className="text-3xl font-bold text-green-400 mb-4 flex items-center justify-center gap-2">
             Schedule Your Classes
+            <GMTTooltip size="md" />
           </h1>
           <p className="text-lg text-slate-300 max-w-2xl mx-auto">
             Choose your class type, select a date and time, and start teaching!
@@ -627,9 +642,12 @@ const ClassSchedulingPage: React.FC = () => {
               {/* Time Selection */}
               {showTimeSelection && (
                 <div>
-                  <h3 className="text-lg font-medium text-slate-200 mb-4">
+                  <h3 className="text-lg font-medium text-slate-200 mb-2">
                     Select Time
                   </h3>
+                  <p className="text-sm text-slate-400 mb-4">
+                    All times are in GMT (Greenwich Mean Time)
+                  </p>
                   <div className="max-h-80 overflow-y-auto">
                     {/* Group time slots by hour */}
                     {Array.from({ length: 16 }, (_, hourIndex) => {
@@ -667,13 +685,7 @@ const ClassSchedulingPage: React.FC = () => {
                                 disabled={slot.isDisabled}
                               >
                                 <div className="font-medium">
-                                  {new Date(
-                                    `2000-01-01T${slot.time}`
-                                  ).toLocaleTimeString([], {
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                  })}
+                                  {slot.time} GMT
                                 </div>
                                 {!slot.isAvailable && (
                                   <div className="text-xs mt-1 opacity-75">
@@ -814,6 +826,42 @@ const ClassSchedulingPage: React.FC = () => {
                   rows={3}
                   placeholder="Enter class description"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-amber-200/90 mb-1">
+                  Session Duration (minutes)
+                </label>
+                <select
+                  value={formData.duration_minutes || 60}
+                  onChange={(e) => {
+                    const duration = parseInt(e.target.value, 10);
+                    // Update end time if start time is already selected
+                    if (selectedTime) {
+                      const startTime = new Date(`2000-01-01T${selectedTime}`);
+                      const endTime = new Date(
+                        startTime.getTime() + duration * 60000
+                      );
+                      const endTimeString = endTime.toTimeString().slice(0, 5);
+                      setFormData((prev) => ({
+                        ...prev,
+                        duration_minutes: duration,
+                        end_time: endTimeString,
+                      }));
+                    } else {
+                      setFormData((prev) => ({
+                        ...prev,
+                        duration_minutes: duration,
+                      }));
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-input text-foreground"
+                >
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={45}>45 minutes</option>
+                  <option value={60}>60 minutes</option>
+                </select>
               </div>
 
               {selectedClassType && (selectedClassType.max_students || 1) > 1 && (

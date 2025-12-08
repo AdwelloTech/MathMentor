@@ -67,7 +67,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
             className={`w-full pl-10 ${
               errors.phone_number ? "border-destructive" : ""
             }`}
-            placeholder="+1 (555) 123-4567"
+            placeholder="+44 7123 456789"
             required
           />
         </div>

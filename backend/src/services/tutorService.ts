@@ -1,4 +1,5 @@
-import { MongoClient, ObjectId } from 'mongodb';
+import mongoose from 'mongoose';
+import { ObjectId } from 'mongodb';
 import { User } from '../models';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mathmentor';
@@ -95,7 +96,7 @@ export interface TutorClass {
 
 export interface TutorStats {
   total: number;
-  active: number;
+  online: number;
   inactive: number;
   approved: number;
   pending: number;
@@ -138,64 +139,61 @@ export interface TutorProfile {
 }
 
 export class TutorService {
-  private static getClient(): MongoClient {
-    return new MongoClient(MONGODB_URI);
-  }
 
   static async getTutorApplications(userId: string): Promise<TutorApplication[]> {
-    const client = this.getClient();
+    console.log(`🔍 BACKEND: Fetching tutor applications for user: ${userId} (Length: ${userId?.length})`);
+    console.log('🔍 BACKEND: UserId type:', typeof userId);
 
-    try {
-      await client.connect();
-      const db = client.db(DB_NAME);
+    const db = mongoose.connection.db!;
 
-      const applications = await db.collection('tutor_applications')
-        .find({ user_id: userId })
-        .sort({ submitted_at: -1 })
-        .toArray();
+    console.log('🔍 BACKEND: About to query database with:', { user_id: userId });
 
-      return applications.map(app => ({
-        ...app,
-        _id: app._id.toString()
-      })) as unknown as TutorApplication[];
-    } finally {
-      await client.close();
+    const applications = await db.collection('tutor_applications')
+      .find({ user_id: userId })
+      .sort({ submitted_at: -1 })
+      .toArray();
+
+    console.log(`📄 BACKEND: Found ${applications.length} applications for user ${userId}`);
+    if (applications.length === 0) {
+      console.log('📄 BACKEND: No applications found - checking what exists in DB...');
+      const allApps = await db.collection('tutor_applications').find({}).limit(5).toArray();
+      console.log('📄 BACKEND: Sample applications in DB:', allApps.map((app: any) => ({
+        id: app._id.toString(),
+        user_id: app.user_id,
+        status: app.application_status
+      })));
     }
+
+    return applications.map((app: any) => ({
+      ...app,
+      _id: app._id.toString()
+    })) as unknown as TutorApplication[];
   }
 
   static async createTutorApplication(applicationData: Omit<TutorApplication, '_id' | 'created_at' | 'updated_at'>): Promise<TutorApplication> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
-    try {
-      await client.connect();
-      const db = client.db(DB_NAME);
+    const now = new Date().toISOString();
+    const application: TutorApplication = {
+      ...applicationData,
+      application_status: 'pending',
+      submitted_at: now,
+      created_at: now,
+      updated_at: now,
+    };
 
-      const now = new Date().toISOString();
-      const application: TutorApplication = {
-        ...applicationData,
-        application_status: 'pending',
-        submitted_at: now,
-        created_at: now,
-        updated_at: now,
-      };
+    const result = await db.collection('tutor_applications').insertOne(application);
 
-      const result = await db.collection('tutor_applications').insertOne(application);
-
-      return {
-        ...application,
-        _id: result.insertedId,
-      };
-    } finally {
-      await client.close();
-    }
+    return {
+      ...application,
+      _id: result.insertedId,
+    };
   }
 
   static async updateTutorApplication(userId: string, updates: Partial<TutorApplication>): Promise<TutorApplication> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const now = new Date().toISOString();
       const updateData = {
@@ -218,23 +216,20 @@ export class TutorService {
         _id: result._id.toString()
       } as unknown as TutorApplication;
     } finally {
-      await client.close();
     }
   }
 
   static async getIDVerification(userId: string): Promise<IDVerification | null> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const verification = await db.collection('id_verifications')
         .find({ user_id: userId })
         .sort({ submitted_at: -1 })
         .limit(1)
         .toArray()
-        .then(results => results[0]);
+        .then((results: any) => results[0]);
 
       if (!verification) {
         return null;
@@ -245,16 +240,13 @@ export class TutorService {
         _id: verification._id.toString()
       } as unknown as IDVerification;
     } finally {
-      await client.close();
     }
   }
 
   static async submitIDVerification(verificationData: Omit<IDVerification, '_id' | 'created_at' | 'updated_at'>): Promise<IDVerification> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const now = new Date().toISOString();
       const verification: IDVerification = {
@@ -272,16 +264,13 @@ export class TutorService {
         _id: result.insertedId,
       };
     } finally {
-      await client.close();
     }
   }
 
   static async acceptAllPendingApplications(): Promise<{ acceptedCount: number; totalProcessed: number }> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const now = new Date().toISOString();
 
@@ -309,21 +298,51 @@ export class TutorService {
         .find({ application_status: 'approved' })
         .toArray();
 
-      let roleUpdates = 0;
+      // Create profile records for approved tutors
+      let profileCreations = 0;
       for (const app of approvedApplications) {
         try {
-          await db.collection('profiles').updateOne(
-            { user_id: app.user_id },
-            {
-              $set: {
-                role: 'tutor',
-                updated_at: now
-              }
-            }
-          );
-          roleUpdates++;
+          // Get user data to populate profile
+          const user = await db.collection('users').findOne({ _id: new ObjectId(app.user_id) });
+          if (user) {
+            const profileData = {
+              user_id: app.user_id,
+              email: user.email,
+              first_name: user.firstName,
+              last_name: user.lastName,
+              full_name: user.fullName,
+              role: 'tutor',
+              avatar_url: user.avatarUrl,
+              profile_image_url: user.profileImageUrl,
+              phone: user.phone,
+              address: user.address,
+              date_of_birth: user.dateOfBirth,
+              gender: user.gender,
+              is_active: user.isActive,
+              last_login: user.lastLogin,
+              created_at: user.createdAt,
+              updated_at: now,
+              qualification: user.qualification,
+              experience_years: user.experienceYears,
+              hourly_rate: user.hourlyRate,
+              availability: user.availability,
+              bio: user.bio,
+              subjects: user.subjects || app.subjects,
+              specializations: user.specializations,
+              languages: user.languages,
+              certifications: user.certifications,
+              profile_completed: user.profileCompleted || false
+            };
+
+            await db.collection('profiles').updateOne(
+              { user_id: app.user_id },
+              { $set: profileData },
+              { upsert: true }
+            );
+            profileCreations++;
+          }
         } catch (error) {
-          console.error(`Error updating role for user ${app.user_id}:`, error);
+          console.error(`Error creating profile for user ${app.user_id}:`, error);
         }
       }
 
@@ -332,16 +351,13 @@ export class TutorService {
         totalProcessed: result.modifiedCount
       };
     } finally {
-      await client.close();
     }
   }
 
   static async acceptAllPendingIDVerifications(): Promise<{ acceptedCount: number; totalProcessed: number }> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const now = new Date().toISOString();
 
@@ -366,21 +382,20 @@ export class TutorService {
         }
       );
 
+      // Note: Users are already active by default upon registration
+
       return {
         acceptedCount: result.modifiedCount,
         totalProcessed: result.modifiedCount
       };
     } finally {
-      await client.close();
     }
   }
 
   static async updateIDVerificationStatus(userId: string, status: IDVerification['verification_status'], adminId?: string): Promise<IDVerification> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const now = new Date().toISOString();
       const updateData: Partial<IDVerification> = {
@@ -394,6 +409,53 @@ export class TutorService {
         updateData.verified_by = adminId;
         updateData.reviewed_at = now;
         updateData.reviewed_by = adminId;
+
+        // Note: User account is already active by default upon registration
+
+        // Create or update profile record for the verified user
+        try {
+          const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+          if (user) {
+            const profileData = {
+              user_id: userId,
+              email: user.email,
+              first_name: user.firstName,
+              last_name: user.lastName,
+              full_name: user.fullName,
+              role: user.role,
+              avatar_url: user.avatarUrl,
+              profile_image_url: user.profileImageUrl,
+              phone: user.phone,
+              address: user.address,
+              date_of_birth: user.dateOfBirth,
+              gender: user.gender,
+              is_active: true, // Set to active since ID is verified
+              last_login: user.lastLogin,
+              created_at: user.createdAt,
+              updated_at: now,
+              qualification: user.qualification,
+              experience_years: user.experienceYears,
+              hourly_rate: user.hourlyRate,
+              availability: user.availability,
+              bio: user.bio,
+              subjects: user.subjects,
+              specializations: user.specializations,
+              languages: user.languages,
+              certifications: user.certifications,
+              profile_completed: user.profileCompleted || false
+            };
+
+            await db.collection('profiles').updateOne(
+              { user_id: userId },
+              { $set: profileData },
+              { upsert: true }
+            );
+            console.log(`Profile created/updated for verified user ${userId}`);
+          }
+        } catch (profileError) {
+          console.error(`Error creating profile for verified user ${userId}:`, profileError);
+          // Don't throw - ID verification succeeded even if profile creation failed
+        }
       }
 
       const result = await db.collection('id_verifications').findOneAndUpdate(
@@ -411,22 +473,29 @@ export class TutorService {
         _id: result._id.toString()
       } as unknown as IDVerification;
     } finally {
-      await client.close();
     }
   }
   
   static async getAllTutorsForAdmin(): Promise<TutorProfile[]> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
-
-      // Get all tutor profiles
-      const tutors = await db.collection('profiles')
+      // Get all tutor users from users collection
+      const tutorUsers = await db.collection('users')
         .find({ role: 'tutor' })
-        .sort({ created_at: -1 })
+        .sort({ createdAt: -1 })
         .toArray();
+
+      // Get all profiles (if they exist)
+      const profiles = await db.collection('profiles')
+        .find({ role: 'tutor' })
+        .toArray();
+
+      // Create a map of user_id to profile for quick lookup
+      const profileMap = new Map();
+      profiles.forEach((profile: any) => {
+        profileMap.set(profile.user_id, profile);
+      });
 
       // Get all tutor applications
       const applications = await db.collection('tutor_applications')
@@ -436,18 +505,47 @@ export class TutorService {
 
       // Create a map of user_id to application for quick lookup
       const applicationMap = new Map();
-      applications.forEach(app => {
+      applications.forEach((app: any) => {
         if (!applicationMap.has(app.user_id)) {
           applicationMap.set(app.user_id, app);
         }
       });
 
-      // Transform the data to include application information
-      const transformedTutors = tutors.map(tutor => {
-        const application = applicationMap.get(tutor.user_id);
+      // Transform the data to include profile and application information
+      const transformedTutors = tutorUsers.map((user: any) => {
+        const profile = profileMap.get(user._id.toString());
+        const application = applicationMap.get(user._id.toString());
+
+        // Use profile data if available, otherwise fall back to user data
         return {
-          ...tutor,
-          _id: tutor._id.toString(),
+          _id: user._id,
+          user_id: user._id.toString(),
+          email: user.email,
+          first_name: user.firstName || profile?.first_name,
+          last_name: user.lastName || profile?.last_name,
+          full_name: user.fullName || profile?.full_name || `${user.firstName || profile?.first_name || ''} ${user.lastName || profile?.last_name || ''}`,
+          role: user.role,
+          avatar_url: user.avatarUrl || profile?.avatar_url,
+          profile_image_url: user.profileImageUrl || profile?.profile_image_url,
+          phone: user.phone || profile?.phone,
+          address: user.address || profile?.address,
+          date_of_birth: user.dateOfBirth || profile?.date_of_birth,
+          gender: user.gender || profile?.gender,
+          is_active: user.isActive || profile?.is_active || false,
+          last_login: user.lastLogin || profile?.last_login,
+          created_at: user.createdAt || profile?.created_at,
+          updated_at: user.updatedAt || profile?.updated_at,
+          qualification: user.qualification || profile?.qualification,
+          experience_years: user.experienceYears || profile?.experience_years,
+          hourly_rate: user.hourlyRate || profile?.hourly_rate,
+          availability: user.availability || profile?.availability,
+          bio: user.bio || profile?.bio,
+          subjects: user.subjects || profile?.subjects || [],
+          specializations: user.specializations || profile?.specializations || [],
+          languages: user.languages || profile?.languages || [],
+          certifications: user.certifications || profile?.certifications || [],
+          profile_completed: user.profileCompleted || profile?.profile_completed || false,
+          // Application information
           application_status: application?.application_status || null,
           submitted_at: application?.submitted_at || null,
           reviewed_at: application?.reviewed_at || null,
@@ -456,16 +554,13 @@ export class TutorService {
 
       return transformedTutors as unknown as TutorProfile[];
     } finally {
-      await client.close();
     }
   }
   
   static async getTutorById(tutorId: string): Promise<TutorProfile | null> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       // Try to find by MongoDB _id first, then by user_id if that fails
       let tutor;
@@ -492,7 +587,7 @@ export class TutorService {
         .sort({ submitted_at: -1 })
         .limit(1)
         .toArray()
-        .then(results => results[0] || null);
+        .then((results: any) => results[0] || null);
 
       // Transform the data
       return {
@@ -503,37 +598,34 @@ export class TutorService {
         reviewed_at: application?.reviewed_at || null,
       } as unknown as TutorProfile;
     } finally {
-      await client.close();
     }
   }
 
   static async getTutorStats(): Promise<TutorStats> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
-      // Get total tutors count
-      const total = await db.collection('profiles')
+      // Get total tutors count (from User collection)
+      const total = await db.collection('users')
         .countDocuments({ role: 'tutor' });
 
-      // Get active tutors count
-      const active = await db.collection('profiles')
-        .countDocuments({ role: 'tutor', is_active: true });
+      // Get online users count (from User collection)
+      const online = await db.collection('users')
+        .countDocuments({ isOnline: true });
 
-      // Get inactive tutors count
-      const inactive = await db.collection('profiles')
-        .countDocuments({ role: 'tutor', is_active: false });
+      // Get inactive tutors count (from User collection)
+      const inactive = await db.collection('users')
+        .countDocuments({ role: 'tutor', isActive: false });
 
       // Get application status counts
       const applications = await db.collection('tutor_applications')
         .find({})
         .toArray();
 
-      const approved = applications.filter(app => app.application_status === 'approved').length;
-      const pending = applications.filter(app => app.application_status === 'pending').length;
-      const rejected = applications.filter(app => app.application_status === 'rejected').length;
+      const approved = applications.filter((app: any) => app.application_status === 'approved').length;
+      const pending = applications.filter((app: any) => app.application_status === 'pending').length;
+      const rejected = applications.filter((app: any) => app.application_status === 'rejected').length;
 
       // Get recent registrations (last 30 days)
       const thirtyDaysAgo = new Date();
@@ -547,7 +639,7 @@ export class TutorService {
 
       return {
         total,
-        active,
+        online,
         inactive,
         approved,
         pending,
@@ -555,16 +647,13 @@ export class TutorService {
         recentRegistrations
       };
     } finally {
-      await client.close();
     }
   }
 
   static async getTutorClasses(tutorId: string): Promise<TutorClass[]> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       // First, get the tutor to find the correct user_id if tutorId is not the MongoDB _id
       let tutor;
@@ -596,14 +685,14 @@ export class TutorService {
       }
 
       // Get class types
-      const classTypeIds = Array.from(new Set(classes.map(c => c.class_type_id)));
+      const classTypeIds = Array.from(new Set(classes.map((c: any) => c.class_type_id)));
       const classTypes = await db.collection('class_types')
-        .find({ _id: { $in: classTypeIds.map(id => new ObjectId(id.toString())) } })
+        .find({ _id: { $in: classTypeIds.map((id: any) => new ObjectId(id.toString())) } })
         .toArray();
 
       // Create a map of class type IDs to class type objects
       const classTypeMap = new Map();
-      classTypes.forEach(type => {
+      classTypes.forEach((type: any) => {
         classTypeMap.set(type._id.toString(), {
           id: type._id.toString(),
           name: type.name,
@@ -613,14 +702,14 @@ export class TutorService {
       });
 
       // Get jitsi meetings for all classes
-      const classIds = classes.map(c => c._id.toString());
+      const classIds = classes.map((c: any) => c._id.toString());
       const jitsiMeetings = await db.collection('jitsi_meetings')
         .find({ class_id: { $in: classIds } })
         .toArray();
 
       // Create a map of class IDs to jitsi meeting objects
       const jitsiMap = new Map();
-      jitsiMeetings.forEach(jitsi => {
+      jitsiMeetings.forEach((jitsi: any) => {
         jitsiMap.set(jitsi.class_id, {
           id: jitsi._id.toString(),
           room_name: jitsi.room_name,
@@ -630,7 +719,7 @@ export class TutorService {
       });
 
       // Combine the data
-      return classes.map(classItem => ({
+      return classes.map((classItem: any) => ({
         ...classItem,
         _id: classItem._id.toString(),
         class_type: classTypeMap.get(classItem.class_type_id) || {
@@ -641,36 +730,30 @@ export class TutorService {
         jitsi_meeting: jitsiMap.get(classItem._id.toString()) || null,
       })) as unknown as TutorClass[];
     } finally {
-      await client.close();
     }
   }
 
   static async updateTutorStatus(tutorId: string, isActive: boolean): Promise<void> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
-
-      const result = await db.collection('profiles').updateOne(
+      // Update the User collection instead of profiles
+      const result = await db.collection('users').updateOne(
         { _id: new ObjectId(tutorId) },
-        { $set: { is_active: isActive, updated_at: new Date().toISOString() } }
+        { $set: { isActive: isActive, updatedAt: new Date() } }
       );
 
       if (result.matchedCount === 0) {
         throw new Error('Tutor not found');
       }
     } finally {
-      await client.close();
     }
   }
 
   static async deleteTutor(tutorId: string): Promise<void> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       // Get the tutor profile to get the user_id
       const tutor = await db.collection('profiles').findOne({ _id: new ObjectId(tutorId) });
@@ -695,7 +778,6 @@ export class TutorService {
       await db.collection('profiles').deleteOne({ _id: new ObjectId(tutorId) });
       
     } finally {
-      await client.close();
     }
   }
   
@@ -706,82 +788,70 @@ export class TutorService {
     rejectionReason?: string,
     adminNotes?: string
   ): Promise<TutorApplication> {
-    const client = this.getClient();
+    console.log(`🔄 BACKEND: Updating tutor application status - User ID: ${userId}, Status: ${status}, Admin ID: ${adminId}`);
+    const db = mongoose.connection.db!;
 
-    try {
-      await client.connect();
-      const db = client.db(DB_NAME);
+    const now = new Date().toISOString();
+    const updateData: Partial<TutorApplication> = {
+      application_status: status,
+      updated_at: now,
+      reviewed_at: now,
+      reviewed_by: adminId
+    };
 
-      const now = new Date().toISOString();
-      const updateData: Partial<TutorApplication> = {
-        application_status: status,
-        updated_at: now,
-        reviewed_at: now,
-        reviewed_by: adminId
-      };
-
-      if (status === 'rejected' && rejectionReason) {
-        updateData.rejection_reason = rejectionReason;
-      }
-
-      if (adminNotes) {
-        updateData.admin_notes = adminNotes;
-      }
-
-      if (status === 'approved') {
-        updateData.approved_by = adminId;
-        
-        // Update the user's role to tutor if application is approved
-        await db.collection('profiles').updateOne(
-          { user_id: userId },
-          {
-            $set: {
-              role: 'tutor',
-              updated_at: now
-            }
-          }
-        );
-      }
-
-      const result = await db.collection('tutor_applications').findOneAndUpdate(
-        { user_id: userId },
-        { $set: updateData },
-        { returnDocument: 'after' }
-      );
-
-      if (!result) {
-        throw new Error('Tutor application not found');
-      }
-
-      return {
-        ...result,
-        _id: result._id.toString()
-      } as unknown as TutorApplication;
-    } finally {
-      await client.close();
+    if (status === 'rejected' && rejectionReason) {
+      updateData.rejection_reason = rejectionReason;
     }
+
+    if (adminNotes) {
+      updateData.admin_notes = adminNotes;
+    }
+
+    if (status === 'approved') {
+      updateData.approved_by = adminId;
+
+      // Update the user's role to tutor if application is approved
+      await db.collection('profiles').updateOne(
+        { user_id: userId },
+        {
+          $set: {
+            role: 'tutor',
+            updated_at: now
+          }
+        }
+      );
+    }
+
+    const result = await db.collection('tutor_applications').findOneAndUpdate(
+      { user_id: userId },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    );
+
+    if (!result) {
+      throw new Error('Tutor application not found');
+    }
+
+    console.log(`✅ BACKEND: Tutor application status updated successfully - User ID: ${userId}, New Status: ${status}`);
+    return {
+      ...result,
+      _id: result._id.toString()
+    } as unknown as TutorApplication;
   }
 
   // Get all tutor applications for admin
   static async getAllTutorApplications(): Promise<TutorApplication[]> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
-    try {
-      await client.connect();
-      const db = client.db(DB_NAME);
+    const applications = await db.collection('tutor_applications')
+      .find({})
+      .sort({ submitted_at: -1 })
+      .toArray();
 
-      const applications = await db.collection('tutor_applications')
-        .find({})
-        .sort({ submitted_at: -1 })
-        .toArray();
-
-      return applications.map(app => ({
-        ...app,
-        _id: app._id.toString()
-      })) as unknown as TutorApplication[];
-    } finally {
-      await client.close();
-    }
+    return applications.map((app: any) => ({
+      ...app,
+      _id: app._id.toString()
+    })) as unknown as TutorApplication[];
   }
 
   // Get tutor application statistics for admin
@@ -792,45 +862,36 @@ export class TutorService {
     rejected: number;
     recentApplications: number;
   }> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
-    try {
-      await client.connect();
-      const db = client.db(DB_NAME);
+    const applications = await db.collection('tutor_applications')
+      .find({})
+      .project({ application_status: 1, created_at: 1 })
+      .toArray();
 
-      const applications = await db.collection('tutor_applications')
-        .find({})
-        .project({ application_status: 1, created_at: 1 })
-        .toArray();
+    const total = applications.length;
+    const pending = applications.filter((app: any) => app.application_status === 'pending').length;
+    const approved = applications.filter((app: any) => app.application_status === 'approved').length;
+    const rejected = applications.filter((app: any) => app.application_status === 'rejected').length;
 
-      const total = applications.length;
-      const pending = applications.filter(app => app.application_status === 'pending').length;
-      const approved = applications.filter(app => app.application_status === 'approved').length;
-      const rejected = applications.filter(app => app.application_status === 'rejected').length;
+    // Recent applications (last 7 days)
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const recentApplications = applications.filter((app: any) => new Date(app.created_at) >= oneWeekAgo).length;
 
-      // Recent applications (last 7 days)
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      const recentApplications = applications.filter(app => new Date(app.created_at) >= oneWeekAgo).length;
-
-      return {
-        total,
-        pending,
-        approved,
-        rejected,
-        recentApplications,
-      };
-    } finally {
-      await client.close();
-    }
+    return {
+      total,
+      pending,
+      approved,
+      rejected,
+      recentApplications,
+    };
   }
 
   static async getAllIDVerifications(): Promise<IDVerification[]> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       // Get all ID verifications
       const verifications = await db.collection('id_verifications')
@@ -839,7 +900,7 @@ export class TutorService {
         .toArray();
 
       // Get all user profiles from Mongoose User model
-      const userIds = verifications.map(v => v.user_id);
+      const userIds = verifications.map((v: any) => v.user_id);
       const users = await User.find({ _id: { $in: userIds } }).select('firstName lastName fullName email phone');
 
       // Create a map of user_id to user for quick lookup
@@ -855,7 +916,7 @@ export class TutorService {
       });
 
       // Transform the data to include user information
-      const transformedVerifications = verifications.map(verification => {
+      const transformedVerifications = verifications.map((verification: any) => {
         const user = userMap.get(verification.user_id);
         return {
           ...verification,
@@ -867,7 +928,6 @@ export class TutorService {
 
       return transformedVerifications as unknown as IDVerification[];
     } finally {
-      await client.close();
     }
   }
 
@@ -878,11 +938,9 @@ export class TutorService {
     rejected_verifications: number;
     expired_verifications: number;
   }> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const verifications = await db.collection('id_verifications')
         .find({})
@@ -890,10 +948,10 @@ export class TutorService {
         .toArray();
 
       const total = verifications.length;
-      const pending = verifications.filter(v => v.verification_status === 'pending').length;
-      const approved = verifications.filter(v => v.verification_status === 'approved').length;
-      const rejected = verifications.filter(v => v.verification_status === 'rejected').length;
-      const expired = verifications.filter(v => v.verification_status === 'expired').length;
+      const pending = verifications.filter((v: any) => v.verification_status === 'pending').length;
+      const approved = verifications.filter((v: any) => v.verification_status === 'approved').length;
+      const rejected = verifications.filter((v: any) => v.verification_status === 'rejected').length;
+      const expired = verifications.filter((v: any) => v.verification_status === 'expired').length;
 
       return {
         total_verifications: total,
@@ -903,7 +961,6 @@ export class TutorService {
         expired_verifications: expired,
       };
     } finally {
-      await client.close();
     }
   }
 
@@ -914,11 +971,9 @@ export class TutorService {
     adminNotes?: string,
     rejectionReason?: string
   ): Promise<IDVerification> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const now = new Date().toISOString();
       const updateData: Partial<IDVerification> = {
@@ -957,16 +1012,13 @@ export class TutorService {
         _id: result._id.toString()
       } as unknown as IDVerification;
     } finally {
-      await client.close();
     }
   }
 
   static async deleteIDVerification(verificationId: string): Promise<void> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const result = await db.collection('id_verifications').deleteOne({
         _id: new ObjectId(verificationId)
@@ -976,16 +1028,13 @@ export class TutorService {
         throw new Error('ID verification not found');
       }
     } finally {
-      await client.close();
     }
   }
 
   static async getRecentTutorApplications(limit: number = 5): Promise<TutorApplication[]> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const applications = await db.collection('tutor_applications')
         .find({})
@@ -993,21 +1042,18 @@ export class TutorService {
         .limit(limit)
         .toArray();
 
-      return applications.map(app => ({
+      return applications.map((app: any) => ({
         ...app,
         _id: app._id.toString()
       })) as unknown as TutorApplication[];
     } finally {
-      await client.close();
     }
   }
 
   static async getRecentIDVerifications(limit: number = 5): Promise<IDVerification[]> {
-    const client = this.getClient();
+    const db = mongoose.connection.db!;
 
     try {
-      await client.connect();
-      const db = client.db(DB_NAME);
 
       const verifications = await db.collection('id_verifications')
         .find({})
@@ -1015,12 +1061,11 @@ export class TutorService {
         .limit(limit)
         .toArray();
 
-      return verifications.map(verification => ({
+      return verifications.map((verification: any) => ({
         ...verification,
         _id: verification._id.toString()
       })) as unknown as IDVerification[];
     } finally {
-      await client.close();
     }
   }
 }

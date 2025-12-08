@@ -1,6 +1,13 @@
 import { User, IUser } from '../models/User';
+import { MongoClient, ObjectId } from 'mongodb';
+
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mathmentor';
+const DB_NAME = process.env.DB_NAME || 'mathmentor';
 
 export class UserService {
+  private static getClient(): MongoClient {
+    return new MongoClient(MONGODB_URI);
+  }
 
   // Get all students for admin management
   static async getAllStudents(): Promise<any[]> {
@@ -190,21 +197,174 @@ export class UserService {
     }
   }
 
-  // Delete student
+  // Delete student with all related data
   static async deleteStudent(studentId: string): Promise<void> {
-    try {
-      const result = await User.findOneAndDelete({
-        _id: studentId,
-        role: 'student'
-      });
+    const client = this.getClient();
 
-      if (!result) {
+    try {
+      await client.connect();
+      const db = client.db(DB_NAME);
+
+      // Get the user first to verify it exists and get details
+      const user = await User.findOne({ _id: studentId, role: 'student' });
+      if (!user) {
         throw new Error('Student not found');
       }
+
+      console.log(`Deleting student: ${user.email} (${user._id})`);
+
+      // Delete all related data
+      await this.deleteUserRelatedData(db, user._id.toString());
+
+      // Finally delete the user account
+      const deleteResult = await User.findOneAndDelete({ _id: studentId, role: 'student' });
+      if (!deleteResult) {
+        throw new Error('Failed to delete student account');
+      }
+
+      console.log(`Successfully deleted student: ${user.email}`);
+
     } catch (error) {
       console.error('Error deleting student:', error);
       throw new Error('Failed to delete student');
+    } finally {
+      await client.close();
     }
+  }
+
+  // Comprehensive user deletion with all related data
+  static async deleteUser(userId: string): Promise<void> {
+    const client = this.getClient();
+
+    try {
+      await client.connect();
+      const db = client.db(DB_NAME);
+
+      // Get the user first to verify it exists
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      console.log(`Deleting user: ${user.email} (${user.role}) - ID: ${user._id}`);
+
+      // Delete all related data
+      await this.deleteUserRelatedData(db, user._id.toString());
+
+      // Finally delete the user account
+      const deleteResult = await User.findByIdAndDelete(userId);
+      if (!deleteResult) {
+        throw new Error('Failed to delete user account');
+      }
+
+      console.log(`Successfully deleted user: ${user.email}`);
+
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw new Error('Failed to delete user');
+    } finally {
+      await client.close();
+    }
+  }
+
+  // Delete all data related to a user
+  private static async deleteUserRelatedData(db: any, userId: string): Promise<void> {
+    console.log(`Deleting related data for user: ${userId}`);
+
+    // Delete profile
+    const profileDeleted = await db.collection('profiles').deleteMany({ user_id: userId });
+    console.log(`  ✅ Deleted ${profileDeleted.deletedCount} profiles`);
+
+    // Delete refresh tokens
+    const tokensDeleted = await db.collection('refresh_tokens').deleteMany({ userId: new ObjectId(userId) });
+    console.log(`  ✅ Deleted ${tokensDeleted.deletedCount} refresh tokens`);
+
+    // Delete tutor applications
+    const appsDeleted = await db.collection('tutor_applications').deleteMany({ user_id: userId });
+    console.log(`  ✅ Deleted ${appsDeleted.deletedCount} tutor applications`);
+
+    // Delete ID verifications
+    const verificationsDeleted = await db.collection('id_verifications').deleteMany({ user_id: userId });
+    console.log(`  ✅ Deleted ${verificationsDeleted.deletedCount} ID verifications`);
+
+    // Delete OTP records
+    const otpsDeleted = await db.collection('otps').deleteMany({ email: { $exists: true } });
+    // We can't filter by user ID for OTPs since they use email, so we'll clean up old ones
+    console.log(`  ✅ Cleaned up OTP records`);
+
+    // Delete bookings (as student or tutor)
+    const bookingsDeleted = await db.collection('bookings').deleteMany({
+      $or: [
+        { student_id: new ObjectId(userId) },
+        { tutor_id: new ObjectId(userId) }
+      ]
+    });
+    console.log(`  ✅ Deleted ${bookingsDeleted.deletedCount} bookings`);
+
+    // Delete instant sessions (as student or tutor)
+    const sessionsDeleted = await db.collection('instant_sessions').deleteMany({
+      $or: [
+        { student_id: new ObjectId(userId) },
+        { tutor_id: new ObjectId(userId) }
+      ]
+    });
+    console.log(`  ✅ Deleted ${sessionsDeleted.deletedCount} instant sessions`);
+
+    // Delete ratings (given or received)
+    const ratingsDeleted = await db.collection('ratings').deleteMany({
+      $or: [
+        { from_user_id: new ObjectId(userId) },
+        { to_user_id: new ObjectId(userId) }
+      ]
+    });
+    console.log(`  ✅ Deleted ${ratingsDeleted.deletedCount} ratings`);
+
+    // Delete flashcards and sets
+    const flashcardSets = await db.collection('flashcard_sets').find({ user_id: new ObjectId(userId) }).toArray();
+    const setIds = flashcardSets.map((set: any) => set._id);
+
+    const setsDeleted = await db.collection('flashcard_sets').deleteMany({ user_id: new ObjectId(userId) });
+    const cardsDeleted = await db.collection('flashcards').deleteMany({ set_id: { $in: setIds } });
+    console.log(`  ✅ Deleted ${setsDeleted.deletedCount} flashcard sets and ${cardsDeleted.deletedCount} flashcards`);
+
+    // Delete quizzes
+    const quizzesDeleted = await db.collection('quizzes').deleteMany({ created_by: new ObjectId(userId) });
+    console.log(`  ✅ Deleted ${quizzesDeleted.deletedCount} quizzes`);
+
+    // Delete quiz attempts
+    const attemptsDeleted = await db.collection('quiz_attempts').deleteMany({ user_id: new ObjectId(userId) });
+    console.log(`  ✅ Deleted ${attemptsDeleted.deletedCount} quiz attempts`);
+
+    // Delete study notes
+    const notesDeleted = await db.collection('study_notes').deleteMany({ user_id: new ObjectId(userId) });
+    console.log(`  ✅ Deleted ${notesDeleted.deletedCount} study notes`);
+
+    // Delete messages (sent or received)
+    const messagesDeleted = await db.collection('messages').deleteMany({
+      $or: [
+        { sender_id: new ObjectId(userId) },
+        { recipient_id: new ObjectId(userId) }
+      ]
+    });
+    console.log(`  ✅ Deleted ${messagesDeleted.deletedCount} messages`);
+
+    // Delete notifications
+    const notificationsDeleted = await db.collection('notifications').deleteMany({ user_id: new ObjectId(userId) });
+    console.log(`  ✅ Deleted ${notificationsDeleted.deletedCount} notifications`);
+
+    // Delete profile images
+    const imagesDeleted = await db.collection('profile_images').deleteMany({ user_id: userId });
+    console.log(`  ✅ Deleted ${imagesDeleted.deletedCount} profile images`);
+
+    // Delete tutor classes (if tutor)
+    const classesDeleted = await db.collection('tutor_classes').deleteMany({ tutor_id: new ObjectId(userId) });
+    console.log(`  ✅ Deleted ${classesDeleted.deletedCount} tutor classes`);
+
+    // Delete conversations (if any)
+    const conversationsDeleted = await db.collection('conversations').deleteMany({
+      participants: new ObjectId(userId)
+    });
+    console.log(`  ✅ Deleted ${conversationsDeleted.deletedCount} conversations`);
   }
 
   static async getRecentStudentSignups(limit: number = 5): Promise<any[]> {

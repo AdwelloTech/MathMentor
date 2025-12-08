@@ -42,6 +42,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import StudentPageWrapper from "@/components/ui/StudentPageWrapper";
+import { formatGMTTime12Hour } from "@/utils/gmtTimeUtils";
+import { GMTTooltip } from "@/components/ui/GMTTooltip";
 
 const BookSessionPage: React.FC = () => {
   const { user } = useAuth();
@@ -205,21 +207,21 @@ const BookSessionPage: React.FC = () => {
   };
 
   const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    // All times are in GMT - display with GMT label
+    return formatGMTTime12Hour(timeString);
   };
-
 
   const filteredSessions = sessions.filter((sessionResult) => {
     const session = sessionResult.class;
 
     // Filter out past sessions - only show upcoming sessions
+    // Parse date and time as GMT (since all times are stored in GMT)
     const sessionDate = session.startDate;
-    const sessionTime = session.schedule.startTime;
-    const sessionDateTime = new Date(`${sessionDate}T${sessionTime}`);
+    const sessionTime = session.schedule?.startTime;
+    if (!sessionDate || !sessionTime) return false;
+    
+    // Create date string in ISO format (treating as GMT/UTC)
+    const sessionDateTime = new Date(`${sessionDate}T${sessionTime}:00.000Z`);
     const now = new Date();
     const isUpcoming = sessionDateTime > now;
 
@@ -279,8 +281,9 @@ const BookSessionPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-bold text-foreground mb-3">
+          <h1 className="text-4xl font-bold text-foreground mb-3 flex items-center gap-2">
             Book a Session
+            <GMTTooltip size="md" />
           </h1>
           <p className="text-lg text-muted-foreground">
             Find and book upcoming sessions with our expert tutors
@@ -492,7 +495,9 @@ const BookSessionPage: React.FC = () => {
                       <div className="flex items-center gap-3 text-muted-foreground">
                         <Clock className="w-4 h-4 text-muted-foreground" />
                         <span className="font-medium">
-                          {formatTime(session.schedule.startTime)} - {formatTime(session.schedule.endTime)}
+                          {session.schedule?.startTime && session.schedule?.endTime
+                            ? `${formatTime(session.schedule.startTime)} - ${formatTime(session.schedule.endTime)}`
+                            : 'Time TBD'}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-muted-foreground">
@@ -562,13 +567,13 @@ const BookSessionPage: React.FC = () => {
                   Complete Payment for {selectedSession.class.title}
                 </DialogTitle>
                 <DialogDescription className="sr-only">
-                  Complete your payment to book a session with {selectedSession.tutor.full_name} on {selectedSession.class.startDate} at {selectedSession.class.schedule.startTime}
+                  Complete your payment to book a session with {selectedSession.tutor.full_name} on {selectedSession.class.startDate} at {selectedSession.class.schedule?.startTime || 'TBD'}
                 </DialogDescription>
                 <SessionPaymentForm
                   sessionTitle={selectedSession.class.title}
                   tutorName={selectedSession.tutor.full_name}
                   sessionDate={selectedSession.class.startDate}
-                  sessionTime={selectedSession.class.schedule.startTime}
+                  sessionTime={selectedSession.class.schedule?.startTime || ''}
                   amount={selectedSession.class.price || 0}
                   customerEmail={user?.email || ""}
                   onPaymentSuccess={handlePaymentSuccess}

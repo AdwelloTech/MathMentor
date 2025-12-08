@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/dialog";
 import { sessionRatingService } from "@/lib/sessionRatingService";
 import SessionTimer from "@/components/sessions/SessionTimer";
+import { formatGMTTime12Hour } from "@/utils/gmtTimeUtils";
+import { GMTTooltip } from "@/components/ui/GMTTooltip";
 
 const ManageSessionsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -305,11 +307,8 @@ const ManageSessionsPage: React.FC = () => {
   };
 
   const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    // All times are in GMT - display with GMT label
+    return formatGMTTime12Hour(timeString);
   };
 
   // Filter to show only upcoming sessions (confirmed and pending)
@@ -338,7 +337,10 @@ const ManageSessionsPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-4xl font-bold text-foreground mb-3">My Sessions</h1>
+            <h1 className="text-4xl font-bold text-foreground mb-3 flex items-center gap-2">
+              My Sessions
+              <GMTTooltip size="md" />
+            </h1>
             <p className="text-muted-foreground text-lg">Manage your upcoming sessions and join classes</p>
           </motion.div>
           {/* Error Message */}

@@ -25,6 +25,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { X, Eye } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { formatGMTTime24Hour } from '@/utils/gmtTimeUtils';
+import { GMTTooltip } from '@/components/ui/GMTTooltip';
 
 interface ParentContextType {
   selectedStudent: ParentStudentLink | undefined;
@@ -207,7 +209,10 @@ const ParentSessionProgress: React.FC = () => {
             <div className="flex items-center gap-3">
               <CalendarDaysIcon className="h-8 w-8 text-yellow-300" />
               <div>
-                <CardTitle className="text-2xl text-yellow-300">Session Progress</CardTitle>
+                <CardTitle className="text-2xl text-yellow-300 flex items-center gap-2">
+                  Session Progress
+                  <GMTTooltip size="sm" />
+                </CardTitle>
                 <CardDescription className="text-white/80">
                   {selectedStudent.studentName}'s tutoring sessions and feedback
                 </CardDescription>
@@ -416,7 +421,7 @@ const ParentSessionProgress: React.FC = () => {
                                 {new Date(session.date).toLocaleDateString()}
                               </Badge>
                               <Badge className="bg-green-400/20 text-green-300 border-green-400/30">
-                                {session.startTime} - {session.endTime}
+                                {formatGMTTime24Hour(session.startTime)} - {formatGMTTime24Hour(session.endTime)}
                               </Badge>
                               <Badge className="bg-yellow-400/20 text-yellow-300 border-yellow-400/30">
                                 {session.duration} min
@@ -630,7 +635,7 @@ const ParentSessionProgress: React.FC = () => {
                       <div className="flex items-center gap-2 text-sm">
                         <ClockIcon className="h-4 w-4 text-blue-300" />
                         <span className="text-white/80">
-                          {selectedSession.startTime} - {selectedSession.endTime}
+                          {formatGMTTime24Hour(selectedSession.startTime)} - {formatGMTTime24Hour(selectedSession.endTime)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">

@@ -11,6 +11,7 @@ import {
 import toast from "react-hot-toast";
 import AuthService from "@/lib/authService";
 import apiClient, { ApiClientError } from "@/lib/apiClient";
+import { CacheManager } from "@/lib/cacheManager";
 import {
   canAccessFeature,
   hasRole,
@@ -33,6 +34,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 interface AuthProviderProps {
   children: ReactNode;
 }
+
+// Cache clearing function for logout (clears all storage)
+const clearProblematicCaches = async () => {
+  console.log('🧹 CLEARING ALL CACHES ON LOGOUT...');
+
+  // Clear all storage during logout
+  CacheManager.clearAllStorage();
+
+  console.log('🎯 ALL CACHES CLEARED ON LOGOUT!');
+};
 
 // Auth provider component
 export function AuthProvider({ children }: AuthProviderProps) {
@@ -60,7 +71,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const initializeAuth = async () => {
       try {
-        console.log("Initializing auth...");
+        console.log("Initializing auth - fresh start with no caches...");
 
         // Check if user is authenticated via API client
         if (apiClient.isAuthenticated()) {
@@ -141,12 +152,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   ) => {
     const now = Date.now();
 
-    // Aggressive duplicate prevention: skip if same user processed within last 2 seconds
+    // Reduced duplicate prevention: only skip if exact same user processed within last 500ms
+    // This prevents race conditions during account switching
     if (
       lastProcessedUserId.current === userData.id &&
-      now - lastProcessedAt.current < 2000
+      now - lastProcessedAt.current < 500
     ) {
-      console.log("Duplicate auth event within 2 seconds, skipping...");
+      console.log("Duplicate auth event within 500ms, skipping...");
       return;
     }
 
@@ -211,6 +223,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
+    console.log('🔍 AUTH ERROR HANDLER: Status:', error.status, 'Message:', error.message, 'Code:', error.code);
+
     if (error.status === 500) {
       toast.error("Server error. Please try again later.");
     } else if (error.status === 401) {
@@ -220,7 +234,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } else if (error.status === 404) {
       toast.error("Resource not found.");
     } else if (error.status >= 400 && error.status < 500) {
-      toast.error(error.message || "Request failed. Please try again.");
+      // For validation errors, show the specific error message from backend
+      const errorMessage = error.message || "Request failed. Please try again.";
+      console.log('🔍 AUTH ERROR HANDLER: Showing error toast:', errorMessage);
+      toast.error(errorMessage);
     } else if (error.message?.includes("network") || error.message?.includes("fetch")) {
       toast.error("Network error. Please check your connection and try again.");
     } else {
@@ -230,17 +247,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Sign in function with better error handling
   const signIn = useCallback(async (email: string, password: string) => {
+    const loginId = Math.random().toString(36).substring(2, 9);
     try {
       setLoading(true);
-      console.log("Attempting sign in for:", email);
+      console.log(`[Login-${loginId}] Attempting sign in for:`, email);
 
       const result = await AuthService.login({ email, password });
 
-      console.log("Sign in successful for:", result.user.email);
+      console.log(`[Login-${loginId}] Sign in successful for:`, result.user.email);
 
       // Fetch the complete user profile from /me endpoint
       const fullProfile = await AuthService.getCurrentUser();
-      console.log("Fetched full user profile for:", fullProfile.email);
+      console.log(`[Login-${loginId}] Fetched full user profile for:`, fullProfile.email);
 
       // Transform backend user data to frontend format
       const userData = AuthService.transformUserData(fullProfile, fullProfile);
@@ -248,7 +266,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Handle auth state change
       await handleAuthStateChange(userData, true); // true = show welcome message
     } catch (error: any) {
-      console.error("Sign in error:", error);
+      console.error(`[Login-${loginId}] Sign in error:`, error);
       handleAuthError(error);
       setLoading(false);
       throw error;
@@ -308,6 +326,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.warn("Sign out API call failed:", error);
       // Continue with local cleanup regardless of API call result
     }
+
+    // Clear all caches and storage on logout
+    await clearProblematicCaches().catch(error => console.warn('Cache clearing failed:', error));
 
     // Always clear local state - this is the most important part
     clearAuthState();

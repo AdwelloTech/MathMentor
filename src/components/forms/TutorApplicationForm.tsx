@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { AcademicCapIcon } from "@heroicons/react/24/outline";
@@ -11,6 +11,7 @@ import { useCVUpload } from "@/hooks/useCVUpload";
 import PersonalInfoSection from "@/components/tutor/application/form/PersonalInfoSection";
 import TeachingInfoSection from "@/components/tutor/application/form/TeachingInfoSection";
 import CVUploadSection from "@/components/tutor/application/form/CVUploadSection";
+import { AVAILABLE_SUBJECTS } from "@/components/tutor/application/form/constants";
 
 interface TutorApplicationFormProps {
   onSuccess: () => void;
@@ -25,27 +26,124 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const cvUpload = useCVUpload();
 
-  const [formData, setFormData] = useState<TutorApplicationFormData>({
-    full_name: "",
-    phone_number: "",
-    subjects: [],
-    specializes_learning_disabilities: false,
-    additional_notes: "",
-    postcode: "",
-    based_in_country: "",
-    past_experience: "",
-    weekly_availability: "",
-    employment_status: "",
-    education_level: "",
-    average_weekly_hours: undefined,
-    expected_hourly_rate: undefined,
-  });
+  // Helper function to map profile subjects to AVAILABLE_SUBJECTS
+  // Handles case-insensitive matching and exact matches
+  const mapProfileSubjectsToAvailable = (profileSubjects: string[]): string[] => {
+    if (!Array.isArray(profileSubjects) || profileSubjects.length === 0) {
+      return [];
+    }
+
+    // Create a case-insensitive map of available subjects
+    const availableSubjectsMap = new Map<string, string>();
+    AVAILABLE_SUBJECTS.forEach(subject => {
+      availableSubjectsMap.set(subject.toLowerCase(), subject);
+    });
+
+    // Match profile subjects to available subjects
+    const matchedSubjects: string[] = [];
+    profileSubjects.forEach(profileSubject => {
+      const normalized = profileSubject.trim();
+      // Try exact match first
+      if (AVAILABLE_SUBJECTS.includes(normalized)) {
+        if (!matchedSubjects.includes(normalized)) {
+          matchedSubjects.push(normalized);
+        }
+      } else {
+        // Try case-insensitive match
+        const matched = availableSubjectsMap.get(normalized.toLowerCase());
+        if (matched && !matchedSubjects.includes(matched)) {
+          matchedSubjects.push(matched);
+        }
+      }
+    });
+
+    return matchedSubjects;
+  };
+
+  // Initialize form data with profile data if available
+  const getInitialFormData = (): TutorApplicationFormData => {
+    const profileSubjects = (profile?.subjects || profile?.specializations || []) as string[];
+    const fullName = profile?.full_name || 
+      (profile?.first_name && profile?.last_name 
+        ? `${profile.first_name} ${profile.last_name}`.trim() 
+        : "");
+
+    // Map profile subjects to available subjects in the form
+    const mappedSubjects = mapProfileSubjectsToAvailable(profileSubjects);
+
+    return {
+      full_name: fullName || "",
+      phone_number: profile?.phone || "",
+      subjects: mappedSubjects,
+      specializes_learning_disabilities: false,
+      additional_notes: "",
+      postcode: profile?.postcode || "",
+      based_in_country: "",
+      past_experience: "",
+      weekly_availability: "",
+      employment_status: "",
+      education_level: profile?.qualification || "",
+      average_weekly_hours: undefined,
+      expected_hourly_rate: undefined,
+    };
+  };
+
+  const [formData, setFormData] = useState<TutorApplicationFormData>(getInitialFormData());
+
+  // Pre-fill form with user profile data when available
+  useEffect(() => {
+    if (profile) {
+      setFormData((prev) => {
+        // Only pre-fill if the field is currently empty to avoid overwriting user edits
+        const newData: TutorApplicationFormData = { ...prev };
+
+        // Pre-fill full name from profile
+        if (!prev.full_name) {
+          if (profile.full_name) {
+            newData.full_name = profile.full_name;
+          } else if (profile.first_name && profile.last_name) {
+            newData.full_name = `${profile.first_name} ${profile.last_name}`.trim();
+          }
+        }
+
+        // Pre-fill phone number from profile
+        if (!prev.phone_number && profile.phone) {
+          newData.phone_number = profile.phone;
+        }
+
+        // Pre-fill subjects from profile (check both subjects and specializations)
+        // Backend stores as specializations, but frontend might use subjects
+        // Map profile subjects to AVAILABLE_SUBJECTS format
+        if (prev.subjects.length === 0) {
+          const profileSubjects = (profile.subjects || profile.specializations || []) as string[];
+          if (Array.isArray(profileSubjects) && profileSubjects.length > 0) {
+            const mappedSubjects = mapProfileSubjectsToAvailable(profileSubjects);
+            if (mappedSubjects.length > 0) {
+              newData.subjects = mappedSubjects;
+            }
+          }
+        }
+
+        // Pre-fill education level from qualification
+        if (!prev.education_level && profile.qualification) {
+          newData.education_level = profile.qualification;
+        }
+
+        // Pre-fill postcode if available
+        if (!prev.postcode && profile.postcode) {
+          newData.postcode = profile.postcode;
+        }
+
+        return newData;
+      });
+    }
+  }, [profile]);
 
   const [errors, setErrors] = useState<TutorApplicationFormErrors>({});
 

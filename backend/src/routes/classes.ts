@@ -106,6 +106,7 @@ router.get('/available', authenticate, async (req, res) => {
       },
     });
   } catch (error: any) {
+    console.error('Error fetching available classes:', error);
     res.status(400).json({
       success: false,
       error: error.message,

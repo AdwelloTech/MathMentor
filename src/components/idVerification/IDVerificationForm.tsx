@@ -1,6 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   IdentificationIcon,
   CameraIcon,
@@ -25,15 +26,27 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
   onCancel,
 }) => {
   const { theme } = useTheme();
-  const [formData, setFormData] = useState<Partial<IDVerificationFormData>>({
-    id_type: "national_id",
-    id_number: "",
-    full_name: "",
-    date_of_birth: "",
-    expiry_date: "",
-    issuing_country: "",
-    issuing_authority: "",
-  });
+  const { profile } = useAuth();
+  
+  // Initialize form data with profile full name if available
+  const getInitialFormData = (): Partial<IDVerificationFormData> => {
+    const fullName = profile?.full_name || 
+      (profile?.first_name && profile?.last_name 
+        ? `${profile.first_name} ${profile.last_name}`.trim() 
+        : "");
+
+    return {
+      id_type: "national_id",
+      id_number: "",
+      full_name: fullName || "",
+      date_of_birth: "",
+      expiry_date: "",
+      issuing_country: "",
+      issuing_authority: "",
+    };
+  };
+
+  const [formData, setFormData] = useState<Partial<IDVerificationFormData>>(getInitialFormData());
 
   const [files, setFiles] = useState<{
     front_image: File | null;
@@ -57,6 +70,26 @@ const IDVerificationForm: React.FC<IDVerificationFormProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Pre-fill full name from profile when available
+  useEffect(() => {
+    if (profile) {
+      setFormData((prev) => {
+        // Only pre-fill if the field is currently empty to avoid overwriting user edits
+        if (!prev.full_name) {
+          const fullName = profile.full_name || 
+            (profile.first_name && profile.last_name 
+              ? `${profile.first_name} ${profile.last_name}`.trim() 
+              : "");
+          
+          if (fullName) {
+            return { ...prev, full_name: fullName };
+          }
+        }
+        return prev;
+      });
+    }
+  }, [profile]);
 
   const fileInputRefs = {
     front_image: useRef<HTMLInputElement>(null),

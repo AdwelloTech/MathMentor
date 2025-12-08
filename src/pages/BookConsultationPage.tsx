@@ -14,6 +14,8 @@ import {
   BookOpen,
   CheckCircle,
 } from "lucide-react";
+import { formatGMTTime12Hour } from "@/utils/gmtTimeUtils";
+import { GMTTooltip } from "@/components/ui/GMTTooltip";
 
 const BookConsultationPage: React.FC = () => {
   const { user } = useAuth();
@@ -116,11 +118,8 @@ const BookConsultationPage: React.FC = () => {
   };
 
   const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    // All times are in GMT - display with GMT label
+    return formatGMTTime12Hour(timeString);
   };
 
   if (loading) {
@@ -159,8 +158,9 @@ const BookConsultationPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
             Book a Consultation
+            <GMTTooltip size="md" />
           </h1>
           <p className="text-gray-600">
             Schedule a detailed consultation session with our expert tutors

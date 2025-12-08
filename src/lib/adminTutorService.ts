@@ -38,7 +38,7 @@ export interface Tutor {
 
 export interface TutorStats {
   total: number;
-  active: number;
+  online: number;
   inactive: number;
   approved: number;
   pending: number;
@@ -104,7 +104,7 @@ class AdminTutorService {
 
   async updateTutorStatus(tutorId: string, isActive: boolean): Promise<void> {
     try {
-      await apiClient.put<void>(`/api/admin/tutors/${tutorId}/status`, { is_active: isActive });
+      await apiClient.put<void>(`/api/admin/tutors/${tutorId}/status`, { isActive: isActive });
     } catch (error) {
       console.error('Error in updateTutorStatus:', error);
       throw error;
@@ -146,7 +146,7 @@ class AdminTutorService {
       console.error('Error in getTutorStats:', error);
       return {
         total: 0,
-        active: 0,
+        online: 0,
         inactive: 0,
         approved: 0,
         pending: 0,

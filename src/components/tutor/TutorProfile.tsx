@@ -506,7 +506,7 @@ const TutorProfile: React.FC = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    placeholder="Enter your phone number"
+                    placeholder="e.g., +44 7123 456789"
                     maxLength={20}
                     showCharCount
                   />
@@ -574,7 +574,7 @@ const TutorProfile: React.FC = () => {
                     name="emergencyContact"
                     value={formData.emergencyContact}
                     onChange={handleInputChange}
-                    placeholder="Emergency contact number"
+                    placeholder="e.g., +44 7123 456789"
                     maxLength={20}
                     showCharCount
                   />

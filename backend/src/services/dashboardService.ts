@@ -32,7 +32,7 @@ export interface AdminDashboardStats {
   total_users: number;
   total_students: number;
   total_tutors: number;
-  active_tutors: number;
+  online_users: number;
   total_sessions: number;
   total_quizzes: number;
   total_quiz_pdfs: number;
@@ -161,9 +161,8 @@ export class DashboardService {
       const totalUsers = await User.countDocuments();
       const totalStudents = await User.countDocuments({ role: 'student' });
       const totalTutors = await User.countDocuments({ role: 'tutor' });
-      const activeTutors = await User.countDocuments({
-        role: 'tutor',
-        isActive: true
+      const onlineUsers = await User.countDocuments({
+        isOnline: true
       });
 
       // Get recent signups (last 7 days)
@@ -208,7 +207,7 @@ export class DashboardService {
         total_users: totalUsers,
         total_students: totalStudents,
         total_tutors: totalTutors,
-        active_tutors: activeTutors,
+        online_users: onlineUsers,
         total_sessions: totalSessions,
         total_quizzes: totalQuizzes,
         total_quiz_pdfs: totalQuizPdfs,

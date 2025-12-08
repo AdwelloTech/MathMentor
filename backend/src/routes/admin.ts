@@ -121,19 +121,19 @@ router.get('/tutors/:tutorId/classes', authenticate, adminGuard, async (req, res
 router.put('/tutors/:tutorId/status', authenticate, adminGuard, async (req, res) => {
   try {
     const { tutorId } = req.params;
-    const { is_active } = req.body;
+    const { isActive } = req.body;
 
-    if (typeof is_active !== 'boolean') {
+    if (typeof isActive !== 'boolean') {
       return res.status(400).json({
         success: false,
-        error: 'is_active must be a boolean value'
+        error: 'isActive must be a boolean value'
       });
     }
 
-    await TutorService.updateTutorStatus(tutorId, is_active);
+    await TutorService.updateTutorStatus(tutorId, isActive);
     res.json({
       success: true,
-      data: { id: tutorId, is_active }
+      data: { id: tutorId, isActive }
     });
   } catch (error: any) {
     console.error('Error updating tutor status:', error);
@@ -242,6 +242,7 @@ router.put('/tutor-applications/:userId', authenticate, adminGuard, async (req, 
   try {
     const { userId } = req.params;
     const { status, rejection_reason, admin_notes } = req.body;
+    console.log(`🔄 API: Admin updating tutor application - User ID: ${userId}, Status: ${status}, Admin ID: ${req.user!.id}`);
 
     if (!status || !['pending', 'approved', 'rejected'].includes(status)) {
       return res.status(400).json({
@@ -457,6 +458,27 @@ router.put('/students/:studentId', authenticate, adminGuard, async (req, res) =>
 });
 
 // Delete student
+// Delete any user with complete data cleanup
+router.delete('/users/:userId', authenticate, adminGuard, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log('DELETE /api/admin/users/:userId - userId:', userId);
+
+    await UserService.deleteUser(userId);
+    res.json({
+      success: true,
+      data: { id: userId }
+    });
+  } catch (error: any) {
+    console.error('Error deleting user:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to delete user'
+    });
+  }
+});
+
+// Delete student (legacy route, now uses comprehensive deletion)
 router.delete('/students/:studentId', authenticate, adminGuard, async (req, res) => {
   try {
     const { studentId } = req.params;

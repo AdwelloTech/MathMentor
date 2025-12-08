@@ -113,15 +113,32 @@ class AuthService {
    * Login user
    */
   static async login(data: LoginFormData): Promise<AuthTokens> {
-    const result = await apiClient.post<AuthTokens>('/api/auth/login', {
+    // Create unique request data to prevent any caching
+    const requestData = {
       email: data.email,
       password: data.password,
-    }, {
+      _timestamp: Date.now(),
+      _requestId: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+    };
+
+    console.log('Frontend: Making login request for:', data.email, 'with requestId:', requestData._requestId);
+
+    const result = await apiClient.post<AuthTokens>('/api/auth/login', requestData, {
       skipAuth: true,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-Request-ID': requestData._requestId
+      }
     });
+
+    console.log('Frontend: Login response received for:', result.user.email, 'Role:', result.user.role);
 
     // Store tokens in API client
     apiClient.setTokens(result.accessToken, result.refreshToken);
+    console.log('Frontend: Tokens stored in apiClient');
 
     return result;
   }
@@ -163,7 +180,15 @@ class AuthService {
    * Get current user profile
    */
   static async getCurrentUser(): Promise<BackendUser> {
-    const user = await apiClient.get<BackendUser>('/api/auth/me');
+    console.log('Frontend: Fetching current user profile');
+    const user = await apiClient.get<BackendUser>('/api/auth/me', {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+    console.log('Frontend: User profile fetched for:', user.email, 'Role:', user.role);
     return user;
   }
 

@@ -37,10 +37,6 @@ interface RequestOptions extends RequestInit {
   encrypt?: boolean; // Enable encryption for this request
 }
 
-interface Tokens {
-  accessToken: string;
-  refreshToken?: string;
-}
 
 class ApiClient {
   private baseURL: string;
@@ -51,63 +47,78 @@ class ApiClient {
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
+    // Load tokens from localStorage (persists across sessions, cleared manually)
     this.loadTokens();
   }
 
   /**
-   * Load tokens from localStorage
+   * Load tokens from localStorage (cross-tab persistence)
    */
   private loadTokens(): void {
     try {
-      const tokens = localStorage.getItem('mathmentor_tokens');
+      const tokens = localStorage.getItem('mathmentor_auth_tokens');
       if (tokens) {
-        const parsed: Tokens = JSON.parse(tokens);
+        const parsed: { accessToken: string; refreshToken?: string } = JSON.parse(tokens);
         this.accessToken = parsed.accessToken;
         this.refreshToken = parsed.refreshToken || null;
+        console.log('🔄 Auth tokens restored from localStorage');
       }
     } catch (error) {
-      console.warn('Failed to load tokens from localStorage:', error);
+      console.warn('Failed to load auth tokens:', error);
     }
   }
 
   /**
-   * Save tokens to localStorage
+   * Save tokens to localStorage (cross-tab persistence)
    */
-  private saveTokens(tokens: Tokens): void {
+  private saveTokens(accessToken: string, refreshToken?: string): void {
     try {
-      localStorage.setItem('mathmentor_tokens', JSON.stringify(tokens));
-      this.accessToken = tokens.accessToken;
-      this.refreshToken = tokens.refreshToken || null;
+      const tokens = { accessToken, refreshToken };
+      localStorage.setItem('mathmentor_auth_tokens', JSON.stringify(tokens));
+      this.accessToken = accessToken;
+      this.refreshToken = refreshToken || null;
+      console.log('💾 Auth tokens saved to localStorage');
     } catch (error) {
-      console.error('Failed to save tokens to localStorage:', error);
+      console.error('Failed to save auth tokens:', error);
     }
+  }
+
+  /**
+   * Set tokens with cross-tab persistence
+   */
+  public setTokens(accessToken: string, refreshToken?: string): void {
+    this.saveTokens(accessToken, refreshToken);
   }
 
   /**
    * Clear tokens from memory and localStorage
    */
   public clearTokens(): void {
+    console.log('🗑️ Clearing auth tokens');
     this.accessToken = null;
     this.refreshToken = null;
+    this.isRefreshing = false;
+    this.refreshPromise = null;
     try {
-      localStorage.removeItem('mathmentor_tokens');
+      localStorage.removeItem('mathmentor_auth_tokens');
     } catch (error) {
-      console.warn('Failed to clear tokens from localStorage:', error);
+      console.warn('Failed to clear auth tokens:', error);
     }
   }
 
-  /**
-   * Set authentication tokens
-   */
-  public setTokens(accessToken: string, refreshToken?: string): void {
-    this.saveTokens({ accessToken, refreshToken });
-  }
 
   /**
    * Check if user is authenticated
    */
   public isAuthenticated(): boolean {
     return !!this.accessToken;
+  }
+
+  /**
+   * Get the current access token
+   */
+  public getAccessToken(): string | null {
+    return this.accessToken;
   }
 
   /**
@@ -169,6 +180,8 @@ class ApiClient {
     options: RequestOptions = {},
     retryCount = 0
   ): Promise<T> {
+    console.log(`🌐 API CLIENT: Making request to ${endpoint}`);
+
     const { skipAuth = false, retries = 1, encrypt: shouldEncrypt = false, ...fetchOptions } = options;
 
     // Prepare headers
@@ -203,6 +216,11 @@ class ApiClient {
     if (!(fetchOptions.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
+
+    // DISABLE ALL CACHING - Prevent any browser or proxy caching
+    headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0';
+    headers['Pragma'] = 'no-cache';
+    headers['Expires'] = '0';
 
     // Add any additional headers
     Object.assign(headers, (fetchOptions.headers as Record<string, string>) || {});
@@ -247,12 +265,14 @@ class ApiClient {
 
       // Handle other HTTP errors
       if (!response.ok) {
+        console.log(`❌ API CLIENT: Request failed with status ${response.status} for ${endpoint}`);
         let errorMessage = `HTTP ${response.status}`;
         let errorCode: string | undefined;
         let errorDetails: any;
 
         try {
           const errorData: any = await response.json();
+          console.log('❌ API CLIENT: Error response:', errorData);
           errorMessage = errorData.error || errorMessage;
           errorCode = errorData.code;
           errorDetails = errorData;
@@ -290,9 +310,11 @@ class ApiClient {
         }
 
         if (!data.success) {
+          console.log(`❌ API CLIENT: Server returned error for ${endpoint}:`, data.error);
           throw new ApiClientError(data.error || 'Request failed', response.status);
         }
 
+        console.log(`✅ API CLIENT: Request successful for ${endpoint}, response:`, data.data);
         return data.data!;
       } else {
         // Return response for non-JSON responses (like file downloads)
@@ -480,7 +502,10 @@ class ApiClient {
 }
 
 // Create and export singleton instance
-const apiClient = new ApiClient(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+console.log('🌐 API CLIENT: Using base URL:', API_BASE_URL);
+const apiClient = new ApiClient(API_BASE_URL);
 
 export default apiClient;
 export { ApiClient };
+

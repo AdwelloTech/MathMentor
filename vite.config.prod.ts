@@ -24,11 +24,11 @@ export default defineConfig({
     open: false,
     proxy: {
       "/api": {
-        target: "https://offline-coal-difference-luggage.trycloudflare.com",
+        target: "https://app.mathmentor.co.uk",
         changeOrigin: true,
       },
       "/api/ai": {
-        target: "https://offline-coal-difference-luggage.trycloudflare.com",
+        target: "https://app.mathmentor.co.uk",
         changeOrigin: true,
       },
     },

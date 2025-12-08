@@ -22,12 +22,11 @@ const formatDate = (dateString: string) => {
   });
 };
 
+import { formatGMTTime12Hour } from "@/utils/gmtTimeUtils";
+
 const formatTime = (timeString: string) => {
-  return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  // All times are in GMT - display with GMT label
+  return formatGMTTime12Hour(timeString);
 };
 
 const getClassTypeIcon = (classTypeName: string) => {

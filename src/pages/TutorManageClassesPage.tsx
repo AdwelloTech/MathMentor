@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { classSchedulingService } from "../lib/classSchedulingService";
@@ -33,6 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
 import ActiveSessionFloatingButton from "@/components/tutor/dashboard/ActiveSessionFloatingButton";
+import { GMTTooltip, GMTHelpText } from "@/components/ui/GMTTooltip";
 
 const TutorManageClassesPage: React.FC = () => {
   const { user, profile } = useAuth();
@@ -46,6 +47,8 @@ const TutorManageClassesPage: React.FC = () => {
   const [showRequests, setShowRequests] = useState(false);
   const [bookingRequests, setBookingRequests] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  const [requestCounts, setRequestCounts] = useState<Record<string, number>>({});
+  const previousRequestCountsRef = useRef<Record<string, number>>({});
   const [filterType, setFilterType] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -59,6 +62,68 @@ const TutorManageClassesPage: React.FC = () => {
       loadClassTypes();
     }
   }, [user]);
+
+  // Load request counts for all classes
+  const loadRequestCounts = async (classList: TutorClass[] = classes) => {
+    if (!user?.id) return;
+    try {
+      const allBookings = await classSchedulingService.bookings.getByTeacherId(user.id);
+      const pendingBookings = allBookings.filter(
+        (booking: any) => booking.booking_status === 'pending'
+      );
+      
+      const counts: Record<string, number> = {};
+      pendingBookings.forEach((booking: any) => {
+        const classId = booking.class_id;
+        if (classId) {
+          counts[classId] = (counts[classId] || 0) + 1;
+        }
+      });
+      
+      // Check for new requests and show notifications
+      const prev = previousRequestCountsRef.current;
+      Object.keys(counts).forEach((classId) => {
+        const newCount = counts[classId];
+        const oldCount = prev[classId] || 0;
+        if (newCount > oldCount && oldCount > 0) { // Only notify if we had previous counts (not on initial load)
+          const classItem = classList.find(c => c.id === classId);
+          if (classItem) {
+            toast.success(
+              `New request${newCount - oldCount > 1 ? 's' : ''} for "${classItem.title}"`,
+              {
+                icon: '🔔',
+                duration: 4000,
+              }
+            );
+          }
+        }
+      });
+      // Update the ref with current counts
+      previousRequestCountsRef.current = counts;
+      
+      setRequestCounts(counts);
+    } catch (err) {
+      console.error("Error loading request counts:", err);
+    }
+  };
+
+  // Load request counts when classes are loaded
+  useEffect(() => {
+    if (classes.length > 0 && user?.id) {
+      loadRequestCounts(classes);
+    }
+  }, [classes, user]);
+
+  // Poll for new requests every 30 seconds
+  useEffect(() => {
+    if (!user?.id || classes.length === 0) return;
+    
+    const interval = setInterval(() => {
+      loadRequestCounts(classes);
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [user, classes]);
 
   // If tutor is inactive, show error message
   if (!isActiveTutor) {
@@ -93,6 +158,10 @@ const TutorManageClassesPage: React.FC = () => {
       setError(null);
       const data = await classSchedulingService.classes.getByTutorId(user!.id);
       setClasses(data || []);
+      // Load request counts after classes are loaded
+      if (data && data.length > 0) {
+        await loadRequestCounts(data);
+      }
     } catch (err) {
       setError("Failed to load classes");
       console.error("Error loading classes:", err);
@@ -198,6 +267,14 @@ const TutorManageClassesPage: React.FC = () => {
       setBookingRequests((prev) =>
         prev.filter((booking) => booking.id !== bookingId)
       );
+
+      // Update request counts
+      if (selectedClass) {
+        setRequestCounts((prev) => ({
+          ...prev,
+          [selectedClass.id]: Math.max(0, (prev[selectedClass.id] || 0) - 1),
+        }));
+      }
 
       toast.success("Booking confirmed successfully");
       // Reload the selected class to update enrollment count
@@ -614,10 +691,15 @@ const TutorManageClassesPage: React.FC = () => {
                         }}
                         variant="ghost"
                         size="sm"
-                        className="h-9 text-purple-600 hover:text-purple-700 hover:bg-purple-700/20 group-hover:scale-105 transition-all duration-200"
+                        className="h-9 text-purple-600 hover:text-purple-700 hover:bg-purple-700/20 group-hover:scale-105 transition-all duration-200 relative"
                       >
                         <Users className="w-4 h-4 mr-1" />
                         Requests
+                        {requestCounts[classItem.id] > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                            {requestCounts[classItem.id]}
+                          </span>
+                        )}
                       </Button>
                       <Button
                         onClick={() => handleDeleteClass(classItem.id)}
@@ -1007,6 +1089,24 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
     }
   };
 
+  // Calculate duration from existing start and end times
+  const calculateDuration = (startTime: string, endTime: string): number => {
+    if (!startTime || !endTime) return 60; // Default to 60 minutes
+    try {
+      const start = new Date(`2000-01-01T${startTime}`);
+      const end = new Date(`2000-01-01T${endTime}`);
+      const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+      // Round to nearest valid duration (15, 30, 45, or 60)
+      const validDurations = [15, 30, 45, 60];
+      const closest = validDurations.reduce((prev, curr) => 
+        Math.abs(curr - durationMinutes) < Math.abs(prev - durationMinutes) ? curr : prev
+      );
+      return closest;
+    } catch {
+      return 60;
+    }
+  };
+
   const [formData, setFormData] = useState({
     title: classItem.title,
     description: classItem.description || "",
@@ -1015,6 +1115,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
     date: formatDateForInput(classItem.date),
     start_time: classItem.start_time,
     end_time: classItem.end_time,
+    duration_minutes: classItem.duration_minutes || calculateDuration(classItem.start_time, classItem.end_time),
     max_students: classItem.max_students,
     price_per_session: classItem.price_per_session,
     status: classItem.status as
@@ -1056,21 +1157,16 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
       return;
     }
 
-    // Calculate end time if start time changed
+    // Calculate end time if start time or duration changed
     let updatedFormData = { ...formData };
 
-    if (formData.start_time && formData.class_type_id) {
-      const classType = classTypes.find(
-        (ct) => ct.id === formData.class_type_id
+    if (formData.start_time && formData.duration_minutes) {
+      const startTime = new Date(`2000-01-01T${formData.start_time}`);
+      const endTime = new Date(
+        startTime.getTime() + formData.duration_minutes * 60000
       );
-      if (classType) {
-        const startTime = new Date(`2000-01-01T${formData.start_time}`);
-        const endTime = new Date(
-          startTime.getTime() + (classType.duration_minutes || 60) * 60000
-        );
-        const endTimeString = endTime.toTimeString().slice(0, 5);
-        updatedFormData.end_time = endTimeString;
-      }
+      const endTimeString = endTime.toTimeString().slice(0, 5);
+      updatedFormData.end_time = endTimeString;
     }
 
     // Ensure numeric fields are properly typed
@@ -1206,41 +1302,111 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           <div className="space-y-2">
             <Label
               htmlFor="start-time"
-              className="text-sm font-bold text-slate-200"
+              className="text-sm font-bold text-slate-200 flex items-center gap-2"
             >
               Start Time
+              <GMTTooltip size="sm" />
             </Label>
-            <Input
-              id="start-time"
-              type="time"
-              step="1"
-              value={formData.start_time}
-              onChange={(e) =>
-                setFormData({ ...formData, start_time: e.target.value })
-              }
-              className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all"
+            <div className="relative">
+              <Input
+                id="start-time"
+                type="time"
+                step="1"
+                value={formData.start_time}
+                onChange={(e) => {
+                  const newStartTime = e.target.value;
+                  // Recalculate end time based on duration
+                  if (newStartTime && formData.duration_minutes) {
+                    const startTime = new Date(`2000-01-01T${newStartTime}`);
+                    const endTime = new Date(
+                      startTime.getTime() + formData.duration_minutes * 60000
+                    );
+                    const endTimeString = endTime.toTimeString().slice(0, 5);
+                    setFormData({
+                      ...formData,
+                      start_time: newStartTime,
+                      end_time: endTimeString,
+                    });
+                  } else {
+                    setFormData({ ...formData, start_time: newStartTime });
+                  }
+                }}
+                className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all pr-16"
+                required
+              />
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-slate-400 font-medium pointer-events-none">
+                GMT
+              </span>
+            </div>
+            <GMTHelpText />
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="duration"
+              className="text-sm font-bold text-slate-200"
+            >
+              Session Duration (minutes)
+            </Label>
+            <select
+              id="duration"
+              value={formData.duration_minutes || 60}
+              onChange={(e) => {
+                const duration = parseInt(e.target.value, 10);
+                // Update end time if start time is set
+                if (formData.start_time) {
+                  const startTime = new Date(`2000-01-01T${formData.start_time}`);
+                  const endTime = new Date(
+                    startTime.getTime() + duration * 60000
+                  );
+                  const endTimeString = endTime.toTimeString().slice(0, 5);
+                  setFormData({
+                    ...formData,
+                    duration_minutes: duration,
+                    end_time: endTimeString,
+                  });
+                } else {
+                  setFormData({
+                    ...formData,
+                    duration_minutes: duration,
+                  });
+                }
+              }}
+              className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all bg-slate-800 text-slate-200"
               required
-            />
+            >
+              <option value={15}>15 minutes</option>
+              <option value={30}>30 minutes</option>
+              <option value={45}>45 minutes</option>
+              <option value={60}>60 minutes</option>
+            </select>
           </div>
 
           <div className="space-y-2">
             <Label
               htmlFor="end-time"
-              className="text-sm font-bold text-slate-200"
+              className="text-sm font-bold text-slate-200 flex items-center gap-2"
             >
               End Time
+              <GMTTooltip size="sm" />
             </Label>
-            <Input
-              id="end-time"
-              type="time"
-              step="1"
-              value={formData.end_time}
-              onChange={(e) =>
-                setFormData({ ...formData, end_time: e.target.value })
-              }
-              className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all"
-              required
-            />
+            <div className="relative">
+              <Input
+                id="end-time"
+                type="time"
+                step="1"
+                value={formData.end_time}
+                onChange={(e) =>
+                  setFormData({ ...formData, end_time: e.target.value })
+                }
+                className="h-12 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all pr-16"
+                required
+              />
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-slate-400 font-medium pointer-events-none">
+                GMT
+              </span>
+            </div>
+            <GMTHelpText />
           </div>
 
           <div className="space-y-2">

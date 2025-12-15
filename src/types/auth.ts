@@ -65,7 +65,7 @@ export interface UserProfile {
   last_name: string;
   full_name: string;
   role: UserRole;
-  avatar_url?: string;
+  avatar_url?: string | null;
   phone?: string;
   address?: string;
   date_of_birth?: string;
@@ -96,7 +96,7 @@ export interface UserProfile {
 
   // Profile image fields
   profile_image_id?: string;
-  profile_image_url?: string;
+  profile_image_url?: string | null;
 
   // Teacher specific fields
   employee_id?: string;

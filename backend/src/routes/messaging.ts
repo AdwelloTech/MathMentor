@@ -3,6 +3,7 @@ import Joi from 'joi';
 import { MessagingService } from '../services/messagingService';
 import { authenticate } from '../middleware/auth';
 import { validateOrThrow } from '../utils/validation';
+import { getIO } from '../realtime/socket';
 
 const router = express.Router();
 
@@ -26,6 +27,15 @@ const createConversationSchema = Joi.object({
 
 const editMessageSchema = Joi.object({
   content: Joi.string().min(1).max(2000).required(),
+});
+
+const createSessionSchema = Joi.object({
+  title: Joi.string().min(1).max(200).required(),
+  date: Joi.string().required(),
+  startTime: Joi.string().required(),
+  endTime: Joi.string().required(),
+  price: Joi.number().optional(),
+  link: Joi.string().uri().optional(),
 });
 
 const createNotificationSchema = Joi.object({
@@ -209,6 +219,46 @@ router.post('/messages', authenticate, async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Message sent successfully',
+      data: message,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Create a 1:1 session invite message (tutor only)
+router.post('/conversations/:conversationId/session', authenticate, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const tutorId = req.user!.id;
+
+    if (req.user!.role !== 'tutor') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only tutors can create sessions',
+      });
+    }
+
+    const { title, date, startTime, endTime, price, link } = validateOrThrow(createSessionSchema, req.body);
+
+    const message = await (MessagingService as any).sendSessionMessage({
+      tutorId,
+      conversationId,
+      session: { title, date, startTime, endTime, price, link },
+    });
+
+    const io = getIO();
+    if (io) {
+      io.to(`conversation:${conversationId}`).emit('message:new', message);
+      io.to(`user:${message.recipientId?.toString?.() || ''}`).emit('message:new', message);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Session created successfully',
       data: message,
     });
   } catch (error: any) {

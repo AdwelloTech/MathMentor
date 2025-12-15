@@ -38,6 +38,19 @@ export interface CreateNotificationData {
   channels?: ('in_app' | 'email' | 'push')[];
 }
 
+export interface CreateSessionMessageData {
+  tutorId: string;
+  conversationId: string;
+  session: {
+    title: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    price?: number;
+    link?: string;
+  };
+}
+
 export class MessagingService {
   // Send a message
   static async sendMessage(data: SendMessageData): Promise<IMessage> {
@@ -90,6 +103,15 @@ export class MessagingService {
     });
 
     const savedMessage = await message.save();
+    console.log('[msg:save]', {
+      messageId: savedMessage._id?.toString?.(),
+      conversationId: conversation._id?.toString?.(),
+      senderId,
+      recipientId,
+      messageType,
+      hasAttachments: Array.isArray(attachments) && attachments.length > 0,
+      createdAt: savedMessage.createdAt,
+    });
 
     // Update conversation's last message
     await (conversation as any).updateLastMessage(
@@ -119,8 +141,72 @@ export class MessagingService {
         channels: ['in_app'] as ('in_app' | 'email' | 'push')[]
       }));
 
-      await (Notification as any).bulkCreate(notifications);
+    await (Notification as any).bulkCreate(notifications);
     }
+
+    // Return message with populated sender info for downstream consumers (sockets/API)
+    const populatedMessage = await (Message as any)
+      .findById(savedMessage._id)
+      .populate('senderId', 'fullName firstName lastName avatarUrl email');
+
+    return populatedMessage || savedMessage;
+  }
+
+  // Send a session invite message (tutor-only, direct conversation)
+  static async sendSessionMessage(data: CreateSessionMessageData): Promise<IMessage> {
+    const { tutorId, conversationId, session } = data;
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      throw new Error('Conversation not found');
+    }
+
+    if (conversation.type !== 'direct') {
+      throw new Error('Session invites are only supported in direct conversations');
+    }
+
+    if (!conversation.participants.some(id => id.equals(tutorId))) {
+      throw new Error('Tutor is not a participant in this conversation');
+    }
+
+    // Identify the other participant (assumed student)
+    const otherParticipant = conversation.participants.find(id => !id.equals(tutorId));
+    if (!otherParticipant) {
+      throw new Error('Conversation must have two participants');
+    }
+
+    const content = session.title || 'New 1:1 Session';
+    const metadata = {
+      type: 'session_invite',
+      session,
+    };
+
+    const message = new Message({
+      senderId: new mongoose.Types.ObjectId(tutorId),
+      recipientId: otherParticipant,
+      conversationId: conversation._id,
+      messageType: 'system',
+      content,
+      metadata,
+      readBy: [new mongoose.Types.ObjectId(tutorId)],
+    });
+
+    const savedMessage = await message.save();
+    console.log('[msg:save:session]', {
+      messageId: savedMessage._id?.toString?.(),
+      conversationId: conversation._id?.toString?.(),
+      senderId: tutorId,
+      recipientId: otherParticipant?.toString?.(),
+      messageType: 'system',
+      session,
+      createdAt: savedMessage.createdAt,
+    });
+
+    await (conversation as any).updateLastMessage(
+      savedMessage._id,
+      content,
+      new mongoose.Types.ObjectId(tutorId)
+    );
 
     return savedMessage;
   }

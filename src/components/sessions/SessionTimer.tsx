@@ -6,6 +6,12 @@ import SessionRatingModal from "./SessionRatingModal";
 import { sessionRatingService } from "@/lib/sessionRatingService";
 import { classSchedulingService } from "@/lib/classSchedulingService";
 import { useAuth } from "@/contexts/AuthContext";
+
+const logDev = (...args: any[]) => {
+  if (import.meta.env.DEV) {
+    console.log(...args);
+  }
+};
 import toast from "react-hot-toast";
 import type { StudentUpcomingSession } from "@/types/classScheduling";
 
@@ -135,7 +141,7 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
 
     // If manually ended, immediately set session to ended state
     if (manuallyEnded) {
-      console.log("Session manually ended - setting ended state immediately");
+      logDev("Session manually ended - setting ended state immediately");
       setTimeRemaining(0);
       setIsSessionActive(false);
       setIsSessionEnded(true);
@@ -144,7 +150,7 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
 
     // If session is cancelled, don't run timer updates
     if (isSessionCancelled) {
-      console.log("Session cancelled - not running timer updates");
+      logDev("Session cancelled - not running timer updates");
       return;
     }
 
@@ -157,12 +163,12 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
   // Check if rated when component loads and when session ends
   useEffect(() => {
     if (user) {
-      console.log("Checking if already rated for this session...");
+      logDev("Checking if already rated for this session...");
       checkIfRated();
     }
 
     // Log current state for debugging
-    console.log("Current state for session:", {
+    logDev("Current state for session:", {
       sessionId: session.id,
       sessionTitle: session.title,
       sessionDate: session.date,
@@ -175,16 +181,14 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
   // Handle initial state when manually ended
   useEffect(() => {
     if (manuallyEnded) {
-      console.log(
-        "Initial load with manually ended session - setting ended state"
-      );
+      logDev("Initial load with manually ended session - setting ended state");
       setTimeRemaining(0);
       setIsSessionActive(false);
       setIsSessionEnded(true);
     }
 
     // Debug current session status
-    console.log("Current session status:", {
+    logDev("Current session status:", {
       manuallyEnded,
       isSessionActive,
       isSessionEnded,
@@ -194,7 +198,7 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
 
   // Auto-show rating modal when session ends
   useEffect(() => {
-    console.log("Rating modal effect triggered:", {
+    logDev("Rating modal effect triggered:", {
       isSessionEnded,
       showRatingModal,
       ratingSubmitted,
@@ -202,10 +206,10 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
       ratingModalShown,
     });
     if (isSessionEnded && !showRatingModal && !ratingSubmitted && !hasRated && !ratingModalShown) {
-      console.log("Setting up rating modal timer...");
+      logDev("Setting up rating modal timer...");
       // Small delay to let user see session ended state
       const timer = setTimeout(() => {
-        console.log("Showing rating modal now!");
+        logDev("Showing rating modal now!");
         setShowRatingModal(true);
         setRatingModalShown(true);
       }, 2000);

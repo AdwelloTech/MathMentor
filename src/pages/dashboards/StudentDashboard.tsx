@@ -900,6 +900,12 @@ const StudentDashboard: React.FC = () => {
                         icon: CogIcon,
                         action: () => navigate("/student/flashcards"),
                       },
+                  {
+                    title: "Explore Tutors",
+                    description: "Browse tutors with completed profiles",
+                    icon: UserGroupIcon,
+                    action: () => navigate("/student/explore-tutors"),
+                  },
                     ].map((action) => (
                       <motion.div
                         key={action.title}

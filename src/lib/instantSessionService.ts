@@ -1,5 +1,6 @@
 // Instant Session Service - Real Implementation
 import apiClient from './apiClient';
+import { getSocket } from './socketClient';
 
 export type InstantSessionStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
 
@@ -174,7 +175,7 @@ export const instantSessionService = {
     };
   },
 
-  // Polling-based subscription for tutors (fallback for real-time)
+  // WebSocket-based subscription for tutors (fallback to no-op if offline)
   subscribeToPending: (
     callback: (payload: {
       new: InstantRequest;
@@ -184,53 +185,75 @@ export const instantSessionService = {
     subjectId?: string,
     isOnline: boolean = false
   ) => {
-    if (!isOnline) {
-      return () => {};
+    if (!isOnline) return () => {};
+
+    const socket = getSocket();
+    if (!socket) return () => {};
+
+    const normalize = (req: any): InstantRequest => ({
+      ...req,
+      id: req.id || req._id,
+      _id: req.id || req._id,
+    });
+
+    const handleNew = (req: any) => {
+      const normalized = normalize(req);
+      if (subjectId && typeof normalized.subjectId === 'object' && normalized.subjectId) {
+        const sid =
+          (normalized.subjectId as any)._id?.toString?.() ||
+          (normalized.subjectId as any).id ||
+          (normalized.subjectId as any).toString?.();
+        if (sid && sid !== subjectId) return;
+      }
+      callback({ new: normalized, old: null, eventType: 'INSERT' });
+    };
+
+    const handleRemove = (req: any) => {
+      const normalized = normalize(req);
+      callback({ new: normalized, old: null, eventType: 'REMOVE' });
+    };
+
+    socket.on('instant:pending:new', handleNew);
+    socket.on('instant:pending:remove', handleRemove);
+
+    return () => {
+      socket.off('instant:pending:new', handleNew);
+      socket.off('instant:pending:remove', handleRemove);
+    };
+  },
+
+  // Subscribe to a specific instant session status updates
+  subscribeToSession: (
+    sessionId: string,
+    handler: (payload: { event: string; session: InstantRequest }) => void
+  ) => {
+    const socket = getSocket();
+    if (!socket) return () => {};
+
+    const join = () => {
+      socket.emit('instant:join', { sessionId });
+    };
+
+    if (socket.connected) {
+      join();
+    } else {
+      socket.once('connect', join);
     }
 
-    let lastRequestIds = new Set<string>();
-    
-    // Poll every 5 seconds for new requests
-    const pollInterval = setInterval(async () => {
-      try {
-        const requests = await instantSessionService.getPendingRequests(subjectId);
-        
-        // Check for new requests
-        const currentRequestIds = new Set(requests.map(r => r.id || r._id));
-        
-        requests.forEach(req => {
-          const reqId = req.id || req._id;
-          if (!lastRequestIds.has(reqId)) {
-            // New request found
-            callback({
-              new: req,
-              old: null,
-              eventType: 'INSERT'
-            });
-          }
-        });
-        
-        // Check for removed requests (accepted, cancelled, or expired)
-        lastRequestIds.forEach(oldId => {
-          if (!currentRequestIds.has(oldId)) {
-            // Request was removed (likely accepted or cancelled)
-            callback({
-              new: { id: oldId, status: 'accepted' } as InstantRequest,
-              old: null,
-              eventType: 'UPDATE'
-            });
-          }
-        });
-        
-        lastRequestIds = currentRequestIds;
-      } catch (error) {
-        console.error('[Instant] Error polling for pending requests:', error);
-      }
-    }, 5000); // Poll every 5 seconds
+    const wrappedHandler = (payload: any) => {
+      if (!payload?.session) return;
+      const normalized = {
+        ...payload.session,
+        id: payload.session.id || payload.session._id,
+        _id: payload.session.id || payload.session._id,
+      };
+      handler({ event: payload.event, session: normalized });
+    };
 
-    // Return cleanup function
+    socket.on('instant:status', wrappedHandler);
+
     return () => {
-      clearInterval(pollInterval);
+      socket.off('instant:status', wrappedHandler);
     };
   },
 };

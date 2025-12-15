@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Class, IClass } from '../models/Class';
 import { User } from '../models/User';
+import { notifyClassStatusChange } from '../realtime/classEvents';
 
 export interface CreateClassData {
   title: string;
@@ -303,7 +304,11 @@ export class ClassService {
       classDoc.isFull = classDoc.enrolledCount >= classDoc.capacity;
     }
 
-    return await classDoc.save();
+    const saved = await classDoc.save();
+    if (updates.status) {
+      notifyClassStatusChange(saved);
+    }
+    return saved;
   }
 
   /**

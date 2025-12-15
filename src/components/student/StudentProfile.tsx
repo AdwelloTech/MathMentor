@@ -122,8 +122,10 @@ const StudentProfile: React.FC = () => {
             schoolName: fullProfile.school_name || "",
           });
 
-          // Set profile image URL
-          setCurrentProfileImageUrl(fullProfile.avatar_url || null);
+          // Set profile image URL (prefer profile_image_url) without triggering redundant updates
+          const initialImageUrl =
+            fullProfile.profile_image_url || fullProfile.avatar_url || null;
+          setCurrentProfileImageUrl(initialImageUrl);
         }
 
         // Get the active profile image from backend API
@@ -154,10 +156,10 @@ const StudentProfile: React.FC = () => {
 
   // Update profile image URL when profile changes
   useEffect(() => {
-    if (profile?.profile_image_url !== undefined) {
-      setCurrentProfileImageUrl(profile.profile_image_url);
+    if (profile?.profile_image_url || profile?.avatar_url) {
+      setCurrentProfileImageUrl(profile.profile_image_url || profile.avatar_url || null);
     }
-  }, [profile?.profile_image_url]);
+  }, [profile?.profile_image_url, profile?.avatar_url]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -194,19 +196,28 @@ const StudentProfile: React.FC = () => {
     }));
   };
 
-  // Handle profile image change
-  const handleProfileImageChange = async () => {
-    // Reload the profile data to get the updated avatar URL
+  // Handle profile image change (align with tutor flow)
+  const handleProfileImageChange = async (imageUrl?: string | null) => {
     try {
-      const freshProfile = await AuthService.getCurrentUser();
-      if (freshProfile?.avatar_url) {
-        setCurrentProfileImageUrl(freshProfile.avatar_url);
-        // Also update AuthContext
+      // If we have the new URL from the uploader, use it immediately
+      if (imageUrl) {
+        setCurrentProfileImageUrl(imageUrl);
         if (updateProfile) {
-          await updateProfile({ avatar_url: freshProfile.avatar_url });
+          await updateProfile({
+            profile_image_url: imageUrl,
+            avatar_url: imageUrl,
+          });
         }
-      } else {
-        setCurrentProfileImageUrl(null);
+        return;
+      }
+
+      // No URL provided: explicitly clear profile image
+      setCurrentProfileImageUrl(null);
+      if (updateProfile) {
+        await updateProfile({
+          profile_image_url: null,
+          avatar_url: null,
+        });
       }
     } catch (error) {
       console.error("Failed to reload profile after image change:", error);

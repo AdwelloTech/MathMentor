@@ -86,8 +86,9 @@ export const uploadProfileImage = async (
  */
 export const getActiveProfileImage = async (): Promise<ProfileImage | null> => {
   try {
-    const response = await apiClient.get<{ success: boolean; data: ProfileImage | null }>('/api/files/profile-images/active');
-    return response.success ? response.data : null;
+    // apiClient already unwraps { success, data }, so we receive the data directly
+    const image = await apiClient.get<ProfileImage | null>('/api/files/profile-images/active');
+    return image ?? null;
   } catch (error: any) {
     console.error('Failed to fetch active profile image:', error);
     return null; // Return null instead of throwing to prevent profile loading errors
@@ -99,8 +100,9 @@ export const getActiveProfileImage = async (): Promise<ProfileImage | null> => {
  */
 export const getUserProfileImages = async (): Promise<ProfileImage[]> => {
   try {
-    const response = await apiClient.get<{ success: boolean; data: ProfileImage[] }>('/api/files/profile-images');
-    return response.success ? response.data : [];
+    // apiClient returns the data payload directly
+    const images = await apiClient.get<ProfileImage[]>('/api/files/profile-images');
+    return images ?? [];
   } catch (error: any) {
     console.error('Failed to fetch user profile images:', error);
     return [];

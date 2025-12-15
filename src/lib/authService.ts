@@ -249,7 +249,12 @@ class AuthService {
     const firstName = backendUser.first_name || backendUser.firstName;
     const lastName = backendUser.last_name || backendUser.lastName;
     const fullName = backendUser.full_name || backendUser.fullName;
-    const avatarUrl = backendUser.avatar_url || backendUser.avatarUrl;
+    const profileImageUrl =
+      backendUser.profile_image_url ||
+      backendUser.profileImageUrl ||
+      backendUser.avatar_url ||
+      backendUser.avatarUrl;
+    const avatarUrl = profileImageUrl;
     const createdAt = backendUser.created_at || backendUser.createdAt;
     const lastLogin = backendUser.last_login || backendUser.lastLogin;
 
@@ -273,6 +278,7 @@ class AuthService {
         role: backendUser.role as any,
         package: backendUser.package as any, // Include package for students
         avatar_url: avatarUrl,
+        profile_image_url: profileImageUrl,
         phone: backendUser.phone,
         is_active: true, // Assume active if user exists
         last_login: lastLogin,

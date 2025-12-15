@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { instantSessionService, type InstantRequest } from "@/lib/instantSessionService";
+import { getSocket } from "@/lib/socketClient";
 import toast from "react-hot-toast";
 
 interface ActiveInstantSessionButtonProps {
@@ -22,79 +23,65 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
   const [showDetails, setShowDetails] = useState(false);
   const [completingSession, setCompletingSession] = useState(false);
 
-  // Check for active instant sessions periodically
+  // Realtime: listen for instant session updates (no polling)
   useEffect(() => {
     if (!tutorId) return;
 
-    const checkForActiveSessions = async () => {
+    const refreshSession = async () => {
       try {
         const sessions = await instantSessionService.getTutorSessions(20);
-        
-        // Find first accepted or in_progress session
         const active = sessions.find(
-          (session) =>
-            session.status === 'accepted' || session.status === 'in_progress'
+          (session) => session.status === "accepted" || session.status === "in_progress"
         );
-        
+
         if (active) {
-          // Get detailed session data to ensure we have the meeting URL
-          try {
-            const sessionId = active.id || active._id;
-            const detailedSession = await instantSessionService.getRequestStatus(sessionId);
-            
-            if (detailedSession) {
-              console.log(
-                "[ActiveInstantSession] Found active session:",
-                "ID:", sessionId,
-                "Status:", detailedSession.status,
-                "Has URL:", !!detailedSession.jitsiMeetingUrl
-              );
-              
-              // If session is still valid (not completed or cancelled)
-              if (
-                detailedSession.status === 'accepted' || 
-                detailedSession.status === 'in_progress' ||
-                detailedSession.status === 'pending'
-              ) {
-                setActiveSession(detailedSession);
-                
-                // If session is pending but showing in active list, try to accept it
-                if (detailedSession.status === 'pending') {
-                  console.log("[ActiveInstantSession] Found pending session in active list, trying to accept");
-                  try {
-                    const acceptedSession = await instantSessionService.acceptRequest(sessionId, tutorId);
-                    if (acceptedSession) {
-                      setActiveSession(acceptedSession);
-                    }
-                  } catch (acceptError) {
-                    console.log("[ActiveInstantSession] Couldn't accept session:", acceptError);
-                  }
-                }
-              } else {
-                console.log("[ActiveInstantSession] Session no longer active, status:", detailedSession.status);
-                setActiveSession(null);
-              }
-            } else {
-              console.log("[ActiveInstantSession] No detailed session data found, using basic data");
-              setActiveSession(active);
-            }
-          } catch (detailError) {
-            console.error("[ActiveInstantSession] Error getting detailed session:", detailError);
-            setActiveSession(active);
+          const sessionId = active.id || (active as any)._id;
+          const detailedSession = await instantSessionService.getRequestStatus(sessionId);
+
+          if (
+            detailedSession &&
+            (detailedSession.status === "accepted" || detailedSession.status === "in_progress")
+          ) {
+            setActiveSession(detailedSession);
+          } else {
+            setActiveSession(null);
           }
         } else {
           setActiveSession(null);
         }
       } catch (error) {
-        console.error("[ActiveInstantSession] Error checking for active sessions:", error);
+        console.error("[ActiveInstantSession] Error refreshing session:", error);
+        setActiveSession(null);
       }
     };
 
-    // Check immediately and then every 10 seconds
-    checkForActiveSessions();
-    const interval = setInterval(checkForActiveSessions, 10000);
+    refreshSession();
 
-    return () => clearInterval(interval);
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleStatus = (payload: any) => {
+      const session = payload?.session;
+      if (!session) return;
+      const tutorMatch =
+        session.tutorId === tutorId ||
+        session.tutorId?._id === tutorId ||
+        session.tutorId?.id === tutorId;
+      if (!tutorMatch) return;
+
+      if (session.status === "accepted" || session.status === "in_progress") {
+        const id = session.id || session._id;
+        setActiveSession({ ...session, id, _id: id } as any);
+      } else {
+        setActiveSession(null);
+      }
+    };
+
+    socket.on("instant:status", handleStatus);
+
+    return () => {
+      socket.off("instant:status", handleStatus);
+    };
   }, [tutorId]);
 
   const handleJoinSession = async () => {

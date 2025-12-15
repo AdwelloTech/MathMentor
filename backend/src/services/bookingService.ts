@@ -3,6 +3,7 @@ import { Booking, IBooking, BookingStatus, BookingType } from '../models/Booking
 import { Class } from '../models/Class';
 import { User } from '../models/User';
 import { ClassService } from './classService';
+import { notifyBookingChange } from '../realtime/classEvents';
 
 export interface CreateBookingData {
   classId?: string;
@@ -97,7 +98,9 @@ export class BookingService {
       createdBy: new mongoose.Types.ObjectId(studentId),
     });
 
-    return await newBooking.save();
+    const saved = await newBooking.save();
+    notifyBookingChange(saved);
+    return saved;
   }
 
   /**
@@ -232,7 +235,9 @@ export class BookingService {
       booking.cancelledAt = new Date();
     }
 
-    return await booking.save();
+    const saved = await booking.save();
+    notifyBookingChange(saved);
+    return saved;
   }
 
   /**
@@ -267,7 +272,9 @@ export class BookingService {
       await ClassService.unenrollStudent(booking.classId.toString(), userId);
     }
 
-    return await booking.save();
+    const saved = await booking.save();
+    notifyBookingChange(saved);
+    return saved;
   }
 
   /**
@@ -291,7 +298,9 @@ export class BookingService {
     booking.isConfirmed = true;
     booking.confirmedAt = new Date();
 
-    return await booking.save();
+    const saved = await booking.save();
+    notifyBookingChange(saved);
+    return saved;
   }
 
   /**
@@ -316,7 +325,9 @@ export class BookingService {
 
     booking.status = 'completed';
 
-    return await booking.save();
+    const saved = await booking.save();
+    notifyBookingChange(saved);
+    return saved;
   }
 
   /**

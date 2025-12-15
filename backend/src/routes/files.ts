@@ -5,6 +5,7 @@ import { authenticate } from '../middleware/auth';
 import { validateFileUpload, validateDocumentFile, validateImageFile, fileUploadRateLimit } from '../middleware/fileValidation';
 import { serveFile, serveThumbnail, servePublicFile, fileDownloadRateLimit, logFileAccess } from '../middleware/fileServing';
 import { FileUploadService, uploadInstances } from '../services/fileUploadService';
+import { ProfileImageService } from '../services/profileImageService';
 import { ProfileImage } from '../models/ProfileImage';
 import { File, FileType } from '../models/File';
 import { StudyNote } from '../models/StudyNote';
@@ -216,32 +217,8 @@ router.delete('/profile-images/:imageId', authenticate, async (req, res) => {
   try {
     const { imageId } = req.params;
 
-    // Find the image
-    const image = await ProfileImage.findById(imageId);
-    if (!image) {
-      return res.status(404).json({
-        success: false,
-        error: 'Profile image not found'
-      });
-    }
-
-    // Verify ownership
-    if (image.userId.toString() !== req.user!.id) {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied: image belongs to another user'
-      });
-    }
-
-    // Delete file from disk
-    if (image.filePath && FileUploadService.fileExists(image.filePath)) {
-      await FileUploadService.deleteFile(image.filePath);
-    }
-
-    // Delete from database
-    await ProfileImage.findByIdAndDelete(imageId);
-
-    console.log('Profile image deleted:', imageId);
+    // Delete image and clear user/profile URLs when active
+    await ProfileImageService.deleteProfileImage(req.user!.id, imageId);
 
     res.json({
       success: true,

@@ -4,6 +4,7 @@ import { XMarkIcon, ClockIcon, UserIcon, CalendarDaysIcon } from "@heroicons/rea
 import { Button } from "@/components/ui/button";
 import { sessionUtils } from "@/utils/sessionUtils";
 import { classSchedulingService } from "@/lib/classSchedulingService";
+import { getSocket } from "@/lib/socketClient";
 import toast from "react-hot-toast";
 import type { TutorClass } from "@/types/classScheduling";
 
@@ -29,29 +30,58 @@ const ActiveSessionFloatingButton: React.FC<ActiveSessionFloatingButtonProps> = 
   const [endingSession, setEndingSession] = useState(false);
   const [enrolledStudents, setEnrolledStudents] = useState<EnrolledStudent[]>([]);
 
-  // Check for active sessions periodically
+  // Realtime: refresh active session on class status updates (fallback only when socket is down)
   useEffect(() => {
-    const checkForActiveSessions = async () => {
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+
+    const refresh = async () => {
       try {
         const upcomingSessions = await classSchedulingService.classes.getByTutorId(tutorId);
-
         const active = upcomingSessions.find((session: any) =>
           (sessionUtils.isSessionActive(session) || session.status === 'in_progress') &&
           session.status !== 'completed' &&
           session.status !== 'cancelled'
         );
-
         setActiveSession(active || null);
       } catch (error) {
         console.error("Error checking for active sessions:", error);
       }
     };
 
-    // Check immediately and then every 30 seconds
-    checkForActiveSessions();
-    const interval = setInterval(checkForActiveSessions, 30000);
+    refresh();
 
-    return () => clearInterval(interval);
+    const socket = getSocket();
+    if (!socket) {
+      fallbackInterval = setInterval(refresh, 30000);
+      return () => {
+        if (fallbackInterval) clearInterval(fallbackInterval);
+      };
+    }
+
+    const handleClassStatus = () => refresh();
+    const ensureFallback = () => {
+      if (socket.connected) {
+        if (fallbackInterval) {
+          clearInterval(fallbackInterval);
+          fallbackInterval = null;
+        }
+      } else if (!fallbackInterval) {
+        fallbackInterval = setInterval(refresh, 30000);
+      }
+    };
+
+    socket.on('class:status', handleClassStatus);
+    socket.on('connect', ensureFallback);
+    socket.on('disconnect', ensureFallback);
+
+    ensureFallback();
+
+    return () => {
+      socket.off('class:status', handleClassStatus);
+      socket.off('connect', ensureFallback);
+      socket.off('disconnect', ensureFallback);
+      if (fallbackInterval) clearInterval(fallbackInterval);
+    };
   }, [tutorId]);
 
   // Fetch enrolled students when active session changes

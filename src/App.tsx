@@ -18,6 +18,8 @@ import AdminLayout from "./components/layout/AdminLayout";
 import StudentLayout from "./components/layout/StudentLayout";
 import ParentLayout from "./components/layout/ParentLayout";
 import TutorLayout from "./components/layout/TutorLayout";
+import { getSocket } from "./lib/socketClient";
+import { useEffect } from "react";
 
 // Lazy load all other pages for code splitting
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
@@ -52,12 +54,15 @@ const CreateEditFlashcardSetPage = lazy(() => import("./pages/tutor/CreateEditFl
 const TutorRatingsPage = lazy(() => import("./pages/tutor/TutorRatingsPage"));
 const FlashcardsListPage = lazy(() => import("./pages/student/FlashcardsListPage"));
 const FlashcardStudyPage = lazy(() => import("./pages/student/FlashcardStudyPage"));
+const TutorDetailPage = lazy(() => import("./pages/student/TutorDetailPage"));
+const MessagesPage = lazy(() => import("./pages/messages/MessagesPage"));
 
 const StudentDashboard = lazy(() => import("./pages/dashboards/StudentDashboard"));
 const BookSessionPage = lazy(() => import("./pages/BookSessionPage"));
 const BookConsultationPage = lazy(() => import("./pages/BookConsultationPage"));
 const ManageSessionsPage = lazy(() => import("./pages/ManageSessionsPage"));
 const InstantSessionPage = lazy(() => import("./pages/student/InstantSessionPage"));
+const ExploreTutorsPage = lazy(() => import("./pages/student/ExploreTutorsPage"));
 const PackagesPage = lazy(() => import("./pages/PackagesPage"));
 const NotesPage = lazy(() => import("./pages/notes/NotesPage"));
 const CreateNotePage = lazy(() => import("./pages/notes/CreateNotePage"));
@@ -80,6 +85,13 @@ function App() {
   const { user, loading, profile } = useAuth();
   const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
   const location = useLocation();
+
+  useEffect(() => {
+    // initialize socket once tokens/user are available
+    if (user && profile) {
+      getSocket();
+    }
+  }, [user, profile]);
 
   // Check if user is fully authenticated (both user and profile exist)
   const isUserAuthenticated = user && profile;
@@ -160,6 +172,7 @@ function App() {
               />
 
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="messages" element={<MessagesPage />} />
               <Route path="id-verification" element={<IDVerificationPage />} />
 
               {/* Admin routes with nested structure */}
@@ -246,6 +259,8 @@ function App() {
               >
                 <Route index element={<StudentDashboard />} />
                 <Route path="book-session" element={<BookSessionPage />} />
+                <Route path="explore-tutors" element={<ExploreTutorsPage />} />
+                <Route path="tutors/:id" element={<TutorDetailPage />} />
                 <Route
                   path="instant-session"
                   element={<InstantSessionPage />}

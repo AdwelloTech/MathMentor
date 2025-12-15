@@ -18,6 +18,7 @@ import {
   Cog6ToothIcon,
   ChartBarIcon,
   ClipboardDocumentListIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -45,6 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [unreadMessages, setUnreadMessages] = useState<number>(0);
 
   // Add admin-specific navigation
   const adminNavigation = [
@@ -123,6 +125,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       href: "/tutor/manage-materials",
       icon: DocumentIcon,
     },
+    {
+      name: "Messages",
+      href: "/messages",
+      icon: ChatBubbleLeftRightIcon,
+    },
   ];
 
   // Check if tutor navigation should be disabled
@@ -161,6 +168,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: CalendarDaysIcon,
         },
         {
+          name: "Explore Tutors",
+          href: "/student/explore-tutors",
+          icon: UserGroupIcon,
+        },
+        {
           name: "My Sessions",
           href: "/student/manage-sessions",
           icon: SparklesIcon,
@@ -179,6 +191,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           name: "Flash Cards",
           href: "/student/flashcards",
           icon: BookOpenIcon,
+        },
+        {
+          name: "Messages",
+          href: "/messages",
+          icon: ChatBubbleLeftRightIcon,
         },
         {
           name: "Packages",
@@ -283,6 +300,20 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     return "Application pending approval";
   };
+
+  useEffect(() => {
+    const stored = localStorage.getItem("mm_unread_messages");
+    if (stored) setUnreadMessages(parseInt(stored, 10) || 0);
+
+    const handleUnread = (event: any) => {
+      const count = event?.detail?.count ?? 0;
+      setUnreadMessages(count);
+    };
+    window.addEventListener("message:unread", handleUnread as any);
+    return () => {
+      window.removeEventListener("message:unread", handleUnread as any);
+    };
+  }, []);
 
   // Collapsible Logo Section
   const LogoSection = () => {
@@ -445,7 +476,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               (active || hasActiveSubItem) ? getActiveClasses() : getHoverClasses(),
               !isHovered && "justify-center"
             )}
-          >
+            >
             <div className="relative">
               <item.icon
                 className={cn(
@@ -457,6 +488,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
               {(active || hasActiveSubItem) && (
                 <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-secondary" />
+              )}
+              {item.name === "Messages" && unreadMessages > 0 && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
               )}
             </div>
 
@@ -773,6 +807,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                             "h-5 w-5 mb-1 transition-transform duration-300",
                             active && "scale-110"
                           )} />
+                          {item.name === "Messages" && unreadMessages > 0 && (
+                            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                          )}
                           {isDisabled && (
                             <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-warning rounded-full" />
                           )}

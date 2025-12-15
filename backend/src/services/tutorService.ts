@@ -132,6 +132,12 @@ export interface TutorProfile {
   languages?: string[];
   certifications?: string[];
   profile_completed?: boolean;
+  is_online?: boolean;
+  average_rating?: number;
+  rating_count?: number;
+  sessions_count?: number;
+  students_count?: number;
+  open_upcoming_sessions_count?: number;
   // Additional application information
   application_status?: string;
   submitted_at?: string;
@@ -599,6 +605,461 @@ export class TutorService {
       } as unknown as TutorProfile;
     } finally {
     }
+  }
+
+  /**
+   * Public listing of tutors with completed profiles (for students)
+   */
+  static async getPublicTutors(): Promise<TutorProfile[]> {
+    const db = mongoose.connection.db!;
+
+    try {
+      const nowUtc = new Date(Date.now());
+
+      const users = await db
+        .collection('users')
+        .find({
+          role: 'tutor',
+          isActive: true,
+          profileCompleted: true,
+        })
+        .project({
+          _id: 1,
+          firstName: 1,
+          lastName: 1,
+          fullName: 1,
+          email: 1,
+          profileImageUrl: 1,
+          avatarUrl: 1,
+          subjects: 1,
+          specializations: 1,
+          qualification: 1,
+          experienceYears: 1,
+          hourlyRate: 1,
+          availability: 1,
+          bio: 1,
+          languages: 1,
+          isOnline: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        })
+        .sort({ lastLogin: -1, updatedAt: -1 })
+        .toArray();
+
+      const tutorIds = users.map((u: any) => u._id.toString());
+
+      // Ratings aggregation: average and count per tutor
+      const ratingsAgg = await db.collection('sessionratings')
+        .aggregate([
+          { $match: { tutorId: { $in: tutorIds.map(id => new mongoose.Types.ObjectId(id)) } } },
+          { $group: { _id: '$tutorId', average_rating: { $avg: '$rating' }, rating_count: { $sum: 1 } } }
+        ])
+        .toArray();
+      const ratingsMap = new Map<string, { average_rating: number; rating_count: number }>();
+      ratingsAgg.forEach((r: any) => {
+        ratingsMap.set(r._id.toString(), {
+          average_rating: r.average_rating ?? 0,
+          rating_count: r.rating_count ?? 0,
+        });
+      });
+
+      // Sessions aggregation: counts and distinct students per tutor
+      const sessionsAgg = await db.collection('sessions')
+        .aggregate([
+          { $match: { tutorId: { $in: tutorIds.map(id => new mongoose.Types.ObjectId(id)) } } },
+          {
+            $group: {
+              _id: '$tutorId',
+              sessions_count: { $sum: 1 },
+              students: { $addToSet: '$studentId' },
+            }
+          },
+          {
+            $project: {
+              sessions_count: 1,
+              students_count: { $size: '$students' },
+            }
+          }
+        ])
+        .toArray();
+      const sessionsMap = new Map<string, { sessions_count: number; students_count: number }>();
+      sessionsAgg.forEach((s: any) => {
+        sessionsMap.set(s._id.toString(), {
+          sessions_count: s.sessions_count ?? 0,
+          students_count: s.students_count ?? 0,
+        });
+      });
+
+      // Open upcoming classes (sessions) per tutor (capacity remaining, future start)
+      const openUpcomingAgg = await db.collection('classes')
+        .aggregate([
+          {
+            $match: {
+              teacherId: { $in: tutorIds.map(id => new mongoose.Types.ObjectId(id)) },
+              isActive: true,
+              status: 'scheduled',
+              $expr: { $gt: ['$capacity', { $ifNull: ['$enrolledCount', 0] }] },
+            }
+          },
+          {
+            $addFields: {
+              startDateTime: {
+                $let: {
+                  vars: {
+                    parts: { $split: [{ $ifNull: ['$schedule.startTime', '00:00'] }, ':'] }
+                  },
+                  in: {
+                    $dateFromParts: {
+                      year: { $year: '$startDate' },
+                      month: { $month: '$startDate' },
+                      day: { $dayOfMonth: '$startDate' },
+                      hour: { $toInt: { $arrayElemAt: ['$$parts', 0] } },
+                      minute: { $toInt: { $arrayElemAt: ['$$parts', 1] } },
+                      timezone: 'UTC'
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            $match: {
+              startDateTime: { $gte: nowUtc }
+            }
+          },
+          {
+            $group: {
+              _id: '$teacherId',
+              open_upcoming_sessions_count: { $sum: 1 },
+            }
+          }
+        ])
+        .toArray();
+      const openUpcomingMap = new Map<string, number>();
+      openUpcomingAgg.forEach((o: any) => {
+        openUpcomingMap.set(o._id.toString(), o.open_upcoming_sessions_count ?? 0);
+      });
+
+      return users.map((user: any) => {
+        const idStr = user._id?.toString();
+        const rating = ratingsMap.get(idStr) || { average_rating: 0, rating_count: 0 };
+        const sessionStats = sessionsMap.get(idStr) || { sessions_count: 0, students_count: 0 };
+        const openUpcomingCount = openUpcomingMap.get(idStr) || 0;
+
+        return {
+          _id: user._id,
+          user_id: idStr,
+          email: user.email,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          full_name: user.fullName || `${user.firstName} ${user.lastName}`.trim(),
+          role: 'tutor',
+          avatar_url: user.avatarUrl || user.profileImageUrl,
+          profile_image_url: user.profileImageUrl || user.avatarUrl,
+          subjects: user.subjects || [],
+          specializations: user.specializations || [],
+          qualification: user.qualification,
+          experience_years: user.experienceYears,
+          hourly_rate: user.hourlyRate,
+          availability: user.availability,
+          bio: user.bio,
+          languages: user.languages || [],
+          is_online: user.isOnline ?? false,
+          average_rating: rating.average_rating || 0,
+          rating_count: rating.rating_count || 0,
+          sessions_count: sessionStats.sessions_count || 0,
+          students_count: sessionStats.students_count || 0,
+          open_upcoming_sessions_count: openUpcomingCount,
+          is_active: true,
+          profile_completed: true,
+          created_at: user.createdAt,
+          updated_at: user.updatedAt,
+        } as TutorProfile;
+      }) as unknown as TutorProfile[];
+    } finally {
+    }
+  }
+
+  /**
+   * Tutor detail with stats and paginated reviews (for students/parents)
+   */
+  static async getTutorDetail(tutorId: string, limit = 20, skip = 0): Promise<TutorProfile & {
+    reviews: {
+      rating: number;
+      review_text?: string;
+      is_anonymous: boolean;
+      created_at: Date;
+      student_name?: string;
+      student_avatar_url?: string;
+    }[];
+  } | null> {
+    const db = mongoose.connection.db!;
+
+    if (!ObjectId.isValid(tutorId)) return null;
+    const tutorObjectId = new ObjectId(tutorId);
+
+    try {
+      // Base tutor info from users collection
+      const user = await db.collection('users').findOne({
+        _id: tutorObjectId,
+        role: 'tutor',
+        isActive: true,
+        profileCompleted: true,
+      });
+
+      if (!user) return null;
+
+      // Ratings aggregate
+      const ratingAgg = await db.collection('sessionratings')
+        .aggregate([
+          { $match: { tutorId: tutorObjectId } },
+          {
+            $group: {
+              _id: '$tutorId',
+              average_rating: { $avg: '$rating' },
+              rating_count: { $sum: 1 },
+            }
+          }
+        ])
+        .toArray();
+      const ratingStats = ratingAgg[0] || { average_rating: 0, rating_count: 0 };
+
+      // Sessions aggregate
+      const sessionsAgg = await db.collection('sessions')
+        .aggregate([
+          { $match: { tutorId: tutorObjectId } },
+          {
+            $group: {
+              _id: '$tutorId',
+              sessions_count: { $sum: 1 },
+              students: { $addToSet: '$studentId' },
+            }
+          },
+          {
+            $project: {
+              sessions_count: 1,
+              students_count: { $size: '$students' },
+            }
+          }
+        ])
+        .toArray();
+      const sessionStats = sessionsAgg[0] || { sessions_count: 0, students_count: 0 };
+
+      // Open upcoming sessions (classes) with remaining capacity
+      const nowUtc = new Date(Date.now());
+      const openUpcoming = await db.collection('classes')
+        .aggregate([
+          {
+            $match: {
+              teacherId: tutorObjectId,
+              isActive: true,
+              status: 'scheduled',
+              $expr: { $gt: ['$capacity', { $ifNull: ['$enrolledCount', 0] }] },
+            }
+          },
+          {
+            $addFields: {
+              startDateTime: {
+                $let: {
+                  vars: {
+                    parts: { $split: [{ $ifNull: ['$schedule.startTime', '00:00'] }, ':'] }
+                  },
+                  in: {
+                    $dateFromParts: {
+                      year: { $year: '$startDate' },
+                      month: { $month: '$startDate' },
+                      day: { $dayOfMonth: '$startDate' },
+                      hour: { $toInt: { $arrayElemAt: ['$$parts', 0] } },
+                      minute: { $toInt: { $arrayElemAt: ['$$parts', 1] } },
+                      timezone: 'UTC'
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            $match: {
+              startDateTime: { $gte: nowUtc }
+            }
+          },
+          { $project: { _id: 1 } }
+        ])
+        .toArray();
+
+      // Reviews (ratings) with student info when not anonymous
+      const reviews = await db.collection('sessionratings')
+        .aggregate([
+          { $match: { tutorId: tutorObjectId } },
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'studentId',
+              foreignField: '_id',
+              as: 'student',
+            }
+          },
+          {
+            $project: {
+              rating: 1,
+              review_text: '$reviewText',
+              is_anonymous: '$isAnonymous',
+              created_at: '$createdAt',
+              student: {
+                $cond: [
+                  '$isAnonymous',
+                  [],
+                  {
+                    $map: {
+                      input: '$student',
+                      as: 's',
+                      in: {
+                        name: { $ifNull: ['$$s.fullName', { $concat: ['$$s.firstName', ' ', '$$s.lastName'] }] },
+                        avatar: '$$s.profileImageUrl',
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ])
+        .toArray();
+
+      const formattedReviews = reviews.map((r: any) => ({
+        rating: r.rating,
+        review_text: r.review_text,
+        is_anonymous: r.is_anonymous ?? false,
+        created_at: r.created_at,
+        student_name: r.is_anonymous ? undefined : (r.student?.[0]?.name || undefined),
+        student_avatar_url: r.is_anonymous ? undefined : (r.student?.[0]?.avatar || undefined),
+      }));
+
+      return {
+        _id: user._id,
+        user_id: user._id?.toString(),
+        email: user.email,
+        first_name: user.firstName,
+        last_name: user.lastName,
+        full_name: user.fullName || `${user.firstName} ${user.lastName}`.trim(),
+        role: 'tutor',
+        avatar_url: user.avatarUrl || user.profileImageUrl,
+        profile_image_url: user.profileImageUrl || user.avatarUrl,
+        subjects: user.subjects || [],
+        specializations: user.specializations || [],
+        qualification: user.qualification,
+        experience_years: user.experienceYears,
+        hourly_rate: user.hourlyRate,
+        availability: user.availability,
+        bio: user.bio,
+        languages: user.languages || [],
+        certifications: user.certifications || [],
+        is_online: user.isOnline ?? false,
+        average_rating: ratingStats.average_rating ?? 0,
+        rating_count: ratingStats.rating_count ?? 0,
+        sessions_count: sessionStats.sessions_count ?? 0,
+        students_count: sessionStats.students_count ?? 0,
+        open_upcoming_sessions_count: openUpcoming.length || 0,
+        is_active: true,
+        profile_completed: true,
+        created_at: user.createdAt,
+        updated_at: user.updatedAt,
+        reviews: formattedReviews,
+      };
+    } finally {
+    }
+  }
+
+  /**
+   * Upcoming classes/sessions for a tutor with open slots
+   */
+  static async getTutorUpcomingSessions(tutorId: string, limit = 20): Promise<any[]> {
+    const db = mongoose.connection.db!;
+    if (!ObjectId.isValid(tutorId)) return [];
+    const tutorObjectId = new ObjectId(tutorId);
+
+    const nowUtc = new Date(Date.now());
+    const classes = await db.collection('classes')
+      .aggregate([
+        {
+          $match: {
+            teacherId: tutorObjectId,
+            isActive: true,
+            status: 'scheduled',
+            $expr: { $gt: ['$capacity', { $ifNull: ['$enrolledCount', 0] }] },
+          }
+        },
+        {
+          $addFields: {
+            startDateTime: {
+              $let: {
+                vars: {
+                  parts: { $split: [{ $ifNull: ['$schedule.startTime', '00:00'] }, ':'] }
+                },
+                in: {
+                  $dateFromParts: {
+                    year: { $year: '$startDate' },
+                    month: { $month: '$startDate' },
+                    day: { $dayOfMonth: '$startDate' },
+                    hour: { $toInt: { $arrayElemAt: ['$$parts', 0] } },
+                    minute: { $toInt: { $arrayElemAt: ['$$parts', 1] } },
+                    timezone: 'UTC'
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          $match: {
+            startDateTime: { $gte: nowUtc }
+          }
+        },
+        { $sort: { startDateTime: 1 } },
+        { $limit: limit }
+      ])
+      .toArray();
+
+    // Basic tutor info and rating for card display
+    const ratingAgg = await db.collection('sessionratings')
+      .aggregate([
+        { $match: { tutorId: tutorObjectId } },
+        { $group: { _id: '$tutorId', average_rating: { $avg: '$rating' }, rating_count: { $sum: 1 } } }
+      ])
+      .toArray();
+    const ratingStats = ratingAgg[0] || { average_rating: 0, rating_count: 0 };
+
+    return classes.map((c: any) => {
+      const available_slots = Math.max((c.capacity || 0) - (c.enrolledCount || 0), 0);
+      return {
+        class: {
+          id: c._id.toString(),
+          title: c.title,
+          description: c.description,
+          date: c.startDate,
+          start_time: c.schedule?.startTime || '',
+          end_time: c.schedule?.endTime || '',
+          duration_minutes: c.schedule?.duration || 60,
+          max_students: c.capacity,
+          current_students: c.enrolledCount,
+          price_per_session: c.price || 0,
+          status: c.status || 'scheduled',
+          subject: c.subjectId || null,
+        },
+        tutor: {
+          id: tutorId,
+          full_name: c.teacherName || '', // fallback empty
+          rating: ratingStats.average_rating || 0,
+          total_reviews: ratingStats.rating_count || 0,
+        },
+        available_slots,
+        max_students: c.capacity,
+        is_bookable: available_slots > 0 && c.isActive && !c.isFull,
+      };
+    });
   }
 
   static async getTutorStats(): Promise<TutorStats> {

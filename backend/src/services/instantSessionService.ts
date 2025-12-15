@@ -1,4 +1,5 @@
 import { InstantSession, IInstantSession } from '../models/InstantSession';
+import { notifyPendingCreated, notifyPendingRemoved, notifySessionStatus } from '../realtime/instantSessionEvents';
 import mongoose from 'mongoose';
 
 export interface CreateInstantSessionRequest {
@@ -35,6 +36,8 @@ class InstantSessionService {
     // Populate student and subject info
     await session.populate('studentId', 'fullName firstName lastName email');
     await session.populate('subjectId', 'name displayName color');
+
+    notifyPendingCreated(session);
     
     return session;
   }
@@ -106,6 +109,9 @@ class InstantSessionService {
     
     console.log('[InstantService] Session accepted with meeting URL:', session.jitsiMeetingUrl);
     
+    notifyPendingRemoved(session);
+    notifySessionStatus(session, 'accepted');
+    
     return session;
   }
 
@@ -132,6 +138,9 @@ class InstantSessionService {
     }
     
     await session.save();
+
+    notifyPendingRemoved(session);
+    notifySessionStatus(session, 'cancelled');
     
     return session;
   }
@@ -215,6 +224,8 @@ class InstantSessionService {
     
     console.log('[InstantService] Tutor joined, meeting URL:', session.jitsiMeetingUrl);
     
+    notifySessionStatus(session, 'tutor_joined');
+    
     return session;
   }
 
@@ -241,6 +252,8 @@ class InstantSessionService {
     await session.populate('subjectId', 'name displayName color');
     
     console.log('[InstantService] Student joined');
+    
+    notifySessionStatus(session, 'student_joined');
     
     return session;
   }
@@ -276,6 +289,8 @@ class InstantSessionService {
     
     console.log('[InstantService] Session started, meeting URL:', session.jitsiMeetingUrl);
     
+    notifySessionStatus(session, 'started');
+    
     return session;
   }
 
@@ -296,6 +311,8 @@ class InstantSessionService {
     session.status = 'completed';
     session.completedAt = new Date();
     await session.save();
+
+    notifySessionStatus(session, 'completed');
     
     return session;
   }

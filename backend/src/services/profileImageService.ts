@@ -4,7 +4,7 @@ import FileUploadService, { FILE_TYPE_CONFIGS } from './fileUploadService';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 
 export interface ProfileImageUploadResult {
   id: string;
@@ -32,6 +32,31 @@ export interface ProfileImageInfo {
 }
 
 export class ProfileImageService {
+  private static async upsertProfileImageUrl(
+    userId: string,
+    imageUrl: string | null
+  ) {
+    const db = mongoose.connection.db;
+    if (!db) return;
+
+    // Keep profile and avatar URLs in sync on the profiles collection
+    await db.collection('profiles').updateOne(
+      { user_id: userId },
+      {
+        $set: {
+          profile_image_url: imageUrl,
+          avatar_url: imageUrl,
+          updated_at: new Date(),
+        },
+        $setOnInsert: {
+          user_id: userId,
+          created_at: new Date(),
+        },
+      },
+      { upsert: true }
+    );
+  }
+
   /**
    * Upload a new profile image for a user
    */
@@ -84,8 +109,10 @@ export class ProfileImageService {
       const imageUrl = FileUploadService.getFileUrl(file.path, baseUrl);
       await User.findByIdAndUpdate(userId, {
         profileImageUrl: imageUrl,
+        avatarUrl: imageUrl, // keep both in sync for frontend consumers
         updatedAt: new Date()
       });
+      await ProfileImageService.upsertProfileImageUrl(userId, imageUrl);
 
       return {
         id: profileImage._id.toString(),
@@ -183,6 +210,7 @@ export class ProfileImageService {
       profileImageUrl: imageUrl, // Also update this for backward compatibility
       updatedAt: new Date()
     });
+    await ProfileImageService.upsertProfileImageUrl(userId, imageUrl);
 
     return {
       id: profileImage._id.toString(),
@@ -208,12 +236,21 @@ export class ProfileImageService {
       throw new Error('Profile image not found');
     }
 
-    // If this is the active image, clear the user's profile image URL
-    if (profileImage.isActive) {
+    // Clear the user's image fields if this image was active OR matches current URLs
+    const user = await User.findById(userId);
+    const imageUrl = FileUploadService.getFileUrl(profileImage.filePath);
+    const matchesCurrent =
+      !!user &&
+      (user.profileImageUrl === imageUrl || user.avatarUrl === imageUrl);
+
+    if (profileImage.isActive || matchesCurrent) {
       await User.findByIdAndUpdate(userId, {
         profileImageUrl: null,
+        avatarUrl: null,
+        profileImageId: null,
         updatedAt: new Date()
       });
+      await ProfileImageService.upsertProfileImageUrl(userId, null);
     }
 
     // Delete the file from storage
@@ -221,6 +258,36 @@ export class ProfileImageService {
 
     // Delete the database record
     await ProfileImage.findByIdAndDelete(imageId);
+  }
+
+  /**
+   * Remove all profile images for a user, clearing storage and DB references
+   * Used when a profile explicitly removes their photo (student or tutor).
+   */
+  static async clearProfileImages(userId: string): Promise<void> {
+    // Always clear the user/profile URLs, even if no image records exist
+    await User.findByIdAndUpdate(userId, {
+      profileImageUrl: null,
+      avatarUrl: null,
+      profileImageId: null,
+      updatedAt: new Date()
+    });
+    await ProfileImageService.upsertProfileImageUrl(userId, null);
+
+    const images = await ProfileImage.find({ userId });
+    for (const image of images) {
+      try {
+        await FileUploadService.deleteFile(image.filePath);
+      } catch (error) {
+        console.error(`Failed to delete profile image file ${image.filePath}:`, error);
+      }
+
+      try {
+        await ProfileImage.findByIdAndDelete(image._id);
+      } catch (error) {
+        console.error(`Failed to delete profile image record ${image._id}:`, error);
+      }
+    }
   }
 
   /**

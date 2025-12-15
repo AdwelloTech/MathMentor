@@ -5,7 +5,7 @@ export interface Conversation {
   id: string;
   title?: string;
   type: 'direct' | 'group' | 'announcement';
-  participants: string[];
+  participants: any[];
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -64,6 +64,15 @@ export interface SendMessageData {
   attachments?: string[];
   replyTo?: string;
   metadata?: Record<string, any>;
+}
+
+export interface CreateSessionPayload {
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  price?: number;
+  link?: string;
 }
 
 export interface CreateNotificationData {
@@ -127,14 +136,36 @@ export const messagingService = {
         ...(beforeDate && { before: beforeDate })
       });
 
-      const result = await apiClient.get<{
-        messages: Message[];
-        pagination: { hasMore: boolean }
-      }>(`/api/messaging/conversations/${conversationId}/messages?${params}`);
+      const raw = await apiClient.get<any>(`/api/messaging/conversations/${conversationId}/messages?${params}`);
+
+      const payload = raw?.data ? raw : { data: raw?.messages ? raw.messages : raw };
+      const messagesArray: any[] = payload?.data || [];
+      const pagination = payload?.pagination || payload?.data?.pagination || payload?.pagination || raw?.pagination || { hasMore: false };
+
+      const normalized: Message[] = messagesArray.map((m: any) => ({
+        id: m.id || m._id,
+        conversationId: m.conversationId || m.conversation_id,
+        senderId: typeof m.senderId === 'object' ? (m.senderId.id || m.senderId._id) : m.senderId,
+        content: m.content,
+        messageType: m.messageType || 'direct',
+        attachments: m.attachments || [],
+        replyTo: m.replyTo || m.reply_to,
+        metadata: m.metadata,
+        isRead: Array.isArray(m.readBy) ? m.readBy.includes(m.senderId) : false,
+        createdAt: m.createdAt,
+        updatedAt: m.updatedAt,
+        sender: m.senderId && typeof m.senderId === 'object'
+          ? {
+              id: m.senderId.id || m.senderId._id,
+              fullName: m.senderId.fullName || `${m.senderId.firstName || ''} ${m.senderId.lastName || ''}`.trim(),
+              email: m.senderId.email,
+            }
+          : undefined,
+      }));
 
       return {
-        messages: result.messages,
-        hasMore: result.pagination.hasMore
+        messages: normalized,
+        hasMore: !!pagination?.hasMore
       };
     },
 
@@ -170,6 +201,11 @@ export const messagingService = {
         `/api/messaging/conversations/${conversationId}/search?${params}`
       );
       return messages;
+    },
+
+    async createSession(conversationId: string, data: CreateSessionPayload): Promise<Message> {
+      const message = await apiClient.post<Message>(`/api/messaging/conversations/${conversationId}/session`, data);
+      return message;
     },
   },
 

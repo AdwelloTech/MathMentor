@@ -1,4 +1,5 @@
 import { User, IUser } from '../models/User';
+import { ProfileImageService } from './profileImageService';
 import { MongoClient, ObjectId } from 'mongodb';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mathmentor';
@@ -147,14 +148,43 @@ export class UserService {
   // Update student
   static async updateStudent(studentId: string, updates: any): Promise<any> {
     try {
+      const normalizedUpdates: any = {
+        ...updates,
+        ...(updates && typeof updates === 'object' && 'profile_image_url' in updates
+          ? { profileImageUrl: updates.profile_image_url }
+          : {}),
+        ...(updates && typeof updates === 'object' && 'avatar_url' in updates
+          ? { avatarUrl: updates.avatar_url }
+          : {}),
+      };
+
+      // Remove snake_case fields so we don't persist unknown keys
+      delete (normalizedUpdates as any).profile_image_url;
+      delete (normalizedUpdates as any).avatar_url;
+
+      const profileImageRemovalRequested = (
+        ('profileImageUrl' in normalizedUpdates && (normalizedUpdates.profileImageUrl === null || normalizedUpdates.profileImageUrl === '')) ||
+        ('avatarUrl' in normalizedUpdates && (normalizedUpdates.avatarUrl === null || normalizedUpdates.avatarUrl === ''))
+      );
+
+      if (profileImageRemovalRequested) {
+        normalizedUpdates.profileImageUrl = null;
+        normalizedUpdates.avatarUrl = null;
+        normalizedUpdates.profileImageId = null;
+      }
+
       const student = await User.findOneAndUpdate(
         { _id: studentId, role: 'student' },
-        updates,
+        normalizedUpdates,
         { new: true }
       ).select('-password');
 
       if (!student) {
         throw new Error('Student not found');
+      }
+
+      if (profileImageRemovalRequested) {
+        await ProfileImageService.clearProfileImages(studentId);
       }
 
       // Transform the data to match frontend expectations

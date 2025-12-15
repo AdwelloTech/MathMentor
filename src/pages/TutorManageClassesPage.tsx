@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { classSchedulingService } from "../lib/classSchedulingService";
+import { getSocket } from "@/lib/socketClient";
 import { TutorClass, ClassType } from "../types/classScheduling";
 import { subjectsService } from "@/lib/subjects";
 import type { Subject } from "@/types/subject";
@@ -114,15 +115,49 @@ const TutorManageClassesPage: React.FC = () => {
     }
   }, [classes, user]);
 
-  // Poll for new requests every 30 seconds
+  // Realtime updates for bookings/classes; fallback polling only if socket missing
   useEffect(() => {
     if (!user?.id || classes.length === 0) return;
-    
-    const interval = setInterval(() => {
-      loadRequestCounts(classes);
-    }, 30000); // Poll every 30 seconds
 
-    return () => clearInterval(interval);
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+    const refresh = () => loadRequestCounts(classes);
+
+    const socket = getSocket();
+    if (!socket) {
+      fallbackInterval = setInterval(refresh, 30000);
+      return () => {
+        if (fallbackInterval) clearInterval(fallbackInterval);
+      };
+    }
+
+    const ensureFallback = () => {
+      if (socket.connected) {
+        if (fallbackInterval) {
+          clearInterval(fallbackInterval);
+          fallbackInterval = null;
+        }
+      } else if (!fallbackInterval) {
+        fallbackInterval = setInterval(refresh, 30000);
+      }
+    };
+
+    const handleBookingUpdate = () => refresh();
+    const handleClassStatus = () => refresh();
+
+    socket.on("booking:update", handleBookingUpdate);
+    socket.on("class:status", handleClassStatus);
+    socket.on("connect", ensureFallback);
+    socket.on("disconnect", ensureFallback);
+
+    ensureFallback();
+
+    return () => {
+      socket.off("booking:update", handleBookingUpdate);
+      socket.off("class:status", handleClassStatus);
+      socket.off("connect", ensureFallback);
+      socket.off("disconnect", ensureFallback);
+      if (fallbackInterval) clearInterval(fallbackInterval);
+    };
   }, [user, classes]);
 
   // If tutor is inactive, show error message

@@ -12,7 +12,10 @@ import {
   activateProfileImage,
   validateImageFile,
   createImagePreview,
-  revokeImagePreview
+  revokeImagePreview,
+  deleteProfileImage,
+  getUserProfileImages,
+  getActiveProfileImage,
 } from '@/lib/profileImages';
 import type { ProfileImageUploadResponse } from '@/types/auth';
 
@@ -131,21 +134,38 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     try {
       setError('');
       setSuccess('');
+      setIsUploading(true);
 
-      // For demo purposes, we'll just clear the UI
-      // In a real implementation, you'd call deleteProfileImage() with the image ID
-      console.log('Removing current profile image');
+      // Fetch active image to get its ID, then delete; fallback to list lookup by URL
+      let targetId: string | undefined;
+      const activeImage = await getActiveProfileImage();
+      if (activeImage?.id) {
+        targetId = activeImage.id;
+      } else {
+        const images = await getUserProfileImages();
+        const match = images.find(img => img.url === currentImageUrl || img.isActive);
+        if (match?.id) targetId = match.id;
+      }
 
-      if (onImageChange) {
-        onImageChange(null);
+      if (targetId) {
+        await deleteProfileImage(targetId);
+        if (onImageChange) {
+          onImageChange(null);
+        }
+      } else {
+        // No specific imageId found, still clear the profile image URLs
+        if (onImageChange) {
+          onImageChange(null);
+        }
       }
 
       setSuccess('Profile image removed successfully!');
       setTimeout(() => setSuccess(''), 3000);
-
     } catch (error: any) {
       console.error('Failed to remove image:', error);
       setError(error.message || 'Failed to remove image');
+    } finally {
+      setIsUploading(false);
     }
   }, [currentImageUrl, onImageChange]);
 

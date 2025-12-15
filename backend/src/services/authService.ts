@@ -2,6 +2,7 @@ import { User, RefreshToken } from '../models';
 import { generateTokenPair, verifyRefreshToken } from '../utils/jwt';
 import { generateUniqueStudentCode } from '../utils/studentCode';
 import { EmailService } from './emailService';
+import { ProfileImageService } from './profileImageService';
 import bcrypt from 'bcryptjs';
 import mongoose, { Types } from 'mongoose';
 
@@ -136,7 +137,7 @@ export class AuthService {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        avatarUrl: user.avatarUrl
+        avatarUrl: user.avatarUrl || undefined
       }
     };
   }
@@ -222,7 +223,7 @@ export class AuthService {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        avatarUrl: user.avatarUrl
+        avatarUrl: user.avatarUrl || undefined
       }
     };
   }
@@ -271,7 +272,7 @@ export class AuthService {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        avatarUrl: user.avatarUrl
+        avatarUrl: user.avatarUrl || undefined
       }
     };
   }
@@ -321,7 +322,7 @@ export class AuthService {
           fullName: user.fullName,
           email: user.email,
           role: user.role,
-          avatarUrl: user.avatarUrl
+          avatarUrl: user.avatarUrl || undefined
         }
       };
     } catch (error) {
@@ -500,7 +501,7 @@ export class AuthService {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        avatarUrl: user.avatarUrl
+        avatarUrl: user.avatarUrl || undefined
       }
     };
   }
@@ -516,6 +517,27 @@ export class AuthService {
         throw new Error('User not found');
       }
       console.log('Found user:', user._id);
+
+    // Normalize snake_case inputs to camelCase expectations
+    const normalizedUpdates: Record<string, any> = {
+      ...updates,
+      ...(updates && typeof updates === 'object' && 'profile_image_url' in updates
+        ? { profileImageUrl: (updates as any).profile_image_url }
+        : {}),
+      ...(updates && typeof updates === 'object' && 'avatar_url' in updates
+        ? { avatarUrl: (updates as any).avatar_url }
+        : {}),
+    };
+
+    // Explicit profile image removal (when client sends null/empty)
+    const profileImageRemovalRequested = (
+      ('profileImageUrl' in normalizedUpdates && (normalizedUpdates.profileImageUrl === null || normalizedUpdates.profileImageUrl === '')) ||
+      ('avatarUrl' in normalizedUpdates && (normalizedUpdates.avatarUrl === null || normalizedUpdates.avatarUrl === ''))
+    );
+    if (profileImageRemovalRequested) {
+      normalizedUpdates.profileImageUrl = null;
+      normalizedUpdates.avatarUrl = null;
+    }
 
     // Update allowed fields
     const allowedFields = [
@@ -538,21 +560,21 @@ export class AuthService {
     // Build update object with only allowed fields
     const updateData: any = {};
     for (const field of allowedFields) {
-      if (updates[field] !== undefined) {
+      if (normalizedUpdates[field] !== undefined) {
         if (camelCaseFields.includes(field)) {
           // Keep camelCase for these fields
-          updateData[field] = updates[field];
+          updateData[field] = normalizedUpdates[field];
         } else {
           // Convert other field names to match database schema (snake_case)
           const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
-          updateData[field] = updates[field];
+          updateData[field] = normalizedUpdates[field];
         }
       }
     }
 
     // Update full name if first or last name changed
-    if (updates.firstName || updates.lastName) {
-      updateData.fullName = `${updates.firstName || user.firstName} ${updates.lastName || user.lastName}`;
+    if (normalizedUpdates.firstName || normalizedUpdates.lastName) {
+      updateData.fullName = `${normalizedUpdates.firstName || user.firstName} ${normalizedUpdates.lastName || user.lastName}`;
     }
 
     // Handle dateOfBirth conversion if it's a string
@@ -564,8 +586,30 @@ export class AuthService {
     console.log('Applying updates:', updateData);
     Object.assign(user, updateData);
 
-    // Mark profile as completed
-    user.profileCompleted = true;
+    if (profileImageRemovalRequested) {
+      user.profileImageId = null;
+      user.profileImageUrl = null;
+      user.avatarUrl = null;
+    }
+
+    // Mark profile as completed only if tutor and key fields are present
+    if (user.role === 'tutor') {
+      const hasTutorBasics =
+        !!user.firstName &&
+        !!user.lastName &&
+        !!user.bio &&
+        !!(user.specializations?.length) &&
+        !!(user.subjects?.length || user.specializations?.length) &&
+        user.experienceYears !== undefined &&
+        user.hourlyRate !== undefined;
+
+      if (hasTutorBasics) {
+        user.profileCompleted = true;
+      }
+    } else {
+      // Non-tutor: keep previous behavior
+      user.profileCompleted = true;
+    }
 
     console.log('Saving user...');
     try {
@@ -574,6 +618,10 @@ export class AuthService {
     } catch (saveError: any) {
       console.error('Error saving user:', saveError);
       throw saveError;
+    }
+
+    if (profileImageRemovalRequested) {
+      await ProfileImageService.clearProfileImages(userId);
     }
 
     // Create or update profile record in profiles collection

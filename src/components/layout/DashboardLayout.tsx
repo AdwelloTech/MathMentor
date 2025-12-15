@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   SparklesIcon,
@@ -19,6 +19,8 @@ import {
 } from "@/lib/instantSessionService";
 import { idVerificationService } from "@/lib/idVerificationService";
 import apiClient from "@/lib/apiClient";
+import { getSocket } from "@/lib/socketClient";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -30,11 +32,80 @@ const DashboardLayout: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const { isAdminLoggedIn, logoutAdmin } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
   const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
   const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+  const [unreadMessages, setUnreadMessages] = useState<number>(0);
+  const seenMessageIds = useRef<Set<string>>(new Set());
+
+  const syncUnread = (count: number) => {
+    setUnreadMessages(count);
+    localStorage.setItem("mm_unread_messages", String(count));
+    localStorage.setItem("mm_unread_messages_tutor", String(count));
+    window.dispatchEvent(new CustomEvent("message:unread", { detail: { count } }));
+  };
+
+  useEffect(() => {
+    const stored =
+      localStorage.getItem("mm_unread_messages") ||
+      localStorage.getItem("mm_unread_messages_tutor");
+    if (stored) {
+      const num = parseInt(stored, 10);
+      if (!isNaN(num)) setUnreadMessages(num);
+    }
+
+    const handleUnread = (event: any) => {
+      const count = event?.detail?.count ?? 0;
+      setUnreadMessages(count);
+    };
+    window.addEventListener("message:unread", handleUnread as any);
+    return () => window.removeEventListener("message:unread", handleUnread as any);
+  }, []);
+
+  // Global socket listener for new messages (toast + unread)
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket || !user?.id) return;
+
+    const handleNewMessage = (message: any) => {
+      const msgId = message.id || message._id;
+      if (!msgId) return;
+      if (seenMessageIds.current.has(msgId)) return;
+      seenMessageIds.current.add(msgId);
+
+      const senderId =
+        (typeof message.senderId === "object" && (message.senderId.id || message.senderId._id)) ||
+        message.senderId;
+      if (senderId === user.id) return;
+
+      const onMessagesPage = location.pathname.startsWith("/messages");
+      if (onMessagesPage) return;
+
+      const next = unreadMessages + 1;
+      syncUnread(next);
+
+      const senderObj =
+        (typeof message.sender === "object" && message.sender) ||
+        (typeof message.senderId === "object" && message.senderId) ||
+        null;
+      const senderName =
+        senderObj?.fullName ||
+        senderObj?.full_name ||
+        [senderObj?.firstName, senderObj?.lastName].filter(Boolean).join(" ") ||
+        message.senderName ||
+        "someone";
+
+      toast.success(`new message from ${senderName}`);
+    };
+
+    socket.on("message:new", handleNewMessage);
+    return () => {
+      socket.off("message:new", handleNewMessage);
+    };
+  }, [location.pathname, unreadMessages, user?.id]);
 
   // Audio notification setup (unlocked on first user interaction)
   const audioCtxRef = useRef<any>(null);
@@ -130,32 +201,19 @@ const DashboardLayout: React.FC = () => {
     }
   }, [profile?.role, user]);
 
-  // Subscribe to instant requests globally for tutors
+  // Subscribe to instant requests globally for tutors (websocket)
   useEffect(() => {
     if (profile?.role !== "tutor") return;
 
-    // Initial fetch to validate data visibility
-    (async () => {
-      try {
-        // For now, we'll skip the initial fetch since the API isn't implemented yet
-        // This can be implemented later when the instant requests API is ready
-      } catch (e) {
-        // Silently handle initial fetch errors
-      }
-    })();
-
-    // Fallback polling every 10s (until Realtime confirmed)
-    // For now, we'll skip polling since the API isn't implemented yet
-    const poll = setInterval(async () => {
-      try {
-        // Skip polling for now - implement when instant requests API is ready
-      } catch (_) {}
-    }, 10000);
     const unsubscribe = instantSessionService.subscribeToPending(
       ({ new: req, eventType }) => {
+        const created =
+          (req as any).createdAt ||
+          (req as any).requestedAt ||
+          (req as any).created_at;
         const isFresh =
-          Date.now() - new Date((req as any).created_at).getTime() <=
-          FRESH_WINDOW_MS;
+          created && Date.now() - new Date(created).getTime() <= FRESH_WINDOW_MS;
+
         if (eventType === "INSERT") {
           if (!isFresh) return; // ignore stale backlog
           playNotificationSound();
@@ -165,11 +223,10 @@ const DashboardLayout: React.FC = () => {
             return [req as InstantRequest, ...prev];
           });
         }
-        if (eventType === "UPDATE" || eventType === "BROADCAST_ACCEPTED") {
+
+        if (eventType === "REMOVE") {
           setInstantRequests((prev) =>
-            (req as any).status !== "pending"
-              ? prev.filter((r) => r.id !== (req as any).id)
-              : prev
+            prev.filter((r) => r.id !== (req as any).id)
           );
         }
       },
@@ -178,7 +235,6 @@ const DashboardLayout: React.FC = () => {
     );
 
     return () => {
-      clearInterval(poll);
       unsubscribe?.();
     };
   }, [profile?.role, profile?.is_online]);

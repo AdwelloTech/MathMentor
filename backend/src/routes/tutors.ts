@@ -3,12 +3,14 @@ import Joi from 'joi';
 import { authenticate } from '../middleware/auth';
 import { TutorService } from '../services/tutorService';
 import { uploadInstances, FileUploadService } from '../services/fileUploadService';
+import { allowRoles } from '../middleware/auth';
 
 console.log('🎯 TUTORS ROUTES LOADED - Available routes:');
 console.log('  GET /api/tutors/applications');
 console.log('  POST /api/tutors/applications');
 console.log('  PUT /api/tutors/applications/:userId');
 console.log('  POST /api/tutors/id-verification');
+console.log('  GET /api/tutors/explore');
 
 // Validation schema for tutor application
 const tutorApplicationSchema = Joi.object({
@@ -273,6 +275,73 @@ router.post('/id-verification', authenticate, uploadInstances.idVerificationImag
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to submit ID verification'
+    });
+  }
+});
+
+// Public tutor listing for students (profile completed only)
+router.get('/explore', authenticate, allowRoles('student', 'parent'), async (req, res) => {
+  try {
+    const tutors = await TutorService.getPublicTutors();
+    res.json({
+      success: true,
+      data: tutors
+    });
+  } catch (error: any) {
+    console.error('Error fetching public tutors:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch tutors'
+    });
+  }
+});
+
+// Tutor detail with stats and reviews (student/parent)
+router.get('/:tutorId/detail', authenticate, allowRoles('student', 'parent'), async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const skip = parseInt(req.query.skip as string) || 0;
+
+    const tutor = await TutorService.getTutorDetail(tutorId, limit, skip);
+
+    if (!tutor) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tutor not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: tutor
+    });
+  } catch (error: any) {
+    console.error('Error fetching tutor detail:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch tutor detail'
+    });
+  }
+});
+
+// Tutor upcoming sessions with open slots (student/parent)
+router.get('/:tutorId/sessions/upcoming', authenticate, allowRoles('student', 'parent'), async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+
+    const sessions = await TutorService.getTutorUpcomingSessions(tutorId, limit);
+
+    res.json({
+      success: true,
+      data: sessions
+    });
+  } catch (error: any) {
+    console.error('Error fetching tutor upcoming sessions:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch tutor sessions'
     });
   }
 });

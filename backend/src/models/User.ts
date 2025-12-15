@@ -10,7 +10,7 @@ export interface IUser extends Document {
   email: string;
   password?: string; // Optional for OAuth users
   role: 'admin' | 'principal' | 'teacher' | 'student' | 'parent' | 'tutor' | 'hr' | 'finance' | 'support';
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   phone?: string;
   address?: string;
   dateOfBirth?: Date;
@@ -40,8 +40,8 @@ export interface IUser extends Document {
   schoolName?: string;
 
   // Profile image fields
-  profileImageId?: mongoose.Types.ObjectId;
-  profileImageUrl?: string;
+  profileImageId?: mongoose.Types.ObjectId | null;
+  profileImageUrl?: string | null;
 
   // Tutor specific fields
   cvUrl?: string;

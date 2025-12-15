@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { classSchedulingService } from "../lib/classSchedulingService";
+import { getSocket } from "@/lib/socketClient";
 import { ClassBooking } from "../types/classScheduling";
 import {
   CalendarDays,
@@ -60,7 +61,7 @@ const ManageSessionsPage: React.FC = () => {
     }
   }, [user]);
 
-  // Real-time timer to update session joinability and fetch fresh data periodically
+  // Real-time timer to update session joinability locally
   useEffect(() => {
     const updateSessionStatus = () => {
       const newJoinability: Record<string, boolean> = {};
@@ -91,79 +92,83 @@ const ManageSessionsPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [upcomingBookings]);
 
-  // Periodic server data fetching to detect tutor session starts
+  // Listen for realtime booking/class updates and refresh once on each event (fallback only when socket is down)
   useEffect(() => {
     if (!user) return;
 
-    let pollingInterval: NodeJS.Timeout;
+    let isRefreshing = false;
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null;
 
-    const fetchFreshData = async () => {
+    const refresh = async () => {
+      if (isRefreshing) return;
+      isRefreshing = true;
       try {
         const data = await classSchedulingService.bookings.getByStudentId(user.id);
         const freshBookings = data || [];
 
-        // Check if any session status has changed to 'in_progress'
-        const hasStatusChange = freshBookings.some((freshBooking) => {
-          const existingBooking = upcomingBookings.find(b => b.id === freshBooking.id);
-          return existingBooking &&
-                 existingBooking.class?.status !== freshBooking.class?.status &&
-                 freshBooking.class?.status === 'in_progress';
+        setUpcomingBookings((prev) => {
+          const hasStatusChange = freshBookings.some((freshBooking) => {
+            const existingBooking = prev.find((b) => b.id === freshBooking.id);
+            return (
+              existingBooking &&
+              existingBooking.class?.status !== freshBooking.class?.status &&
+              freshBooking.class?.status === "in_progress"
+            );
+          });
+
+          if (hasStatusChange) {
+            toast.success("Session has started! You can now join.");
+          }
+
+          return freshBookings;
         });
-
-        // Update state with fresh data
-        setUpcomingBookings(freshBookings);
-
-        // If there was a status change to in_progress, show a brief success notification
-        if (hasStatusChange) {
-          toast.success("Session has started! You can now join.");
-        }
       } catch (error) {
-        console.error("Error fetching fresh session data:", error);
-        // Don't show error toast for background polling
+        console.error("Error refreshing session data:", error);
+      } finally {
+        isRefreshing = false;
       }
     };
 
-    // Determine polling frequency based on session timing
-    const getPollingInterval = () => {
-      const now = new Date();
-      const upcomingSessions = upcomingBookings.filter(booking => {
-        if (!booking.class) return false;
-        const sessionDateTime = new Date(`${booking.class.date}T${booking.class.start_time}`);
-        const timeDiff = sessionDateTime.getTime() - now.getTime();
-        const minutesUntilStart = timeDiff / (1000 * 60);
-        return minutesUntilStart > 0 && minutesUntilStart <= 10; // Within 10 minutes
-      });
+    // Initial load
+    refresh();
 
-      // If there are sessions starting soon, poll more frequently
-      return upcomingSessions.length > 0 ? 3000 : 12000; // 3 seconds vs 12 seconds
-    };
+    const socket = getSocket();
+    if (!socket) {
+      // No socket available: fallback poll
+      fallbackInterval = setInterval(refresh, 12000);
+      return () => {
+        if (fallbackInterval) clearInterval(fallbackInterval);
+      };
+    }
 
-    // Set up polling with dynamic interval
-    const setupPolling = () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
+    const handleBookingUpdate = () => refresh();
+    const handleClassStatus = () => refresh();
+    const ensureFallback = () => {
+      if (socket.connected) {
+        if (fallbackInterval) {
+          clearInterval(fallbackInterval);
+          fallbackInterval = null;
+        }
+      } else if (!fallbackInterval) {
+        fallbackInterval = setInterval(refresh, 12000);
       }
-      pollingInterval = setInterval(fetchFreshData, getPollingInterval());
     };
 
-    // Initial fetch
-    fetchFreshData();
+    socket.on("booking:update", handleBookingUpdate);
+    socket.on("class:status", handleClassStatus);
+    socket.on("connect", ensureFallback);
+    socket.on("disconnect", ensureFallback);
 
-    // Start polling
-    setupPolling();
-
-    // Set up a separate interval to adjust polling frequency every minute
-    const adjustmentInterval = setInterval(() => {
-      setupPolling(); // Recalculate and restart polling with new frequency
-    }, 60000); // Adjust every minute
+    ensureFallback();
 
     return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
-      clearInterval(adjustmentInterval);
+      socket.off("booking:update", handleBookingUpdate);
+      socket.off("class:status", handleClassStatus);
+      socket.off("connect", ensureFallback);
+      socket.off("disconnect", ensureFallback);
+      if (fallbackInterval) clearInterval(fallbackInterval);
     };
-  }, [user, upcomingBookings]);
+  }, [user]);
 
   const loadBookings = async () => {
     try {

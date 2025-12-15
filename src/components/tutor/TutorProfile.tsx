@@ -33,6 +33,7 @@ import { validateDocumentFile } from "@/constants/form";
 import { subjectsService } from "@/lib/subjects";
 import type { Subject } from "@/types/subject";
 import apiClient from "@/lib/apiClient";
+import { getActiveProfileImage } from "@/lib/profileImages";
 
 interface TutorProfileFormData {
   email: string;
@@ -56,7 +57,7 @@ interface TutorProfileFormData {
 }
 
 const TutorProfile: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingCV, setIsUploadingCV] = useState(false);
@@ -131,7 +132,19 @@ const TutorProfile: React.FC = () => {
         });
 
         // Set profile image URL from profile data
-        setCurrentProfileImageUrl(profile.profile_image_url || null);
+        setCurrentProfileImageUrl(
+          profile.profile_image_url || profile.avatar_url || null
+        );
+
+        // Try to load active profile image from backend (local state only to avoid loops)
+        try {
+          const activeImage = await getActiveProfileImage();
+          if (activeImage?.url) {
+            setCurrentProfileImageUrl(activeImage.url);
+          }
+        } catch (err) {
+          // ignore and keep existing URL
+        }
       } catch (err) {
         console.error("Error loading profile data:", err);
       } finally {
@@ -186,9 +199,13 @@ const TutorProfile: React.FC = () => {
 
   const handleProfileImageChange = async (imageUrl: string | null) => {
     setCurrentProfileImageUrl(imageUrl);
-    // The profile image URL will be updated when the auth context refreshes
-    // No need to manually call updateProfile as the ProfileImageUpload component
-    // handles the backend update and the auth context should reflect this
+    // Also update AuthContext so it persists across refresh
+    if (updateProfile) {
+      await updateProfile({
+        profile_image_url: imageUrl,
+        avatar_url: imageUrl,
+      });
+    }
   };
 
   // -----------------------------

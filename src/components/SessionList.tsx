@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ClassSearchResult } from '../types/classScheduling';
-import { CalendarDays, Clock, Users, Star, BookOpen, Video, CheckCircle } from 'lucide-react';
+import { CalendarDays, Clock, Users, BookOpen, Video, CheckCircle } from 'lucide-react';
 
 type SessionListProps = {
   sessions: ClassSearchResult[];
@@ -32,14 +32,14 @@ const formatTime = (timeString: string) => {
 const getClassTypeIcon = (classTypeName: string) => {
   switch (classTypeName?.toLowerCase()) {
     case 'group':
-      return <Users className="w-5 h-5" />;
+      return <Users className="w-5 h-5 text-primary" />;
     case 'consultation':
-      return <BookOpen className="w-5 h-5" />;
+      return <BookOpen className="w-5 h-5 text-primary" />;
     case 'one-on-one':
     case 'one-on-one extended':
-      return <Video className="w-5 h-5" />;
+      return <Video className="w-5 h-5 text-primary" />;
     default:
-      return <BookOpen className="w-5 h-5" />;
+      return <BookOpen className="w-5 h-5 text-primary" />;
   }
 };
 
@@ -51,21 +51,21 @@ const SessionList: React.FC<SessionListProps> = ({
   bookingLoading,
 }) => {
   if (loading) {
-    return <div className="text-center py-12">Loading sessions...</div>;
+    return <div className="text-center py-12 text-muted-foreground">Loading sessions...</div>;
   }
   if (error) {
-    return <div className="text-center py-12 text-red-600">{error}</div>;
+    return <div className="text-center py-12 text-destructive">{error}</div>;
   }
   if (!sessions.length) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="text-center py-12"
+        className="text-center py-12 text-muted-foreground"
       >
-        <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No sessions found</h3>
-        <p className="text-gray-600">
+        <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-card-foreground mb-2">No sessions found</h3>
+        <p className="text-sm">
           Try adjusting your filters or check back later for new sessions.
         </p>
       </motion.div>
@@ -82,37 +82,22 @@ const SessionList: React.FC<SessionListProps> = ({
             key={session.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow p-6 flex flex-col h-full"
+            className="rounded-xl border border-border bg-card text-card-foreground shadow-sm p-6 flex flex-col h-full"
           >
             <div className="flex items-center gap-2 mb-2">
               {getClassTypeIcon(session.class_type?.name || '')}
-              <span className="text-sm font-semibold text-blue-600">
+              <span className="text-sm font-semibold text-primary">
                 {session.class_type?.name}
               </span>
-              <span className="ml-auto text-green-600 font-bold text-lg">
+              <span className="ml-auto text-primary font-semibold text-lg">
                 ${session.price_per_session}
               </span>
             </div>
             <div className="px-0 pb-4 flex flex-col min-h-[120px] justify-start">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold">
-                    {tutor.full_name.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">{tutor.full_name}</p>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm text-gray-600">
-                      {tutor.rating.toFixed(1)} ({tutor.total_reviews} reviews)
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mt-2">{session.title}</h3>
+              <p className="font-medium text-card-foreground">{tutor.full_name}</p>
+              <h3 className="text-lg font-semibold text-card-foreground mt-1">{session.title}</h3>
               {session.description ? (
-                <p className="text-sm text-gray-600 mt-1 mb-0 line-clamp-2">
+                <p className="text-sm text-muted-foreground mt-1 mb-0 line-clamp-2">
                   {session.description}
                 </p>
               ) : (
@@ -120,15 +105,15 @@ const SessionList: React.FC<SessionListProps> = ({
               )}
             </div>
             <div className="px-0 pb-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <CalendarDays className="w-4 h-4" />
                 <span>{formatDate(session.date)}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="w-4 h-4" />
                 <span>{formatTime(session.start_time)} - {formatTime(session.end_time)}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="w-4 h-4" />
                 <span>
                   {sessionResult.available_slots} of {session.max_students} spots available
@@ -142,8 +127,8 @@ const SessionList: React.FC<SessionListProps> = ({
                   disabled={isBooking || !sessionResult.is_bookable}
                   className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
                     sessionResult.is_bookable
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60'
+                      : 'bg-muted text-muted-foreground cursor-not-allowed'
                   }`}
                 >
                   {isBooking ? (

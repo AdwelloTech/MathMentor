@@ -279,90 +279,43 @@ export default function InstantSessionPage() {
     }
   };
 
-  // Poll for session status updates when waiting
+  // Realtime subscription for session status and tutor join
   useEffect(() => {
-    if (status !== "waiting" || !requestId) return;
+    if (!requestId) return;
 
-    console.log("[Student] Starting to poll for session status:", requestId);
-    
-    const pollInterval = setInterval(async () => {
-      try {
-        const session = await instantSessionService.getRequestStatus(requestId);
-        
-        if (!session) {
-          console.log("[Student] Session not found, may have been cancelled");
-          setStatus("cancelled");
-          clearInterval(pollInterval);
-          return;
+    const unsubscribe = instantSessionService.subscribeToSession(requestId, ({ session }) => {
+      const sessionStatus = session.status;
+
+      if (sessionStatus === "accepted") {
+        setJitsiUrl(session.jitsiMeetingUrl || null);
+        setStatus("accepted");
+        setAcceptedAt(session.acceptedAt ? new Date(session.acceptedAt) : new Date());
+        setTutorJoined(!!session.tutorJoinedAt);
+        if (typeof session.tutorId === "string") {
+          setTutorId(session.tutorId);
+        } else if (session.tutorId && typeof session.tutorId === "object" && "_id" in session.tutorId) {
+          setTutorId((session.tutorId as any)._id);
         }
-
-        console.log("[Student] Session status:", session.status);
-
-        if (session.status === "accepted") {
-          console.log("[Student] Session accepted! URL:", session.jitsiMeetingUrl);
-          setJitsiUrl(session.jitsiMeetingUrl || null);
-          setStatus("accepted");
-          setAcceptedAt(session.acceptedAt ? new Date(session.acceptedAt) : new Date());
-          setTutorJoined(!!session.tutorJoinedAt);
-          // Store tutor ID for rating later
-          if (typeof session.tutorId === 'string') {
-            setTutorId(session.tutorId);
-          } else if (session.tutorId && typeof session.tutorId === 'object' && '_id' in session.tutorId) {
-            setTutorId(session.tutorId._id);
-          }
-          clearInterval(pollInterval);
-        } else if (session.status === "cancelled" || session.status === "expired") {
-          console.log("[Student] Session cancelled or expired");
-          setStatus(session.status);
-          clearInterval(pollInterval);
-        }
-      } catch (error) {
-        console.error("[Student] Error polling session status:", error);
       }
-    }, 2000); // Poll every 2 seconds
+
+      if (sessionStatus === "cancelled" || sessionStatus === "expired") {
+        setStatus(sessionStatus);
+        setRequestId(null);
+      }
+
+      if (sessionStatus === "completed") {
+        setStatus("completed");
+      }
+
+      if (session.tutorJoinedAt && !tutorJoined) {
+        setTutorJoined(true);
+      }
+    });
 
     return () => {
-      console.log("[Student] Cleaning up polling interval");
-      clearInterval(pollInterval);
+      unsubscribe?.();
     };
-  }, [status, requestId]);
-
-  // Poll for tutor joined status and session completion when session is accepted
-  useEffect(() => {
-    if (status !== "accepted" || !requestId) return;
-
-    console.log("[Student] Polling for tutor joined status and session completion");
-
-    const pollInterval = setInterval(async () => {
-      try {
-        const session = await instantSessionService.getRequestStatus(requestId);
-        
-        if (!session) {
-          console.log("[Student] Session not found");
-          clearInterval(pollInterval);
-          return;
-        }
-
-        // Check if session is completed
-        if (session.status === 'completed') {
-          console.log("[Student] Session has been completed by tutor");
-          setStatus("completed");
-          clearInterval(pollInterval);
-          return;
-        }
-        
-        // Check if tutor has joined
-        if (session.tutorJoinedAt && !tutorJoined) {
-          console.log("[Student] Tutor has joined! Student can now join.");
-          setTutorJoined(true);
-        }
-      } catch (error) {
-        console.error("[Student] Error checking session status:", error);
-      }
-    }, 2000); // Poll every 2 seconds
-
-    return () => clearInterval(pollInterval);
-  }, [status, requestId, tutorJoined]);
+  }, [requestId, tutorJoined]);
 
 
   // Reset function to clear state and localStorage

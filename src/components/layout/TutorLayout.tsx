@@ -1,22 +1,23 @@
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import TutorDashboard from "@/pages/dashboards/TutorDashboard";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TutorLayout: React.FC = () => {
   const location = useLocation();
+  // Access auth to ensure hooks stay in sync; not directly used here
+  useAuth();
   console.log('🏗️ TUTOR LAYOUT: Rendering for path:', location.pathname);
-
-  // If we're on the main tutor route, show the dashboard
-  if (location.pathname === "/tutor" || location.pathname === "/tutor/") {
-    console.log('📊 TUTOR LAYOUT: Rendering TutorDashboard for /tutor');
-    return <TutorDashboard />;
-  }
 
   // For nested routes, show the specific page
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Page content */}
-      <Outlet />
+      {location.pathname === "/tutor" || location.pathname === "/tutor/" ? (
+        <TutorDashboard />
+      ) : (
+        <Outlet />
+      )}
     </div>
   );
 };

@@ -148,7 +148,7 @@ const DashboardLayout: React.FC = () => {
           audioCtxRef.current.resume();
         }
         setAudioEnabled(true);
-      } catch (_) { }
+      } catch (_) {}
       document.removeEventListener("click", unlock);
       document.removeEventListener("keydown", unlock);
       document.removeEventListener("touchstart", unlock);
@@ -394,9 +394,8 @@ const DashboardLayout: React.FC = () => {
         </main>
       </div>
 
-      {/* Floating Instant Requests Notification - DISABLED to avoid duplicates */}
-      {/* The detailed popup in TutorDashboard (InstantSessionRequestPopup) handles this better */}
-      {/* {profile?.role === "tutor" &&
+      {/* Floating Instant Requests Notification - Only show when tutor is online */}
+      {profile?.role === "tutor" &&
         profile?.is_online &&
         instantRequests.filter((req) => !dismissedIds.has(req.id)).length >
           0 && (
@@ -446,6 +445,7 @@ const DashboardLayout: React.FC = () => {
                         transition={{ delay: index * 0.1 }}
                         className="group relative bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
                       >
+                        {/* Animated background gradient */}
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                         <div className="relative flex items-start justify-between">
@@ -499,11 +499,13 @@ const DashboardLayout: React.FC = () => {
                           </div>
                         </div>
 
+                        {/* Subtle pulse animation for urgency */}
                         <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                       </motion.div>
                     ))}
                 </div>
 
+                {/* Footer with action hint */}
                 <div className="mt-4 pt-3 border-t border-gray-100">
                   <p className="text-xs text-gray-500 text-center">
                     💡 Click Accept to start helping immediately
@@ -512,7 +514,7 @@ const DashboardLayout: React.FC = () => {
               </CardContent>
             </Card>
           </motion.div>
-        )} */}
+        )}
     </div>
   );
 };

@@ -1,28 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  SparklesIcon,
-  ClockIcon,
-  UserGroupIcon,
-  XMarkIcon,
-  CheckIcon,
-} from "@heroicons/react/24/outline";
+// import {
+//   SparklesIcon,
+//   ClockIcon,
+//   UserGroupIcon,
+//   XMarkIcon,
+//   CheckIcon,
+// } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { getRoleContainerClass } from "@/utils/roleStyles";
 import type { TutorApplication } from "@/types/auth";
 import Sidebar from "./Sidebar";
-import {
-  instantSessionService,
-  type InstantRequest,
-} from "@/lib/instantSessionService";
+// import {
+//   instantSessionService,
+//   type InstantRequest,
+// } from "@/lib/instantSessionService";
 import { idVerificationService } from "@/lib/idVerificationService";
 import apiClient from "@/lib/apiClient";
 import { getSocket } from "@/lib/socketClient";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// import { Button } from "@/components/ui/button";
+// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -33,11 +33,11 @@ const DashboardLayout: React.FC = () => {
   const { isAdminLoggedIn, logoutAdmin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
-  const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
-  const [acceptingId, setAcceptingId] = useState<string | null>(null);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
-  const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
-  const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+  // const [instantRequests, setInstantRequests] = useState<InstantRequest[]>([]);
+  // const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  // const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  // const [subjects, setSubjects] = useState<{ [key: string]: string }>({});
+  // const FRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
   const [unreadMessages, setUnreadMessages] = useState<number>(0);
   const seenMessageIds = useRef<Set<string>>(new Set());
 
@@ -108,90 +108,90 @@ const DashboardLayout: React.FC = () => {
   }, [location.pathname, unreadMessages, user?.id]);
 
   // Audio notification setup (unlocked on first user interaction)
-  const audioCtxRef = useRef<any>(null);
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  // const audioCtxRef = useRef<any>(null);
+  // const [audioEnabled, setAudioEnabled] = useState(false);
 
   // Load subjects for display
-  useEffect(() => {
-    const loadSubjects = async () => {
-      try {
-        // Use apiClient for consistent URL handling
-        const result = await apiClient.get<any[]>('/api/subjects');
-        if (result) {
-          const subjectsMap: { [key: string]: string } = {};
-          result.forEach((subject: any) => {
-            subjectsMap[subject._id] = subject.displayName || subject.name;
-          });
-          setSubjects(subjectsMap);
-        }
-      } catch (error) {
-        // Silently handle subjects loading errors
-      }
-    };
+  // useEffect(() => {
+  //   const loadSubjects = async () => {
+  //     try {
+  //       // Use apiClient for consistent URL handling
+  //       const result = await apiClient.get<any[]>('/api/subjects');
+  //       if (result) {
+  //         const subjectsMap: { [key: string]: string } = {};
+  //         result.forEach((subject: any) => {
+  //           subjectsMap[subject._id] = subject.displayName || subject.name;
+  //         });
+  //         setSubjects(subjectsMap);
+  //       }
+  //     } catch (error) {
+  //       // Silently handle subjects loading errors
+  //     }
+  //   };
 
-    loadSubjects();
-  }, []);
+  //   loadSubjects();
+  // }, []);
 
-  const getSubjectName = (subjectId: string | { _id: string; name: string; displayName: string; color: string }) => {
-    const id = typeof subjectId === 'string' ? subjectId : subjectId._id;
-    return subjects[id] || "Unknown Subject";
-  };
+  // const getSubjectName = (subjectId: string | { _id: string; name: string; displayName: string; color: string }) => {
+  //   const id = typeof subjectId === 'string' ? subjectId : subjectId._id;
+  //   return subjects[id] || "Unknown Subject";
+  // };
 
-  useEffect(() => {
-    const unlock = () => {
-      try {
-        const AC =
-          (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (!AC) return;
-        if (!audioCtxRef.current) audioCtxRef.current = new AC();
-        if (audioCtxRef.current.state !== "running") {
-          audioCtxRef.current.resume();
-        }
-        setAudioEnabled(true);
-      } catch (_) { }
-      document.removeEventListener("click", unlock);
-      document.removeEventListener("keydown", unlock);
-      document.removeEventListener("touchstart", unlock);
-    };
-    document.addEventListener("click", unlock);
-    document.addEventListener("keydown", unlock);
-    document.addEventListener("touchstart", unlock);
-    return () => {
-      document.removeEventListener("click", unlock);
-      document.removeEventListener("keydown", unlock);
-      document.removeEventListener("touchstart", unlock);
-    };
-  }, []);
+  // useEffect(() => {
+  //   const unlock = () => {
+  //     try {
+  //       const AC =
+  //         (window as any).AudioContext || (window as any).webkitAudioContext;
+  //       if (!AC) return;
+  //       if (!audioCtxRef.current) audioCtxRef.current = new AC();
+  //       if (audioCtxRef.current.state !== "running") {
+  //         audioCtxRef.current.resume();
+  //       }
+  //       setAudioEnabled(true);
+  //     } catch (_) { }
+  //     document.removeEventListener("click", unlock);
+  //     document.removeEventListener("keydown", unlock);
+  //     document.removeEventListener("touchstart", unlock);
+  //   };
+  //   document.addEventListener("click", unlock);
+  //   document.addEventListener("keydown", unlock);
+  //   document.addEventListener("touchstart", unlock);
+  //   return () => {
+  //     document.removeEventListener("click", unlock);
+  //     document.removeEventListener("keydown", unlock);
+  //     document.removeEventListener("touchstart", unlock);
+  //   };
+  // }, []);
 
-  const playNotificationSound = () => {
-    try {
-      if (!audioEnabled) return;
-      const ctx = audioCtxRef.current;
-      if (!ctx) return;
-      const now = ctx.currentTime;
-      const makeBeep = (startOffset: number) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "square";
-        osc.frequency.setValueAtTime(1200, now + startOffset);
-        gain.gain.setValueAtTime(0.0001, now + startOffset);
-        gain.gain.exponentialRampToValueAtTime(0.08, now + startOffset + 0.02);
-        gain.gain.exponentialRampToValueAtTime(
-          0.0001,
-          now + startOffset + 0.15
-        );
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now + startOffset);
-        osc.stop(now + startOffset + 0.16);
-      };
-      // Two short beeps
-      makeBeep(0);
-      makeBeep(0.2);
-    } catch (_) {
-      // no-op
-    }
-  };
+  // const playNotificationSound = () => {
+  //   try {
+  //     if (!audioEnabled) return;
+  //     const ctx = audioCtxRef.current;
+  //     if (!ctx) return;
+  //     const now = ctx.currentTime;
+  //     const makeBeep = (startOffset: number) => {
+  //       const osc = ctx.createOscillator();
+  //       const gain = ctx.createGain();
+  //       osc.type = "square";
+  //       osc.frequency.setValueAtTime(1200, now + startOffset);
+  //       gain.gain.setValueAtTime(0.0001, now + startOffset);
+  //       gain.gain.exponentialRampToValueAtTime(0.08, now + startOffset + 0.02);
+  //       gain.gain.exponentialRampToValueAtTime(
+  //         0.0001,
+  //         now + startOffset + 0.15
+  //       );
+  //       osc.connect(gain);
+  //       gain.connect(ctx.destination);
+  //       osc.start(now + startOffset);
+  //       osc.stop(now + startOffset + 0.16);
+  //     };
+  //     // Two short beeps
+  //     makeBeep(0);
+  //     makeBeep(0.2);
+  //   } catch (_) {
+  //     // no-op
+  //   }
+  // };
 
   // Check tutor application and ID verification status on mount
   useEffect(() => {
@@ -202,42 +202,42 @@ const DashboardLayout: React.FC = () => {
   }, [profile?.role, user]);
 
   // Subscribe to instant requests globally for tutors (websocket)
-  useEffect(() => {
-    if (profile?.role !== "tutor") return;
+  // useEffect(() => {
+  //   if (profile?.role !== "tutor") return;
 
-    const unsubscribe = instantSessionService.subscribeToPending(
-      ({ new: req, eventType }) => {
-        const created =
-          (req as any).createdAt ||
-          (req as any).requestedAt ||
-          (req as any).created_at;
-        const isFresh =
-          created && Date.now() - new Date(created).getTime() <= FRESH_WINDOW_MS;
+  //   const unsubscribe = instantSessionService.subscribeToPending(
+  //     ({ new: req, eventType }) => {
+  //       const created =
+  //         (req as any).createdAt ||
+  //         (req as any).requestedAt ||
+  //         (req as any).created_at;
+  //       const isFresh =
+  //         created && Date.now() - new Date(created).getTime() <= FRESH_WINDOW_MS;
 
-        if (eventType === "INSERT") {
-          if (!isFresh) return; // ignore stale backlog
-          playNotificationSound();
-          setInstantRequests((prev) => {
-            const exists = prev.some((r) => r.id === (req as any).id);
-            if (exists) return prev;
-            return [req as InstantRequest, ...prev];
-          });
-        }
+  //       if (eventType === "INSERT") {
+  //         if (!isFresh) return; // ignore stale backlog
+  //         playNotificationSound();
+  //         setInstantRequests((prev) => {
+  //           const exists = prev.some((r) => r.id === (req as any).id);
+  //           if (exists) return prev;
+  //           return [req as InstantRequest, ...prev];
+  //         });
+  //       }
 
-        if (eventType === "REMOVE") {
-          setInstantRequests((prev) =>
-            prev.filter((r) => r.id !== (req as any).id)
-          );
-        }
-      },
-      undefined,
-      profile?.is_online || false
-    );
+  //       if (eventType === "REMOVE") {
+  //         setInstantRequests((prev) =>
+  //           prev.filter((r) => r.id !== (req as any).id)
+  //         );
+  //       }
+  //     },
+  //     undefined,
+  //     profile?.is_online || false
+  //   );
 
-    return () => {
-      unsubscribe?.();
-    };
-  }, [profile?.role, profile?.is_online]);
+  //   return () => {
+  //     unsubscribe?.();
+  //   };
+  // }, [profile?.role, profile?.is_online]);
 
   const checkTutorApplication = async () => {
     if (!user) return;
@@ -279,87 +279,87 @@ const DashboardLayout: React.FC = () => {
       navigate("/login");
     }
   };
-  const DEFAULT_JITSI_URL = "https://meet.jit.si/jitsi_room_test_123456789";
-  const MEETING_TAB_NAME = "instant_meeting_tab";
+  // const DEFAULT_JITSI_URL = "https://meet.jit.si/jitsi_room_test_123456789";
+  // const MEETING_TAB_NAME = "instant_meeting_tab";
 
-  const handleAcceptInstant = async (requestId: string) => {
-    // Open a blank tab synchronously to avoid popup blockers
-    const meetingWindow = window.open("about:blank", MEETING_TAB_NAME);
+  // const handleAcceptInstant = async (requestId: string) => {
+  //   // Open a blank tab synchronously to avoid popup blockers
+  //   const meetingWindow = window.open("about:blank", MEETING_TAB_NAME);
 
-    if (!meetingWindow) {
-      window.open(DEFAULT_JITSI_URL, "_blank");
-      return;
-    }
+  //   if (!meetingWindow) {
+  //     window.open(DEFAULT_JITSI_URL, "_blank");
+  //     return;
+  //   }
 
-    // Show a loading message while waiting for the meeting URL
-    try {
-      meetingWindow.document.open();
-      meetingWindow.document.write(`
-      <!doctype html>
-      <meta charset="utf-8">
-      <title>Joining your meeting…</title>
-      <style>
-        body{font-family:system-ui,Segoe UI,Arial;margin:24px;line-height:1.5}
-        .btn{display:inline-block;padding:10px 14px;border:1px solid #ccc;border-radius:8px;text-decoration:none}
-      </style>
-      <h1>Joining your meeting…</h1>
-      <p>This tab will navigate automatically when the session is ready.</p>
-      <p>If it doesn't, you can <a class="btn" href="${DEFAULT_JITSI_URL}" target="_self" rel="noopener">open the Meeting link</a>.</p>
-    `);
-      meetingWindow.document.close();
-    } catch {
-      // ignore
-    }
+  //   // Show a loading message while waiting for the meeting URL
+  //   try {
+  //     meetingWindow.document.open();
+  //     meetingWindow.document.write(`
+  //     <!doctype html>
+  //     <meta charset="utf-8">
+  //     <title>Joining your meeting…</title>
+  //     <style>
+  //       body{font-family:system-ui,Segoe UI,Arial;margin:24px;line-height:1.5}
+  //       .btn{display:inline-block;padding:10px 14px;border:1px solid #ccc;border-radius:8px;text-decoration:none}
+  //     </style>
+  //     <h1>Joining your meeting…</h1>
+  //     <p>This tab will navigate automatically when the session is ready.</p>
+  //     <p>If it doesn't, you can <a class="btn" href="${DEFAULT_JITSI_URL}" target="_self" rel="noopener">open the Meeting link</a>.</p>
+  //   `);
+  //     meetingWindow.document.close();
+  //   } catch {
+  //     // ignore
+  //   }
 
-    try {
-      if (!profile?.id) {
-        meetingWindow.close();
-        return;
-      }
+  //   try {
+  //     if (!profile?.id) {
+  //       meetingWindow.close();
+  //       return;
+  //     }
 
-      setAcceptingId(requestId);
-      setDismissedIds((prev) => new Set(prev).add(requestId));
-      setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
+  //     setAcceptingId(requestId);
+  //     setDismissedIds((prev) => new Set(prev).add(requestId));
+  //     setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
 
-      // Accept the request and get the meeting URL from the backend
-      const accepted = await instantSessionService.acceptRequest(
-        requestId,
-        profile.id
-      );
+  //     // Accept the request and get the meeting URL from the backend
+  //     const accepted = await instantSessionService.acceptRequest(
+  //       requestId,
+  //       profile.id
+  //     );
 
-      // Use the meeting URL from the backend, fallback to default if missing
-      const url = (() => {
-        try {
-          return new URL(
-            accepted?.jitsiMeetingUrl || DEFAULT_JITSI_URL
-          ).toString();
-        } catch {
-          return DEFAULT_JITSI_URL;
-        }
-      })();
+  //     // Use the meeting URL from the backend, fallback to default if missing
+  //     const url = (() => {
+  //       try {
+  //         return new URL(
+  //           accepted?.jitsiMeetingUrl || DEFAULT_JITSI_URL
+  //         ).toString();
+  //       } catch {
+  //         return DEFAULT_JITSI_URL;
+  //       }
+  //     })();
 
-      // Redirect the opened tab to the meeting URL
-      try {
-        meetingWindow.location.replace(url);
-      } catch {
-        try {
-          meetingWindow.location.href = url;
-        } catch {
-          window.open(url, MEETING_TAB_NAME);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      if (!meetingWindow.closed) meetingWindow.close();
-    } finally {
-      setAcceptingId(null);
-    }
-  };
+  //     // Redirect the opened tab to the meeting URL
+  //     try {
+  //       meetingWindow.location.replace(url);
+  //     } catch {
+  //       try {
+  //         meetingWindow.location.href = url;
+  //       } catch {
+  //         window.open(url, MEETING_TAB_NAME);
+  //       }
+  //     }
+  //   } catch (e) {
+  //     console.error(e);
+  //     if (!meetingWindow.closed) meetingWindow.close();
+  //   } finally {
+  //     setAcceptingId(null);
+  //   }
+  // };
 
-  const handleRejectInstant = (requestId: string) => {
-    setDismissedIds((prev) => new Set(prev).add(requestId));
-    setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
-  };
+  // const handleRejectInstant = (requestId: string) => {
+  //   setDismissedIds((prev) => new Set(prev).add(requestId));
+  //   setInstantRequests((prev) => prev.filter((r) => r.id !== requestId));
+  // };
 
   return (
     <div

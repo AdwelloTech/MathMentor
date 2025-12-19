@@ -72,7 +72,7 @@ const TutorManageClassesPage: React.FC = () => {
       const pendingBookings = allBookings.filter(
         (booking: any) => booking.booking_status === 'pending'
       );
-      
+
       const counts: Record<string, number> = {};
       pendingBookings.forEach((booking: any) => {
         const classId = booking.class_id;
@@ -80,7 +80,7 @@ const TutorManageClassesPage: React.FC = () => {
           counts[classId] = (counts[classId] || 0) + 1;
         }
       });
-      
+
       // Check for new requests and show notifications
       const prev = previousRequestCountsRef.current;
       Object.keys(counts).forEach((classId) => {
@@ -101,7 +101,7 @@ const TutorManageClassesPage: React.FC = () => {
       });
       // Update the ref with current counts
       previousRequestCountsRef.current = counts;
-      
+
       setRequestCounts(counts);
     } catch (err) {
       console.error("Error loading request counts:", err);
@@ -928,7 +928,6 @@ const TutorManageClassesPage: React.FC = () => {
                 classTypes={classTypes}
                 onSave={handleUpdateClass}
                 onCancel={() => setEditingClass(null)}
-                userId={user!.id}
               />
             </motion.div>
           </div>
@@ -1055,6 +1054,9 @@ const TutorManageClassesPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Floating Active Session Button */}
+      {user?.id && <ActiveSessionFloatingButton tutorId={user.id} />}
     </div>
   );
 };
@@ -1064,7 +1066,6 @@ interface EditClassFormProps {
   classTypes: ClassType[];
   onSave: (updatedClass: Partial<TutorClass>) => void;
   onCancel: () => void;
-  userId: string;
 }
 
 const EditClassForm: React.FC<EditClassFormProps> = ({
@@ -1072,7 +1073,6 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
   classTypes,
   onSave,
   onCancel,
-  userId,
 }) => {
   const getClassTypeId = (classTypeId: string | undefined, classData?: TutorClass) => {
     // First try to find by class_type_id if it exists
@@ -1133,7 +1133,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
       const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
       // Round to nearest valid duration (15, 30, 45, or 60)
       const validDurations = [15, 30, 45, 60];
-      const closest = validDurations.reduce((prev, curr) => 
+      const closest = validDurations.reduce((prev, curr) =>
         Math.abs(curr - durationMinutes) < Math.abs(prev - durationMinutes) ? curr : prev
       );
       return closest;
@@ -1165,7 +1165,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
     subjectsService
       .listActive()
       .then(setSubjects)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1555,7 +1555,7 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
             }
             rows={3}
             className="h-24 border-2 border-slate-600 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-20 transition-all resize-none"
-            /* required */
+          /* required */
           />
         </div>
 
@@ -1576,8 +1576,6 @@ const EditClassForm: React.FC<EditClassFormProps> = ({
           </Button>
         </div>
       </form>
-      {/* Floating Active Session Button */}
-      <ActiveSessionFloatingButton tutorId={userId} />
     </div>
   );
 };

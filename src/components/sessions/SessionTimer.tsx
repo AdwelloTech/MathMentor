@@ -230,11 +230,11 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
   // Format time in countdown clock format (HH:MM:SS)
   const formatTimeCountdown = (seconds: number): string => {
     if (seconds <= 0) return "00:00:00";
-    
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
@@ -331,22 +331,42 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
       setEndingSession(true);
 
       try {
-        // Update the session status in the database
+        // Update the booking status in the database
         console.log(
-          "Updating session status to 'completed' for session:",
+          "Updating booking status to 'completed' for session:",
           session.id
         );
 
-        // First check if the session exists and can be updated
-        console.log("Session data being updated:", {
-          sessionId: session.id,
-          currentStatus: session.class_status,
-          newStatus: "completed",
-        });
+        // Use bookingId if available, otherwise try to find it
+        if (bookingId) {
+          console.log("Completing via bookingId:", bookingId);
+          await classSchedulingService.bookings.complete(bookingId);
+        } else if (user?.id) {
+          // Fallback: attempt to locate the booking for this class & student
+          const studentId = user.id;
+          console.log("bookingId not provided. Attempting lookup", {
+            studentId,
+            classId: session.id,
+          });
 
-        await classSchedulingService.classes.update(session.id, {
-          status: "completed",
-        });
+          // Use backend API to find the booking
+          const bookingsResponse = await fetch(`/api/bookings/student/${studentId}`);
+          if (!bookingsResponse.ok) throw new Error('Failed to fetch bookings');
+
+          const allBookings = await bookingsResponse.json();
+          const existingBookings = allBookings.filter((b: any) =>
+            b.class_id === session.id || b.classId?._id === session.id
+          );
+
+          if (!existingBookings || existingBookings.length === 0) {
+            throw new Error("Booking not found for this class");
+          }
+
+          const foundId = existingBookings[0].id;
+          await classSchedulingService.bookings.complete(foundId);
+        } else {
+          throw new Error("User not available for completing session");
+        }
 
         console.log("Database updated successfully!");
 
@@ -476,8 +496,8 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
           <div className="flex items-center justify-between">
             {/* Timer Display */}
             <div className="text-xl font-bold text-gray-900 font-mono">
-              {isSessionCancelled 
-                ? "00:00:00" 
+              {isSessionCancelled
+                ? "00:00:00"
                 : !isSessionActive && timeRemaining > 0
                   ? formatTimeCountdown(timeRemaining)
                   : formatTime(timeRemaining)

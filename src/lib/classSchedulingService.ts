@@ -131,7 +131,7 @@ export const classSchedulingService = {
         if (filters?.class_type) queryParams.append('class_type', filters.class_type);
 
         const response = await apiClient.get<any[]>(`/api/classes/available?${queryParams}`);
-        
+
         // Handle case where response might not be an array
         if (!Array.isArray(response)) {
           console.error('Expected array but got:', typeof response, response);
@@ -433,12 +433,12 @@ export const classSchedulingService = {
 
         // Build backend updates object, only including defined fields
         const backendUpdates: any = {};
-        
+
         if (updates.title !== undefined) backendUpdates.title = updates.title;
         if (updates.description !== undefined) backendUpdates.description = updates.description;
         if (updates.subject_id !== undefined) backendUpdates.subjectId = updates.subject_id;
         if (updates.grade_level_id !== undefined) backendUpdates.gradeLevelId = updates.grade_level_id;
-        
+
         if (updates.schedule || (startTime && endTime)) {
           backendUpdates.schedule = updates.schedule || {
             dayOfWeek: updates.date ? new Date(updates.date).getDay() : undefined,
@@ -447,17 +447,17 @@ export const classSchedulingService = {
             duration: duration,
           };
         }
-        
+
         if (updates.date !== undefined) backendUpdates.startDate = updates.date;
         if (updates.recurring_end_date !== undefined) backendUpdates.endDate = updates.recurring_end_date;
         if (updates.max_students !== undefined) backendUpdates.capacity = updates.max_students;
         if (updates.price_per_session !== undefined) backendUpdates.price = updates.price_per_session;
-        
+
         if (updates.status !== undefined) {
           backendUpdates.status = updates.status;
           backendUpdates.isActive = updates.status === "scheduled" || updates.status === "completed" || updates.status === "in_progress";
         }
-        
+
         if (updates.meeting_link !== undefined) backendUpdates.meetingLink = updates.meeting_link;
         if (updates.jitsi_room_name !== undefined) backendUpdates.jitsiRoomName = updates.jitsi_room_name;
         if (updates.jitsi_password !== undefined) backendUpdates.jitsiPassword = updates.jitsi_password;
@@ -532,9 +532,18 @@ export const classSchedulingService = {
   bookings: {
     cancel: async (bookingId: string, reason?: string): Promise<void> => {
       try {
-        await apiClient.put(`/api/bookings/${bookingId}/cancel`, { reason });
+        await apiClient.post(`/api/bookings/${bookingId}/cancel`, { reason });
       } catch (error) {
         console.error('Error cancelling booking:', error);
+        throw error;
+      }
+    },
+
+    complete: async (bookingId: string): Promise<void> => {
+      try {
+        await apiClient.post(`/api/bookings/${bookingId}/complete`, {});
+      } catch (error) {
+        console.error('Error completing booking:', error);
         throw error;
       }
     },
@@ -597,7 +606,7 @@ export const classSchedulingService = {
             title: booking.classId.title,
             description: booking.description || booking.classId.description,
             date: booking.scheduledDate ? new Date(booking.scheduledDate).toISOString().split('T')[0] :
-                  booking.classId?.startDate ? new Date(booking.classId.startDate).toISOString().split('T')[0] : null,
+              booking.classId?.startDate ? new Date(booking.classId.startDate).toISOString().split('T')[0] : null,
             start_time: booking.startTime,
             end_time: booking.endTime,
             duration_minutes: booking.duration,

@@ -142,7 +142,10 @@ const TutorManageClassesPage: React.FC = () => {
     };
 
     const handleBookingUpdate = () => refresh();
-    const handleClassStatus = () => refresh();
+    const handleClassStatus = () => {
+      // Reload classes to get updated status
+      loadClasses();
+    };
 
     socket.on("booking:update", handleBookingUpdate);
     socket.on("class:status", handleClassStatus);

@@ -4,6 +4,7 @@ import { Class } from '../models/Class';
 import { User } from '../models/User';
 import { ClassService } from './classService';
 import { notifyBookingChange } from '../realtime/classEvents';
+import { getIO } from '../realtime/socket';
 
 export interface CreateBookingData {
   classId?: string;
@@ -327,6 +328,38 @@ export class BookingService {
 
     const saved = await booking.save();
     notifyBookingChange(saved);
+
+    // If this booking is for a class, check if all bookings for that class are completed
+    if (booking.classId) {
+      const classId = booking.classId.toString();
+
+      // Get all bookings for this class
+      const allBookings = await Booking.find({
+        classId: new mongoose.Types.ObjectId(classId)
+      });
+
+      // Check if all bookings are either completed or cancelled
+      const allDone = allBookings.every(b =>
+        b.status === 'completed' || b.status === 'cancelled'
+      );
+
+      // If all bookings are done, mark the class as completed
+      if (allDone) {
+        await Class.findByIdAndUpdate(classId, {
+          status: 'completed'
+        });
+
+        // Emit socket event to notify tutor that class is completed
+        const io = getIO();
+        if (io) {
+          io.emit('class:status', {
+            classId,
+            status: 'completed'
+          });
+        }
+      }
+    }
+
     return saved;
   }
 

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  XMarkIcon, 
-  CheckCircleIcon, 
+import {
+  XMarkIcon,
+  CheckCircleIcon,
   ClockIcon,
   UserCircleIcon,
   UserIcon,
@@ -37,7 +37,7 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
     const unsubscribe = instantSessionService.subscribeToPending(
       ({ new: request, eventType }) => {
         console.log('[InstantPopup] Event received:', eventType, request.id);
-        
+
         if (eventType === 'INSERT' && request.status === 'pending') {
           // Check if we've already dismissed this request
           if (!dismissedIds.has(request.id || request._id)) {
@@ -86,26 +86,26 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
 
   const handleAccept = async (request: InstantRequest) => {
     const reqId = request.id || request._id;
-    
+
     try {
       setAcceptingId(reqId);
       console.log('[InstantPopup] Accepting request:', reqId);
-      
+
       // Accept the request - this generates the meeting URL
       const accepted = await instantSessionService.acceptRequest(reqId, tutorId);
-      
+
       // Remove from list immediately
       setRequests(prev => prev.filter(r => (r.id || r._id) !== reqId));
 
       // DON'T mark tutor as joined yet - only when they click the join button
-      
+
       console.log('[InstantPopup] Session accepted with URL:', accepted.jitsiMeetingUrl);
 
       // Show the accepted session modal with the link
       if (accepted.jitsiMeetingUrl) {
         setAcceptedSession(accepted);
         setShowAcceptedModal(true);
-        
+
         toast.success('Session accepted! Click the link to join.', {
           icon: '✅',
           duration: 4000,
@@ -131,10 +131,10 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
   const handleDismiss = (request: InstantRequest) => {
     const reqId = request.id || request._id;
     console.log('[InstantPopup] Dismissing request:', reqId);
-    
+
     // Add to dismissed set
     setDismissedIds(prev => new Set([...prev, reqId]));
-    
+
     // Remove from list
     setRequests(prev => prev.filter(r => (r.id || r._id) !== reqId));
   };
@@ -175,7 +175,7 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
   const handleJoinFromModal = async () => {
     if (acceptedSession?.jitsiMeetingUrl) {
       const sessionId = acceptedSession.id || acceptedSession._id;
-      
+
       // Mark tutor as joined so student can now join
       try {
         await instantSessionService.markTutorJoined(sessionId);
@@ -183,7 +183,7 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
       } catch (error) {
         console.error('[InstantPopup] Error marking tutor as joined:', error);
       }
-      
+
       // Open the meeting
       window.open(acceptedSession.jitsiMeetingUrl, '_blank');
       setShowAcceptedModal(false);
@@ -191,6 +191,13 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
   };
 
   const handleCloseModal = () => {
+    // Trigger a custom event to notify ActiveInstantSessionButton to refresh
+    if (acceptedSession) {
+      window.dispatchEvent(new CustomEvent('instant-session-accepted', {
+        detail: { session: acceptedSession }
+      }));
+    }
+
     setShowAcceptedModal(false);
     setAcceptedSession(null);
   };
@@ -329,160 +336,160 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
       <div className="fixed bottom-6 right-6 z-50 max-w-md">
         <AnimatePresence>
           {requests.map((request, index) => {
-          const reqId = request.id || request._id;
-          const isAccepting = acceptingId === reqId;
-          
-          return (
-            <motion.div
-              key={reqId}
-              initial={{ opacity: 0, x: 400, y: 0 }}
-              animate={{ 
-                opacity: 1, 
-                x: 0, 
-                y: index * -10, // Stack them slightly
-              }}
-              exit={{ opacity: 0, x: 400, scale: 0.9 }}
-              transition={{ 
-                type: 'spring', 
-                stiffness: 300, 
-                damping: 30,
-                delay: index * 0.1 
-              }}
-              className="mb-4"
-              style={{ zIndex: 50 - index }}
-            >
-              <div className="bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl shadow-2xl border-2 border-green-200 dark:border-green-700 overflow-hidden backdrop-blur-lg">
-                {/* Header with pulse animation */}
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 relative overflow-hidden">
+            const reqId = request.id || request._id;
+            const isAccepting = acceptingId === reqId;
+
+            return (
+              <motion.div
+                key={reqId}
+                initial={{ opacity: 0, x: 400, y: 0 }}
+                animate={{
+                  opacity: 1,
+                  x: 0,
+                  y: index * -10, // Stack them slightly
+                }}
+                exit={{ opacity: 0, x: 400, scale: 0.9 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 30,
+                  delay: index * 0.1
+                }}
+                className="mb-4"
+                style={{ zIndex: 50 - index }}
+              >
+                <div className="bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl shadow-2xl border-2 border-green-200 dark:border-green-700 overflow-hidden backdrop-blur-lg">
+                  {/* Header with pulse animation */}
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 relative overflow-hidden">
+                    <motion.div
+                      className="absolute inset-0 bg-white"
+                      animate={{
+                        opacity: [0.1, 0.3, 0.1],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                    />
+                    <div className="flex items-center justify-between relative z-10">
+                      <div className="flex items-center gap-2">
+                        <motion.div
+                          animate={{
+                            scale: [1, 1.2, 1],
+                          }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                          }}
+                        >
+                          <BellAlertIcon className="w-6 h-6 text-white" />
+                        </motion.div>
+                        <h3 className="text-white font-bold text-lg">
+                          New Instant Session Request
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => handleDismiss(request)}
+                        className="text-white/80 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-lg"
+                        disabled={isAccepting}
+                      >
+                        <XMarkIcon className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6 space-y-4">
+                    {/* Student Info */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                        <UserCircleIcon className="w-7 h-7 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Student</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {getStudentName(request)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Subject Info */}
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 bg-gradient-to-br from-${getSubjectColor(request)}-500 to-${getSubjectColor(request)}-600 rounded-full flex items-center justify-center shadow-lg`}>
+                        <AcademicCapIcon className="w-7 h-7 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Subject</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {getSubjectName(request)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Time Info */}
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 bg-white/70 dark:bg-gray-800/70 rounded-lg p-3">
+                      <ClockIcon className="w-5 h-5" />
+                      <span>15 minutes session • Requested {getTimeAgo(request.requestedAt)}</span>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-2">
+                      <motion.button
+                        onClick={() => handleAccept(request)}
+                        disabled={isAccepting}
+                        whileHover={{ scale: isAccepting ? 1 : 1.02 }}
+                        whileTap={{ scale: isAccepting ? 1 : 0.98 }}
+                        className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isAccepting ? (
+                          <>
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                              className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                            />
+                            <span>Accepting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircleIcon className="w-5 h-5" />
+                            <span>Accept & Join</span>
+                          </>
+                        )}
+                      </motion.button>
+                      <button
+                        onClick={() => handleDismiss(request)}
+                        disabled={isAccepting}
+                        className="px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bottom accent */}
                   <motion.div
-                    className="absolute inset-0 bg-white"
+                    className="h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-green-500"
                     animate={{
-                      opacity: [0.1, 0.3, 0.1],
+                      backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
                     }}
                     transition={{
-                      duration: 2,
+                      duration: 3,
                       repeat: Infinity,
-                      ease: 'easeInOut',
+                      ease: 'linear',
+                    }}
+                    style={{
+                      backgroundSize: '200% 100%',
                     }}
                   />
-                  <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-2">
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.2, 1],
-                        }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: 'easeInOut',
-                        }}
-                      >
-                        <BellAlertIcon className="w-6 h-6 text-white" />
-                      </motion.div>
-                      <h3 className="text-white font-bold text-lg">
-                        New Instant Session Request
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => handleDismiss(request)}
-                      className="text-white/80 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-lg"
-                      disabled={isAccepting}
-                    >
-                      <XMarkIcon className="w-5 h-5" />
-                    </button>
-                  </div>
                 </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-4">
-                  {/* Student Info */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                      <UserCircleIcon className="w-7 h-7 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Student</p>
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        {getStudentName(request)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Subject Info */}
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 bg-gradient-to-br from-${getSubjectColor(request)}-500 to-${getSubjectColor(request)}-600 rounded-full flex items-center justify-center shadow-lg`}>
-                      <AcademicCapIcon className="w-7 h-7 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Subject</p>
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        {getSubjectName(request)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Time Info */}
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 bg-white/70 dark:bg-gray-800/70 rounded-lg p-3">
-                    <ClockIcon className="w-5 h-5" />
-                    <span>15 minutes session • Requested {getTimeAgo(request.requestedAt)}</span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-2">
-                    <motion.button
-                      onClick={() => handleAccept(request)}
-                      disabled={isAccepting}
-                      whileHover={{ scale: isAccepting ? 1 : 1.02 }}
-                      whileTap={{ scale: isAccepting ? 1 : 0.98 }}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isAccepting ? (
-                        <>
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                          />
-                          <span>Accepting...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircleIcon className="w-5 h-5" />
-                          <span>Accept & Join</span>
-                        </>
-                      )}
-                    </motion.button>
-                    <button
-                      onClick={() => handleDismiss(request)}
-                      disabled={isAccepting}
-                      className="px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                </div>
-
-                {/* Bottom accent */}
-                <motion.div
-                  className="h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-green-500"
-                  animate={{
-                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  }}
-                  style={{
-                    backgroundSize: '200% 100%',
-                  }}
-                />
-              </div>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-    </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
     </>
   );
 }

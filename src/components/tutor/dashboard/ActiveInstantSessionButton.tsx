@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  XMarkIcon, 
-  ClockIcon, 
-  UserIcon, 
+import {
+  XMarkIcon,
+  ClockIcon,
+  UserIcon,
   AcademicCapIcon,
-  ArrowRightIcon 
+  ArrowRightIcon
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { instantSessionService, type InstantRequest } from "@/lib/instantSessionService";
@@ -57,8 +57,24 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
 
     refreshSession();
 
+    // Listen for custom event from InstantSessionRequestPopup
+    const handleCustomEvent = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const session = customEvent.detail?.session;
+      if (session && (session.status === "accepted" || session.status === "in_progress")) {
+        console.log("[ActiveInstantSession] Custom event received, refreshing session");
+        refreshSession();
+      }
+    };
+
+    window.addEventListener('instant-session-accepted', handleCustomEvent);
+
     const socket = getSocket();
-    if (!socket) return;
+    if (!socket) {
+      return () => {
+        window.removeEventListener('instant-session-accepted', handleCustomEvent);
+      };
+    }
 
     const handleStatus = (payload: any) => {
       const session = payload?.session;
@@ -80,29 +96,30 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
     socket.on("instant:status", handleStatus);
 
     return () => {
+      window.removeEventListener('instant-session-accepted', handleCustomEvent);
       socket.off("instant:status", handleStatus);
     };
   }, [tutorId]);
 
   const handleJoinSession = async () => {
     if (!activeSession) return;
-    
+
     const sessionId = activeSession.id || activeSession._id;
-    
+
     try {
       // Show loading toast
       const loadingToast = toast.loading("Preparing meeting room...");
-      
+
       // Get fresh session data to ensure we have the latest meeting URL
       const freshSessionData = await instantSessionService.getRequestStatus(sessionId);
-      
+
       // Check if we have a valid session with the right status
       if (freshSessionData) {
         console.log("[ActiveInstantSession] Current session status:", freshSessionData.status);
-        
+
         // Update our local state with the fresh data
         setActiveSession(freshSessionData);
-        
+
         // Mark tutor as joined so student can join (do this first, before opening the URL)
         if (!freshSessionData.tutorJoinedAt) {
           try {
@@ -116,7 +133,7 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
             console.error("[ActiveInstantSession] Error marking tutor as joined:", joinError);
           }
         }
-        
+
         // If we have a meeting URL, open it
         if (freshSessionData.jitsiMeetingUrl) {
           toast.dismiss(loadingToast);
@@ -124,7 +141,7 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
           toast.success("Opening meeting room...");
           return;
         }
-        
+
         // If no URL, fetch one more time
         const finalSession = await instantSessionService.getRequestStatus(sessionId);
         if (finalSession?.jitsiMeetingUrl) {
@@ -135,11 +152,11 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
           return;
         }
       }
-      
+
       // If we got here, we couldn't get a meeting URL
       toast.dismiss(loadingToast);
       toast.error("Meeting URL not available. Please try again in a few moments or complete the session.");
-      
+
     } catch (error) {
       console.error("[ActiveInstantSession] Error joining session:", error);
       toast.error("Failed to join meeting. Please try again.");
@@ -188,7 +205,7 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
     const startTime = new Date(session.acceptedAt || session.requestedAt);
     const now = new Date();
     const diffMinutes = Math.floor((now.getTime() - startTime.getTime()) / 60000);
-    
+
     if (diffMinutes < 1) return 'Just started';
     if (diffMinutes < 60) return `${diffMinutes}m elapsed`;
     const hours = Math.floor(diffMinutes / 60);
@@ -206,9 +223,9 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
       <AnimatePresence>
         <motion.div
           initial={{ scale: 0.8, opacity: 0, y: 50 }}
-          animate={{ 
-            scale: 1, 
-            opacity: 1, 
+          animate={{
+            scale: 1,
+            opacity: 1,
             y: 0,
             transition: {
               type: "spring",
@@ -217,9 +234,9 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
               duration: 0.4,
             }
           }}
-          exit={{ 
-            scale: 0.8, 
-            opacity: 0, 
+          exit={{
+            scale: 0.8,
+            opacity: 0,
             y: 50,
             transition: {
               duration: 0.2,
@@ -240,12 +257,12 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
             className="flex flex-col items-center space-y-2"
           >
             <motion.div
-              whileHover={{ 
+              whileHover={{
                 scale: 1.12,
                 rotate: [0, -3, 3, 0],
                 transition: { duration: 0.3, ease: "easeOut" }
               }}
-              whileTap={{ 
+              whileTap={{
                 scale: 0.92,
                 transition: { duration: 0.1, ease: "easeInOut" }
               }}
@@ -257,9 +274,9 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
               >
                 {/* Glow effect */}
                 <div className="absolute inset-0 rounded-full bg-blue-400 opacity-20 blur-xl animate-pulse"></div>
-                
+
                 <ClockIcon className="w-8 h-8 relative z-10 transition-transform duration-200 group-hover:scale-110" />
-                
+
                 {/* Pulsing indicator with ring */}
                 <div className="absolute -top-1 -right-1 flex items-center justify-center">
                   <div className="absolute w-6 h-6 bg-green-400 rounded-full opacity-30 animate-ping"></div>
@@ -271,8 +288,8 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
             {/* Label with enhanced animation */}
             <motion.div
               initial={{ opacity: 0, y: 5 }}
-              animate={{ 
-                opacity: 1, 
+              animate={{
+                opacity: 1,
                 y: 0,
                 transition: {
                   delay: 0.15,

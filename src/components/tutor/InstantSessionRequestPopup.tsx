@@ -184,6 +184,11 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
         console.error('[InstantPopup] Error marking tutor as joined:', error);
       }
 
+      // Trigger custom event to show blue floating button
+      window.dispatchEvent(new CustomEvent('instant-session-accepted', {
+        detail: { session: acceptedSession }
+      }));
+
       // Open the meeting
       window.open(acceptedSession.jitsiMeetingUrl, '_blank');
       setShowAcceptedModal(false);

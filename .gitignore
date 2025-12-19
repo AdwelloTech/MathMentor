@@ -6,6 +6,7 @@ yarn-error.log*
 
 # Production build
 dist/
+dist-prod/
 build/
 
 # Environment variables
@@ -14,6 +15,8 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.prod
+backend/.env.prod
 
 # IDE files
 .vscode/

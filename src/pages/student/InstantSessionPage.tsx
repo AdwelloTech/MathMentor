@@ -41,52 +41,52 @@ interface MockTutor {
 }
 
 const mockTutors: MockTutor[] = [
-  { 
-    id: "1", 
-    subject: "Mathematics", 
-    color: "from-blue-500 to-blue-600", 
+  {
+    id: "1",
+    subject: "Mathematics",
+    color: "from-blue-500 to-blue-600",
     initials: "MA",
     imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mathematics&backgroundColor=b6e3f4"
   },
-  { 
-    id: "2", 
-    subject: "Physics", 
-    color: "from-purple-500 to-purple-600", 
+  {
+    id: "2",
+    subject: "Physics",
+    color: "from-purple-500 to-purple-600",
     initials: "PH",
     imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Physics&backgroundColor=c0aede"
   },
-  { 
-    id: "3", 
-    subject: "Chemistry", 
-    color: "from-green-500 to-green-600", 
+  {
+    id: "3",
+    subject: "Chemistry",
+    color: "from-green-500 to-green-600",
     initials: "CH",
     imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Chemistry&backgroundColor=b7e4c7"
   },
-  { 
-    id: "4", 
-    subject: "Biology", 
-    color: "from-emerald-500 to-emerald-600", 
+  {
+    id: "4",
+    subject: "Biology",
+    color: "from-emerald-500 to-emerald-600",
     initials: "BI",
     imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Biology&backgroundColor=a7f3d0"
   },
-  { 
-    id: "5", 
-    subject: "English", 
-    color: "from-red-500 to-red-600", 
+  {
+    id: "5",
+    subject: "English",
+    color: "from-red-500 to-red-600",
     initials: "EN",
     imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=English&backgroundColor=fecaca"
   },
-  { 
-    id: "6", 
-    subject: "History", 
-    color: "from-amber-500 to-amber-600", 
+  {
+    id: "6",
+    subject: "History",
+    color: "from-amber-500 to-amber-600",
     initials: "HI",
     imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=History&backgroundColor=fde68a"
   },
-  { 
-    id: "7", 
-    subject: "Geography", 
-    color: "from-cyan-500 to-cyan-600", 
+  {
+    id: "7",
+    subject: "Geography",
+    color: "from-cyan-500 to-cyan-600",
     initials: "GE",
     imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Geography&backgroundColor=a5f3fc"
   },
@@ -97,20 +97,20 @@ const generateTutorPositions = (count: number) => {
   const positions: { x: number; y: number; angle: number }[] = [];
   const minDistanceFromCenter = 150; // Minimum distance from center icon
   const maxDistanceFromCenter = 220; // Maximum distance for nice spread
-  
+
   // Create evenly spaced angles with some randomness
   const baseAngleStep = (Math.PI * 2) / count;
   const angleRandomness = baseAngleStep * 0.3; // 30% randomness
-  
+
   for (let i = 0; i < count; i++) {
     // Base angle evenly distributed
     const baseAngle = i * baseAngleStep;
     // Add some randomness but keep general distribution
     const angle = baseAngle + (Math.random() - 0.5) * angleRandomness;
-    
+
     // Vary the distance for a more organic feel
     const distance = minDistanceFromCenter + Math.random() * (maxDistanceFromCenter - minDistanceFromCenter);
-    
+
     const x = Math.cos(angle) * distance;
     const y = Math.sin(angle) * distance;
 
@@ -369,8 +369,32 @@ export default function InstantSessionPage() {
       } catch (error) {
         console.error("[Student] Error marking as joined:", error);
       }
-      
+
       window.open(jitsiUrl, "_blank");
+    }
+  };
+
+  const handleEndSession = async () => {
+    if (!requestId) {
+      resetSession();
+      return;
+    }
+
+    try {
+      console.log("[Student] Ending session:", requestId);
+      // Call the backend to complete the session
+      // This will emit socket events to notify the tutor
+      await instantSessionService.completeSession(requestId);
+      console.log("[Student] Session completed successfully");
+
+      // Set status to completed to show the rating screen
+      setStatus("completed");
+    } catch (error) {
+      console.error("[Student] Error ending session:", error);
+      // Even if the API call fails, show the rating screen
+      // The user experience is more important than perfect consistency
+      toast.error("Failed to notify tutor, but you can still rate the session");
+      setStatus("completed");
     }
   };
 
@@ -387,7 +411,7 @@ export default function InstantSessionPage() {
 
     try {
       setSubmittingRating(true);
-      
+
       await sessionRatingService.create({
         sessionId: requestId,
         tutorId: tutorId,
@@ -398,7 +422,7 @@ export default function InstantSessionPage() {
 
       setRatingSubmitted(true);
       toast.success("Thank you for your feedback!");
-      
+
       // Reset after 3 seconds
       setTimeout(() => {
         resetSession();
@@ -595,7 +619,7 @@ export default function InstantSessionPage() {
                               transform: 'translate(-50%, -50%)',
                             }}
                             initial={{ scale: 0, opacity: 0 }}
-                            animate={{ 
+                            animate={{
                               scale: [0, 1.1, 1],
                               opacity: 1,
                             }}
@@ -624,8 +648,8 @@ export default function InstantSessionPage() {
                                 <div className="p-3 flex flex-col items-center gap-2 min-w-[90px]">
                                   {/* Avatar with image */}
                                   <div className="relative w-14 h-14 rounded-full overflow-hidden shadow-lg ring-2 ring-background">
-                                    <img 
-                                      src={tutor.imageUrl} 
+                                    <img
+                                      src={tutor.imageUrl}
                                       alt={tutor.subject}
                                       className="w-full h-full object-cover"
                                       onError={(e) => {
@@ -797,7 +821,7 @@ export default function InstantSessionPage() {
                     transition={{ delay: 0.3 }}
                     className="text-xl text-muted-foreground"
                   >
-                    {tutorJoined 
+                    {tutorJoined
                       ? "Your tutor is in the meeting room - you can join now!"
                       : "A tutor has accepted your request. Waiting for them to enter the meeting room..."
                     }
@@ -821,9 +845,8 @@ export default function InstantSessionPage() {
                           </span>
                         </div>
                         <div
-                          className={`text-5xl font-bold text-center ${
-                            timeLeft < 5 * 60 * 1000 ? "text-destructive" : "text-primary"
-                          }`}
+                          className={`text-5xl font-bold text-center ${timeLeft < 5 * 60 * 1000 ? "text-destructive" : "text-primary"
+                            }`}
                         >
                           {formatTime(timeLeft)}
                         </div>
@@ -867,13 +890,13 @@ export default function InstantSessionPage() {
                               >
                                 <CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400 mx-auto mb-2" />
                                 <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                                   Tutor is ready! You can join now
+                                  Tutor is ready! You can join now
                                 </p>
                                 <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                                   Click the button below to enter the meeting
                                 </p>
                               </motion.div>
-                              
+
                               <motion.button
                                 onClick={handleJoin}
                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -891,7 +914,7 @@ export default function InstantSessionPage() {
                       )}
 
                       <button
-                        onClick={resetSession}
+                        onClick={handleEndSession}
                         className="w-full bg-destructive/10 text-destructive border-2 border-destructive/30 py-4 px-6 rounded-2xl font-semibold text-lg hover:bg-destructive/20 transition-all duration-200 flex items-center justify-center gap-2"
                       >
                         <XCircleIcon className="w-5 h-5" />
@@ -1052,11 +1075,10 @@ export default function InstantSessionPage() {
                         disabled={rating === 0 || submittingRating}
                         whileHover={{ scale: rating > 0 ? 1.02 : 1 }}
                         whileTap={{ scale: rating > 0 ? 0.98 : 1 }}
-                        className={`w-full py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
-                          rating > 0
-                            ? 'bg-gradient-to-r from-primary to-emerald-600 text-white hover:shadow-2xl hover:shadow-primary/30'
-                            : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                        }`}
+                        className={`w-full py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${rating > 0
+                          ? 'bg-gradient-to-r from-primary to-emerald-600 text-white hover:shadow-2xl hover:shadow-primary/30'
+                          : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                          }`}
                       >
                         {submittingRating ? (
                           <>

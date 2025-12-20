@@ -89,6 +89,13 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
         const id = session.id || session._id;
         setActiveSession({ ...session, id, _id: id } as any);
       } else {
+        // Show notification when session ends
+        if (session.status === "completed") {
+          const studentName = typeof session.studentId === 'object' && session.studentId
+            ? session.studentId.fullName || 'Student'
+            : 'Student';
+          toast.success(`${studentName} has ended the instant session`);
+        }
         setActiveSession(null);
       }
     };

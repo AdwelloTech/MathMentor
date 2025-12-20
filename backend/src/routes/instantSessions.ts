@@ -54,7 +54,7 @@ router.post('/request', authenticate, async (req, res) => {
 router.get('/pending', authenticate, async (req, res) => {
   try {
     const { subjectId, limit } = req.query;
-    
+
     const sessions = await instantSessionService.getPendingRequests(
       subjectId as string | undefined,
       limit ? parseInt(limit as string) : 20
@@ -153,7 +153,7 @@ router.post('/:id/cancel', authenticate, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const session = await instantSessionService.getSessionById(id);
 
     if (!session) {
@@ -254,7 +254,7 @@ router.get('/tutor/me', authenticate, async (req, res) => {
 router.post('/:id/tutor-joined', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const session = await instantSessionService.markTutorJoined(id);
 
     res.json({
@@ -278,7 +278,7 @@ router.post('/:id/tutor-joined', authenticate, async (req, res) => {
 router.post('/:id/student-joined', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const session = await instantSessionService.markStudentJoined(id);
 
     res.json({
@@ -302,7 +302,7 @@ router.post('/:id/student-joined', authenticate, async (req, res) => {
 router.post('/:id/start', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const session = await instantSessionService.startSession(id);
 
     res.json({
@@ -326,8 +326,9 @@ router.post('/:id/start', authenticate, async (req, res) => {
 router.post('/:id/complete', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const session = await instantSessionService.completeSession(id);
+    const userId = req.user?.id;
+
+    const session = await instantSessionService.completeSession(id, userId);
 
     res.json({
       success: true,

@@ -7,16 +7,16 @@ export interface IInstantSession extends Document {
   studentId: mongoose.Types.ObjectId;
   tutorId?: mongoose.Types.ObjectId;
   subjectId: mongoose.Types.ObjectId;
-  
+
   // Session details
   status: InstantSessionStatus;
   durationMinutes: number; // Fixed at 15 minutes
-  
+
   // Meeting information
   jitsiMeetingUrl?: string;
   tutorJoinedAt?: Date;
   studentJoinedAt?: Date;
-  
+
   // Status tracking
   requestedAt: Date;
   acceptedAt?: Date;
@@ -24,11 +24,14 @@ export interface IInstantSession extends Document {
   completedAt?: Date;
   cancelledAt?: Date;
   expiredAt?: Date;
-  
+
+  // Completion info
+  completedBy?: mongoose.Types.ObjectId;
+
   // Cancellation info
   cancellationReason?: string;
   cancelledBy?: mongoose.Types.ObjectId;
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -53,7 +56,7 @@ const instantSessionSchema = new Schema<IInstantSession>(
       required: true,
       index: true
     },
-    
+
     // Session details
     status: {
       type: String,
@@ -69,7 +72,7 @@ const instantSessionSchema = new Schema<IInstantSession>(
       min: 15,
       max: 15 // Fixed at 15 minutes
     },
-    
+
     // Meeting information
     jitsiMeetingUrl: {
       type: String,
@@ -81,7 +84,7 @@ const instantSessionSchema = new Schema<IInstantSession>(
     studentJoinedAt: {
       type: Date
     },
-    
+
     // Status tracking
     requestedAt: {
       type: Date,
@@ -103,7 +106,13 @@ const instantSessionSchema = new Schema<IInstantSession>(
     expiredAt: {
       type: Date
     },
-    
+
+    // Completion info
+    completedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+
     // Cancellation info
     cancellationReason: {
       type: String,
@@ -128,7 +137,7 @@ instantSessionSchema.index({ status: 1, subjectId: 1 });
 instantSessionSchema.index({ createdAt: 1 }); // For expiration cleanup
 
 // Virtual for checking if session has expired (15 minutes after acceptance)
-instantSessionSchema.virtual('isExpired').get(function() {
+instantSessionSchema.virtual('isExpired').get(function () {
   if (this.acceptedAt && this.status === 'accepted') {
     const now = new Date();
     const expiryTime = new Date(this.acceptedAt.getTime() + (15 * 60 * 1000));
@@ -138,7 +147,7 @@ instantSessionSchema.virtual('isExpired').get(function() {
 });
 
 // Virtual for checking if request is stale (pending for more than 5 minutes)
-instantSessionSchema.virtual('isPendingStale').get(function() {
+instantSessionSchema.virtual('isPendingStale').get(function () {
   if (this.status === 'pending') {
     const now = new Date();
     const staleTime = new Date(this.requestedAt.getTime() + (5 * 60 * 1000));
@@ -148,39 +157,39 @@ instantSessionSchema.virtual('isPendingStale').get(function() {
 });
 
 // Pre-save middleware
-instantSessionSchema.pre('save', function(next) {
+instantSessionSchema.pre('save', function (next) {
   // Set acceptedAt when status changes to accepted
   if (this.isModified('status') && this.status === 'accepted' && !this.acceptedAt) {
     this.acceptedAt = new Date();
     // Generate Jitsi meeting URL
     this.jitsiMeetingUrl = `https://meet.jit.si/MathMentor-instant_${this._id}`;
   }
-  
+
   // Set startedAt when status changes to in_progress
   if (this.isModified('status') && this.status === 'in_progress' && !this.startedAt) {
     this.startedAt = new Date();
   }
-  
+
   // Set completedAt when status changes to completed
   if (this.isModified('status') && this.status === 'completed' && !this.completedAt) {
     this.completedAt = new Date();
   }
-  
+
   // Set cancelledAt when status changes to cancelled
   if (this.isModified('status') && this.status === 'cancelled' && !this.cancelledAt) {
     this.cancelledAt = new Date();
   }
-  
+
   // Set expiredAt when status changes to expired
   if (this.isModified('status') && this.status === 'expired' && !this.expiredAt) {
     this.expiredAt = new Date();
   }
-  
+
   next();
 });
 
 // Instance methods
-instantSessionSchema.methods.accept = async function(tutorId: mongoose.Types.ObjectId): Promise<boolean> {
+instantSessionSchema.methods.accept = async function (tutorId: mongoose.Types.ObjectId): Promise<boolean> {
   if (this.status === 'pending') {
     this.status = 'accepted';
     this.tutorId = tutorId;
@@ -190,7 +199,7 @@ instantSessionSchema.methods.accept = async function(tutorId: mongoose.Types.Obj
   return false;
 };
 
-instantSessionSchema.methods.cancel = async function(userId: mongoose.Types.ObjectId, reason?: string): Promise<boolean> {
+instantSessionSchema.methods.cancel = async function (userId: mongoose.Types.ObjectId, reason?: string): Promise<boolean> {
   if (this.status === 'pending' || this.status === 'accepted') {
     this.status = 'cancelled';
     this.cancelledBy = userId;
@@ -203,7 +212,7 @@ instantSessionSchema.methods.cancel = async function(userId: mongoose.Types.Obje
   return false;
 };
 
-instantSessionSchema.methods.markTutorJoined = async function(): Promise<boolean> {
+instantSessionSchema.methods.markTutorJoined = async function (): Promise<boolean> {
   if (this.status === 'accepted' && !this.tutorJoinedAt) {
     this.tutorJoinedAt = new Date();
     await this.save();
@@ -212,7 +221,7 @@ instantSessionSchema.methods.markTutorJoined = async function(): Promise<boolean
   return false;
 };
 
-instantSessionSchema.methods.markStudentJoined = async function(): Promise<boolean> {
+instantSessionSchema.methods.markStudentJoined = async function (): Promise<boolean> {
   if (this.status === 'accepted' && !this.studentJoinedAt) {
     this.studentJoinedAt = new Date();
     await this.save();
@@ -221,7 +230,7 @@ instantSessionSchema.methods.markStudentJoined = async function(): Promise<boole
   return false;
 };
 
-instantSessionSchema.methods.startSession = async function(): Promise<boolean> {
+instantSessionSchema.methods.startSession = async function (): Promise<boolean> {
   if (this.status === 'accepted') {
     this.status = 'in_progress';
     await this.save();
@@ -230,7 +239,7 @@ instantSessionSchema.methods.startSession = async function(): Promise<boolean> {
   return false;
 };
 
-instantSessionSchema.methods.complete = async function(): Promise<boolean> {
+instantSessionSchema.methods.complete = async function (): Promise<boolean> {
   if (this.status === 'in_progress' || this.status === 'accepted') {
     this.status = 'completed';
     await this.save();
@@ -239,7 +248,7 @@ instantSessionSchema.methods.complete = async function(): Promise<boolean> {
   return false;
 };
 
-instantSessionSchema.methods.expire = async function(): Promise<boolean> {
+instantSessionSchema.methods.expire = async function (): Promise<boolean> {
   if (this.status === 'accepted' || this.status === 'in_progress') {
     this.status = 'expired';
     await this.save();
@@ -249,16 +258,16 @@ instantSessionSchema.methods.expire = async function(): Promise<boolean> {
 };
 
 // Static methods
-instantSessionSchema.statics.getPendingRequests = function(
+instantSessionSchema.statics.getPendingRequests = function (
   subjectId?: mongoose.Types.ObjectId,
   limit: number = 20
 ) {
   const query: any = { status: 'pending' };
-  
+
   if (subjectId) {
     query.subjectId = subjectId;
   }
-  
+
   return this.find(query)
     .populate('studentId', 'fullName firstName lastName email')
     .populate('subjectId', 'name displayName color')
@@ -266,7 +275,7 @@ instantSessionSchema.statics.getPendingRequests = function(
     .limit(limit);
 };
 
-instantSessionSchema.statics.getByStudent = function(
+instantSessionSchema.statics.getByStudent = function (
   studentId: mongoose.Types.ObjectId,
   limit: number = 10
 ) {
@@ -277,7 +286,7 @@ instantSessionSchema.statics.getByStudent = function(
     .limit(limit);
 };
 
-instantSessionSchema.statics.getByTutor = function(
+instantSessionSchema.statics.getByTutor = function (
   tutorId: mongoose.Types.ObjectId,
   limit: number = 10
 ) {
@@ -288,10 +297,10 @@ instantSessionSchema.statics.getByTutor = function(
     .limit(limit);
 };
 
-instantSessionSchema.statics.cleanupStaleRequests = async function(): Promise<number> {
+instantSessionSchema.statics.cleanupStaleRequests = async function (): Promise<number> {
   // Cancel requests that have been pending for more than 5 minutes
   const staleTime = new Date(Date.now() - (5 * 60 * 1000));
-  
+
   const result = await this.updateMany(
     {
       status: 'pending',
@@ -304,14 +313,14 @@ instantSessionSchema.statics.cleanupStaleRequests = async function(): Promise<nu
       }
     }
   );
-  
+
   return result.modifiedCount || 0;
 };
 
-instantSessionSchema.statics.expireOldSessions = async function(): Promise<number> {
+instantSessionSchema.statics.expireOldSessions = async function (): Promise<number> {
   // Expire accepted sessions that have exceeded 15 minutes
   const expiryTime = new Date(Date.now() - (15 * 60 * 1000));
-  
+
   const result = await this.updateMany(
     {
       status: { $in: ['accepted', 'in_progress'] },
@@ -324,7 +333,7 @@ instantSessionSchema.statics.expireOldSessions = async function(): Promise<numbe
       }
     }
   );
-  
+
   return result.modifiedCount || 0;
 };
 

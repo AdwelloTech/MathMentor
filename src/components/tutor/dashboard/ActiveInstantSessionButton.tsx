@@ -91,10 +91,24 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
       } else {
         // Show notification when session ends
         if (session.status === "completed") {
-          const studentName = typeof session.studentId === 'object' && session.studentId
-            ? session.studentId.fullName || 'Student'
-            : 'Student';
-          toast.success(`${studentName} has ended the instant session`);
+          // Only show notification if student completed it (not tutor)
+          // Extract the actual ID strings for comparison
+          const completedById = typeof session.completedBy === 'object' && session.completedBy?._id
+            ? session.completedBy._id.toString()
+            : session.completedBy?.toString();
+
+          const studentId = typeof session.studentId === 'object' && session.studentId?._id
+            ? session.studentId._id.toString()
+            : session.studentId?.toString();
+
+          const completedByStudent = completedById && studentId && completedById === studentId;
+
+          if (completedByStudent) {
+            const studentName = typeof session.studentId === 'object' && session.studentId
+              ? session.studentId.fullName || 'Student'
+              : 'Student';
+            toast.success(`${studentName} has ended the instant session`);
+          }
         }
         setActiveSession(null);
       }

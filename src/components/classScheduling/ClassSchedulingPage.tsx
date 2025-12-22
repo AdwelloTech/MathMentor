@@ -488,11 +488,10 @@ const ClassSchedulingPage: React.FC = () => {
               transition={{ delay: index * 0.1 }}
               whileHover={{ scale: 1.02, y: -5 }}
               whileTap={{ scale: 0.98 }}
-              className={`cursor-pointer p-6 bg-slate-700/50 rounded-xl border-slate-600 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300 ${
-                selectedClassType?.id === classType.id
+              className={`cursor-pointer p-6 bg-slate-700/50 rounded-xl border-slate-600 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300 ${selectedClassType?.id === classType.id
                   ? "ring-2 ring-green-500 ring-offset-2"
                   : ""
-              }`}
+                }`}
               onClick={() => handleClassTypeSelect(classType)}
             >
               <div className="flex items-center justify-between mb-4">
@@ -610,21 +609,19 @@ const ClassSchedulingPage: React.FC = () => {
                       key={day.date}
                       whileHover={{ scale: day.isDisabled ? 1 : 1.05 }}
                       whileTap={{ scale: day.isDisabled ? 1 : 0.95 }}
-                      className={`p-2 text-center rounded-lg transition-all ${
-                        day.isToday
-                          ? "bg-green-600 text-white font-semibold"
-                          : day.isSelected
+                      className={`p-2 text-center rounded-lg transition-all ${day.isSelected
                           ? "bg-green-600 text-white ring-2 ring-green-500 ring-offset-2"
-                          : day.hasClasses
-                          ? "bg-green-100 text-green-700 hover:bg-green-200"
-                          : day.isCurrentMonth
-                          ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
-                          : "bg-slate-600/50 text-slate-400"
-                      } ${
-                        day.isDisabled
+                          : day.isToday
+                            ? "border-2 border-green-500 text-slate-200 font-semibold"
+                            : day.hasClasses
+                              ? "bg-green-100 text-green-700 hover:bg-green-200"
+                              : day.isCurrentMonth
+                                ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
+                                : "bg-slate-600/50 text-slate-400"
+                        } ${day.isDisabled
                           ? "opacity-50 cursor-not-allowed"
                           : "cursor-pointer"
-                      }`}
+                        }`}
                       onClick={() =>
                         !day.isDisabled && handleDateSelect(day.date)
                       }
@@ -667,17 +664,15 @@ const ClassSchedulingPage: React.FC = () => {
                                 key={slot.time}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className={`p-2 text-center rounded-lg transition-all text-xs ${
-                                  slot.isSelected
+                                className={`p-2 text-center rounded-lg transition-all text-xs ${slot.isSelected
                                     ? "bg-green-600 text-white ring-2 ring-green-500 ring-offset-2 ring-offset-slate-800"
                                     : slot.isAvailable
-                                    ? "bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white"
-                                    : "bg-slate-800/50 text-slate-500 cursor-not-allowed"
-                                } ${
-                                  slot.isDisabled
+                                      ? "bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white"
+                                      : "bg-slate-800/50 text-slate-500 cursor-not-allowed"
+                                  } ${slot.isDisabled
                                     ? "opacity-50 cursor-not-allowed"
                                     : "cursor-pointer"
-                                }`}
+                                  }`}
                                 onClick={() =>
                                   slot.isAvailable &&
                                   handleTimeSelect(slot.time)

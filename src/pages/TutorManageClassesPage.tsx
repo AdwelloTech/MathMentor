@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
 import ActiveSessionFloatingButton from "@/components/tutor/dashboard/ActiveSessionFloatingButton";
 import { GMTTooltip, GMTHelpText } from "@/components/ui/GMTTooltip";
+import { formatGMTTime12Hour } from "@/utils/gmtTimeUtils";
 
 const TutorManageClassesPage: React.FC = () => {
   const { user, profile } = useAuth();
@@ -388,11 +389,8 @@ const TutorManageClassesPage: React.FC = () => {
   };
 
   const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    // Times are stored in GMT, convert to user's local timezone
+    return formatGMTTime12Hour(timeString);
   };
 
   const getClassTypeName = (classTypeId: string | undefined, classData?: TutorClass) => {

@@ -269,7 +269,14 @@ const ManageSessionsPage: React.FC = () => {
 
     const sessionDate = booking.class.date;
     const sessionTime = booking.class.end_time;
-    const sessionDateTime = new Date(`${sessionDate}T${sessionTime}`);
+
+    // IMPORTANT: sessionDate and sessionTime are in GMT
+    // We need to parse them as GMT, not local time
+    const [year, month, day] = sessionDate.split('-').map(Number);
+    const [hours, minutes] = sessionTime.split(':').map(Number);
+
+    // Create date in UTC (GMT)
+    const sessionDateTime = new Date(Date.UTC(year, month - 1, day, hours, minutes));
     const now = new Date();
 
     return now > sessionDateTime;

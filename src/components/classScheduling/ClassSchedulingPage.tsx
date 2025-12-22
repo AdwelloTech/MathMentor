@@ -26,6 +26,7 @@ import type { Subject } from "@/types/subject";
 import toast from "react-hot-toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { GMTTooltip } from "@/components/ui/GMTTooltip";
+import { convertLocalToGMT, getUserTimezoneAbbreviation } from "@/utils/timezoneUtils";
 
 const ClassSchedulingPage: React.FC = () => {
   const { user, profile } = useAuth();
@@ -290,12 +291,16 @@ const ClassSchedulingPage: React.FC = () => {
     );
     const endTimeString = endTime.toTimeString().slice(0, 5);
 
+    // Convert local time to GMT for storage
+    const gmtStart = convertLocalToGMT(selectedDate, time);
+    const gmtEnd = convertLocalToGMT(selectedDate, endTimeString);
+
     // Use the current selectedDate state directly
     setFormData((prev) => ({
       ...prev,
-      date: selectedDate,
-      start_time: time,
-      end_time: endTimeString,
+      date: gmtStart.date,
+      start_time: gmtStart.time,
+      end_time: gmtEnd.time,
     }));
   };
 
@@ -330,20 +335,11 @@ const ClassSchedulingPage: React.FC = () => {
     try {
       setLoading(true);
 
-      // Calculate end time using selected duration
-      const duration = formData.duration_minutes || 60;
-      const startTime = new Date(`2000-01-01T${selectedTime}`);
-      const endTime = new Date(
-        startTime.getTime() + duration * 60000
-      );
-      const endTimeString = endTime.toTimeString().slice(0, 5);
-
+      // formData already contains GMT-converted date and times from handleTimeSelect
       const classData: CreateClassFormData & { tutor_id: string } = {
         ...formData,
         tutor_id: tutorId,
-        date: selectedDate,
-        start_time: selectedTime,
-        end_time: endTimeString,
+        // formData.date, formData.start_time, formData.end_time are already in GMT
         max_students: selectedClassType?.max_students || 1,
       };
 
@@ -489,8 +485,8 @@ const ClassSchedulingPage: React.FC = () => {
               whileHover={{ scale: 1.02, y: -5 }}
               whileTap={{ scale: 0.98 }}
               className={`cursor-pointer p-6 bg-slate-700/50 rounded-xl border-slate-600 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300 ${selectedClassType?.id === classType.id
-                  ? "ring-2 ring-green-500 ring-offset-2"
-                  : ""
+                ? "ring-2 ring-green-500 ring-offset-2"
+                : ""
                 }`}
               onClick={() => handleClassTypeSelect(classType)}
             >
@@ -610,14 +606,14 @@ const ClassSchedulingPage: React.FC = () => {
                       whileHover={{ scale: day.isDisabled ? 1 : 1.05 }}
                       whileTap={{ scale: day.isDisabled ? 1 : 0.95 }}
                       className={`p-2 text-center rounded-lg transition-all ${day.isSelected
-                          ? "bg-green-600 text-white ring-2 ring-green-500 ring-offset-2"
-                          : day.isToday
-                            ? "border-2 border-green-500 text-slate-200 font-semibold"
-                            : day.hasClasses
-                              ? "bg-green-100 text-green-700 hover:bg-green-200"
-                              : day.isCurrentMonth
-                                ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
-                                : "bg-slate-600/50 text-slate-400"
+                        ? "bg-green-600 text-white ring-2 ring-green-500 ring-offset-2"
+                        : day.isToday
+                          ? "border-2 border-green-500 text-slate-200 font-semibold"
+                          : day.hasClasses
+                            ? "bg-green-100 text-green-700 hover:bg-green-200"
+                            : day.isCurrentMonth
+                              ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
+                              : "bg-slate-600/50 text-slate-400"
                         } ${day.isDisabled
                           ? "opacity-50 cursor-not-allowed"
                           : "cursor-pointer"
@@ -643,7 +639,7 @@ const ClassSchedulingPage: React.FC = () => {
                     Select Time
                   </h3>
                   <p className="text-sm text-slate-400 mb-4">
-                    All times are in GMT (Greenwich Mean Time)
+                    All times are in your local timezone ({getUserTimezoneAbbreviation()})
                   </p>
                   <div className="max-h-80 overflow-y-auto">
                     {/* Group time slots by hour */}
@@ -665,10 +661,10 @@ const ClassSchedulingPage: React.FC = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 className={`p-2 text-center rounded-lg transition-all text-xs ${slot.isSelected
-                                    ? "bg-green-600 text-white ring-2 ring-green-500 ring-offset-2 ring-offset-slate-800"
-                                    : slot.isAvailable
-                                      ? "bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white"
-                                      : "bg-slate-800/50 text-slate-500 cursor-not-allowed"
+                                  ? "bg-green-600 text-white ring-2 ring-green-500 ring-offset-2 ring-offset-slate-800"
+                                  : slot.isAvailable
+                                    ? "bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white"
+                                    : "bg-slate-800/50 text-slate-500 cursor-not-allowed"
                                   } ${slot.isDisabled
                                     ? "opacity-50 cursor-not-allowed"
                                     : "cursor-pointer"
@@ -680,7 +676,7 @@ const ClassSchedulingPage: React.FC = () => {
                                 disabled={slot.isDisabled}
                               >
                                 <div className="font-medium">
-                                  {slot.time} GMT
+                                  {slot.time}
                                 </div>
                                 {!slot.isAvailable && (
                                   <div className="text-xs mt-1 opacity-75">

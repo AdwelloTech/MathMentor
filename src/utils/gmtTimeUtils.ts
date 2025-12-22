@@ -5,6 +5,8 @@
  * This ensures consistency across all timezones and prevents confusion.
  */
 
+import { formatTimeInUserTimezone12Hour, formatTimeInUserTimezone24Hour, formatTimeWithRelativeDate as formatTimeWithRelativeDateTZ } from './timezoneUtils';
+
 /**
  * Parse a date and time string as GMT
  * @param dateString - Date in YYYY-MM-DD format
@@ -25,7 +27,7 @@ export function parseGMTDateTime(dateString: string, timeString: string): Date {
  */
 export function formatGMTTime(dateString: string, timeString: string): string {
   const date = parseGMTDateTime(dateString, timeString);
-  
+
   // Format time in 12-hour format with GMT label
   const timeStr = date.toLocaleTimeString('en-GB', {
     hour: '2-digit',
@@ -33,7 +35,7 @@ export function formatGMTTime(dateString: string, timeString: string): string {
     hour12: false,
     timeZone: 'UTC'
   });
-  
+
   return `${timeStr} GMT`;
 }
 
@@ -44,79 +46,28 @@ export function formatGMTTime(dateString: string, timeString: string): string {
  * @returns Formatted string with relative date and GMT label
  */
 export function formatGMTTimeWithRelativeDate(dateString: string, timeString: string): string {
-  const date = parseGMTDateTime(dateString, timeString);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  
-  // Get GMT date components
-  const dateYear = date.getUTCFullYear();
-  const dateMonth = date.getUTCMonth();
-  const dateDay = date.getUTCDate();
-  
-  const todayYear = today.getUTCFullYear();
-  const todayMonth = today.getUTCMonth();
-  const todayDay = today.getUTCDate();
-  
-  const tomorrowYear = tomorrow.getUTCFullYear();
-  const tomorrowMonth = tomorrow.getUTCMonth();
-  const tomorrowDay = tomorrow.getUTCDate();
-  
-  // Format time in 12-hour format
-  const timeStr = date.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'UTC'
-  });
-  
-  // Check if it's today
-  if (dateYear === todayYear && dateMonth === todayMonth && dateDay === todayDay) {
-    return `Today, ${timeStr} GMT`;
-  }
-  
-  // Check if it's tomorrow
-  if (dateYear === tomorrowYear && dateMonth === tomorrowMonth && dateDay === tomorrowDay) {
-    return `Tomorrow, ${timeStr} GMT`;
-  }
-  
-  // Format full date
-  const dateStr = date.toLocaleDateString('en-GB', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC'
-  });
-  
-  return `${dateStr}, ${timeStr} GMT`;
+  // Convert from GMT to user's local timezone with relative date
+  return formatTimeWithRelativeDateTZ(dateString, timeString);
 }
 
 /**
  * Format GMT time in 12-hour format with AM/PM
  * @param timeString - Time in HH:MM format (GMT)
- * @returns Formatted time string with GMT label
+ * @returns Formatted time string with user's timezone label
  */
 export function formatGMTTime12Hour(timeString: string): string {
-  const [hours, minutes] = timeString.split(':').map(Number);
-  const date = new Date(Date.UTC(2000, 0, 1, hours, minutes));
-  
-  const timeStr = date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-    timeZone: 'UTC'
-  });
-  
-  return `${timeStr} GMT`;
+  // Convert from GMT to user's local timezone
+  return formatTimeInUserTimezone12Hour(timeString);
 }
 
 /**
  * Format GMT time in 24-hour format
  * @param timeString - Time in HH:MM format (GMT)
- * @returns Formatted time string with GMT label
+ * @returns Formatted time string with user's timezone label
  */
 export function formatGMTTime24Hour(timeString: string): string {
-  return `${timeString} GMT`;
+  // Convert from GMT to user's local timezone
+  return formatTimeInUserTimezone24Hour(timeString);
 }
 
 /**
@@ -137,7 +88,7 @@ export function canJoinGMTSession(dateString: string, timeString: string): boole
   const sessionDateTime = parseGMTDateTime(dateString, timeString);
   const now = getCurrentGMT();
   const fiveMinutesBefore = new Date(sessionDateTime.getTime() - 5 * 60 * 1000);
-  
+
   return now >= fiveMinutesBefore && now <= sessionDateTime;
 }
 
@@ -152,7 +103,7 @@ export function isGMTSessionActive(dateString: string, startTime: string, endTim
   const sessionStart = parseGMTDateTime(dateString, startTime);
   const sessionEnd = parseGMTDateTime(dateString, endTime);
   const now = getCurrentGMT();
-  
+
   return now >= sessionStart && now <= sessionEnd;
 }
 
@@ -165,7 +116,7 @@ export function isGMTSessionActive(dateString: string, startTime: string, endTim
 export function isGMTSessionEnded(dateString: string, endTime: string): boolean {
   const sessionEnd = parseGMTDateTime(dateString, endTime);
   const now = getCurrentGMT();
-  
+
   return now > sessionEnd;
 }
 
@@ -191,18 +142,3 @@ export function dateToGMTDateString(date: Date): string {
   const day = date.getUTCDate().toString().padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

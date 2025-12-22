@@ -214,7 +214,10 @@ const BookSessionPage: React.FC = () => {
 
   const formatTime = (timeString: string) => {
     // All times are in GMT - display with GMT label
-    return formatGMTTime12Hour(timeString);
+    console.log('BookSessionPage - Original time from DB:', timeString);
+    const formatted = formatGMTTime12Hour(timeString);
+    console.log('BookSessionPage - Formatted time:', formatted);
+    return formatted;
   };
 
   const filteredSessions = sessions.filter((sessionResult) => {
@@ -230,7 +233,7 @@ const BookSessionPage: React.FC = () => {
     const sessionDate = session.startDate;
     const sessionTime = session.schedule?.startTime;
     if (!sessionDate || !sessionTime) return false;
-    
+
     // Create date string in ISO format (treating as GMT/UTC)
     const sessionDateTime = new Date(`${sessionDate}T${sessionTime}:00.000Z`);
     const now = new Date();
@@ -519,11 +522,10 @@ const BookSessionPage: React.FC = () => {
                     <Button
                       onClick={() => handleBookSession(sessionResult)}
                       disabled={isBooking || !sessionResult.is_bookable}
-                      className={`w-full font-semibold ${
-                        sessionResult.is_bookable
+                      className={`w-full font-semibold ${sessionResult.is_bookable
                           ? "bg-primary hover:bg-primary/90 text-primary-foreground"
                           : "bg-muted text-muted-foreground cursor-not-allowed"
-                      }`}
+                        }`}
                     >
                       {isBooking ? (
                         <div className="flex items-center justify-center gap-2">

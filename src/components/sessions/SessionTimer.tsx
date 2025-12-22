@@ -110,8 +110,15 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
       }
 
       const now = new Date();
-      const sessionStart = new Date(`${session.date}T${session.start_time}`);
-      const sessionEnd = new Date(`${session.date}T${session.end_time}`);
+
+      // IMPORTANT: session.date, session.start_time, and session.end_time are in GMT
+      // Parse them as UTC, not local time
+      const [year, month, day] = session.date.split('-').map(Number);
+      const [startHours, startMinutes] = session.start_time.split(':').map(Number);
+      const [endHours, endMinutes] = session.end_time.split(':').map(Number);
+
+      const sessionStart = new Date(Date.UTC(year, month - 1, day, startHours, startMinutes));
+      const sessionEnd = new Date(Date.UTC(year, month - 1, day, endHours, endMinutes));
 
       if (now < sessionStart) {
         // Session hasn't started yet

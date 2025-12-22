@@ -14,6 +14,7 @@ const logDev = (...args: any[]) => {
 };
 import toast from "react-hot-toast";
 import type { StudentUpcomingSession } from "@/types/classScheduling";
+import { getSocket } from "@/lib/socketClient";
 
 interface SessionTimerProps {
   session: StudentUpcomingSession;
@@ -291,6 +292,18 @@ const SessionTimer: React.FC<SessionTimerProps> = ({
         }
 
         console.log("Session cancelled successfully in database!");
+
+        // Emit Socket.IO event for real-time sync with tutor
+        const socket = getSocket();
+
+        if (socket && user) {
+          socket.emit('booking:cancelled', {
+            bookingId: bookingId || session.id, // Use session.id as fallback
+            classId: session.id,
+            studentId: user.id,
+            studentName: user.profile?.full_name || 'Student'
+          });
+        }
 
         // Set cancellation state
         setIsSessionCancelled(true);

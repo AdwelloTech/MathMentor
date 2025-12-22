@@ -147,9 +147,14 @@ const TutorManageClassesPage: React.FC = () => {
       // Reload classes to get updated status
       loadClasses();
     };
+    const handleStudentCancelled = () => {
+      // Reload classes to update status and student count
+      loadClasses();
+    };
 
     socket.on("booking:update", handleBookingUpdate);
     socket.on("class:status", handleClassStatus);
+    socket.on("session:student-cancelled", handleStudentCancelled);
     socket.on("connect", ensureFallback);
     socket.on("disconnect", ensureFallback);
 
@@ -158,6 +163,7 @@ const TutorManageClassesPage: React.FC = () => {
     return () => {
       socket.off("booking:update", handleBookingUpdate);
       socket.off("class:status", handleClassStatus);
+      socket.off("session:student-cancelled", handleStudentCancelled);
       socket.off("connect", ensureFallback);
       socket.off("disconnect", ensureFallback);
       if (fallbackInterval) clearInterval(fallbackInterval);

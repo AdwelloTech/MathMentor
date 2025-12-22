@@ -74,12 +74,51 @@ const ActiveSessionFloatingButton: React.FC<ActiveSessionFloatingButtonProps> = 
     socket.on('connect', ensureFallback);
     socket.on('disconnect', ensureFallback);
 
+    // Listen for student cancellations
+    const handleStudentCancelled = (data: {
+      classId: string;
+      studentName: string;
+      remainingStudents: number;
+      isLastStudent: boolean;
+      maxStudents: number;
+    }) => {
+      if (data.isLastStudent) {
+        // Last student left - end session
+        toast(`${data.studentName} cancelled. Session ended.`, {
+          icon: '👋',
+          duration: 5000,
+        });
+
+        // Close the active session popup
+        setActiveSession(null);
+        setShowDetails(false);
+
+        // Refresh to get updated class list
+        refresh();
+      } else {
+        // Some students still in session
+        toast(
+          `${data.studentName} left the session (${data.remainingStudents}/${data.maxStudents} students remaining)`,
+          {
+            icon: '👋',
+            duration: 4000,
+          }
+        );
+
+        // Refresh to update student count
+        refresh();
+      }
+    };
+
+    socket.on('session:student-cancelled', handleStudentCancelled);
+
     ensureFallback();
 
     return () => {
       socket.off('class:status', handleClassStatus);
       socket.off('connect', ensureFallback);
       socket.off('disconnect', ensureFallback);
+      socket.off('session:student-cancelled', handleStudentCancelled);
       if (fallbackInterval) clearInterval(fallbackInterval);
     };
   }, [tutorId]);
@@ -162,9 +201,9 @@ const ActiveSessionFloatingButton: React.FC<ActiveSessionFloatingButtonProps> = 
       <AnimatePresence>
         <motion.div
           initial={{ scale: 0.8, opacity: 0, y: 50 }}
-          animate={{ 
-            scale: 1, 
-            opacity: 1, 
+          animate={{
+            scale: 1,
+            opacity: 1,
             y: 0,
             transition: {
               type: "spring",
@@ -173,9 +212,9 @@ const ActiveSessionFloatingButton: React.FC<ActiveSessionFloatingButtonProps> = 
               duration: 0.4,
             }
           }}
-          exit={{ 
-            scale: 0.8, 
-            opacity: 0, 
+          exit={{
+            scale: 0.8,
+            opacity: 0,
             y: 50,
             transition: {
               duration: 0.2,
@@ -196,29 +235,29 @@ const ActiveSessionFloatingButton: React.FC<ActiveSessionFloatingButtonProps> = 
             className="flex flex-col items-center space-y-2"
           >
             <motion.div
-              whileHover={{ 
+              whileHover={{
                 scale: 1.12,
                 rotate: [0, -3, 3, 0],
                 transition: { duration: 0.3, ease: "easeOut" }
               }}
-              whileTap={{ 
+              whileTap={{
                 scale: 0.92,
                 transition: { duration: 0.1, ease: "easeInOut" }
               }}
             >
-            <Button
-              onClick={() => {
-                console.log("Opening modal for session:", activeSession);
-                setShowDetails(true);
-              }}
-              className="bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-2xl hover:shadow-red-500/50 rounded-full w-16 h-16 flex items-center justify-center group relative transition-all duration-200 ease-out"
-              size="lg"
-            >
+              <Button
+                onClick={() => {
+                  console.log("Opening modal for session:", activeSession);
+                  setShowDetails(true);
+                }}
+                className="bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-2xl hover:shadow-red-500/50 rounded-full w-16 h-16 flex items-center justify-center group relative transition-all duration-200 ease-out"
+                size="lg"
+              >
                 {/* Glow effect */}
                 <div className="absolute inset-0 rounded-full bg-red-400 opacity-20 blur-xl animate-pulse"></div>
-                
+
                 <ClockIcon className="w-8 h-8 relative z-10 transition-transform duration-200 group-hover:scale-110" />
-                
+
                 {/* Pulsing indicator with ring */}
                 <div className="absolute -top-1 -right-1 flex items-center justify-center">
                   <div className="absolute w-6 h-6 bg-green-400 rounded-full opacity-30 animate-ping"></div>
@@ -230,8 +269,8 @@ const ActiveSessionFloatingButton: React.FC<ActiveSessionFloatingButtonProps> = 
             {/* Label with enhanced animation */}
             <motion.div
               initial={{ opacity: 0, y: 5 }}
-              animate={{ 
-                opacity: 1, 
+              animate={{
+                opacity: 1,
                 y: 0,
                 transition: {
                   delay: 0.15,

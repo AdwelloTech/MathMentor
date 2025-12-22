@@ -158,6 +158,54 @@ export const initSocket = (server: http.Server) => {
       }
     });
 
+    // Handle booking cancellations from students
+    socket.on('booking:cancelled', async (data: {
+      bookingId: string;
+      classId: string;
+      studentId: string;
+      studentName: string;
+    }) => {
+      try {
+        // Import dynamically to avoid circular dependencies
+        const { Class } = await import('../models/Class');
+        const { Booking } = await import('../models/Booking');
+
+        // Get the class to find tutor and check type
+        const classData = await Class.findById(data.classId).select('teacherId capacity classTypeId');
+        if (!classData) {
+          console.error('Class not found:', data.classId);
+          return;
+        }
+
+        // Get remaining active bookings for this class
+        const activeBookings = await Booking.find({
+          classId: data.classId,
+          bookingStatus: { $in: ['confirmed', 'pending'] }
+        }).countDocuments();
+
+        const remainingStudents = activeBookings;
+
+        // If no students left, update class status back to 'scheduled'
+        if (remainingStudents === 0) {
+          await Class.findByIdAndUpdate(data.classId, { status: 'scheduled' });
+        }
+
+        // Emit to tutor
+        const teacherId = classData.teacherId?.toString();
+        if (teacherId) {
+          io?.to(`user:${teacherId}`).emit('session:student-cancelled', {
+            classId: data.classId,
+            studentName: data.studentName,
+            remainingStudents,
+            isLastStudent: remainingStudents === 0,
+            maxStudents: classData.capacity || 1
+          });
+        }
+      } catch (error) {
+        console.error('Error handling booking cancellation:', error);
+      }
+    });
+
     socket.on('disconnect', () => {
       // No-op for now
     });

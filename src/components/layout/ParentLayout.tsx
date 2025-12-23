@@ -196,8 +196,8 @@ const ParentLayout: React.FC = () => {
     <div className="relative">
       {/* Student Selector - Sticky at top */}
       {linkedStudents.length > 0 && !location.pathname.includes('/parent/manage') && (
-        <div className="sticky top-0 z-40 bg-gradient-to-r from-green-900/95 to-green-800/95 backdrop-blur-sm border-b border-yellow-400/20 px-6 py-4 mb-6">
-          <div className="max-w-7xl mx-auto flex items-center gap-4">
+        <div className="sticky top-0 z-40 bg-gradient-to-r from-green-900/95 to-green-800/95 backdrop-blur-sm border-b border-yellow-400/20 px-4 sm:px-6 lg:px-8 py-4 mb-6 -mx-4 sm:-mx-6 lg:-mx-8 -mt-10 shadow-md">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             <label className="text-white/80 text-sm font-medium whitespace-nowrap">
               Viewing Student:
             </label>
@@ -205,10 +205,10 @@ const ParentLayout: React.FC = () => {
               <SelectTrigger className="bg-green-900/60 border-yellow-400/30 text-white w-full max-w-md">
                 <SelectValue>
                   {selectedStudent ? (
-                    <span className="flex items-center gap-2">
-                      <AcademicCapIcon className="h-4 w-4 text-yellow-300" />
-                      <span className="font-medium">{selectedStudent.studentName}</span>
-                      <span className="text-xs text-white/60 ml-2">({selectedStudent.studentEmail})</span>
+                    <span className="flex items-center gap-2 min-w-0">
+                      <AcademicCapIcon className="h-4 w-4 text-yellow-300 flex-shrink-0" />
+                      <span className="font-medium truncate">{selectedStudent.studentName}</span>
+                      <span className="text-xs text-white/60 ml-1 truncate hidden sm:inline">({selectedStudent.studentEmail})</span>
                     </span>
                   ) : (
                     'Select a student'
@@ -232,26 +232,29 @@ const ParentLayout: React.FC = () => {
             </Select>
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* Error Alert */}
-      {error && (
-        <div className="px-6 mb-6">
-          <div className="max-w-7xl mx-auto">
-            <Alert className="bg-red-900/40 border-red-400/30 text-white">
-              <AlertDescription className="flex items-center justify-between">
-                <span>{error}</span>
-                <button
-                  onClick={handleRetry}
-                  className="ml-4 px-3 py-1 bg-yellow-400 text-green-900 rounded-md text-sm font-medium hover:bg-yellow-500 transition-colors"
-                >
-                  Retry
-                </button>
-              </AlertDescription>
-            </Alert>
+      {
+        error && (
+          <div className="px-6 mb-6">
+            <div className="max-w-7xl mx-auto">
+              <Alert className="bg-red-900/40 border-red-400/30 text-white">
+                <AlertDescription className="flex items-center justify-between">
+                  <span>{error}</span>
+                  <button
+                    onClick={handleRetry}
+                    className="ml-4 px-3 py-1 bg-yellow-400 text-green-900 rounded-md text-sm font-medium hover:bg-yellow-500 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </AlertDescription>
+              </Alert>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Main Content with bottom padding for mobile nav */}
       <div className="px-6 pb-24 lg:pb-0">
@@ -309,7 +312,7 @@ const ParentLayout: React.FC = () => {
           </div>
         </div>
       </nav>
-    </div>
+    </div >
   );
 };
 

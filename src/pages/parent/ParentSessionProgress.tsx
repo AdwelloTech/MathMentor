@@ -452,22 +452,25 @@ const ParentSessionProgress: React.FC = () => {
                     >
                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-start gap-3 mb-3">
-                            <div className="mt-1">{getStatusIcon(session.status)}</div>
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between mb-2">
+                          <div className="flex flex-col sm:flex-row items-start gap-3 mb-3">
+                            <div className="mt-1 hidden sm:block">{getStatusIcon(session.status)}</div>
+                            <div className="flex-1 w-full">
+                              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
                                 <div>
-                                  <h4 className="font-semibold text-white text-lg mb-1">
-                                    {session.subject}
-                                  </h4>
-                                  <div className="flex items-center gap-2 text-sm text-white/60 mb-2">
-                                    <UserIcon className="h-4 w-4" />
-                                    <span>{session.tutorName}</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="sm:hidden">{getStatusIcon(session.status)}</div>
+                                    <h4 className="font-semibold text-white text-lg mb-1 break-words">
+                                      {session.subject}
+                                    </h4>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-2 text-sm text-white/60 mb-2">
+                                    <UserIcon className="h-4 w-4 shrink-0" />
+                                    <span className="truncate max-w-[150px]">{session.tutorName}</span>
                                     <span>•</span>
-                                    <span>{session.tutorEmail}</span>
+                                    <span className="truncate max-w-[150px]">{session.tutorEmail}</span>
                                   </div>
                                 </div>
-                                <div className="flex flex-col items-end gap-2">
+                                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                   <Badge className={getStatusBadgeClass(session.status)}>
                                     {session.status}
                                   </Badge>
@@ -475,7 +478,7 @@ const ParentSessionProgress: React.FC = () => {
                                     onClick={() => handleViewSessionDetails(session)}
                                     variant="outline"
                                     size="sm"
-                                    className="bg-yellow-400/10 border-yellow-400/30 text-yellow-300 hover:bg-yellow-400/20"
+                                    className="bg-yellow-400/10 border-yellow-400/30 text-yellow-300 hover:bg-yellow-400/20 whitespace-nowrap"
                                   >
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Details
@@ -484,16 +487,16 @@ const ParentSessionProgress: React.FC = () => {
                               </div>
 
                               <div className="flex flex-wrap gap-2 mb-3">
-                                <Badge className="bg-purple-400/20 text-purple-300 border-purple-400/30">
+                                <Badge className="bg-purple-400/20 text-purple-300 border-purple-400/30 whitespace-normal h-auto text-left">
                                   {session.sessionType}
                                 </Badge>
-                                <Badge className="bg-blue-400/20 text-blue-300 border-blue-400/30">
+                                <Badge className="bg-blue-400/20 text-blue-300 border-blue-400/30 whitespace-nowrap">
                                   {new Date(session.date).toLocaleDateString()}
                                 </Badge>
-                                <Badge className="bg-green-400/20 text-green-300 border-green-400/30">
+                                <Badge className="bg-green-400/20 text-green-300 border-green-400/30 whitespace-normal h-auto text-left leading-tight">
                                   {formatGMTTime24Hour(session.startTime)} - {formatGMTTime24Hour(session.endTime)}
                                 </Badge>
-                                <Badge className="bg-yellow-400/20 text-yellow-300 border-yellow-400/30">
+                                <Badge className="bg-yellow-400/20 text-yellow-300 border-yellow-400/30 whitespace-nowrap">
                                   {session.duration} min
                                 </Badge>
                               </div>
@@ -553,12 +556,12 @@ const ParentSessionProgress: React.FC = () => {
 
               {/* Pagination */}
               {sessionData?.pagination && sessionData.pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-yellow-400/10">
-                  <div className="text-sm text-white/60">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-yellow-400/10">
+                  <div className="text-sm text-white/60 text-center sm:text-left w-full sm:w-auto">
                     Showing {(sessionData.pagination.page - 1) * sessionData.pagination.limit + 1}-
                     {Math.min(sessionData.pagination.page * sessionData.pagination.limit, sessionData.pagination.totalSessions)} of {sessionData.pagination.totalSessions} sessions
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center gap-2 w-full sm:w-auto">
                     <Button
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={!sessionData.pagination.hasPrevPage}

@@ -271,7 +271,8 @@ const ParentManageStudents: React.FC = () => {
                     size="sm"
                   >
                     <PlusIcon className="h-4 w-4 mr-2" />
-                    Link Another Student
+                    <span className="hidden sm:inline">Link Another Student</span>
+                    <span className="sm:hidden">Link</span>
                   </Button>
                 )}
               </div>

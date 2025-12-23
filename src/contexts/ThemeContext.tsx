@@ -21,12 +21,17 @@ const applyTheme = (theme: ThemeMode) => {
   }
 };
 
-// Force dark theme for admin and dashboard contexts
+// Force dark theme for admin, parent, and dashboard contexts
 const getDefaultTheme = (): ThemeMode => {
-  // Check if we're in an admin context
+  // Check if we're in an authenticated context that uses dark theme
   if (typeof window !== 'undefined') {
     const path = window.location.pathname;
-    if (path.startsWith('/admin') || path.includes('dashboard')) {
+    // Force dark mode for admin and parent areas
+    if (
+      path.startsWith('/admin') ||
+      path.startsWith('/parent') ||
+      path.includes('dashboard')
+    ) {
       return 'dark';
     }
   }

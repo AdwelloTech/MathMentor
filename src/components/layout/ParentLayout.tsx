@@ -214,7 +214,7 @@ const ParentLayout: React.FC = () => {
         <div className="safe-area-inset-bottom">
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex items-center px-2 py-2 min-w-max">
-              {parentNavigation.map((item, index) => {
+              {parentNavigation.map((item) => {
                 const active = isActive(item.href);
 
                 return (

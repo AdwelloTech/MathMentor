@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ParentStudentLink, parentService } from '@/lib/parentService';
@@ -614,9 +615,9 @@ const ParentSessionProgress: React.FC = () => {
       </motion.div >
 
       {/* Session Detail Modal */}
-      <AnimatePresence>
-        {
-          isModalOpen && selectedSession && (
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isModalOpen && selectedSession && (
             <motion.div
               initial={{ opacity: 1 }}
               animate={{ opacity: 1 }}
@@ -773,8 +774,10 @@ const ParentSessionProgress: React.FC = () => {
               </motion.div>
             </motion.div>
           )
-        }
-      </AnimatePresence >
+          }
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 };

@@ -109,6 +109,21 @@ const ParentLayout: React.FC = () => {
     }
   }, [user, profile, retryCount, loadLinkedStudents]);
 
+  // Global opacity safety net - force visibility after hydration
+  // This prevents production-specific bugs where Framer Motion or other libraries
+  // inject inline opacity:0 styles that never get cleaned up
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      // Force visibility on any elements with inline opacity styles
+      document.querySelectorAll('[style*="opacity"]').forEach((el) => {
+        const element = el as HTMLElement;
+        element.style.opacity = '1';
+        element.style.pointerEvents = 'auto';
+      });
+    });
+    return () => cancelAnimationFrame(timer);
+  }, [location.pathname]); // Re-run on route change
+
   // Manual retry function
   const handleRetry = () => {
     setRetryCount(0);

@@ -124,12 +124,12 @@ const ParentSessionProgress: React.FC = () => {
   };
 
   const containerVariants = {
-    hidden: { opacity: 0 },
+    hidden: { opacity: 1 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 1, y: 20 },
     visible: { opacity: 1, y: 0 },
   };
 
@@ -615,16 +615,16 @@ const ParentSessionProgress: React.FC = () => {
         {
           isModalOpen && selectedSession && (
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 1 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 1 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
               onClick={handleCloseModal}
             >
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
+                initial={{ scale: 1, opacity: 1 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
+                exit={{ scale: 1, opacity: 1 }}
                 className="bg-green-950/90 border border-yellow-400/20 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >

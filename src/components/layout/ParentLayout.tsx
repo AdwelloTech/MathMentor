@@ -126,7 +126,6 @@ const ParentLayout: React.FC = () => {
       document.querySelectorAll('*').forEach((el) => {
         const element = el as HTMLElement;
         if (element.style.opacity === '0') {
-          console.log('🛡️ Fixing element:', element);
           fixOpacity(element);
         }
       });
@@ -141,7 +140,6 @@ const ParentLayout: React.FC = () => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
           const element = mutation.target as HTMLElement;
           if (element.style.opacity === '0') {
-            console.log('🛡️ Detected opacity:0, fixing:', element);
             fixOpacity(element);
           }
         }
@@ -161,7 +159,6 @@ const ParentLayout: React.FC = () => {
     return () => {
       observer.disconnect();
       clearInterval(interval);
-      console.log('🛡️ Stopped opacity monitor');
     };
   }, [location.pathname]);
 

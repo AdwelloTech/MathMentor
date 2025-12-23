@@ -141,10 +141,10 @@ const ParentLayout: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="px-6 py-16">
+      <div className="px-6 py-16 min-h-screen">
         <div className="max-w-7xl mx-auto space-y-8">
-          <Skeleton className="h-32 w-full bg-slate-200" />
-          <Skeleton className="h-96 w-full bg-slate-200" />
+          <Skeleton className="h-32 w-full bg-green-950/40" />
+          <Skeleton className="h-96 w-full bg-green-950/40" />
         </div>
       </div>
     );
@@ -223,7 +223,7 @@ const ParentLayout: React.FC = () => {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.2 }}
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-xl border-t border-border shadow-2xl"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-green-950/95 backdrop-blur-xl border-t border-yellow-400/20 shadow-2xl"
       >
         <div className="safe-area-inset-bottom">
           <div className="overflow-x-auto scrollbar-hide">
@@ -244,8 +244,8 @@ const ParentLayout: React.FC = () => {
                       className={cn(
                         "flex flex-col items-center justify-center w-full py-2 px-1 rounded-xl transition-all duration-300 min-h-[56px] active:scale-95 relative",
                         active
-                          ? "bg-primary text-primary-foreground shadow-lg"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-yellow-400 text-green-900 shadow-lg"
+                          : "text-white/60 hover:text-white hover:bg-green-800/50"
                       )}
                     >
                       <item.icon className={cn(
@@ -261,7 +261,7 @@ const ParentLayout: React.FC = () => {
                       {active && (
                         <motion.div
                           layoutId="parent-mobile-nav-indicator"
-                          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-1 bg-primary-foreground rounded-t-full"
+                          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-1 bg-green-900 rounded-t-full"
                           transition={{ type: "spring", stiffness: 500, damping: 30 }}
                         />
                       )}

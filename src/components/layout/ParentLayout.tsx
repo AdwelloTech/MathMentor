@@ -23,11 +23,18 @@ import { cn } from '@/lib/utils';
 
 
 const ParentLayout: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [linkedStudents, setLinkedStudents] = useState<ParentStudentLink[]>([]);
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  // Initialize selectedStudentId from localStorage to persist across refresh
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('parent_selected_student_id') || '';
+    } catch {
+      return '';
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
@@ -59,9 +66,19 @@ const ParentLayout: React.FC = () => {
       console.log('ParentLayout: Loaded', students.length, 'students');
       setLinkedStudents(students);
 
-      // Auto-select first student if available
-      if (students.length > 0 && !selectedStudentId) {
-        setSelectedStudentId(students[0].studentId);
+      // Auto-select student - prefer stored ID if still valid, otherwise first student
+      if (students.length > 0) {
+        const storedValid = selectedStudentId && students.some(s => s.studentId === selectedStudentId);
+        if (!storedValid) {
+          // Stored ID is invalid or missing, select first student
+          const firstStudentId = students[0].studentId;
+          setSelectedStudentId(firstStudentId);
+          try {
+            localStorage.setItem('parent_selected_student_id', firstStudentId);
+          } catch (e) {
+            console.error('Failed to save selected student to localStorage:', e);
+          }
+        }
       }
 
       // Redirect to management if no students linked
@@ -85,15 +102,23 @@ const ParentLayout: React.FC = () => {
     }
   }, [user, profile, selectedStudentId, location.pathname, navigate, retryCount]);
 
-  // Load students when auth is ready or retry count changes
+  // Load students when auth is ready (not loading) and we have user/profile
   useEffect(() => {
+    if (authLoading) {
+      // Auth is still initializing, wait for it
+      console.log('ParentLayout: Auth still loading, waiting...');
+      setLoading(true);
+      return;
+    }
+
     if (user && profile) {
       loadLinkedStudents();
     } else {
-      // Still loading auth
-      setLoading(true);
+      // Auth finished but no user - shouldn't happen on protected route
+      console.log('ParentLayout: Auth complete but no user/profile');
+      setLoading(false);
     }
-  }, [user, profile, retryCount, loadLinkedStudents]);
+  }, [authLoading, user, profile, retryCount, loadLinkedStudents]);
 
   // Manual retry function
   const handleRetry = () => {
@@ -104,6 +129,12 @@ const ParentLayout: React.FC = () => {
 
   const handleStudentChange = (studentId: string) => {
     setSelectedStudentId(studentId);
+    // Persist to localStorage for refresh
+    try {
+      localStorage.setItem('parent_selected_student_id', studentId);
+    } catch (e) {
+      console.error('Failed to save selected student to localStorage:', e);
+    }
   };
 
   const selectedStudent = linkedStudents.find(s => s.studentId === selectedStudentId);

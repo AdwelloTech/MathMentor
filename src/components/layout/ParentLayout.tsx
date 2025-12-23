@@ -109,37 +109,61 @@ const ParentLayout: React.FC = () => {
     }
   }, [user, profile, retryCount, loadLinkedStudents]);
 
-  // Global opacity safety net - force visibility after hydration
-  // This prevents production-specific bugs where Framer Motion or other libraries
-  // inject inline opacity:0 styles that never get cleaned up
+  // Continuous opacity monitor - prevents Framer Motion from hiding content
+  // Uses MutationObserver to watch for and immediately fix opacity changes
   useEffect(() => {
-    const timer = requestAnimationFrame(() => {
-      // Force visibility on any elements with inline opacity styles
-      const elements = document.querySelectorAll('[style*="opacity"]');
-      console.log(`🛡️ ParentLayout Safety Net: Found ${elements.length} elements with opacity styles`);
-      elements.forEach((el) => {
-        const element = el as HTMLElement;
-        const oldOpacity = element.style.opacity;
-        element.style.opacity = '1';
+    console.log('🛡️ Starting continuous opacity monitor for parent routes');
+
+    const fixOpacity = (element: HTMLElement) => {
+      if (element.style.opacity === '0' || element.style.opacity === '') {
+        element.style.setProperty('opacity', '1', 'important');
         element.style.pointerEvents = 'auto';
-        if (oldOpacity !== '1') {
-          console.log(`🛡️ Fixed element:`, element, `opacity: ${oldOpacity} → 1`);
+      }
+    };
+
+    // Fix all elements immediately
+    const fixAllElements = () => {
+      document.querySelectorAll('*').forEach((el) => {
+        const element = el as HTMLElement;
+        if (element.style.opacity === '0') {
+          console.log('🛡️ Fixing element:', element);
+          fixOpacity(element);
         }
       });
+    };
 
-      // Also check for other CSS-based invisibility
-      const body = document.body;
-      const computedStyle = window.getComputedStyle(body);
-      console.log(`🛡️ Body styles:`, {
-        color: computedStyle.color,
-        backgroundColor: computedStyle.backgroundColor,
-        opacity: computedStyle.opacity,
-        visibility: computedStyle.visibility,
-        display: computedStyle.display
+    // Initial fix
+    fixAllElements();
+
+    // Watch for style changes and fix them immediately
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+          const element = mutation.target as HTMLElement;
+          if (element.style.opacity === '0') {
+            console.log('🛡️ Detected opacity:0, fixing:', element);
+            fixOpacity(element);
+          }
+        }
       });
     });
-    return () => cancelAnimationFrame(timer);
-  }, [location.pathname]); // Re-run on route change
+
+    // Observe the entire document
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style'],
+      subtree: true
+    });
+
+    // Also run periodically as a backup
+    const interval = setInterval(fixAllElements, 100);
+
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+      console.log('🛡️ Stopped opacity monitor');
+    };
+  }, [location.pathname]);
 
   // Manual retry function
   const handleRetry = () => {

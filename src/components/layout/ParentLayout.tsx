@@ -115,10 +115,27 @@ const ParentLayout: React.FC = () => {
   useEffect(() => {
     const timer = requestAnimationFrame(() => {
       // Force visibility on any elements with inline opacity styles
-      document.querySelectorAll('[style*="opacity"]').forEach((el) => {
+      const elements = document.querySelectorAll('[style*="opacity"]');
+      console.log(`🛡️ ParentLayout Safety Net: Found ${elements.length} elements with opacity styles`);
+      elements.forEach((el) => {
         const element = el as HTMLElement;
+        const oldOpacity = element.style.opacity;
         element.style.opacity = '1';
         element.style.pointerEvents = 'auto';
+        if (oldOpacity !== '1') {
+          console.log(`🛡️ Fixed element:`, element, `opacity: ${oldOpacity} → 1`);
+        }
+      });
+
+      // Also check for other CSS-based invisibility
+      const body = document.body;
+      const computedStyle = window.getComputedStyle(body);
+      console.log(`🛡️ Body styles:`, {
+        color: computedStyle.color,
+        backgroundColor: computedStyle.backgroundColor,
+        opacity: computedStyle.opacity,
+        visibility: computedStyle.visibility,
+        display: computedStyle.display
       });
     });
     return () => cancelAnimationFrame(timer);

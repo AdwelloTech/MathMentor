@@ -120,9 +120,9 @@ export class ParentService {
   static async getLinkedStudents(parentId: string): Promise<ParentStudentLink[]> {
     try {
       // First get the links
-    const links = await ParentStudent.find({
-      parentId: new Types.ObjectId(parentId),
-      isActive: true
+      const links = await ParentStudent.find({
+        parentId: new Types.ObjectId(parentId),
+        isActive: true
       });
 
       // Then get the student details separately to handle missing students
@@ -148,22 +148,22 @@ export class ParentService {
 
       return validLinks.map(link => {
         const student = studentMap.get(link.studentId.toString());
-      return {
-        id: link._id.toString(),
-        studentId: student._id.toString(),
+        return {
+          id: link._id.toString(),
+          studentId: student._id.toString(),
           studentName: student.fullName || 'Unknown Student',
           studentEmail: student.email || '',
-        studentCode: student.studentCode || '',
-        studentPackage: student.package || 'free',
-        relationship: link.relationship,
-        isPrimaryContact: link.isPrimaryContact,
-        linkedAt: link.linkedAt,
-        canViewGrades: link.canViewGrades,
-        canViewAttendance: link.canViewAttendance,
-        canViewReports: link.canViewReports,
-        canBookSessions: link.canBookSessions
-      };
-    });
+          studentCode: student.studentCode || '',
+          studentPackage: student.package || 'free',
+          relationship: link.relationship,
+          isPrimaryContact: link.isPrimaryContact,
+          linkedAt: link.linkedAt,
+          canViewGrades: link.canViewGrades,
+          canViewAttendance: link.canViewAttendance,
+          canViewReports: link.canViewReports,
+          canBookSessions: link.canBookSessions
+        };
+      });
     } catch (error) {
       console.error('Error in getLinkedStudents:', error);
       throw error;
@@ -276,13 +276,23 @@ export class ParentService {
     }).populate('quiz_id').limit(5).sort({ completed_at: -1 });
 
     const totalQuizzes = quizAttempts.length;
-    const averageScore = totalQuizzes > 0 
-      ? quizAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / totalQuizzes
+
+    // Helper function to calculate percentage from attempt
+    const getAttemptPercentage = (attempt: any): number => {
+      const correct = attempt.correct_answers || 0;
+      const total = attempt.total_questions || 0;
+      return total > 0 ? Math.round((correct / total) * 100) : 0;
+    };
+
+    // Calculate average score as percentage
+    const averageScore = totalQuizzes > 0
+      ? quizAttempts.reduce((sum, a) => sum + getAttemptPercentage(a), 0) / totalQuizzes
       : 0;
 
+    // Recent quizzes with calculated percentage
     const recentQuizzes = quizAttempts.slice(0, 3).map((attempt: any) => ({
       title: attempt.quiz_id?.title || 'Unknown Quiz',
-      score: attempt.score || 0,
+      score: getAttemptPercentage(attempt), // Use calculated percentage
       completedAt: attempt.completed_at
     }));
 
@@ -292,10 +302,14 @@ export class ParentService {
     }).populate('teacherId').populate('subjectId').limit(10).sort({ scheduledDate: -1 });
 
     const now = new Date();
+    const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const completedSessions = sessions.filter(s => s.status === 'completed').length;
-    const upcomingSessions = sessions.filter(s => 
-      s.status === 'confirmed' && new Date(s.scheduledDate) > now
-    ).length;
+    const upcomingSessions = sessions.filter(s => {
+      const isUpcomingStatus = s.status === 'confirmed' || s.status === 'pending';
+      const sessionDate = new Date(s.scheduledDate);
+      const sessionDateOnly = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
+      return isUpcomingStatus && sessionDateOnly >= todayDateOnly;
+    }).length;
 
     const recentSessions = sessions.slice(0, 3).map((session: any) => ({
       subject: session.subjectId?.name || session.title,
@@ -304,14 +318,15 @@ export class ParentService {
       status: session.status
     }));
 
-    // Performance overview (simplified)
+    // Performance overview using percentages
     const subjectPerformance: any = {};
     quizAttempts.forEach((attempt: any) => {
       const subject = attempt.quiz_id?.subject || 'General';
+      const percentage = getAttemptPercentage(attempt);
       if (!subjectPerformance[subject]) {
         subjectPerformance[subject] = { total: 0, count: 0 };
       }
-      subjectPerformance[subject].total += attempt.score || 0;
+      subjectPerformance[subject].total += percentage;
       subjectPerformance[subject].count += 1;
     });
 
@@ -370,22 +385,29 @@ export class ParentService {
       .populate('quiz_id')
       .sort({ completed_at: -1 });
 
-    // Calculate statistics
+    // Calculate statistics using percentages
     const totalQuizzes = attempts.length;
-    const scores = attempts.map(a => a.score || 0);
-    const averageScore = totalQuizzes > 0 
-      ? scores.reduce((sum, score) => sum + score, 0) / totalQuizzes
-      : 0;
-    const bestScore = totalQuizzes > 0 ? Math.max(...scores) : 0;
-    const worstScore = totalQuizzes > 0 ? Math.min(...scores) : 0;
 
-    // Subject breakdown
+    // Calculate percentage for each attempt: (correct_answers / total_questions) * 100
+    const percentages = attempts.map(a => {
+      const correct = a.correct_answers || 0;
+      const total = a.total_questions || 0;
+      return total > 0 ? Math.round((correct / total) * 100) : 0;
+    });
+
+    const averageScore = totalQuizzes > 0
+      ? percentages.reduce((sum, pct) => sum + pct, 0) / totalQuizzes
+      : 0;
+    const bestScore = totalQuizzes > 0 ? Math.max(...percentages) : 0;
+    const worstScore = totalQuizzes > 0 ? Math.min(...percentages) : 0;
+
+    // Subject breakdown using percentages
     const subjectMap = new Map<string, { total: number; count: number }>();
-    attempts.forEach((attempt: any) => {
+    attempts.forEach((attempt: any, index: number) => {
       const subject = attempt.quiz_id?.subject || 'General';
       const current = subjectMap.get(subject) || { total: 0, count: 0 };
       subjectMap.set(subject, {
-        total: current.total + (attempt.score || 0),
+        total: current.total + percentages[index],
         count: current.count + 1
       });
     });
@@ -397,18 +419,29 @@ export class ParentService {
     }));
 
     // Format attempts for response
-    const formattedAttempts = attempts.map((attempt: any) => ({
-      id: attempt._id.toString(),
-      quizTitle: attempt.quiz_id?.title || 'Unknown Quiz',
-      subject: attempt.quiz_id?.subject || 'General',
-      score: attempt.score || 0,
-      totalQuestions: attempt.total_questions || 0,
-      correctAnswers: attempt.correct_answers || 0,
-      completedAt: attempt.completed_at,
-      tutorFeedback: attempt.tutor_feedback,
-      tutorName: attempt.quiz_id?.createdBy?.fullName,
-      difficulty: attempt.quiz_id?.difficulty || 'medium'
-    }));
+    const formattedAttempts = attempts.map((attempt: any) => {
+      const correctAnswers = attempt.correct_answers || 0;
+      const totalQuestions = attempt.total_questions || 0;
+      // Calculate percentage based on correct answers / total questions
+      const percentage = totalQuestions > 0
+        ? Math.round((correctAnswers / totalQuestions) * 100)
+        : 0;
+
+      return {
+        id: attempt._id.toString(),
+        quizTitle: attempt.quiz_id?.title || 'Unknown Quiz',
+        subject: attempt.quiz_id?.subject || 'General',
+        score: attempt.score || 0,
+        maxScore: attempt.max_score || 0,
+        percentage, // Calculated percentage
+        totalQuestions,
+        correctAnswers,
+        completedAt: attempt.completed_at,
+        tutorFeedback: attempt.tutor_feedback,
+        tutorName: attempt.quiz_id?.createdBy?.fullName,
+        difficulty: attempt.quiz_id?.difficulty || 'medium'
+      };
+    });
 
     return {
       attempts: formattedAttempts,
@@ -455,16 +488,16 @@ export class ParentService {
     const studentAnswers = await StudentAnswer.find({
       attempt_id: new Types.ObjectId(attemptId)
     })
-    .populate({
-      path: 'question_id',
-      select: 'questionText questionType points answers explanation hint difficulty tags order isActive'
-    })
-    .populate({
-      path: 'selected_answer_id',
-      select: 'answerText isCorrect explanation order'
-    })
-    .sort({ created_at: 1 })
-    .lean();
+      .populate({
+        path: 'question_id',
+        select: 'questionText questionType points answers explanation hint difficulty tags order isActive'
+      })
+      .populate({
+        path: 'selected_answer_id',
+        select: 'answerText isCorrect explanation order'
+      })
+      .sort({ created_at: 1 })
+      .lean();
 
     // Transform to match frontend format
     const transformedStudentAnswers = studentAnswers.map((answer: any) => ({
@@ -546,6 +579,7 @@ export class ParentService {
     studentId: string,
     options: {
       filter?: 'all' | 'upcoming' | 'completed' | 'cancelled';
+      subject?: string; // NEW: Filter by subject name
       page?: number;
       limit?: number;
     } = {}
@@ -572,19 +606,43 @@ export class ParentService {
     // Apply status filter if specified
     if (options.filter && options.filter !== 'all') {
       const now = new Date();
+      // Get today's date without time for proper comparison
+      const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
       switch (options.filter) {
         case 'completed':
           sessions = sessions.filter(s => s.status === 'completed');
           break;
         case 'upcoming':
-          sessions = sessions.filter(s =>
-            s.status === 'confirmed' && new Date(s.scheduledDate) > now
-          );
+          // Include both confirmed AND pending sessions that are today or in the future
+          sessions = sessions.filter(s => {
+            const isUpcomingStatus = s.status === 'confirmed' || s.status === 'pending';
+            if (!isUpcomingStatus) return false;
+
+            const sessionDate = new Date(s.scheduledDate);
+            // Get session date without time
+            const sessionDateOnly = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
+
+            // Session is upcoming if:
+            // 1. Session date is in the future (tomorrow or later)
+            // 2. OR session date is today (we show all today's pending/confirmed sessions)
+            const isInFuture = sessionDateOnly >= todayDateOnly;
+
+            return isInFuture;
+          });
           break;
         case 'cancelled':
           sessions = sessions.filter(s => s.status === 'cancelled');
           break;
       }
+    }
+
+    // Apply subject filter if specified (NEW)
+    if (options.subject) {
+      sessions = sessions.filter((s: any) => {
+        const sessionSubject = s.subjectId?.name || s.title || '';
+        return sessionSubject.toLowerCase() === options.subject!.toLowerCase();
+      });
     }
 
     // Get ratings for sessions
@@ -596,14 +654,22 @@ export class ParentService {
 
     const ratingMap = new Map(ratings.map(r => [r.sessionId.toString(), r]));
 
-    // Calculate statistics
+    // Calculate statistics from ALL sessions (not just filtered)
+    const allSessions = await Booking.find({
+      studentId: new Types.ObjectId(studentId)
+    });
+
     const now = new Date();
-    const totalSessions = sessions.length;
-    const completedSessions = sessions.filter(s => s.status === 'completed').length;
-    const upcomingSessions = sessions.filter(s => 
-      s.status === 'confirmed' && new Date(s.scheduledDate) > now
-    ).length;
-    const cancelledSessions = sessions.filter(s => s.status === 'cancelled').length;
+    const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const totalSessions = allSessions.length;
+    const completedSessions = allSessions.filter(s => s.status === 'completed').length;
+    const upcomingSessions = allSessions.filter(s => {
+      const isUpcomingStatus = s.status === 'confirmed' || s.status === 'pending';
+      const sessionDate = new Date(s.scheduledDate);
+      const sessionDateOnly = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
+      return isUpcomingStatus && sessionDateOnly >= todayDateOnly;
+    }).length;
+    const cancelledSessions = allSessions.filter(s => s.status === 'cancelled').length;
 
     const allRatings = Array.from(ratingMap.values()).map(r => r.rating);
     const averageRating = allRatings.length > 0
@@ -615,11 +681,11 @@ export class ParentService {
     sessions.forEach((session: any) => {
       const tutorId = session.teacherId?._id?.toString();
       const tutorName = session.teacherId?.fullName || 'Unknown';
-      
+
       if (tutorId) {
         const current = tutorMap.get(tutorId) || { name: tutorName, count: 0, totalRating: 0, ratingCount: 0 };
         const rating = ratingMap.get(session._id.toString());
-        
+
         tutorMap.set(tutorId, {
           name: tutorName,
           count: current.count + 1,

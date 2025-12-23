@@ -90,12 +90,14 @@ export const parentService = {
     studentId: string,
     options?: {
       filter?: 'all' | 'upcoming' | 'completed' | 'cancelled';
+      subject?: string; // Filter by subject name
       page?: number;
       limit?: number;
     }
   ): Promise<any> {
     const params = new URLSearchParams();
     if (options?.filter) params.append('filter', options.filter);
+    if (options?.subject) params.append('subject', options.subject);
     if (options?.page) params.append('page', options.page.toString());
     if (options?.limit) params.append('limit', options.limit.toString());
 

@@ -222,11 +222,14 @@ router.get('/students/:studentId/session-progress', authenticate, async (req, re
     }
 
     const { studentId } = req.params;
-    const { filter, page, limit } = req.query;
+    const { filter, page, limit, subject } = req.query;
 
     const options: any = {};
     if (filter && ['all', 'upcoming', 'completed', 'cancelled'].includes(filter as string)) {
       options.filter = filter;
+    }
+    if (subject && typeof subject === 'string') {
+      options.subject = subject;
     }
     if (page) {
       options.page = parseInt(page as string, 10);

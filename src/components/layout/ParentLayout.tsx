@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
 import { parentService, ParentStudentLink } from '@/lib/parentService';
 import {
   Select,
@@ -20,13 +21,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
+
 const ParentLayout: React.FC = () => {
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [linkedStudents, setLinkedStudents] = useState<ParentStudentLink[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
   // Parent navigation items for mobile
   const parentNavigation = [
@@ -39,14 +44,19 @@ const ParentLayout: React.FC = () => {
 
   const isActive = (href: string) => location.pathname === href;
 
-  useEffect(() => {
-    loadLinkedStudents();
-  }, []);
+  const loadLinkedStudents = useCallback(async () => {
+    // Don't load if not authenticated - wait for auth to complete
+    if (!user || !profile) {
+      console.log('ParentLayout: Waiting for auth to complete...');
+      return;
+    }
 
-  const loadLinkedStudents = async () => {
     try {
       setLoading(true);
+      setError('');
+      console.log('ParentLayout: Loading linked students for user:', user.id);
       const students = await parentService.getLinkedStudents();
+      console.log('ParentLayout: Loaded', students.length, 'students');
       setLinkedStudents(students);
 
       // Auto-select first student if available
@@ -60,10 +70,36 @@ const ParentLayout: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error loading linked students:', error);
-      setError('Failed to load linked students');
+      setError('Failed to load linked students. Please try again.');
+
+      // Auto-retry with exponential backoff
+      if (retryCount < maxRetries) {
+        const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+        console.log(`ParentLayout: Retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+        }, delay);
+      }
     } finally {
       setLoading(false);
     }
+  }, [user, profile, selectedStudentId, location.pathname, navigate, retryCount]);
+
+  // Load students when auth is ready or retry count changes
+  useEffect(() => {
+    if (user && profile) {
+      loadLinkedStudents();
+    } else {
+      // Still loading auth
+      setLoading(true);
+    }
+  }, [user, profile, retryCount, loadLinkedStudents]);
+
+  // Manual retry function
+  const handleRetry = () => {
+    setRetryCount(0);
+    setError('');
+    loadLinkedStudents();
   };
 
   const handleStudentChange = (studentId: string) => {
@@ -130,7 +166,15 @@ const ParentLayout: React.FC = () => {
         <div className="px-6 mb-6">
           <div className="max-w-7xl mx-auto">
             <Alert className="bg-red-900/40 border-red-400/30 text-white">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="flex items-center justify-between">
+                <span>{error}</span>
+                <button
+                  onClick={handleRetry}
+                  className="ml-4 px-3 py-1 bg-yellow-400 text-green-900 rounded-md text-sm font-medium hover:bg-yellow-500 transition-colors"
+                >
+                  Retry
+                </button>
+              </AlertDescription>
             </Alert>
           </div>
         </div>

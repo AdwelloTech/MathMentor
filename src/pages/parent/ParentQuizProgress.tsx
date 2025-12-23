@@ -40,6 +40,8 @@ interface QuizAttempt {
   quizTitle: string;
   subject: string;
   score: number;
+  maxScore?: number;
+  percentage: number; // Calculated as (correctAnswers / totalQuestions) * 100
   totalQuestions: number;
   correctAnswers: number;
   completedAt: Date;
@@ -146,10 +148,10 @@ const ParentQuizProgress: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   const loadAttemptDetails = async (attemptId: string) => {
     if (!selectedStudent) return;
-    
+
     try {
       setLoadingAttempt(true);
       const details = await parentService.getStudentQuizAttemptDetails(
@@ -160,7 +162,7 @@ const ParentQuizProgress: React.FC = () => {
     } catch (error: any) {
       console.error('Error loading attempt details:', error);
       toast.error('Failed to load quiz details');
-      
+
       // Navigate back to list view
       setSelectedAttempt(null);
     } finally {
@@ -189,7 +191,7 @@ const ParentQuizProgress: React.FC = () => {
     if (score >= 60) return 'bg-yellow-400/20 text-yellow-300 border-yellow-400/30';
     return 'bg-red-400/20 text-red-300 border-red-400/30';
   };
-  
+
   const formatDate = (dateInput?: string | Date | null) => {
     if (!dateInput) return "—";
     const d = new Date(dateInput);
@@ -319,7 +321,7 @@ const ParentQuizProgress: React.FC = () => {
                     <div>
                       <p className="text-white/60 text-sm">Needs Attention</p>
                       <p className="text-3xl font-bold text-orange-300 mt-1">
-                        {quizData?.attempts.filter(a => a.score < 60).length || 0}
+                        {quizData?.attempts.filter(a => a.percentage < 60).length || 0}
                       </p>
                     </div>
                     <ExclamationTriangleIcon className="h-10 w-10 text-orange-300/40" />
@@ -350,7 +352,7 @@ const ParentQuizProgress: React.FC = () => {
                           <span className={`text-2xl font-bold ${getScoreColor(subject.averageScore)}`}>
                             {subject.averageScore.toFixed(1)}%
                           </span>
-                          <span className="text-xs text-white/60">average</span>
+                          <span className="text-xs text-white/60">average score</span>
                         </div>
                       </div>
                     ))}
@@ -395,8 +397,8 @@ const ParentQuizProgress: React.FC = () => {
                                   <Badge className="bg-purple-400/20 text-purple-300 border-purple-400/30">
                                     {attempt.difficulty}
                                   </Badge>
-                                  <Badge className={getScoreBadgeClass(attempt.score)}>
-                                    {attempt.score.toFixed(1)}%
+                                  <Badge className={getScoreBadgeClass(attempt.percentage)}>
+                                    {attempt.percentage.toFixed(1)}%
                                   </Badge>
                                 </div>
                                 <p className="text-sm text-white/60">
@@ -423,11 +425,11 @@ const ParentQuizProgress: React.FC = () => {
                           </div>
 
                           <div className="flex flex-col items-end gap-2">
-                            <div className={`text-3xl font-bold ${getScoreColor(attempt.score)}`}>
-                              {attempt.score.toFixed(0)}%
+                            <div className={`text-3xl font-bold ${getScoreColor(attempt.percentage)}`}>
+                              {attempt.percentage.toFixed(0)}%
                             </div>
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
                               className="bg-blue-400/10 text-blue-300 border-blue-400/30 hover:bg-blue-400/20"
                             >
@@ -483,15 +485,24 @@ const ParentQuizProgress: React.FC = () => {
                 </div>
 
                 <div className="text-right">
-                  <div className={`text-3xl font-bold ${getScoreColor(selectedAttempt.attempt.score || 0)}`}>
-                    {selectedAttempt.attempt.correct_answers || 0} / {selectedAttempt.attempt.total_questions || 0}
-                  </div>
-                  <div className="text-sm text-white/60 mb-1">
-                    Questions Correct
-                  </div>
-                  <div className={`text-xl ${getScoreColor(selectedAttempt.attempt.score || 0)}`}>
-                    {selectedAttempt.attempt.score?.toFixed(1) || '0.0'}%
-                  </div>
+                  {(() => {
+                    const correct = selectedAttempt.attempt.correct_answers || 0;
+                    const total = selectedAttempt.attempt.total_questions || 0;
+                    const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+                    return (
+                      <>
+                        <div className={`text-3xl font-bold ${getScoreColor(pct)}`}>
+                          {correct} / {total}
+                        </div>
+                        <div className="text-sm text-white/60 mb-1">
+                          Questions Correct
+                        </div>
+                        <div className={`text-xl ${getScoreColor(pct)}`}>
+                          {pct.toFixed(1)}%
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -550,7 +561,7 @@ const ParentQuizProgress: React.FC = () => {
               const isCorrect = studentAnswer?.is_correct;
 
               return (
-                <Card 
+                <Card
                   key={question.id}
                   className="bg-green-950/40 border border-yellow-400/20 text-white backdrop-blur-sm rounded-2xl shadow-xl"
                 >
@@ -576,7 +587,7 @@ const ParentQuizProgress: React.FC = () => {
                     </p>
 
                     {question.question_type === "multiple_choice" ||
-                    question.question_type === "true_false" ? (
+                      question.question_type === "true_false" ? (
                       <div className="space-y-2">
                         {question.answers?.map((answer) => {
                           const isSelected =

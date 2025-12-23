@@ -37,6 +37,7 @@ const ParentDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [linkedStudents, setLinkedStudents] = useState<ParentStudentLink[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [studentCode, setStudentCode] = useState('');
   const [selectedRelationshipType, setSelectedRelationshipType] = useState('');
@@ -44,6 +45,8 @@ const ParentDashboard: React.FC = () => {
   const [linkError, setLinkError] = useState('');
   const [linkSuccess, setLinkSuccess] = useState('');
   const [isLinking, setIsLinking] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
   const handleLogout = async () => {
     try {
@@ -58,23 +61,47 @@ const ParentDashboard: React.FC = () => {
     if (user && profile) {
       loadLinkedStudents();
     }
-  }, [user, profile]);
+  }, [user, profile, retryCount]);
 
   const loadLinkedStudents = async () => {
+    // Don't load if not authenticated
+    if (!user || !profile) {
+      return;
+    }
+
     try {
       setLoading(true);
+      setLoadError('');
+      console.log('ParentDashboard: Loading linked students for user:', user.id);
       const students = await parentService.getLinkedStudents();
+      console.log('ParentDashboard: Loaded', students.length, 'students');
       setLinkedStudents(students);
-      
+
       // Show link form if no students are linked
       if (students.length === 0) {
         setShowLinkForm(true);
       }
     } catch (error: any) {
       console.error('Error loading linked students:', error);
+      setLoadError('Failed to load linked students. Please try again.');
+
+      // Auto-retry with exponential backoff
+      if (retryCount < maxRetries) {
+        const delay = Math.pow(2, retryCount) * 1000;
+        console.log(`ParentDashboard: Retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+        }, delay);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    setRetryCount(0);
+    setLoadError('');
+    loadLinkedStudents();
   };
 
   const handleLinkStudent = async (e: React.FormEvent) => {
@@ -115,7 +142,7 @@ const ParentDashboard: React.FC = () => {
       setSelectedRelationshipType('');
       setCustomRelationship('');
       setShowLinkForm(false);
-      
+
       // Reload students list
       await loadLinkedStudents();
     } catch (error: any) {
@@ -207,7 +234,7 @@ const ParentDashboard: React.FC = () => {
                       <div>
                         <h1 className="text-4xl font-extrabold text-yellow-300 drop-shadow-md tracking-tight">
                           Parent Dashboard
-        </h1>
+                        </h1>
                         <Badge
                           variant="outline"
                           className="border-yellow-300/40 text-yellow-300 mt-2 bg-green-900/60"
@@ -262,6 +289,22 @@ const ParentDashboard: React.FC = () => {
               </motion.div>
             )}
 
+            {loadError && (
+              <motion.div variants={itemVariants}>
+                <Alert className="bg-red-900/40 border-red-400/30 text-white">
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>{loadError}</span>
+                    <button
+                      onClick={handleRetry}
+                      className="ml-4 px-3 py-1 bg-yellow-400 text-green-900 rounded-md text-sm font-medium hover:bg-yellow-500 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
+
             {/* Link Student Form */}
             {showLinkForm && (
               <motion.div variants={itemVariants}>
@@ -292,8 +335,8 @@ const ParentDashboard: React.FC = () => {
                         />
                         <p className="text-xs text-white/60">
                           Format: 3 letters - 3 digits - 3 alphanumeric characters
-        </p>
-      </div>
+                        </p>
+                      </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="relationship" className="text-white">
@@ -472,8 +515,8 @@ const ParentDashboard: React.FC = () => {
                 </Card>
               </motion.div>
             )}
-        </div>
-      </motion.div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

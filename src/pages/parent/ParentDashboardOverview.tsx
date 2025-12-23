@@ -120,7 +120,6 @@ const ParentDashboardOverview: React.FC = () => {
   return (
     <motion.div
       variants={containerVariants}
-      initial="hidden"
       animate="visible"
       className="space-y-6"
     >
@@ -159,7 +158,7 @@ const ParentDashboardOverview: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <Button 
+              <Button
                 className="w-full bg-yellow-400 text-green-900 hover:bg-yellow-500"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -205,7 +204,7 @@ const ParentDashboardOverview: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <Button 
+              <Button
                 className="w-full bg-yellow-400 text-green-900 hover:bg-yellow-500"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -311,11 +310,10 @@ const ParentDashboardOverview: React.FC = () => {
                       <div key={index} className="p-3 bg-green-900/40 rounded-lg border border-yellow-400/10">
                         <div className="flex justify-between items-start mb-1">
                           <span className="text-sm font-medium text-white">{session.subject}</span>
-                          <Badge className={`text-xs ${
-                            session.status === 'completed' 
-                              ? 'bg-green-400/20 text-green-300 border-green-400/30'
-                              : 'bg-blue-400/20 text-blue-300 border-blue-400/30'
-                          }`}>
+                          <Badge className={`text-xs ${session.status === 'completed'
+                            ? 'bg-green-400/20 text-green-300 border-green-400/30'
+                            : 'bg-blue-400/20 text-blue-300 border-blue-400/30'
+                            }`}>
                             {session.status}
                           </Badge>
                         </div>

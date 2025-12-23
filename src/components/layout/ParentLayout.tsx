@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 
 
 const ParentLayout: React.FC = () => {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [linkedStudents, setLinkedStudents] = useState<ParentStudentLink[]>([]);
@@ -102,23 +102,12 @@ const ParentLayout: React.FC = () => {
     }
   }, [user, profile, selectedStudentId, location.pathname, navigate, retryCount]);
 
-  // Load students when auth is ready (not loading) and we have user/profile
+  // Load students when we have user/profile
   useEffect(() => {
-    if (authLoading) {
-      // Auth is still initializing, wait for it
-      console.log('ParentLayout: Auth still loading, waiting...');
-      setLoading(true);
-      return;
-    }
-
     if (user && profile) {
       loadLinkedStudents();
-    } else {
-      // Auth finished but no user - shouldn't happen on protected route
-      console.log('ParentLayout: Auth complete but no user/profile');
-      setLoading(false);
     }
-  }, [authLoading, user, profile, retryCount, loadLinkedStudents]);
+  }, [user, profile, retryCount, loadLinkedStudents]);
 
   // Manual retry function
   const handleRetry = () => {
@@ -220,10 +209,9 @@ const ParentLayout: React.FC = () => {
 
       {/* Mobile Bottom Navigation */}
       <motion.nav
-        initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.2 }}
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-green-950/95 backdrop-blur-xl border-t border-yellow-400/20 shadow-2xl"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-xl border-t border-border shadow-2xl"
       >
         <div className="safe-area-inset-bottom">
           <div className="overflow-x-auto scrollbar-hide">
@@ -234,7 +222,6 @@ const ParentLayout: React.FC = () => {
                 return (
                   <motion.div
                     key={item.name}
-                    initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: index * 0.03, duration: 0.3 }}
                     className="flex-shrink-0 w-16 mx-1"
@@ -244,8 +231,8 @@ const ParentLayout: React.FC = () => {
                       className={cn(
                         "flex flex-col items-center justify-center w-full py-2 px-1 rounded-xl transition-all duration-300 min-h-[56px] active:scale-95 relative",
                         active
-                          ? "bg-yellow-400 text-green-900 shadow-lg"
-                          : "text-white/60 hover:text-white hover:bg-green-800/50"
+                          ? "bg-primary text-primary-foreground shadow-lg"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       )}
                     >
                       <item.icon className={cn(
@@ -261,7 +248,7 @@ const ParentLayout: React.FC = () => {
                       {active && (
                         <motion.div
                           layoutId="parent-mobile-nav-indicator"
-                          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-1 bg-green-900 rounded-t-full"
+                          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-1 bg-primary-foreground rounded-t-full"
                           transition={{ type: "spring", stiffness: 500, damping: 30 }}
                         />
                       )}

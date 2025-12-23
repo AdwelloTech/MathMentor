@@ -209,7 +209,8 @@ const ParentLayout: React.FC = () => {
 
       {/* Mobile Bottom Navigation */}
       <motion.nav
-        animate={{ y: 0, opacity: 1 }}
+        initial={false}
+        animate={{ y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
         className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-xl border-t border-border shadow-2xl"
       >
@@ -222,7 +223,8 @@ const ParentLayout: React.FC = () => {
                 return (
                   <motion.div
                     key={item.name}
-                    animate={{ y: 0, opacity: 1 }}
+                    initial={false}
+                    animate={{ y: 0 }}
                     transition={{ delay: index * 0.03, duration: 0.3 }}
                     className="flex-shrink-0 w-16 mx-1"
                   >

@@ -36,7 +36,7 @@ const TutorRatingsPage: React.FC = () => {
   // Early return while profile is loading/undefined
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-background p-8">
         <div className="max-w-6xl mx-auto">
           <LoadingSpinner />
         </div>
@@ -46,7 +46,7 @@ const TutorRatingsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-background p-8">
         <div className="max-w-6xl mx-auto">
           <LoadingSpinner />
         </div>
@@ -56,7 +56,7 @@ const TutorRatingsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-background p-8">
         <div className="max-w-6xl mx-auto">
           <Card className="border-red-200">
             <CardContent className="p-8 text-center text-red-600">
@@ -70,7 +70,7 @@ const TutorRatingsPage: React.FC = () => {
 
   if (!stats || stats.total_reviews === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-background p-8">
         <div className="max-w-6xl mx-auto">
           <Card className="border-gray-200">
             <CardContent className="p-12 text-center text-gray-500">
@@ -90,9 +90,8 @@ const TutorRatingsPage: React.FC = () => {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        className={`w-5 h-5 ${
-          index < rating ? "text-yellow-400 fill-current" : "text-gray-300"
-        }`}
+        className={`w-5 h-5 ${index < rating ? "text-yellow-400 fill-current" : "text-gray-300"
+          }`}
       />
     ));
   };
@@ -158,7 +157,7 @@ const TutorRatingsPage: React.FC = () => {
   const namedCount = ratings?.filter((r) => !r.isAnonymous).length || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -166,10 +165,10 @@ const TutorRatingsPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-primary mb-2">
             My Ratings & Feedback
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Track your performance and student satisfaction
           </p>
         </motion.div>
@@ -318,8 +317,8 @@ const TutorRatingsPage: React.FC = () => {
                               rating.rating >= 4
                                 ? "default"
                                 : rating.rating >= 3
-                                ? "secondary"
-                                : "destructive"
+                                  ? "secondary"
+                                  : "destructive"
                             }
                           >
                             {rating.rating} Star{rating.rating !== 1 ? "s" : ""}
@@ -342,7 +341,7 @@ const TutorRatingsPage: React.FC = () => {
                           <span>
                             {rating.isAnonymous
                               ? "Anonymous Student"
-                              : rating.student?.fullName || "Student"}
+                              : (rating.studentId as any)?.fullName || "Student"}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">

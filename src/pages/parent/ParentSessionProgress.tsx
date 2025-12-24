@@ -633,7 +633,7 @@ const ParentSessionProgress: React.FC = () => {
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-yellow-400/10">
+                <div className="flex items-center justify-between p-4 md:p-6 border-b border-yellow-400/10">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-yellow-400/20 rounded-lg">
                       <EyeIcon className="h-6 w-6 text-yellow-300" />
@@ -656,24 +656,24 @@ const ParentSessionProgress: React.FC = () => {
                 </div>
 
                 {/* Content */}
-                <div className="p-6 space-y-6">
+                <div className="p-4 md:p-6 space-y-4 md:space-y-6">
                   {/* Session Info */}
                   <div className="bg-green-900/40 rounded-lg p-4 border border-yellow-400/10">
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-yellow-400/20 rounded-lg">
                         <UserIcon className="h-6 w-6 text-yellow-300" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
                           <div>
                             <h3 className="text-lg font-semibold text-white mb-1">
                               {selectedSession.subject}
                             </h3>
-                            <div className="flex items-center gap-2 text-sm text-white/60 mb-2">
-                              <UserIcon className="h-4 w-4" />
-                              <span>{selectedSession.tutorName}</span>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-white/60 mb-2">
+                              <UserIcon className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">{selectedSession.tutorName}</span>
                               <span>•</span>
-                              <span>{selectedSession.tutorEmail}</span>
+                              <span className="break-all">{selectedSession.tutorEmail}</span>
                             </div>
                           </div>
                           <Badge className={getStatusBadgeClass(selectedSession.status)}>
@@ -681,7 +681,7 @@ const ParentSessionProgress: React.FC = () => {
                           </Badge>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 gap-3">
                           <div className="flex items-center gap-2 text-sm">
                             <CalendarDaysIcon className="h-4 w-4 text-yellow-300" />
                             <span className="text-white/80">
@@ -694,8 +694,8 @@ const ParentSessionProgress: React.FC = () => {
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
-                            <ClockIcon className="h-4 w-4 text-blue-300" />
-                            <span className="text-white/80">
+                            <ClockIcon className="h-4 w-4 text-blue-300 flex-shrink-0" />
+                            <span className="text-white/80 break-words">
                               {formatGMTTime24Hour(selectedSession.startTime)} - {formatGMTTime24Hour(selectedSession.endTime)}
                             </span>
                           </div>

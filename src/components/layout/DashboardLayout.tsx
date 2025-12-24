@@ -381,7 +381,13 @@ const DashboardLayout: React.FC = () => {
         {/* Header removed - keeping design clean and minimal */}
 
         {/* Main content with bottom padding for mobile nav */}
-        <main className={profile?.role === "student" ? "pt-10 pb-24 lg:pb-10" : "py-10 pb-24 lg:pb-10"}>
+        <main className={
+          profile?.role === "student"
+            ? "pt-10 pb-24 lg:pb-10"
+            : profile?.role === "parent"
+              ? "pb-24 lg:pb-10" // No top padding for parents to allow full-width sticky headers
+              : "py-10 pb-24 lg:pb-10"
+        }>
           <div className="px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

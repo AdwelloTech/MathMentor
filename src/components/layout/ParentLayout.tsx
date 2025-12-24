@@ -196,7 +196,7 @@ const ParentLayout: React.FC = () => {
     <div className="relative">
       {/* Student Selector - Sticky at top */}
       {linkedStudents.length > 0 && !location.pathname.includes('/parent/manage') && (
-        <div className="sticky top-0 z-40 bg-gradient-to-r from-green-900/95 to-green-800/95 backdrop-blur-sm border-b border-yellow-400/20 px-4 sm:px-6 lg:px-8 py-4 mb-6 -mx-4 sm:-mx-6 lg:-mx-8 -mt-11 shadow-md">
+        <div className="sticky top-0 z-40 bg-gradient-to-r from-green-900/95 to-green-800/95 backdrop-blur-sm border-b border-yellow-400/20 px-4 sm:px-6 lg:px-8 py-4 mb-6 -mx-4 sm:-mx-6 lg:-mx-8 shadow-md">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             <label className="text-white/80 text-sm font-medium whitespace-nowrap">
               Viewing Student:
@@ -257,7 +257,11 @@ const ParentLayout: React.FC = () => {
       }
 
       {/* Main Content with bottom padding for mobile nav */}
-      <div className="px-6 pb-24 lg:pb-0">
+      <div className={cn(
+        "px-6 pb-24 lg:pb-0",
+        // Add top padding if student selector is hidden (since we removed default padding from DashboardLayout)
+        !(linkedStudents.length > 0 && !location.pathname.includes('/parent/manage')) && "pt-10"
+      )}>
         <div className="max-w-7xl mx-auto">
           <Outlet context={{ selectedStudent, linkedStudents, refreshStudents: loadLinkedStudents }} />
         </div>

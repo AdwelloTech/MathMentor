@@ -4,6 +4,7 @@ import { Question } from '../models/Question';
 import { Booking } from '../models/Booking';
 import { SessionRating } from '../models/SessionRating';
 import { Subject } from '../models/Subject';
+import { InstantSession } from '../models/InstantSession';
 import { Types } from 'mongoose';
 import { validateStudentCodeFormat } from '../utils/studentCode';
 
@@ -658,19 +659,30 @@ export class ParentService {
       });
     }
 
-    // Get ratings for sessions
-    const sessionIds = sessions.map(s => s._id);
-    const ratings = await SessionRating.find({
-      sessionId: { $in: sessionIds },
-      studentId: new Types.ObjectId(studentId)
-    });
-
-    const ratingMap = new Map(ratings.map(r => [r.sessionId.toString(), r]));
 
     // Calculate statistics from ALL sessions (not just filtered)
     const allSessions = await Booking.find({
       studentId: new Types.ObjectId(studentId)
     });
+
+    // Also get instant sessions for this student
+    const instantSessions = await InstantSession.find({
+      studentId: new Types.ObjectId(studentId),
+      status: 'completed'
+    });
+
+    // Get ratings for ALL sessions (both regular Bookings and InstantSessions)
+    const allBookingIds = allSessions.map(s => s._id);
+    const allInstantSessionIds = instantSessions.map(s => s._id);
+    const allSessionIds = [...allBookingIds, ...allInstantSessionIds];
+
+    const allRatingsData = await SessionRating.find({
+      sessionId: { $in: allSessionIds },
+      studentId: new Types.ObjectId(studentId)
+    });
+
+    // Create a map for quick lookup (used for individual session display)
+    const ratingMap = new Map(allRatingsData.map(r => [r.sessionId.toString(), r]));
 
     const now = new Date();
     const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -684,7 +696,8 @@ export class ParentService {
     }).length;
     const cancelledSessions = allSessions.filter(s => s.status === 'cancelled').length;
 
-    const allRatings = Array.from(ratingMap.values()).map(r => r.rating);
+    // Calculate average rating from ALL ratings (including instant sessions)
+    const allRatings = allRatingsData.map(r => r.rating);
     const averageRating = allRatings.length > 0
       ? allRatings.reduce((sum, r) => sum + r, 0) / allRatings.length
       : 0;

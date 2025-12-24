@@ -481,7 +481,7 @@ const ManageSessionsPage: React.FC = () => {
                             <div className="mt-1">
                               <SessionTimer
                                 session={{
-                                  id: session.id,
+                                  id: booking.id,
                                   title: session.title,
                                   description: session.description || "",
                                   date: session.date,
@@ -630,7 +630,7 @@ const ManageSessionsPage: React.FC = () => {
                         <h3 className="text-lg font-semibold text-primary mb-3">Session Timer</h3>
                         <SessionTimer
                           session={{
-                            id: selectedBooking.class!.id,
+                            id: selectedBooking.id,
                             title: selectedBooking.class!.title,
                             description: selectedBooking.class!.description || "",
                             date: selectedBooking.class!.date,

@@ -270,12 +270,15 @@ export class ParentService {
     }
 
     // Get quiz stats
-    const quizAttempts = await QuizAttempt.find({
+    // Get quiz stats - Fetch ALL completed attempts for accurate stats
+    const allQuizAttempts = await QuizAttempt.find({
       student_id: new Types.ObjectId(studentId),
       status: 'completed'
-    }).populate('quiz_id').limit(5).sort({ completed_at: -1 });
+    })
+      .populate('quiz_id') // We need quiz_id for subject analysis
+      .sort({ completed_at: -1 });
 
-    const totalQuizzes = quizAttempts.length;
+    const totalQuizzes = allQuizAttempts.length;
 
     // Helper function to calculate percentage from attempt
     const getAttemptPercentage = (attempt: any): number => {
@@ -284,34 +287,44 @@ export class ParentService {
       return total > 0 ? Math.round((correct / total) * 100) : 0;
     };
 
-    // Calculate average score as percentage
+    // Calculate average score as percentage from ALL attempts
     const averageScore = totalQuizzes > 0
-      ? quizAttempts.reduce((sum, a) => sum + getAttemptPercentage(a), 0) / totalQuizzes
+      ? allQuizAttempts.reduce((sum, a) => sum + getAttemptPercentage(a), 0) / totalQuizzes
       : 0;
 
-    // Recent quizzes with calculated percentage
-    const recentQuizzes = quizAttempts.slice(0, 3).map((attempt: any) => ({
+    // Recent quizzes with calculated percentage (top 3)
+    const recentQuizzes = allQuizAttempts.slice(0, 3).map((attempt: any) => ({
       title: attempt.quiz_id?.title || 'Unknown Quiz',
       score: getAttemptPercentage(attempt), // Use calculated percentage
       completedAt: attempt.completed_at
     }));
 
-    // Get session stats
-    const sessions = await Booking.find({
+    // Get session stats - Fetch ALL sessions for accurate counts
+    const allSessions = await Booking.find({
       studentId: new Types.ObjectId(studentId)
-    }).populate('teacherId').populate('subjectId').limit(10).sort({ scheduledDate: -1 });
+    }).select('status scheduledDate');
 
     const now = new Date();
     const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const completedSessions = sessions.filter(s => s.status === 'completed').length;
-    const upcomingSessions = sessions.filter(s => {
+
+    const completedSessions = allSessions.filter(s => s.status === 'completed').length;
+    const upcomingSessions = allSessions.filter(s => {
       const isUpcomingStatus = s.status === 'confirmed' || s.status === 'pending';
       const sessionDate = new Date(s.scheduledDate);
       const sessionDateOnly = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
       return isUpcomingStatus && sessionDateOnly >= todayDateOnly;
     }).length;
 
-    const recentSessions = sessions.slice(0, 3).map((session: any) => ({
+    // Get detailed recent sessions for the feed
+    const recentSessionsQuery = await Booking.find({
+      studentId: new Types.ObjectId(studentId)
+    })
+      .populate('teacherId')
+      .populate('subjectId')
+      .limit(3)
+      .sort({ scheduledDate: -1 });
+
+    const recentSessions = recentSessionsQuery.map((session: any) => ({
       subject: session.subjectId?.name || session.title,
       tutorName: session.teacherId?.fullName || 'Unknown',
       date: session.scheduledDate,
@@ -320,7 +333,7 @@ export class ParentService {
 
     // Performance overview using percentages
     const subjectPerformance: any = {};
-    quizAttempts.forEach((attempt: any) => {
+    allQuizAttempts.forEach((attempt: any) => {
       const subject = attempt.quiz_id?.subject || 'General';
       const percentage = getAttemptPercentage(attempt);
       if (!subjectPerformance[subject]) {
@@ -350,7 +363,7 @@ export class ParentService {
         recentQuizzes
       },
       sessionStats: {
-        totalSessions: sessions.length,
+        totalSessions: allSessions.length,
         upcomingSessions,
         completedSessions,
         recentSessions

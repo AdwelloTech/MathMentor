@@ -34,6 +34,8 @@ export interface Tutor {
   application_status?: string;
   submitted_at?: string;
   reviewed_at?: string;
+  // Allowed session types (admin-approved)
+  allowed_session_types?: ('one-on-one' | 'group' | 'consultation')[];
 }
 
 export interface TutorStats {
@@ -155,7 +157,7 @@ class AdminTutorService {
       }; // Return default values instead of throwing
     }
   }
-  
+
   async updateTutorApplication(
     userId: string,
     status: 'pending' | 'approved' | 'rejected',
@@ -170,6 +172,20 @@ class AdminTutorService {
       });
     } catch (error) {
       console.error('Error in updateTutorApplication:', error);
+      throw error;
+    }
+  }
+
+  async updateSessionTypes(
+    tutorId: string,
+    sessionTypes: ('one-on-one' | 'group' | 'consultation')[]
+  ): Promise<void> {
+    try {
+      await apiClient.put<void>(`/api/admin/tutors/${tutorId}/session-types`, {
+        session_types: sessionTypes
+      });
+    } catch (error) {
+      console.error('Error in updateSessionTypes:', error);
       throw error;
     }
   }

@@ -42,6 +42,9 @@ const ManageTutorsPage: React.FC = () => {
   const [showClassesModal, setShowClassesModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [deletingTutor, setDeletingTutor] = useState<string | null>(null);
+  // Session types editing state
+  const [editingSessionTypes, setEditingSessionTypes] = useState<('one-on-one' | 'group' | 'consultation')[]>([]);
+  const [savingSessionTypes, setSavingSessionTypes] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -134,6 +137,8 @@ const ManageTutorsPage: React.FC = () => {
 
   const handleViewTutor = async (tutor: Tutor) => {
     setSelectedTutor(tutor);
+    // Initialize editing session types with tutor's current allowed types, or all types if not set
+    setEditingSessionTypes(tutor.allowed_session_types || ['one-on-one', 'group', 'consultation']);
     setShowTutorModal(true);
   };
 
@@ -194,6 +199,34 @@ const ManageTutorsPage: React.FC = () => {
       toast.error("Failed to delete tutor");
     } finally {
       setDeletingTutor(null);
+    }
+  };
+
+  const handleSaveSessionTypes = async () => {
+    if (!selectedTutor) return;
+
+    try {
+      setSavingSessionTypes(true);
+      await adminTutorService.updateSessionTypes(selectedTutor.id || selectedTutor.user_id, editingSessionTypes);
+
+      // Update local state
+      setTutors((prev) =>
+        prev.map((tutor) =>
+          (tutor.id || tutor.user_id) === (selectedTutor.id || selectedTutor.user_id)
+            ? { ...tutor, allowed_session_types: editingSessionTypes }
+            : tutor
+        )
+      );
+
+      // Update selected tutor
+      setSelectedTutor((prev) => prev ? { ...prev, allowed_session_types: editingSessionTypes } : null);
+
+      toast.success('Session permissions updated successfully');
+    } catch (error) {
+      console.error('Error updating session types:', error);
+      toast.error('Failed to update session permissions');
+    } finally {
+      setSavingSessionTypes(false);
     }
   };
 
@@ -266,644 +299,696 @@ const ManageTutorsPage: React.FC = () => {
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
-          {/* Header */}
-          <div className="pt-6">
-            <h1 className="text-3xl font-bold text-foreground">Manage Tutors</h1>
-            <p className="mt-2 text-lg text-muted-foreground">
-              View and manage all tutor profiles, their status, and scheduled
-              classes.
-            </p>
-          </div>
+      {/* Header */}
+      <div className="pt-6">
+        <h1 className="text-3xl font-bold text-foreground">Manage Tutors</h1>
+        <p className="mt-2 text-lg text-muted-foreground">
+          View and manage all tutor profiles, their status, and scheduled
+          classes.
+        </p>
+      </div>
 
-          {/* Stats Cards */}
-          {stats && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-center"
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                        <UserIcon className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
-                          Total Tutors
-                        </CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="pl-0">
-                      <div className="text-3xl font-bold text-card-foreground ml-3">
-                        {stats.total}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                        <CheckCircleIcon className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
-                          Online
-                        </CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="pl-0">
-                      <div className="text-3xl font-bold text-card-foreground ml-3">
-                        {stats.online}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                        <AcademicCapIcon className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
-                          Approved
-                        </CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="pl-0">
-                      <div className="text-3xl font-bold text-card-foreground ml-3">
-                        {stats.approved}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                        <ClockIcon className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
-                          Pending
-                        </CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="pl-0">
-                      <div className="text-3xl font-bold text-card-foreground ml-3">
-                        {stats.pending}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Search and Filter */}
+      {/* Stats Cards */}
+      {stats && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-center"
+        >
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <MagnifyingGlassIcon className="h-5 w-5 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" />
-                      <input
-                        type="text"
-                        placeholder="Search tutors by name, email, or phone..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background"
-                      />
-                    </div>
+            <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
+              <CardHeader className="pb-2">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <UserIcon className="w-6 h-6 text-white" />
                   </div>
-
-                  <div className="flex items-center space-x-2">
-                    <FunnelIcon className="h-5 w-5 text-muted-foreground" />
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="approved">Approved</option>
-                      <option value="pending">Pending</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="no_application">No Application</option>
-                    </select>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
+                      Total Tutors
+                    </CardTitle>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Tutors Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <Card className="shadow-[0_2px_2px_0_#16803D] border-0 overflow-hidden">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                    <UserIcon className="w-4 h-4 text-white" />
-                  </div>
-                  <span>Tutors ({filteredTutors.length})</span>
-                </CardTitle>
               </CardHeader>
-
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-border">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Tutor
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Contact
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Joined
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-card divide-y divide-border">
-                      {filteredTutors.map((tutor) => (
-                        <tr key={tutor.id} className="hover:bg-muted/50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                                {tutor.profile_image_url ? (
-                                  <img
-                                    src={tutor.profile_image_url}
-                                    alt={tutor.full_name}
-                                    className="h-10 w-10 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <span className="text-sm font-medium text-card-foreground">
-                                    {tutor.full_name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")
-                                      .toUpperCase()}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-card-foreground">
-                                  {tutor.full_name}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {tutor.qualification || "No qualification"}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-card-foreground">
-                              {tutor.email}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {tutor.phone || "No phone"}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {getStatusBadge(tutor)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                            {formatDate(tutor.created_at)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-3">
-                              {/* View Details Button */}
-                              <button
-                                onClick={() => handleViewTutor(tutor)}
-                                className="inline-flex items-center justify-center p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 border border-blue-500/20"
-                                title="View Details"
-                              >
-                                <EyeIcon className="h-5 w-5" />
-                              </button>
-
-                              {/* View Classes Button */}
-                              <button
-                                onClick={() => handleViewClasses(tutor)}
-                                className="inline-flex items-center justify-center p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 border border-green-500/20"
-                                title="View Classes"
-                              >
-                                <CalendarDaysIcon className="h-5 w-5" />
-                              </button>
-
-                              {/* Activate/Deactivate Button */}
-                              <button
-                                onClick={() =>
-                                  handleUpdateStatus(tutor.id || tutor.user_id, !tutor.is_active)
-                                }
-                                disabled={updatingStatus === (tutor.id || tutor.user_id)}
-                                className={`inline-flex items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 border ${
-                                  tutor.is_active
-                                    ? "bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 focus:ring-red-500/50 border-red-500/20"
-                                    : "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 focus:ring-green-500/50 border-green-500/20"
-                                } ${
-                                  updatingStatus === (tutor.id || tutor.user_id)
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                                }`}
-                                title={
-                                  tutor.is_active ? "Deactivate" : "Activate"
-                                }
-                              >
-                                {updatingStatus === (tutor.id || tutor.user_id) ? (
-                                  <LoadingSpinner size="sm" />
-                                ) : tutor.is_active ? (
-                                  <XCircleIcon className="h-5 w-5" />
-                                ) : (
-                                  <CheckCircleIcon className="h-5 w-5" />
-                                )}
-                              </button>
-
-                              {/* Delete Button */}
-                              <button
-                                onClick={() => handleDeleteTutor(tutor.id || tutor.user_id)}
-                                disabled={deletingTutor === (tutor.id || tutor.user_id)}
-                                className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 border border-red-500/20 ${
-                                  deletingTutor === (tutor.id || tutor.user_id)
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                                }`}
-                                title="Delete"
-                              >
-                                {deletingTutor === (tutor.id || tutor.user_id) ? (
-                                  <LoadingSpinner size="sm" />
-                                ) : (
-                                  <TrashIcon className="h-5 w-5" />
-                                )}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {filteredTutors.length === 0 && (
-                  <div className="text-center py-12">
-                    <UserIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-2 text-sm font-medium text-foreground">
-                      No tutors found
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {searchTerm || filterStatus !== "all"
-                        ? "Try adjusting your search or filter criteria."
-                        : "No tutors have been registered yet."}
-                    </p>
+              <CardContent className="pt-0">
+                <div className="pl-0">
+                  <div className="text-3xl font-bold text-card-foreground ml-3">
+                    {stats.total}
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Tutor Details Modal */}
-          {showTutorModal && selectedTutor && (
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
-              <div className="relative top-8 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-6 border-b border-border">
-                  <h2 className="text-xl font-semibold text-card-foreground">
-                    Tutor Details
-                  </h2>
-                  <button
-                    onClick={() => setShowTutorModal(false)}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <XCircleIcon className="h-6 w-6" />
-                  </button>
-                </div>
-
-                <div className="overflow-y-auto max-h-[calc(85vh-120px)]">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Basic Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-card-foreground">
-                        Basic Information
-                      </h3>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-                          {selectedTutor.profile_image_url ? (
-                            <img
-                              src={selectedTutor.profile_image_url}
-                              alt={selectedTutor.full_name}
-                              className="h-16 w-16 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-lg font-medium text-card-foreground">
-                              {selectedTutor.full_name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="text-lg font-medium text-card-foreground">
-                            {selectedTutor.full_name}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            {selectedTutor.role}
-                          </p>
-                          {getStatusBadge(selectedTutor)}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <EnvelopeIcon className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-card-foreground">
-                            {selectedTutor.email}
-                          </span>
-                        </div>
-                        {selectedTutor.phone && (
-                          <div className="flex items-center space-x-2">
-                            <PhoneIcon className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-card-foreground">
-                              {selectedTutor.phone}
-                            </span>
-                          </div>
-                        )}
-                        {selectedTutor.address && (
-                          <div className="flex items-center space-x-2">
-                            <MapPinIcon className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-card-foreground">
-                              {selectedTutor.address}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Professional Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-card-foreground">
-                        Professional Information
-                      </h3>
-
-                      <div className="space-y-2">
-                        {selectedTutor.qualification && (
-                          <div>
-                            <span className="text-sm font-medium text-muted-foreground">
-                              Qualification:
-                            </span>
-                            <p className="text-sm text-card-foreground">
-                              {selectedTutor.qualification}
-                            </p>
-                          </div>
-                        )}
-
-                        {selectedTutor.experience_years && (
-                          <div>
-                            <span className="text-sm font-medium text-muted-foreground">
-                              Experience:
-                            </span>
-                            <p className="text-sm text-card-foreground">
-                              {selectedTutor.experience_years} years
-                            </p>
-                          </div>
-                        )}
-
-                        {selectedTutor.hourly_rate && (
-                          <div>
-                            <span className="text-sm font-medium text-muted-foreground">
-                              Hourly Rate:
-                            </span>
-                            <p className="text-sm text-card-foreground">
-                              {formatCurrency(selectedTutor.hourly_rate)}
-                            </p>
-                          </div>
-                        )}
-
-                        {selectedTutor.subjects &&
-                          selectedTutor.subjects.length > 0 && (
-                            <div>
-                              <span className="text-sm font-medium text-muted-foreground">
-                                Subjects:
-                              </span>
-                              <p className="text-sm text-card-foreground">
-                                {selectedTutor.subjects.join(", ")}
-                              </p>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-
-                    {/* Additional Information */}
-                    <div className="md:col-span-2 space-y-4">
-                      {selectedTutor.bio && (
-                        <div>
-                          <h3 className="text-lg font-medium text-card-foreground">
-                            Bio
-                          </h3>
-                          <p className="text-sm text-card-foreground mt-2">
-                            {selectedTutor.bio}
-                          </p>
-                        </div>
-                      )}
-
-                      {selectedTutor.availability && (
-                        <div>
-                          <h3 className="text-lg font-medium text-card-foreground">
-                            Availability
-                          </h3>
-                          <p className="text-sm text-card-foreground mt-2">
-                            {selectedTutor.availability}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <span className="text-sm font-medium text-muted-foreground">
-                            Profile Completed:
-                          </span>
-                          <p className="text-sm text-card-foreground">
-                            {selectedTutor.profile_completed ? "Yes" : "No"}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-sm font-medium text-muted-foreground">
-                            Last Login:
-                          </span>
-                          <p className="text-sm text-card-foreground">
-                            {formatDate(selectedTutor.last_login)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
+              <CardHeader className="pb-2">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <CheckCircleIcon className="w-6 h-6 text-white" />
                   </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
+                      Online
+                    </CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="pl-0">
+                  <div className="text-3xl font-bold text-card-foreground ml-3">
+                    {stats.online}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
+              <CardHeader className="pb-2">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <AcademicCapIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
+                      Approved
+                    </CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="pl-0">
+                  <div className="text-3xl font-bold text-card-foreground ml-3">
+                    {stats.approved}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px]">
+              <CardHeader className="pb-2">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <ClockIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
+                      Pending
+                    </CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="pl-0">
+                  <div className="text-3xl font-bold text-card-foreground ml-3">
+                    {stats.pending}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Search and Filter */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <Card className="shadow-[0_2px_2px_0_#16803D] border-0">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <MagnifyingGlassIcon className="h-5 w-5 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search tutors by name, email, or phone..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background"
+                  />
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Tutor Classes Modal */}
-          {showClassesModal && selectedTutor && (
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
-              <div className="relative top-8 mx-auto p-5 border w-full max-w-6xl shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
-                <div className="flex items-center justify-between mb-4 border-b border-border pb-4">
-                  <h2 className="text-xl font-semibold text-card-foreground">
-                    Classes by {selectedTutor.full_name}
-                  </h2>
-                  <button
-                    onClick={() => setShowClassesModal(false)}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <XCircleIcon className="h-6 w-6" />
-                  </button>
+              <div className="flex items-center space-x-2">
+                <FunnelIcon className="h-5 w-5 text-muted-foreground" />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background"
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="approved">Approved</option>
+                  <option value="pending">Pending</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="no_application">No Application</option>
+                </select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Tutors Table */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <Card className="shadow-[0_2px_2px_0_#16803D] border-0 overflow-hidden">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                <UserIcon className="w-4 h-4 text-white" />
+              </div>
+              <span>Tutors ({filteredTutors.length})</span>
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-border">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Tutor
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Joined
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-card divide-y divide-border">
+                  {filteredTutors.map((tutor) => (
+                    <tr key={tutor.id || tutor.user_id} className="hover:bg-muted/50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                            {tutor.profile_image_url ? (
+                              <img
+                                src={tutor.profile_image_url}
+                                alt={tutor.full_name}
+                                className="h-10 w-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-sm font-medium text-card-foreground">
+                                {tutor.full_name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-card-foreground">
+                              {tutor.full_name}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {tutor.qualification || "No qualification"}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-card-foreground">
+                          {tutor.email}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {tutor.phone || "No phone"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getStatusBadge(tutor)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {formatDate(tutor.created_at)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-3">
+                          {/* View Details Button */}
+                          <button
+                            onClick={() => handleViewTutor(tutor)}
+                            className="inline-flex items-center justify-center p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 border border-blue-500/20"
+                            title="View Details"
+                          >
+                            <EyeIcon className="h-5 w-5" />
+                          </button>
+
+                          {/* View Classes Button */}
+                          <button
+                            onClick={() => handleViewClasses(tutor)}
+                            className="inline-flex items-center justify-center p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 border border-green-500/20"
+                            title="View Classes"
+                          >
+                            <CalendarDaysIcon className="h-5 w-5" />
+                          </button>
+
+                          {/* Activate/Deactivate Button */}
+                          <button
+                            onClick={() =>
+                              handleUpdateStatus(tutor.id || tutor.user_id, !tutor.is_active)
+                            }
+                            disabled={updatingStatus === (tutor.id || tutor.user_id)}
+                            className={`inline-flex items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 border ${tutor.is_active
+                              ? "bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 focus:ring-red-500/50 border-red-500/20"
+                              : "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 focus:ring-green-500/50 border-green-500/20"
+                              } ${updatingStatus === (tutor.id || tutor.user_id)
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                              }`}
+                            title={
+                              tutor.is_active ? "Deactivate" : "Activate"
+                            }
+                          >
+                            {updatingStatus === (tutor.id || tutor.user_id) ? (
+                              <LoadingSpinner size="sm" />
+                            ) : tutor.is_active ? (
+                              <XCircleIcon className="h-5 w-5" />
+                            ) : (
+                              <CheckCircleIcon className="h-5 w-5" />
+                            )}
+                          </button>
+
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDeleteTutor(tutor.id || tutor.user_id)}
+                            disabled={deletingTutor === (tutor.id || tutor.user_id)}
+                            className={`inline-flex items-center justify-center p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 border border-red-500/20 ${deletingTutor === (tutor.id || tutor.user_id)
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                              }`}
+                            title="Delete"
+                          >
+                            {deletingTutor === (tutor.id || tutor.user_id) ? (
+                              <LoadingSpinner size="sm" />
+                            ) : (
+                              <TrashIcon className="h-5 w-5" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredTutors.length === 0 && (
+              <div className="text-center py-12">
+                <UserIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-2 text-sm font-medium text-foreground">
+                  No tutors found
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {searchTerm || filterStatus !== "all"
+                    ? "Try adjusting your search or filter criteria."
+                    : "No tutors have been registered yet."}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Tutor Details Modal */}
+      {showTutorModal && selectedTutor && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-8 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="text-xl font-semibold text-card-foreground">
+                Tutor Details
+              </h2>
+              <button
+                onClick={() => setShowTutorModal(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <XCircleIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto max-h-[calc(85vh-120px)]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-card-foreground">
+                    Basic Information
+                  </h3>
+
+                  <div className="flex items-center space-x-3">
+                    <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                      {selectedTutor.profile_image_url ? (
+                        <img
+                          src={selectedTutor.profile_image_url}
+                          alt={selectedTutor.full_name}
+                          className="h-16 w-16 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-lg font-medium text-card-foreground">
+                          {selectedTutor.full_name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-medium text-card-foreground">
+                        {selectedTutor.full_name}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedTutor.role}
+                      </p>
+                      {getStatusBadge(selectedTutor)}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <EnvelopeIcon className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-card-foreground">
+                        {selectedTutor.email}
+                      </span>
+                    </div>
+                    {selectedTutor.phone && (
+                      <div className="flex items-center space-x-2">
+                        <PhoneIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-card-foreground">
+                          {selectedTutor.phone}
+                        </span>
+                      </div>
+                    )}
+                    {selectedTutor.address && (
+                      <div className="flex items-center space-x-2">
+                        <MapPinIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-card-foreground">
+                          {selectedTutor.address}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="overflow-y-auto max-h-[calc(85vh-120px)]">
-                  {tutorClasses.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {tutorClasses.map((classItem) => (
-                        <div
-                          key={classItem.id}
-                          className="bg-muted/50 rounded-lg p-4 border"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-medium text-card-foreground">
-                              {classItem.title}
-                            </h3>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                classItem.status === "active" || classItem.status === "in_progress" || classItem.status === "scheduled"
-                                  ? "bg-green-500/20 text-green-300 border border-green-500/30"
-                                  : classItem.status === "cancelled"
-                                  ? "bg-red-500/20 text-red-300 border border-red-500/30"
-                                  : classItem.status === "completed"
-                                  ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                                  : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
-                              }`}
-                            >
-                              {classItem.status}
-                            </span>
-                          </div>
+                {/* Professional Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-card-foreground">
+                    Professional Information
+                  </h3>
 
-                          <div className="space-y-1 text-sm text-muted-foreground">
-                            <div className="flex items-center space-x-1">
-                              <CalendarDaysIcon className="h-4 w-4" />
-                              <span>{formatDate(classItem.date)}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <ClockIcon className="h-4 w-4" />
-                              <span>
-                                {classItem.start_time} - {classItem.end_time}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <AcademicCapIcon className="h-4 w-4" />
-                              <span>{classItem.class_type.name}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <UserGroupIcon className="h-4 w-4" />
-                              <span>
-                                {classItem.current_students}/
-                                {classItem.max_students} students
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <CurrencyDollarIcon className="h-4 w-4" />
-                              <span>
-                                {formatCurrency(classItem.price_per_session)}
-                              </span>
-                            </div>
-                          </div>
+                  <div className="space-y-2">
+                    {selectedTutor.qualification && (
+                      <div>
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Qualification:
+                        </span>
+                        <p className="text-sm text-card-foreground">
+                          {selectedTutor.qualification}
+                        </p>
+                      </div>
+                    )}
 
-                          {classItem.jitsi_meeting && (
-                            <div className="mt-3 pt-3 border-t border-border">
-                              <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                                <VideoCameraIcon className="h-4 w-4" />
-                                <span>Jitsi Meeting Available</span>
-                              </div>
-                              <a
-                                href={classItem.jitsi_meeting.meeting_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center space-x-1 text-blue-400 hover:text-blue-300 text-sm mt-1 transition-colors"
-                              >
-                                <LinkIcon className="h-4 w-4" />
-                                <span>Join Meeting</span>
-                              </a>
-                            </div>
-                          )}
+                    {selectedTutor.experience_years && (
+                      <div>
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Experience:
+                        </span>
+                        <p className="text-sm text-card-foreground">
+                          {selectedTutor.experience_years} years
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedTutor.hourly_rate && (
+                      <div>
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Hourly Rate:
+                        </span>
+                        <p className="text-sm text-card-foreground">
+                          {formatCurrency(selectedTutor.hourly_rate)}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedTutor.subjects &&
+                      selectedTutor.subjects.length > 0 && (
+                        <div>
+                          <span className="text-sm font-medium text-muted-foreground">
+                            Subjects:
+                          </span>
+                          <p className="text-sm text-card-foreground">
+                            {selectedTutor.subjects.join(", ")}
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <CalendarDaysIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                      <h3 className="mt-2 text-sm font-medium text-foreground">
-                        No classes found
+                      )}
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="md:col-span-2 space-y-4">
+                  {selectedTutor.bio && (
+                    <div>
+                      <h3 className="text-lg font-medium text-card-foreground">
+                        Bio
                       </h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        This tutor hasn't scheduled any classes yet.
+                      <p className="text-sm text-card-foreground mt-2">
+                        {selectedTutor.bio}
                       </p>
                     </div>
                   )}
+
+                  {selectedTutor.availability && (
+                    <div>
+                      <h3 className="text-lg font-medium text-card-foreground">
+                        Availability
+                      </h3>
+                      <p className="text-sm text-card-foreground mt-2">
+                        {selectedTutor.availability}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Profile Completed:
+                      </span>
+                      <p className="text-sm text-card-foreground">
+                        {selectedTutor.profile_completed ? "Yes" : "No"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Last Login:
+                      </span>
+                      <p className="text-sm text-card-foreground">
+                        {formatDate(selectedTutor.last_login)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Session Permissions Section */}
+                  <div className="border-t border-border pt-4 mt-4">
+                    <h3 className="text-lg font-medium text-card-foreground mb-3">
+                      Session Permissions
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Select which session types this tutor can schedule.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      {[
+                        { id: 'one-on-one' as const, label: 'One-on-One', icon: '👤' },
+                        { id: 'group' as const, label: 'Group', icon: '👥' },
+                        { id: 'consultation' as const, label: 'Consultation', icon: '💬' },
+                      ].map((type) => (
+                        <label
+                          key={type.id}
+                          className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${editingSessionTypes.includes(type.id)
+                            ? 'border-green-500 bg-green-500/10'
+                            : 'border-border hover:border-green-500/50'
+                            }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={editingSessionTypes.includes(type.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setEditingSessionTypes([...editingSessionTypes, type.id]);
+                              } else {
+                                setEditingSessionTypes(editingSessionTypes.filter((t) => t !== type.id));
+                              }
+                            }}
+                            className="sr-only"
+                          />
+                          <span className="text-xl mr-2">{type.icon}</span>
+                          <span className="font-medium text-foreground text-sm">{type.label}</span>
+                          {editingSessionTypes.includes(type.id) && (
+                            <span className="ml-auto text-green-500">✓</span>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      {editingSessionTypes.length === 0 && (
+                        <p className="text-xs text-red-500">At least one session type required</p>
+                      )}
+                      <button
+                        onClick={handleSaveSessionTypes}
+                        disabled={savingSessionTypes || editingSessionTypes.length === 0}
+                        className={`px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-500 hover:to-green-600 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] ml-auto ${(savingSessionTypes || editingSessionTypes.length === 0) ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                      >
+                        {savingSessionTypes ? 'Saving...' : 'Save Permissions'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        </div>
+      )}
+
+      {/* Tutor Classes Modal */}
+      {showClassesModal && selectedTutor && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-8 mx-auto p-5 border w-full max-w-6xl shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 border-b border-border pb-4">
+              <h2 className="text-xl font-semibold text-card-foreground">
+                Classes by {selectedTutor.full_name}
+              </h2>
+              <button
+                onClick={() => setShowClassesModal(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <XCircleIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto max-h-[calc(85vh-120px)]">
+              {tutorClasses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {tutorClasses.map((classItem) => (
+                    <div
+                      key={classItem.id}
+                      className="bg-muted/50 rounded-lg p-4 border"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-card-foreground">
+                          {classItem.title}
+                        </h3>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${classItem.status === "active" || classItem.status === "in_progress" || classItem.status === "scheduled"
+                            ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                            : classItem.status === "cancelled"
+                              ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                              : classItem.status === "completed"
+                                ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                                : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
+                            }`}
+                        >
+                          {classItem.status}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <CalendarDaysIcon className="h-4 w-4" />
+                          <span>{formatDate(classItem.date)}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <ClockIcon className="h-4 w-4" />
+                          <span>
+                            {classItem.start_time} - {classItem.end_time}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <AcademicCapIcon className="h-4 w-4" />
+                          <span>{classItem.class_type.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <UserGroupIcon className="h-4 w-4" />
+                          <span>
+                            {classItem.current_students}/
+                            {classItem.max_students} students
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <CurrencyDollarIcon className="h-4 w-4" />
+                          <span>
+                            {formatCurrency(classItem.price_per_session)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {classItem.jitsi_meeting && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                            <VideoCameraIcon className="h-4 w-4" />
+                            <span>Jitsi Meeting Available</span>
+                          </div>
+                          <a
+                            href={classItem.jitsi_meeting.meeting_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center space-x-1 text-blue-400 hover:text-blue-300 text-sm mt-1 transition-colors"
+                          >
+                            <LinkIcon className="h-4 w-4" />
+                            <span>Join Meeting</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <CalendarDaysIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-2 text-sm font-medium text-foreground">
+                    No classes found
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    This tutor hasn't scheduled any classes yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

@@ -34,12 +34,12 @@ export interface GradeLevel {
   display_name: string;
   sort_order: number;
   category:
-    | "preschool"
-    | "elementary"
-    | "middle"
-    | "high"
-    | "college"
-    | "graduate";
+  | "preschool"
+  | "elementary"
+  | "middle"
+  | "high"
+  | "college"
+  | "graduate";
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -115,6 +115,7 @@ export interface UserProfile {
   certifications?: string[];
   languages?: string[];
   profile_completed?: boolean;
+  allowed_session_types?: ('one-on-one' | 'group' | 'consultation')[];
 
   // Parent specific fields
   children_ids?: string[];
@@ -303,6 +304,8 @@ export interface TutorApplication {
   approved_by?: string;
   created_at: string;
   updated_at: string;
+  // Session type preferences
+  preferred_session_types?: ('one-on-one' | 'group' | 'consultation')[];
 }
 
 export interface TutorApplicationFormData {
@@ -324,6 +327,8 @@ export interface TutorApplicationFormData {
   education_level?: string;
   average_weekly_hours?: number;
   expected_hourly_rate?: number;
+  // Session type preferences
+  preferred_session_types: ('one-on-one' | 'group' | 'consultation')[];
 }
 
 export interface TutorApplicationStats {

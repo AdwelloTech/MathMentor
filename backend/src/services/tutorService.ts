@@ -35,6 +35,8 @@ export interface TutorApplication {
   average_weekly_hours?: number;
   expected_hourly_rate?: number;
   based_in_country?: string;
+  // Session type preferences selected during application
+  preferred_session_types?: ('one-on-one' | 'group' | 'consultation')[];
 }
 
 export interface IDVerification {
@@ -481,7 +483,7 @@ export class TutorService {
     } finally {
     }
   }
-  
+
   static async getAllTutorsForAdmin(): Promise<TutorProfile[]> {
     const db = mongoose.connection.db!;
 
@@ -555,6 +557,8 @@ export class TutorService {
           application_status: application?.application_status || null,
           submitted_at: application?.submitted_at || null,
           reviewed_at: application?.reviewed_at || null,
+          // Session type permissions
+          allowed_session_types: user.allowedSessionTypes || profile?.allowed_session_types || null,
         };
       });
 
@@ -562,7 +566,7 @@ export class TutorService {
     } finally {
     }
   }
-  
+
   static async getTutorById(tutorId: string): Promise<TutorProfile | null> {
     const db = mongoose.connection.db!;
 
@@ -1225,29 +1229,30 @@ export class TutorService {
 
       // Delete tutor-related records in all collections
       const userId = tutor.user_id;
-      
+
       // Delete tutor applications
       await db.collection('tutor_applications').deleteMany({ user_id: userId });
-      
+
       // Delete ID verifications
       await db.collection('id_verifications').deleteMany({ user_id: userId });
-      
+
       // Delete classes (should handle cascading deletes of related records)
       await db.collection('tutor_classes').deleteMany({ tutor_id: tutorId });
-      
+
       // Finally delete the profile
       await db.collection('profiles').deleteOne({ _id: new ObjectId(tutorId) });
-      
+
     } finally {
     }
   }
-  
+
   static async updateTutorApplicationStatus(
     userId: string,
     status: 'pending' | 'approved' | 'rejected',
     adminId: string,
     rejectionReason?: string,
-    adminNotes?: string
+    adminNotes?: string,
+    allowedSessionTypes?: ('one-on-one' | 'group' | 'consultation')[]
   ): Promise<TutorApplication> {
     console.log(`🔄 BACKEND: Updating tutor application status - User ID: ${userId}, Status: ${status}, Admin ID: ${adminId}`);
     const db = mongoose.connection.db!;
@@ -1271,16 +1276,29 @@ export class TutorService {
     if (status === 'approved') {
       updateData.approved_by = adminId;
 
-      // Update the user's role to tutor if application is approved
+      // Set allowed session types - default to all 3 if not specified
+      const sessionTypes = allowedSessionTypes && allowedSessionTypes.length > 0
+        ? allowedSessionTypes
+        : ['one-on-one', 'group', 'consultation'];
+
+      // Update the user's role to tutor and set allowed session types
+      await User.findByIdAndUpdate(userId, {
+        allowedSessionTypes: sessionTypes
+      });
+
+      // Also update the profiles collection
       await db.collection('profiles').updateOne(
         { user_id: userId },
         {
           $set: {
             role: 'tutor',
+            allowed_session_types: sessionTypes,
             updated_at: now
           }
         }
       );
+
+      console.log(`✅ BACKEND: Set allowed session types for tutor ${userId}:`, sessionTypes);
     }
 
     const result = await db.collection('tutor_applications').findOneAndUpdate(
@@ -1313,6 +1331,35 @@ export class TutorService {
       ...app,
       _id: app._id.toString()
     })) as unknown as TutorApplication[];
+  }
+
+  // Update allowed session types for an existing tutor (admin function)
+  static async updateTutorSessionTypes(
+    tutorId: string,
+    sessionTypes: ('one-on-one' | 'group' | 'consultation')[]
+  ): Promise<{ success: boolean }> {
+    console.log(`🔄 BACKEND: Updating session types for tutor ${tutorId}:`, sessionTypes);
+    const db = mongoose.connection.db!;
+    const now = new Date().toISOString();
+
+    // Update User model
+    await User.findByIdAndUpdate(tutorId, {
+      allowedSessionTypes: sessionTypes
+    });
+
+    // Also update profiles collection
+    await db.collection('profiles').updateOne(
+      { user_id: tutorId },
+      {
+        $set: {
+          allowed_session_types: sessionTypes,
+          updated_at: now
+        }
+      }
+    );
+
+    console.log(`✅ BACKEND: Updated session types for tutor ${tutorId}`);
+    return { success: true };
   }
 
   // Get tutor application statistics for admin

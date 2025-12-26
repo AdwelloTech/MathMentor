@@ -32,6 +32,9 @@ const tutorApplicationSchema = Joi.object({
   education_level: Joi.string().optional().allow(''),
   average_weekly_hours: Joi.number().optional(),
   expected_hourly_rate: Joi.number().optional(),
+  preferred_session_types: Joi.array().items(
+    Joi.string().valid('one-on-one', 'group', 'consultation')
+  ).min(1).required(),
 });
 
 const router = express.Router();

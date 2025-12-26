@@ -69,9 +69,9 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
   // Initialize form data with profile data if available
   const getInitialFormData = (): TutorApplicationFormData => {
     const profileSubjects = (profile?.subjects || profile?.specializations || []) as string[];
-    const fullName = profile?.full_name || 
-      (profile?.first_name && profile?.last_name 
-        ? `${profile.first_name} ${profile.last_name}`.trim() 
+    const fullName = profile?.full_name ||
+      (profile?.first_name && profile?.last_name
+        ? `${profile.first_name} ${profile.last_name}`.trim()
         : "");
 
     // Map profile subjects to available subjects in the form
@@ -91,6 +91,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
       education_level: profile?.qualification || "",
       average_weekly_hours: undefined,
       expected_hourly_rate: undefined,
+      preferred_session_types: ['one-on-one', 'group', 'consultation'], // All selected by default
     };
   };
 
@@ -215,6 +216,10 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
       newErrors.cv_file = "Please upload your CV";
     }
 
+    if (!formData.preferred_session_types || formData.preferred_session_types.length === 0) {
+      newErrors.preferred_session_types = "Please select at least one session type";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -271,6 +276,7 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
         education_level: formData.education_level?.trim() || undefined,
         average_weekly_hours: formData.average_weekly_hours || undefined,
         expected_hourly_rate: formData.expected_hourly_rate || undefined,
+        preferred_session_types: formData.preferred_session_types,
       };
 
       await db.tutorApplications.create(applicationData);
@@ -348,6 +354,63 @@ const TutorApplicationForm: React.FC<TutorApplicationFormProps> = ({
           onDrop={cvUpload.handleDrop}
           onRemoveFile={cvUpload.removeUploadedFile}
         />
+
+        {/* Session Type Preferences */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-secondary-foreground mb-2">
+              Session Types You're Interested In <span className="text-red-500">*</span>
+            </label>
+            <p className="text-sm text-muted-foreground mb-3">
+              Select the types of sessions you'd like to teach. The admin will approve which types you can schedule.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { id: 'one-on-one', label: 'One-on-One', desc: '60 min, 1 student', icon: '👤' },
+                { id: 'group', label: 'Group', desc: '60 min, up to 5 students', icon: '👥' },
+                { id: 'consultation', label: 'Consultation', desc: '30 min, 1 student', icon: '💬' },
+              ].map((type) => (
+                <label
+                  key={type.id}
+                  className={`flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${formData.preferred_session_types.includes(type.id as any)
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                    }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.preferred_session_types.includes(type.id as any)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        handleInputChange('preferred_session_types', [
+                          ...formData.preferred_session_types,
+                          type.id,
+                        ]);
+                      } else {
+                        handleInputChange(
+                          'preferred_session_types',
+                          formData.preferred_session_types.filter((t) => t !== type.id)
+                        );
+                      }
+                    }}
+                    className="sr-only"
+                  />
+                  <span className="text-2xl mr-3">{type.icon}</span>
+                  <div>
+                    <span className="font-medium text-foreground">{type.label}</span>
+                    <p className="text-xs text-muted-foreground mt-1">{type.desc}</p>
+                  </div>
+                  {formData.preferred_session_types.includes(type.id as any) && (
+                    <span className="ml-auto text-primary">✓</span>
+                  )}
+                </label>
+              ))}
+            </div>
+            {errors.preferred_session_types && (
+              <p className="text-sm text-red-500 mt-2">{errors.preferred_session_types}</p>
+            )}
+          </div>
+        </div>
 
         <div className="space-y-4">
           <label

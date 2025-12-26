@@ -4,6 +4,7 @@ import { TutorService } from '../services/tutorService';
 import { ClassService } from '../services/classService';
 import { FlashcardService } from '../services/flashcardService';
 import { UserService } from '../services/userService';
+import { emitToUser } from '../realtime/socket';
 
 const router = express.Router();
 
@@ -241,7 +242,7 @@ router.get('/tutor-applications/stats', authenticate, adminGuard, async (req, re
 router.put('/tutor-applications/:userId', authenticate, adminGuard, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { status, rejection_reason, admin_notes } = req.body;
+    const { status, rejection_reason, admin_notes, allowed_session_types } = req.body;
     console.log(`🔄 API: Admin updating tutor application - User ID: ${userId}, Status: ${status}, Admin ID: ${req.user!.id}`);
 
     if (!status || !['pending', 'approved', 'rejected'].includes(status)) {
@@ -256,8 +257,16 @@ router.put('/tutor-applications/:userId', authenticate, adminGuard, async (req, 
       status,
       req.user!.id,
       rejection_reason,
-      admin_notes
+      admin_notes,
+      allowed_session_types
     );
+
+    // Emit real-time update if session types were set during approval
+    if (status === 'approved' && allowed_session_types) {
+      emitToUser(userId, 'session-types:updated', {
+        allowed_session_types
+      });
+    }
 
     res.json({
       success: true,
@@ -268,6 +277,49 @@ router.put('/tutor-applications/:userId', authenticate, adminGuard, async (req, 
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to update tutor application status'
+    });
+  }
+});
+
+// Update session types for an existing tutor
+router.put('/tutors/:tutorId/session-types', authenticate, adminGuard, async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+    const { session_types } = req.body;
+
+    if (!session_types || !Array.isArray(session_types)) {
+      return res.status(400).json({
+        success: false,
+        error: 'session_types must be an array'
+      });
+    }
+
+    // Validate session types
+    const validTypes = ['one-on-one', 'group', 'consultation'];
+    const invalidTypes = session_types.filter((t: string) => !validTypes.includes(t));
+    if (invalidTypes.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid session types: ${invalidTypes.join(', ')}. Valid types are: ${validTypes.join(', ')}`
+      });
+    }
+
+    await TutorService.updateTutorSessionTypes(tutorId, session_types);
+
+    // Emit real-time update to the tutor
+    emitToUser(tutorId, 'session-types:updated', {
+      allowed_session_types: session_types
+    });
+
+    res.json({
+      success: true,
+      data: { tutorId, session_types }
+    });
+  } catch (error: any) {
+    console.error('Error updating tutor session types:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to update tutor session types'
     });
   }
 });

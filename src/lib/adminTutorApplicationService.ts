@@ -30,6 +30,8 @@ export interface TutorApplication {
   average_weekly_hours: number | null;
   expected_hourly_rate: number | null;
   based_in_country: string;
+  // Session type preferences
+  preferred_session_types?: ('one-on-one' | 'group' | 'consultation')[];
 }
 
 export interface ApplicationStats {
@@ -111,6 +113,8 @@ export class AdminTutorApplicationService {
             average_weekly_hours: app.average_weekly_hours,
             expected_hourly_rate: app.expected_hourly_rate,
             based_in_country: app.based_in_country || "Not specified",
+            // Session type preferences
+            preferred_session_types: app.preferred_session_types || [],
           } as TutorApplication;
         } catch (transformError) {
           console.error(
@@ -151,7 +155,8 @@ export class AdminTutorApplicationService {
   // Approve an application
   static async approveApplication(
     applicationId: string,
-    adminNotes?: string
+    adminNotes?: string,
+    allowedSessionTypes?: ('one-on-one' | 'group' | 'consultation')[]
   ): Promise<boolean> {
     try {
       console.log("Approving application:", applicationId);
@@ -166,6 +171,7 @@ export class AdminTutorApplicationService {
       const updateData = {
         status: "approved",
         admin_notes: adminNotes,
+        allowed_session_types: allowedSessionTypes || ['one-on-one', 'group', 'consultation'],
       };
 
       await apiClient.put(`/api/admin/tutor-applications/${application.user_id}`, updateData);

@@ -51,6 +51,8 @@ const ManageTutorApplicationsPage: React.FC = () => {
     rejected: 0,
     recentApplications: 0,
   });
+  // Session types the admin selects to approve for the tutor
+  const [selectedSessionTypes, setSelectedSessionTypes] = useState<('one-on-one' | 'group' | 'consultation')[]>(['one-on-one', 'group', 'consultation']);
 
   useEffect(() => {
     loadData();
@@ -113,6 +115,8 @@ const ManageTutorApplicationsPage: React.FC = () => {
     setSelectedApplication(application);
     setActionType("approve");
     setAdminNotes("");
+    // Pre-fill with tutor's preferred session types, or all types if not specified
+    setSelectedSessionTypes(application.preferred_session_types || ['one-on-one', 'group', 'consultation']);
     setShowActionModal(true);
   };
 
@@ -272,10 +276,11 @@ const ManageTutorApplicationsPage: React.FC = () => {
       let success = false;
 
       if (actionType === "approve") {
-        console.log('✅ ADMIN APPROVING TUTOR APPLICATION - User ID:', selectedApplication.user_id, 'Application ID:', selectedApplication.id);
+        console.log('✅ ADMIN APPROVING TUTOR APPLICATION - User ID:', selectedApplication.user_id, 'Application ID:', selectedApplication.id, 'Session Types:', selectedSessionTypes);
         success = await AdminTutorApplicationService.approveApplication(
           selectedApplication.id,
-          adminNotes || undefined
+          adminNotes || undefined,
+          selectedSessionTypes
         );
 
         if (success) {
@@ -413,629 +418,704 @@ const ManageTutorApplicationsPage: React.FC = () => {
       animate={{ opacity: 1 }}
       className="space-y-8"
     >
-          {/* Header */}
-          <div className="pt-6">
-            <h1 className="text-3xl font-bold text-card-foreground">
-              Manage Tutor Applications
-            </h1>
-            <p className="mt-2 text-lg text-muted-foreground">
-              Review and manage tutor applications submitted by potential
-              educators.
-            </p>
-          </div>
+      {/* Header */}
+      <div className="pt-6">
+        <h1 className="text-3xl font-bold text-card-foreground">
+          Manage Tutor Applications
+        </h1>
+        <p className="mt-2 text-lg text-muted-foreground">
+          Review and manage tutor applications submitted by potential
+          educators.
+        </p>
+      </div>
 
-          {/* Stats */}
+      {/* Stats */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-center"
+      >
+        {dashboardStats.map((stat, index) => (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-center"
-          >
-            {dashboardStats.map((stat, index) => (
-              <motion.div
-                key={stat.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
-              >
-                <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px] dark:bg-card dark:border-border">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                        <stat.icon className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
-                          {stat.name}
-                        </CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="pl-0">
-                      <div className="flex items-start space-x-2">
-                        <div className="text-3xl font-bold text-card-foreground ml-3">
-                          {stat.value}
-                        </div>
-                        <div
-                          className={`ml-2 flex items-baseline text-sm font-semibold ${
-                            stat.changeType === "positive"
-                              ? "text-green-400"
-                              : "text-red-400"
-                          }`}
-                        >
-                          {stat.change}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* Applications Management Section */}
-          <motion.div
+            key={stat.name}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+            transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
           >
-            <Card className="shadow-[0_2px_2px_0_#16803D] border-0 dark:bg-card dark:border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
-                    <DocumentTextIcon className="w-4 h-4 text-white" />
+            <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-[0_2px_2px_0_#16803D] h-[152px] w-[311px] dark:bg-card dark:border-border">
+              <CardHeader className="pb-2">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-[#16803D] w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <stat.icon className="w-6 h-6 text-white" />
                   </div>
-                  <span>Tutor Applications</span>
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                {/* Search and Filter */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <input
-                        type="text"
-                        placeholder="Search applications..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
-                      />
-                    </div>
-                  </div>
-                  <div className="sm:w-48">
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                    </select>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-card-foreground max-w-xs">
+                      {stat.name}
+                    </CardTitle>
                   </div>
                 </div>
-
-                {/* Applications Table */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-border">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Applicant
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Subjects
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Submitted
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-card divide-y divide-border">
-                      {filteredApplications.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={5}
-                            className="px-6 py-4 text-center text-muted-foreground"
-                          >
-                            {applications.length === 0
-                              ? "No applications found"
-                              : "No applications match your search criteria"}
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredApplications.map((application) => (
-                          <tr key={application.id} className="hover:bg-muted/50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                                  <span className="text-sm font-medium text-muted-foreground">
-                                    {application.full_name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
-                                  </span>
-                                </div>
-                                <div className="ml-4">
-                                  <div className="text-sm font-medium text-card-foreground">
-                                    {application.full_name}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {application.applicant_email}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {application.phone_number}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex flex-wrap gap-1">
-                                {application.subjects
-                                  .slice(0, 3)
-                                  .map((subject, index) => (
-                                    <span
-                                      key={index}
-                                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                                    >
-                                      {subject}
-                                    </span>
-                                  ))}
-                                {application.subjects.length > 3 && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
-                                    +{application.subjects.length - 3} more
-                                  </span>
-                                )}
-                              </div>
-                              {application.specializes_learning_disabilities && (
-                                <div className="mt-1">
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                                    Learning Disabilities Specialist
-                                  </span>
-                                </div>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {getStatusBadge(application.application_status)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                              {formatDate(application.submitted_at)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() =>
-                                    handleViewApplication(application)
-                                  }
-                                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#34A853] to-[#6DD47E] rounded-lg hover:from-[#2E8B47] hover:to-[#5BC06F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34A853] transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
-                                  title="View Details"
-                                >
-                                  <EyeIcon className="h-4 w-4 mr-1" />
-                                  View
-                                </button>
-                                {application.application_status ===
-                                  "pending" && (
-                                  <>
-                                    <button
-                                      onClick={() =>
-                                        handleApproveApplication(application)
-                                      }
-                                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
-                                      title="Approve Application"
-                                    >
-                                      <CheckIcon className="h-4 w-4 mr-1" />
-                                      Approve
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleRejectApplication(application)
-                                      }
-                                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-500 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
-                                      title="Reject Application"
-                                    >
-                                      <XMarkIcon className="h-4 w-4 mr-1" />
-                                      Reject
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="pl-0">
+                  <div className="flex items-start space-x-2">
+                    <div className="text-3xl font-bold text-card-foreground ml-3">
+                      {stat.value}
+                    </div>
+                    <div
+                      className={`ml-2 flex items-baseline text-sm font-semibold ${stat.changeType === "positive"
+                        ? "text-green-400"
+                        : "text-red-400"
+                        }`}
+                    >
+                      {stat.change}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
+        ))}
+      </motion.div>
 
-          {/* Application Details Modal */}
-          {showApplicationModal && selectedApplication && (
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
-              <div className="relative top-8 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
-                <div className="mt-3">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-card-foreground">
-                      Application Details: {selectedApplication.full_name}
-                    </h3>
-                    <button
-                      onClick={() => setShowApplicationModal(false)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <XMarkIcon className="h-6 w-6" />
-                    </button>
-                  </div>
+      {/* Applications Management Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <Card className="shadow-[0_2px_2px_0_#16803D] border-0 dark:bg-card dark:border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <div className="bg-[#16803D] w-8 h-8 rounded-lg flex items-center justify-center">
+                <DocumentTextIcon className="w-4 h-4 text-white" />
+              </div>
+              <span>Tutor Applications</span>
+            </CardTitle>
+          </CardHeader>
 
-                  <div className="space-y-6">
-                    {/* Personal Information */}
-                    <div>
-                      <h4 className="text-md font-medium text-card-foreground mb-3">
-                        Personal Information
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center">
-                          <UserGroupIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span className="text-card-foreground">
-                            <strong>Name:</strong>{" "}
-                            {selectedApplication.full_name}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <EnvelopeIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span className="text-card-foreground">
-                            <strong>Email:</strong>{" "}
-                            {selectedApplication.applicant_email}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <PhoneIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span className="text-card-foreground">
-                            <strong>Phone:</strong>{" "}
-                            {selectedApplication.phone_number}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span className="text-card-foreground">
-                            <strong>Submitted:</strong>{" "}
-                            {formatDate(selectedApplication.submitted_at)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+          <CardContent>
+            {/* Search and Filter */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="flex-1">
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search applications..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+              <div className="sm:w-48">
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
 
-                    {/* Teaching Information */}
-                    <div>
-                      <h4 className="text-md font-medium text-card-foreground mb-3">
-                        Teaching Information
-                      </h4>
-                      <div className="space-y-3">
-                        <div>
-                          <strong>Subjects:</strong>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {selectedApplication.subjects.map(
-                              (subject, index) => (
+            {/* Applications Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-border">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Applicant
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Subjects
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Submitted
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-card divide-y divide-border">
+                  {filteredApplications.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-6 py-4 text-center text-muted-foreground"
+                      >
+                        {applications.length === 0
+                          ? "No applications found"
+                          : "No applications match your search criteria"}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredApplications.map((application) => (
+                      <tr key={application.id} className="hover:bg-muted/50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                              <span className="text-sm font-medium text-muted-foreground">
+                                {application.full_name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </span>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-card-foreground">
+                                {application.full_name}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {application.applicant_email}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {application.phone_number}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-wrap gap-1">
+                            {application.subjects
+                              .slice(0, 3)
+                              .map((subject, index) => (
                                 <span
                                   key={index}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
                                 >
                                   {subject}
                                 </span>
-                              )
+                              ))}
+                            {application.subjects.length > 3 && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
+                                +{application.subjects.length - 3} more
+                              </span>
                             )}
                           </div>
-                        </div>
-                        <div>
-                          <strong>Learning Disabilities Specialization:</strong>
-                          <span
-                            className={`ml-2 ${
-                              selectedApplication.specializes_learning_disabilities
-                                ? "text-green-600"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            {selectedApplication.specializes_learning_disabilities
-                              ? "Yes"
-                              : "No"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Additional Information */}
-                    <div>
-                      <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
-                        Additional Information
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center">
-                          <span>
-                            <strong>Postcode:</strong>{" "}
-                            {selectedApplication.postcode}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <span>
-                            <strong>Based in Country:</strong>{" "}
-                            {selectedApplication.based_in_country}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <span>
-                            <strong>Employment Status:</strong>{" "}
-                            {selectedApplication.employment_status ||
-                              "Not specified"}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <span>
-                            <strong>Education Level:</strong>{" "}
-                            {selectedApplication.education_level ||
-                              "Not specified"}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <span>
-                            <strong>Average Weekly Hours:</strong>{" "}
-                            {selectedApplication.average_weekly_hours ||
-                              "Not specified"}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <span>
-                            <strong>Expected Hourly Rate:</strong>{" "}
-                            {selectedApplication.expected_hourly_rate
-                              ? `$${selectedApplication.expected_hourly_rate}`
-                              : "Not specified"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {selectedApplication.past_experience && (
-                        <div className="mt-4">
-                          <strong className="text-card-foreground">Past Experience:</strong>
-                          <div className="bg-muted p-3 rounded-lg mt-2">
-                            <p className="text-sm text-card-foreground">
-                              {selectedApplication.past_experience}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {selectedApplication.weekly_availability && (
-                        <div className="mt-4">
-                          <strong className="text-card-foreground">Weekly Availability:</strong>
-                          <div className="bg-muted p-3 rounded-lg mt-2">
-                            <p className="text-sm text-card-foreground">
-                              {selectedApplication.weekly_availability}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* CV Information */}
-                    <div>
-                      <h4 className="text-md font-medium text-card-foreground mb-3">
-                        CV Information
-                      </h4>
-                      <div className="bg-muted p-4 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-sm font-medium text-card-foreground">
-                              {selectedApplication.cv_file_name}
+                          {application.specializes_learning_disabilities && (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                Learning Disabilities Specialist
+                              </span>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              Size:{" "}
-                              {formatFileSize(selectedApplication.cv_file_size)}
-                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(application.application_status)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                          {formatDate(application.submitted_at)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() =>
+                                handleViewApplication(application)
+                              }
+                              className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#34A853] to-[#6DD47E] rounded-lg hover:from-[#2E8B47] hover:to-[#5BC06F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34A853] transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
+                              title="View Details"
+                            >
+                              <EyeIcon className="h-4 w-4 mr-1" />
+                              View
+                            </button>
+                            {application.application_status ===
+                              "pending" && (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      handleApproveApplication(application)
+                                    }
+                                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
+                                    title="Approve Application"
+                                  >
+                                    <CheckIcon className="h-4 w-4 mr-1" />
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleRejectApplication(application)
+                                    }
+                                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-500 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
+                                    title="Reject Application"
+                                  >
+                                    <XMarkIcon className="h-4 w-4 mr-1" />
+                                    Reject
+                                  </button>
+                                </>
+                              )}
                           </div>
-                          <button
-                            onClick={() =>
-                              handleDownloadCV(
-                                selectedApplication.cv_url,
-                                selectedApplication.cv_file_name
-                              )
-                            }
-                            className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#34A853] to-[#6DD47E] rounded-lg hover:from-[#2E8B47] hover:to-[#5BC06F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34A853] transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
-                          >
-                            <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
-                            Download CV
-                          </button>
-                        </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Application Details Modal */}
+      {showApplicationModal && selectedApplication && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-8 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-card-foreground">
+                  Application Details: {selectedApplication.full_name}
+                </h3>
+                <button
+                  onClick={() => setShowApplicationModal(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Personal Information */}
+                <div>
+                  <h4 className="text-md font-medium text-card-foreground mb-3">
+                    Personal Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center">
+                      <UserGroupIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-card-foreground">
+                        <strong>Name:</strong>{" "}
+                        {selectedApplication.full_name}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <EnvelopeIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-card-foreground">
+                        <strong>Email:</strong>{" "}
+                        {selectedApplication.applicant_email}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <PhoneIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-card-foreground">
+                        <strong>Phone:</strong>{" "}
+                        {selectedApplication.phone_number}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-card-foreground">
+                        <strong>Submitted:</strong>{" "}
+                        {formatDate(selectedApplication.submitted_at)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Teaching Information */}
+                <div>
+                  <h4 className="text-md font-medium text-card-foreground mb-3">
+                    Teaching Information
+                  </h4>
+                  <div className="space-y-3">
+                    <div>
+                      <strong>Subjects:</strong>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedApplication.subjects.map(
+                          (subject, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                            >
+                              {subject}
+                            </span>
+                          )
+                        )}
                       </div>
                     </div>
+                    <div>
+                      <strong>Learning Disabilities Specialization:</strong>
+                      <span
+                        className={`ml-2 ${selectedApplication.specializes_learning_disabilities
+                          ? "text-green-600"
+                          : "text-gray-500"
+                          }`}
+                      >
+                        {selectedApplication.specializes_learning_disabilities
+                          ? "Yes"
+                          : "No"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-                    {/* Additional Notes */}
-                    {selectedApplication.additional_notes && (
+                {/* Additional Information */}
+                <div>
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                    Additional Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Postcode:</strong>{" "}
+                        {selectedApplication.postcode}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Based in Country:</strong>{" "}
+                        {selectedApplication.based_in_country}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Employment Status:</strong>{" "}
+                        {selectedApplication.employment_status ||
+                          "Not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Education Level:</strong>{" "}
+                        {selectedApplication.education_level ||
+                          "Not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Average Weekly Hours:</strong>{" "}
+                        {selectedApplication.average_weekly_hours ||
+                          "Not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span>
+                        <strong>Expected Hourly Rate:</strong>{" "}
+                        {selectedApplication.expected_hourly_rate
+                          ? `$${selectedApplication.expected_hourly_rate}`
+                          : "Not specified"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedApplication.past_experience && (
+                    <div className="mt-4">
+                      <strong className="text-card-foreground">Past Experience:</strong>
+                      <div className="bg-muted p-3 rounded-lg mt-2">
+                        <p className="text-sm text-card-foreground">
+                          {selectedApplication.past_experience}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedApplication.weekly_availability && (
+                    <div className="mt-4">
+                      <strong className="text-card-foreground">Weekly Availability:</strong>
+                      <div className="bg-muted p-3 rounded-lg mt-2">
+                        <p className="text-sm text-card-foreground">
+                          {selectedApplication.weekly_availability}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* CV Information */}
+                <div>
+                  <h4 className="text-md font-medium text-card-foreground mb-3">
+                    CV Information
+                  </h4>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-md font-medium text-card-foreground mb-3">
-                          Additional Notes
-                        </h4>
-                        <div className="bg-muted p-4 rounded-lg">
-                          <p className="text-sm text-card-foreground">
-                            {selectedApplication.additional_notes}
-                          </p>
+                        <div className="text-sm font-medium text-card-foreground">
+                          {selectedApplication.cv_file_name}
                         </div>
+                        <div className="text-sm text-muted-foreground">
+                          Size:{" "}
+                          {formatFileSize(selectedApplication.cv_file_size)}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleDownloadCV(
+                            selectedApplication.cv_url,
+                            selectedApplication.cv_file_name
+                          )
+                        }
+                        className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#34A853] to-[#6DD47E] rounded-lg hover:from-[#2E8B47] hover:to-[#5BC06F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34A853] transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
+                      >
+                        <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                        Download CV
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preferred Session Types */}
+                <div>
+                  <h4 className="text-md font-medium text-card-foreground mb-3">
+                    Preferred Session Types
+                  </h4>
+                  <div className="bg-muted p-4 rounded-lg">
+                    {selectedApplication.preferred_session_types && selectedApplication.preferred_session_types.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedApplication.preferred_session_types.map((type) => (
+                          <span
+                            key={type}
+                            className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-green-500/20 text-green-300 border border-green-500/30"
+                          >
+                            {type === 'one-on-one' && '👤 One-on-One'}
+                            {type === 'group' && '👥 Group'}
+                            {type === 'consultation' && '💬 Consultation'}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No session types specified</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Additional Notes */}
+                {selectedApplication.additional_notes && (
+                  <div>
+                    <h4 className="text-md font-medium text-card-foreground mb-3">
+                      Additional Notes
+                    </h4>
+                    <div className="bg-muted p-4 rounded-lg">
+                      <p className="text-sm text-card-foreground">
+                        {selectedApplication.additional_notes}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Application Status */}
+                <div>
+                  <h4 className="text-md font-medium text-card-foreground mb-3">
+                    Application Status
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <span className="mr-2 text-card-foreground">Status:</span>
+                      {getStatusBadge(
+                        selectedApplication.application_status
+                      )}
+                    </div>
+                    {selectedApplication.reviewed_at && (
+                      <div className="text-sm text-muted-foreground">
+                        Reviewed:{" "}
+                        {formatDate(selectedApplication.reviewed_at)}
                       </div>
                     )}
-
-                    {/* Application Status */}
-                    <div>
-                      <h4 className="text-md font-medium text-card-foreground mb-3">
-                        Application Status
-                      </h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center">
-                          <span className="mr-2 text-card-foreground">Status:</span>
-                          {getStatusBadge(
-                            selectedApplication.application_status
-                          )}
-                        </div>
-                        {selectedApplication.reviewed_at && (
-                          <div className="text-sm text-muted-foreground">
-                            Reviewed:{" "}
-                            {formatDate(selectedApplication.reviewed_at)}
-                          </div>
-                        )}
-                        {selectedApplication.rejection_reason && (
-                          <div className="text-sm text-muted-foreground">
-                            <strong className="text-card-foreground">Rejection Reason:</strong>{" "}
-                            <span className="text-card-foreground">{selectedApplication.rejection_reason}</span>
-                          </div>
-                        )}
-                        {selectedApplication.admin_notes && (
-                          <div className="text-sm text-muted-foreground">
-                            <strong className="text-card-foreground">Admin Notes:</strong>{" "}
-                            <span className="text-card-foreground">{selectedApplication.admin_notes}</span>
-                          </div>
-                        )}
+                    {selectedApplication.rejection_reason && (
+                      <div className="text-sm text-muted-foreground">
+                        <strong className="text-card-foreground">Rejection Reason:</strong>{" "}
+                        <span className="text-card-foreground">{selectedApplication.rejection_reason}</span>
                       </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    {selectedApplication.application_status === "pending" && (
-                      <div className="flex justify-end space-x-3 pt-4 border-t border-border">
-                        <button
-                          onClick={() =>
-                            handleApproveApplication(selectedApplication)
-                          }
-                          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
-                        >
-                          <CheckIcon className="h-4 w-4 mr-2" />
-                          Approve Application
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleRejectApplication(selectedApplication)
-                          }
-                          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-500 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
-                        >
-                          <XMarkIcon className="h-4 w-4 mr-2" />
-                          Reject Application
-                        </button>
+                    )}
+                    {selectedApplication.admin_notes && (
+                      <div className="text-sm text-muted-foreground">
+                        <strong className="text-card-foreground">Admin Notes:</strong>{" "}
+                        <span className="text-card-foreground">{selectedApplication.admin_notes}</span>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* Action Modal */}
-          {showActionModal && selectedApplication && actionType && (
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
-              <div className="relative top-8 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
-                <div className="mt-3">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-card-foreground">
-                      {actionType === "approve" ? "Approve" : "Reject"}{" "}
-                      Application
-                    </h3>
+                {/* Action Buttons */}
+                {selectedApplication.application_status === "pending" && (
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-border">
                     <button
-                      onClick={() => setShowActionModal(false)}
-                      className="text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        handleApproveApplication(selectedApplication)
+                      }
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
                     >
-                      <XMarkIcon className="h-6 w-6" />
+                      <CheckIcon className="h-4 w-4 mr-2" />
+                      Approve Application
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleRejectApplication(selectedApplication)
+                      }
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-500 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105"
+                    >
+                      <XMarkIcon className="h-4 w-4 mr-2" />
+                      Reject Application
                     </button>
                   </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        You are about to <strong className="text-card-foreground">{actionType}</strong> the
-                        application from{" "}
-                        <strong className="text-card-foreground">{selectedApplication.full_name}</strong>.
-                      </p>
-                    </div>
+      {/* Action Modal */}
+      {showActionModal && selectedApplication && actionType && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-8 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-card border-border max-h-[85vh] overflow-y-auto">
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-card-foreground">
+                  {actionType === "approve" ? "Approve" : "Reject"}{" "}
+                  Application
+                </h3>
+                <button
+                  onClick={() => setShowActionModal(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
 
-                    {actionType === "reject" && (
-                      <div>
-                        <label className="block text-sm font-medium text-card-foreground mb-2">
-                          Rejection Reason *
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    You are about to <strong className="text-card-foreground">{actionType}</strong> the
+                    application from{" "}
+                    <strong className="text-card-foreground">{selectedApplication.full_name}</strong>.
+                  </p>
+                </div>
+
+                {/* Session Types Selection for Approval */}
+                {actionType === "approve" && (
+                  <div>
+                    <label className="block text-sm font-medium text-card-foreground mb-2">
+                      Approve for Session Types *
+                    </label>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {selectedApplication?.preferred_session_types?.length ? (
+                        <>Tutor requested: <strong>{selectedApplication.preferred_session_types.join(', ')}</strong></>
+                      ) : (
+                        'Select which session types this tutor can schedule'
+                      )}
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      {[
+                        { id: 'one-on-one' as const, label: 'One-on-One', icon: '👤' },
+                        { id: 'group' as const, label: 'Group', icon: '👥' },
+                        { id: 'consultation' as const, label: 'Consultation', icon: '💬' },
+                      ].map((type) => (
+                        <label
+                          key={type.id}
+                          className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedSessionTypes.includes(type.id)
+                            ? 'border-green-500 bg-green-500/10'
+                            : 'border-border hover:border-green-500/50'
+                            }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedSessionTypes.includes(type.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedSessionTypes([...selectedSessionTypes, type.id]);
+                              } else {
+                                setSelectedSessionTypes(selectedSessionTypes.filter((t) => t !== type.id));
+                              }
+                            }}
+                            className="sr-only"
+                          />
+                          <span className="text-xl mr-2">{type.icon}</span>
+                          <span className="font-medium text-foreground text-sm">{type.label}</span>
+                          {selectedSessionTypes.includes(type.id) && (
+                            <span className="ml-auto text-green-500">✓</span>
+                          )}
                         </label>
-                        <textarea
-                          value={rejectionReason}
-                          onChange={(e) => setRejectionReason(e.target.value)}
-                          rows={3}
-                          className="w-full border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
-                          placeholder="Please provide a reason for rejection..."
-                          required
-                        />
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-sm font-medium text-card-foreground mb-2">
-                        Admin Notes (Optional)
-                      </label>
-                      <textarea
-                        value={adminNotes}
-                        onChange={(e) => setAdminNotes(e.target.value)}
-                        rows={3}
-                        className="w-full border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
-                        placeholder="Add any additional notes..."
-                      />
+                      ))}
                     </div>
+                    {selectedSessionTypes.length === 0 && (
+                      <p className="text-xs text-red-500 mt-2">Please select at least one session type</p>
+                    )}
+                  </div>
+                )}
 
-                    <div className="flex justify-end space-x-3 pt-4 border-t border-border">
-                      <button
-                        onClick={() => setShowActionModal(false)}
-                        className="px-4 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-lg hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-border transition-all duration-200"
-                        disabled={processingAction}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleActionSubmit}
-                        className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105 ${
-                          actionType === "approve"
-                            ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 focus:ring-green-500"
-                            : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 focus:ring-red-500"
-                        }`}
-                        disabled={
-                          processingAction ||
-                          (actionType === "reject" && !rejectionReason.trim())
-                        }
-                      >
-                        {processingAction ? (
+                {actionType === "reject" && (
+                  <div>
+                    <label className="block text-sm font-medium text-card-foreground mb-2">
+                      Rejection Reason *
+                    </label>
+                    <textarea
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      rows={3}
+                      className="w-full border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
+                      placeholder="Please provide a reason for rejection..."
+                      required
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-card-foreground mb-2">
+                    Admin Notes (Optional)
+                  </label>
+                  <textarea
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    rows={3}
+                    className="w-full border border-border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#34A853] focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
+                    placeholder="Add any additional notes..."
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-border">
+                  <button
+                    onClick={() => setShowActionModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-lg hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-border transition-all duration-200"
+                    disabled={processingAction}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleActionSubmit}
+                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-[0_2px_2px_0_#16803D] hover:shadow-[0_4px_4px_0_#16803D] transform hover:scale-105 ${actionType === "approve"
+                      ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 focus:ring-green-500"
+                      : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 focus:ring-red-500"
+                      }`}
+                    disabled={
+                      processingAction ||
+                      (actionType === "reject" && !rejectionReason.trim()) ||
+                      (actionType === "approve" && selectedSessionTypes.length === 0)
+                    }
+                  >
+                    {processingAction ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        {actionType === "approve" ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Processing...
+                            <CheckIcon className="h-4 w-4 mr-2" />
+                            Approve Application
                           </>
                         ) : (
                           <>
-                            {actionType === "approve" ? (
-                              <>
-                                <CheckIcon className="h-4 w-4 mr-2" />
-                                Approve Application
-                              </>
-                            ) : (
-                              <>
-                                <XMarkIcon className="h-4 w-4 mr-2" />
-                                Reject Application
-                              </>
-                            )}
+                            <XMarkIcon className="h-4 w-4 mr-2" />
+                            Reject Application
                           </>
                         )}
-                      </button>
-                    </div>
-                  </div>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

@@ -354,19 +354,19 @@ const TutorDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-yellow-50 border border-yellow-200 rounded-lg p-8"
+          className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-8"
         >
-          <ExclamationTriangleIcon className="h-16 w-16 text-yellow-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <ExclamationTriangleIcon className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-slate-100 mb-2">
             Application Under Additional Review
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-slate-300 mb-6">
             Your application is being reviewed in detail by our team. We may
             contact you for additional information.
           </p>
 
-          <div className="bg-white border border-yellow-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center text-sm text-gray-600">
+          <div className="bg-slate-700/50 border border-yellow-500/20 rounded-lg p-4 mb-6">
+            <div className="flex items-center text-sm text-slate-300">
               <ClockIcon className="h-5 w-5 mr-2" />
               <span>Extended review in progress - please check back soon</span>
             </div>
@@ -384,35 +384,35 @@ const TutorDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-red-50 border border-red-200 rounded-lg p-8"
+          className="bg-red-500/20 border border-red-500/30 rounded-lg p-8"
         >
-          <XCircleIcon className="h-16 w-16 text-red-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <XCircleIcon className="h-16 w-16 text-red-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-slate-100 mb-2">
             Application Not Approved
           </h1>
-          <p className="text-gray-600 mb-4">
+          <p className="text-slate-300 mb-4">
             Unfortunately, your tutor application was not approved at this time.
           </p>
 
           {application.rejection_reason && (
-            <div className="bg-white border border-red-200 rounded-lg p-4 mb-4 text-left">
-              <h3 className="font-medium text-gray-900 mb-2">Reason:</h3>
-              <p className="text-gray-700 text-sm">
+            <div className="bg-slate-700/50 border border-red-500/20 rounded-lg p-4 mb-4 text-left">
+              <h3 className="font-medium text-slate-200 mb-2">Reason:</h3>
+              <p className="text-slate-400 text-sm">
                 {application.rejection_reason}
               </p>
             </div>
           )}
 
           {application.admin_notes && (
-            <div className="bg-white border border-red-200 rounded-lg p-4 mb-6 text-left">
-              <h3 className="font-medium text-gray-900 mb-2">
+            <div className="bg-slate-700/50 border border-red-500/20 rounded-lg p-4 mb-6 text-left">
+              <h3 className="font-medium text-slate-200 mb-2">
                 Additional Notes:
               </h3>
-              <p className="text-gray-700 text-sm">{application.admin_notes}</p>
+              <p className="text-slate-400 text-sm">{application.admin_notes}</p>
             </div>
           )}
 
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-slate-400 mb-6">
             You're welcome to improve your qualifications and apply again in the
             future.
           </p>
@@ -424,108 +424,113 @@ const TutorDashboard: React.FC = () => {
   // If application is approved but ID verification is not completed
   if (isApprovedTutor && !areTutorFeaturesEnabled) {
     return (
-      <div className="space-y-8">
-        <div className="border-b border-gray-200 pb-5">
-          <h1 className="text-2xl font-bold text-foreground">
-            Welcome, {profile?.full_name}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Tutor Dashboard - Manage your tutoring profile and sessions.
-          </p>
-        </div>
+      <div className="min-h-screen bg-slate-800 relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 -my-10 px-4 sm:px-6 lg:px-8 py-10">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.05),transparent_50%)]"></div>
 
-        {/* Application Approved Notice */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-success/10 border border-success/20 rounded-lg p-4"
-        >
-          <div className="flex items-start">
-            <CheckCircleIcon className="h-5 w-5 text-success mt-0.5 mr-3" />
-            <div className="flex-1">
-              <h3 className="text-sm font-medium text-success">
-                Application Approved!
-              </h3>
-              <p className="mt-1 text-sm text-success/80">
-                Congratulations! Your tutor application has been approved. To
-                complete your setup and access all tutor features, please
-                complete your ID verification.
-              </p>
+        <div className="relative z-10 space-y-8">
+          <div className="border-b border-slate-600 pb-5">
+            <h1 className="text-2xl font-bold text-slate-100">
+              Welcome, {profile?.full_name}
+            </h1>
+            <p className="mt-2 text-sm text-slate-400">
+              Tutor Dashboard - Manage your tutoring profile and sessions.
+            </p>
+          </div>
+
+          {/* Application Approved Notice */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-success/10 border border-success/20 rounded-lg p-4"
+          >
+            <div className="flex items-start">
+              <CheckCircleIcon className="h-5 w-5 text-success mt-0.5 mr-3" />
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-success">
+                  Application Approved!
+                </h3>
+                <p className="mt-1 text-sm text-success/80">
+                  Congratulations! Your tutor application has been approved. To
+                  complete your setup and access all tutor features, please
+                  complete your ID verification.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ID Verification Status */}
+          <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-6">
+            <h3 className="font-medium text-slate-200 mb-4">Next Steps:</h3>
+            <div className="space-y-3 text-sm text-slate-400">
+              {!hasIDVerification && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-accent rounded-full"></div>
+                  <span>Submit ID verification documents</span>
+                </div>
+              )}
+              {isIDVerificationPending && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                  <span>ID verification under review</span>
+                </div>
+              )}
+              {isIDVerificationRejected && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-destructive rounded-full"></div>
+                  <span>ID verification rejected - please resubmit</span>
+                </div>
+              )}
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-success rounded-full"></div>
+                <span>
+                  Access full tutor features once ID verification is approved
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {!hasIDVerification && (
+                <button
+                  onClick={() => navigate("/id-verification")}
+                  className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-lg shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200"
+                >
+                  <IdentificationIcon className="h-5 w-5 mr-2" />
+                  Complete ID Verification
+                </button>
+              )}
+              {isIDVerificationRejected && (
+                <button
+                  onClick={() => navigate("/id-verification")}
+                  className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-lg shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200"
+                >
+                  <IdentificationIcon className="h-5 w-5 mr-2" />
+                  Resubmit ID Verification
+                </button>
+              )}
+              <button
+                onClick={() => navigate("/profile")}
+                className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-secondary-foreground bg-secondary border border-border rounded-lg shadow-sm hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors duration-200"
+              >
+                View Profile
+              </button>
             </div>
           </div>
-        </motion.div>
 
-        {/* ID Verification Status */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h3 className="font-medium text-card-foreground mb-4">Next Steps:</h3>
-          <div className="space-y-3 text-sm text-muted-foreground">
-            {!hasIDVerification && (
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span>Submit ID verification documents</span>
+          {/* Note: Dashboard data and upcoming classes are only available after ID verification is completed */}
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-6">
+            <div className="flex items-start">
+              <ClockIcon className="h-5 w-5 text-green-400 mt-0.5 mr-3" />
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-green-300">
+                  Complete ID Verification to Access Dashboard
+                </h3>
+                <p className="mt-1 text-sm text-green-200/80">
+                  Once your ID verification is approved, you'll have access to
+                  your full tutor dashboard including upcoming classes, earnings,
+                  and student information.
+                </p>
               </div>
-            )}
-            {isIDVerificationPending && (
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                <span>ID verification under review</span>
-              </div>
-            )}
-            {isIDVerificationRejected && (
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-destructive rounded-full"></div>
-                <span>ID verification rejected - please resubmit</span>
-              </div>
-            )}
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-success rounded-full"></div>
-              <span>
-                Access full tutor features once ID verification is approved
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-3">
-            {!hasIDVerification && (
-              <button
-                onClick={() => navigate("/id-verification")}
-                className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-lg shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200"
-              >
-                <IdentificationIcon className="h-5 w-5 mr-2" />
-                Complete ID Verification
-              </button>
-            )}
-            {isIDVerificationRejected && (
-              <button
-                onClick={() => navigate("/id-verification")}
-                className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-lg shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200"
-              >
-                <IdentificationIcon className="h-5 w-5 mr-2" />
-                Resubmit ID Verification
-              </button>
-            )}
-            <button
-              onClick={() => navigate("/profile")}
-              className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-secondary-foreground bg-secondary border border-border rounded-lg shadow-sm hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors duration-200"
-            >
-              View Profile
-            </button>
-          </div>
-        </div>
-
-        {/* Note: Dashboard data and upcoming classes are only available after ID verification is completed */}
-        <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
-          <div className="flex items-start">
-            <ClockIcon className="h-5 w-5 text-primary mt-0.5 mr-3" />
-            <div className="flex-1">
-              <h3 className="text-sm font-medium text-primary">
-                Complete ID Verification to Access Dashboard
-              </h3>
-              <p className="mt-1 text-sm text-primary/80">
-                Once your ID verification is approved, you'll have access to
-                your full tutor dashboard including upcoming classes, earnings,
-                and student information.
-              </p>
             </div>
           </div>
         </div>
@@ -602,70 +607,70 @@ const TutorDashboard: React.FC = () => {
           <div className="space-y-8">
             {/* Status Alerts */}
             <div id="tutor-status-overview">
-            {!isActiveTutor && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm"
-              >
-                <div className="flex items-start">
-                  <XCircleIcon className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-red-800">
-                      Account Temporarily Inactive
-                    </h3>
-                    <p className="text-sm text-red-700 mt-1">
-                      Your tutor account has been temporarily deactivated. You
-                      can still view your dashboard and profile, but you cannot
-                      schedule new classes or accept new students.
-                    </p>
+              {!isActiveTutor && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex items-start">
+                    <XCircleIcon className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-red-800">
+                        Account Temporarily Inactive
+                      </h3>
+                      <p className="text-sm text-red-700 mt-1">
+                        Your tutor account has been temporarily deactivated. You
+                        can still view your dashboard and profile, but you cannot
+                        schedule new classes or accept new students.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
 
-            {isActiveTutor && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 shadow-sm"
-              >
-                <div className="flex items-start">
-                  <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 mr-3" />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-green-300">
-                      Setup Complete!
-                    </h3>
-                    <p className="text-sm text-green-200 mt-1">
-                      Your tutor application and ID verification have been
-                      approved. You can now schedule classes and start teaching!
-                    </p>
+              {isActiveTutor && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex items-start">
+                    <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 mr-3" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-green-300">
+                        Setup Complete!
+                      </h3>
+                      <p className="text-sm text-green-200 mt-1">
+                        Your tutor application and ID verification have been
+                        approved. You can now schedule classes and start teaching!
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
 
-            {/* Online Status Message */}
-            {isActiveTutor && profile?.is_online === false && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-blue-500/20 border border-blue-500/30 rounded-xl p-4 shadow-sm"
-              >
-                <div className="flex items-start">
-                  <ClockIcon className="h-5 w-5 text-blue-400 mt-0.5 mr-3" />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-blue-300">
-                      You are currently offline
-                    </h3>
-                    <p className="text-sm text-blue-200 mt-1">
-                      Toggle the online switch above to start receiving instant
-                      session requests from students.
-                    </p>
+              {/* Online Status Message */}
+              {isActiveTutor && profile?.is_online === false && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-blue-500/20 border border-blue-500/30 rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex items-start">
+                    <ClockIcon className="h-5 w-5 text-blue-400 mt-0.5 mr-3" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-blue-300">
+                        You are currently offline
+                      </h3>
+                      <p className="text-sm text-blue-200 mt-1">
+                        Toggle the online switch above to start receiving instant
+                        session requests from students.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
             </div>
 
             {/* Stats Grid */}
@@ -801,11 +806,10 @@ const TutorDashboard: React.FC = () => {
                         whileTap={{ scale: 0.98 }}
                       >
                         <Card
-                          className={`cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group bg-slate-700/50 border-slate-600 ${
-                            action.disabled
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
+                          className={`cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group bg-slate-700/50 border-slate-600 ${action.disabled
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                            }`}
                           onClick={action.disabled ? undefined : action.action}
                         >
                           <CardContent className="p-6 text-center">
@@ -836,13 +840,13 @@ const TutorDashboard: React.FC = () => {
 
         {/* Floating Active Session Button */}
         <ActiveSessionFloatingButton tutorId={profile?.id || ""} />
-        
+
         {/* Active Instant Session Button */}
         <ActiveInstantSessionButton tutorId={profile?.id || ""} />
-        
+
         {/* Instant Session Request Popup */}
-        <InstantSessionRequestPopup 
-          tutorId={profile?.id || ""} 
+        <InstantSessionRequestPopup
+          tutorId={profile?.id || ""}
           isOnline={profile?.is_online || false}
         />
       </div>
@@ -914,37 +918,37 @@ const TutorDashboard: React.FC = () => {
 
             {/* Profile Completion Alert */}
             <div id="tutor-profile-completion">
-            {!isProfileComplete && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm"
-              >
-                <div className="flex items-start">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-yellow-800">
-                      Complete Your Profile
-                    </h3>
-                    <p className="mt-1 text-sm text-yellow-700">
-                      You need to upload your CV and complete your profile to
-                      start accepting tutoring sessions.
-                    </p>
-                    <div className="mt-2">
-                      <div className="bg-yellow-200 rounded-full h-2">
-                        <div
-                          className="bg-yellow-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${profileCompletion}%` }}
-                        ></div>
+              {!isProfileComplete && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex items-start">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-yellow-800">
+                        Complete Your Profile
+                      </h3>
+                      <p className="mt-1 text-sm text-yellow-700">
+                        You need to upload your CV and complete your profile to
+                        start accepting tutoring sessions.
+                      </p>
+                      <div className="mt-2">
+                        <div className="bg-yellow-200 rounded-full h-2">
+                          <div
+                            className="bg-yellow-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${profileCompletion}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-yellow-600 mt-1 block">
+                          {profileCompletion}% complete
+                        </span>
                       </div>
-                      <span className="text-xs text-yellow-600 mt-1 block">
-                        {profileCompletion}% complete
-                      </span>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1078,10 +1082,10 @@ const TutorDashboard: React.FC = () => {
                               {subject}
                             </span>
                           )) || (
-                            <span className="text-gray-500 text-sm">
-                              No subjects listed
-                            </span>
-                          )}
+                              <span className="text-gray-500 text-sm">
+                                No subjects listed
+                              </span>
+                            )}
                         </div>
                       </div>
 
@@ -1120,15 +1124,15 @@ const TutorDashboard: React.FC = () => {
                         </label>
                         <p className="text-gray-900">
                           {application?.application_status ===
-                          ("pending" as TutorApplicationStatus)
+                            ("pending" as TutorApplicationStatus)
                             ? "Under Review"
                             : application?.application_status ===
                               ("approved" as TutorApplicationStatus)
-                            ? "Approved"
-                            : application?.application_status ===
-                              ("rejected" as TutorApplicationStatus)
-                            ? "Rejected"
-                            : "Unknown"}
+                              ? "Approved"
+                              : application?.application_status ===
+                                ("rejected" as TutorApplicationStatus)
+                                ? "Rejected"
+                                : "Unknown"}
                         </p>
                       </div>
                     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   CalendarDaysIcon,
@@ -11,6 +12,7 @@ import {
   PlusIcon,
   XMarkIcon,
   CheckIcon,
+  LockClosedIcon,
 } from "@heroicons/react/24/outline";
 import { classSchedulingService } from "@/lib/classSchedulingService";
 import { subjectsService } from "@/lib/subjects";
@@ -27,9 +29,12 @@ import toast from "react-hot-toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { GMTTooltip } from "@/components/ui/GMTTooltip";
 import { convertLocalToGMT, getUserTimezoneAbbreviation } from "@/utils/timezoneUtils";
+import { getSocket } from "@/lib/socketClient";
+import apiClient from "@/lib/apiClient";
 
 const ClassSchedulingPage: React.FC = () => {
   const { user, profile } = useAuth();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [classTypes, setClassTypes] = useState<ClassType[]>([]);
   const [selectedClassType, setSelectedClassType] = useState<ClassType | null>(
@@ -45,6 +50,7 @@ const ClassSchedulingPage: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [allowedSessionTypes, setAllowedSessionTypes] = useState<('one-on-one' | 'group' | 'consultation')[] | null>(null);
 
 
   // Check if tutor is active
@@ -93,9 +99,10 @@ const ClassSchedulingPage: React.FC = () => {
     );
   }
 
+  // Reload data whenever navigating to this page (location.key changes on each navigation)
   useEffect(() => {
     loadData();
-  }, []);
+  }, [location.key]);
 
   useEffect(() => {
     generateCalendar();
@@ -104,6 +111,24 @@ const ClassSchedulingPage: React.FC = () => {
   useEffect(() => {
     generateCalendar();
   }, [currentMonth, currentYear]);
+
+  // Listen for real-time session type updates from admin
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleSessionTypesUpdated = (data: { allowed_session_types: ('one-on-one' | 'group' | 'consultation')[] }) => {
+      console.log('📡 Session types updated in real-time:', data);
+      setAllowedSessionTypes(data.allowed_session_types || []);
+      toast.success('Your session type permissions have been updated!');
+    };
+
+    socket.on('session-types:updated', handleSessionTypesUpdated);
+
+    return () => {
+      socket.off('session-types:updated', handleSessionTypesUpdated);
+    };
+  }, []);
 
   const loadData = async () => {
     if (!user?.id) {
@@ -114,6 +139,19 @@ const ClassSchedulingPage: React.FC = () => {
 
     try {
       setLoading(true);
+
+      // Fetch fresh user profile to get updated allowed_session_types
+      try {
+        const profileData = await apiClient.get<{ success: boolean; data: { allowed_session_types?: ('one-on-one' | 'group' | 'consultation')[] } }>('/api/auth/me');
+        if (profileData && (profileData as any).allowed_session_types) {
+          setAllowedSessionTypes((profileData as any).allowed_session_types);
+        } else if (profileData && (profileData as any).data?.allowed_session_types) {
+          setAllowedSessionTypes((profileData as any).data.allowed_session_types);
+        }
+      } catch (profileError) {
+        // Silent fail - will use cached profile data
+      }
+
       const [types, classes, subs] = await Promise.all([
         classSchedulingService.classTypes.getAll(),
         classSchedulingService.classes.getByTutorId(user.id),
@@ -410,6 +448,36 @@ const ClassSchedulingPage: React.FC = () => {
     }
   };
 
+  // Map class type name to session type ID for permission checking
+  const getSessionTypeId = (classTypeName: string): 'one-on-one' | 'group' | 'consultation' | null => {
+    const name = classTypeName.toLowerCase();
+    if (name.includes('one-to-one') || name.includes('one-on-one') || name.includes('extended')) {
+      return 'one-on-one';
+    }
+    if (name.includes('group')) {
+      return 'group';
+    }
+    if (name.includes('consultation')) {
+      return 'consultation';
+    }
+    return null;
+  };
+
+  // Check if a class type is allowed based on tutor's permissions
+  const isClassTypeAllowed = (classType: ClassType): boolean => {
+    // Use fresh allowedSessionTypes from API call, fallback to profile data
+    const allowedTypes = allowedSessionTypes ?? profile?.allowed_session_types;
+    // If no allowed types set, allow all (backwards compatibility for existing tutors)
+    if (!allowedTypes || allowedTypes.length === 0) {
+      return true;
+    }
+    const sessionTypeId = getSessionTypeId(classType.name);
+    if (!sessionTypeId) {
+      return true; // Unknown types are allowed
+    }
+    return allowedTypes.includes(sessionTypeId);
+  };
+
   const goToPreviousMonth = () => {
     if (currentMonth === 0) {
       setCurrentMonth(11);
@@ -476,73 +544,84 @@ const ClassSchedulingPage: React.FC = () => {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          {classTypes.map((classType, index) => (
-            <motion.div
-              key={classType.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.02, y: -5 }}
-              whileTap={{ scale: 0.98 }}
-              className={`cursor-pointer p-6 bg-slate-700/50 rounded-xl border-slate-600 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 duration-300 ${selectedClassType?.id === classType.id
-                ? "ring-2 ring-green-500 ring-offset-2"
-                : ""
-                }`}
-              onClick={() => handleClassTypeSelect(classType)}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2 text-green-400">
-                  <div className="bg-green-600 w-10 h-10 rounded-lg flex items-center justify-center">
-                    <div className="text-white">
-                      {getClassTypeIcon(classType.name)}
-                    </div>
-                  </div>
-                </div>
-                {selectedClassType?.id === classType.id && (
-                  <div className="bg-green-600 w-6 h-6 rounded-full flex items-center justify-center">
-                    <CheckIcon className="h-4 w-4 text-white" />
+          {classTypes.map((classType, index) => {
+            const isAllowed = isClassTypeAllowed(classType);
+            return (
+              <motion.div
+                key={classType.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={isAllowed ? { scale: 1.02, y: -5 } : undefined}
+                whileTap={isAllowed ? { scale: 0.98 } : undefined}
+                className={`relative p-6 rounded-xl border-slate-600 shadow-lg transition-all duration-300 ${isAllowed
+                  ? `cursor-pointer bg-slate-700/50 hover:shadow-xl hover:-translate-y-1 ${selectedClassType?.id === classType.id ? "ring-2 ring-green-500 ring-offset-2" : ""}`
+                  : "bg-slate-800/50 opacity-60 cursor-not-allowed"
+                  }`}
+                onClick={() => isAllowed && handleClassTypeSelect(classType)}
+                title={!isAllowed ? "You are not approved for this session type. Contact admin for access." : undefined}
+              >
+                {/* Lock overlay for restricted types */}
+                {!isAllowed && (
+                  <div className="absolute top-3 right-3 bg-slate-600 rounded-full p-2">
+                    <LockClosedIcon className="h-4 w-4 text-slate-400" />
                   </div>
                 )}
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-slate-200 mb-2">
-                  {classType.name}
-                </h3>
-                <p className="text-sm text-slate-400 mb-4">
-                  {classType.description || "No description available"}
-                </p>
-
-                <div className="space-y-3 text-sm text-slate-400">
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-green-600/20 w-6 h-6 rounded-md flex items-center justify-center">
-                      <ClockIcon className="h-3 w-3 text-green-400" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2 text-green-400">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isAllowed ? 'bg-green-600' : 'bg-slate-600'}`}>
+                      <div className="text-white">
+                        {getClassTypeIcon(classType.name)}
+                      </div>
                     </div>
-                    <span className="font-medium">
-                      {classType.duration_minutes} minutes
-                    </span>
                   </div>
+                  {selectedClassType?.id === classType.id && isAllowed && (
+                    <div className="bg-green-600 w-6 h-6 rounded-full flex items-center justify-center">
+                      <CheckIcon className="h-4 w-4 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${isAllowed ? 'text-slate-200' : 'text-slate-400'}`}>
+                    {classType.name}
+                    {!isAllowed && <span className="text-xs ml-2 text-slate-500">(Locked)</span>}
+                  </h3>
+                  <p className="text-sm text-slate-400 mb-4">
+                    {classType.description || "No description available"}
+                  </p>
 
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-yellow-500/20 w-6 h-6 rounded-md flex items-center justify-center">
-                      <UserGroupIcon className="h-3 w-3 text-yellow-400" />
+                  <div className="space-y-3 text-sm text-slate-400">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isAllowed ? 'bg-green-600/20' : 'bg-slate-600/20'}`}>
+                        <ClockIcon className={`h-3 w-3 ${isAllowed ? 'text-green-400' : 'text-slate-500'}`} />
+                      </div>
+                      <span className="font-medium">
+                        {classType.duration_minutes} minutes
+                      </span>
                     </div>
-                    <span className="font-medium">
-                      Max {classType.max_students || 1} student
-                      {(classType.max_students || 1) > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-blue-500/20 w-6 h-6 rounded-md flex items-center justify-center">
-                      <CurrencyDollarIcon className="h-3 w-3 text-blue-400" />
+
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isAllowed ? 'bg-yellow-500/20' : 'bg-slate-600/20'}`}>
+                        <UserGroupIcon className={`h-3 w-3 ${isAllowed ? 'text-yellow-400' : 'text-slate-500'}`} />
+                      </div>
+                      <span className="font-medium">
+                        Max {classType.max_students || 1} student
+                        {(classType.max_students || 1) > 1 ? "s" : ""}
+                      </span>
                     </div>
-                    <span className="font-medium">
-                      ${classType.price_per_session || 0}/session
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isAllowed ? 'bg-blue-500/20' : 'bg-slate-600/20'}`}>
+                        <CurrencyDollarIcon className={`h-3 w-3 ${isAllowed ? 'text-blue-400' : 'text-slate-500'}`} />
+                      </div>
+                      <span className="font-medium">
+                        ${classType.price_per_session || 0}/session
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         {/* Calendar and Time Selection */}

@@ -36,6 +36,7 @@ export const db = {
       education_level?: string;
       average_weekly_hours?: number;
       expected_hourly_rate?: number;
+      preferred_session_types?: ('one-on-one' | 'group' | 'consultation')[];
     }) => {
       const result = await apiClient.post('/api/tutors/applications', application);
       return result;

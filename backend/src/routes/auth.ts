@@ -4,11 +4,11 @@ import { AuthService, RegisterData, LoginData } from '../services/authService';
 import { authenticate } from '../middleware/auth';
 import { registerSchema, loginSchema, validateOrThrow } from '../utils/validation';
 import { User } from '../models';
-import { 
-  authLimiter, 
-  passwordResetLimiter, 
+import {
+  authLimiter,
+  passwordResetLimiter,
   otpLimiter,
-  emailLimiter 
+  emailLimiter
 } from '../middleware/rateLimiter';
 
 const router = express.Router();
@@ -252,7 +252,7 @@ router.post('/login', authLimiter, async (req, res) => {
         email: error.email
       });
     }
-    
+
     res.status(401).json({
       success: false,
       error: error.message
@@ -428,6 +428,7 @@ router.get('/me', authenticate, async (req, res) => {
         cv_file_name: user.cvFileName,
         profile_completed: user.profileCompleted,
         is_online: user.isOnline,
+        allowed_session_types: user.allowedSessionTypes,
         created_at: user.createdAt,
         last_login: user.lastLogin
       }

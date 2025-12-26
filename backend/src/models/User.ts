@@ -54,6 +54,7 @@ export interface IUser extends Document {
   certifications?: string[];
   languages?: string[];
   profileCompleted?: boolean;
+  allowedSessionTypes?: ('one-on-one' | 'group' | 'consultation')[];
 
   // Parent specific fields
   childrenIds?: mongoose.Types.ObjectId[];
@@ -151,6 +152,10 @@ const userSchema = new Schema<IUser>(
     certifications: [{ type: String }],
     languages: [{ type: String }],
     profileCompleted: { type: Boolean, default: false },
+    allowedSessionTypes: [{
+      type: String,
+      enum: ['one-on-one', 'group', 'consultation'],
+    }],
 
 
     // Parent specific fields
@@ -193,7 +198,7 @@ userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 
 // Virtual for age calculation
-userSchema.virtual('age').get(function(this: IUser) {
+userSchema.virtual('age').get(function (this: IUser) {
   if (!this.dateOfBirth) return null;
   const today = new Date();
   const birthDate = new Date(this.dateOfBirth);
@@ -208,7 +213,7 @@ userSchema.virtual('age').get(function(this: IUser) {
 });
 
 // Pre-save middleware to hash password
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password') || !this.password) return next();
 
@@ -223,18 +228,18 @@ userSchema.pre('save', async function(next) {
 });
 
 // Instance method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 
 // Static method to find user by email
-userSchema.statics.findByEmail = function(email: string) {
+userSchema.statics.findByEmail = function (email: string) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
 // Static method to find active users
-userSchema.statics.findActive = function() {
+userSchema.statics.findActive = function () {
   return this.find({ isActive: true });
 };
 

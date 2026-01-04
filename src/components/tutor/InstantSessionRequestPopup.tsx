@@ -84,6 +84,30 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
     };
   }, [tutorId, isOnline]);
 
+  // Listen for updates to the accepted session (e.g. if student cancels/ends it)
+  useEffect(() => {
+    if (!acceptedSession) return;
+
+    const id = acceptedSession.id || acceptedSession._id;
+    if (!id) return;
+
+    const unsubscribe = instantSessionService.subscribeToSession(id, ({ session }) => {
+      // If the session matches what we are showing
+      const updateId = session.id || session._id;
+      if (updateId === id) {
+        // If session is no longer active (completed, cancelled, expired), close the modal
+        if (['completed', 'cancelled', 'expired'].includes(session.status)) {
+          setShowAcceptedModal(false);
+          setAcceptedSession(null);
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [acceptedSession]);
+
   const handleAccept = async (request: InstantRequest) => {
     const reqId = request.id || request._id;
 
@@ -174,6 +198,28 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
 
   const handleJoinFromModal = async () => {
     if (acceptedSession?.jitsiMeetingUrl) {
+      // 1. Open blank tab SYNCHRONOUSLY
+      const meetingWindow = window.open("about:blank", "_blank");
+
+      if (!meetingWindow) {
+        toast.error("Please allow popups and try again.");
+        return;
+      }
+
+      // Show loading
+      try {
+        meetingWindow.document.write(`
+          <!doctype html><meta charset="utf-8">
+          <title>Joining meeting…</title>
+          <body style="font-family:system-ui;padding:24px;text-align:center">
+          <h1>Joining your meeting…</h1>
+          <p>Please wait while we connect you.</p>
+          </body>`);
+        meetingWindow.document.close();
+      } catch (e) {
+        // Ignore
+      }
+
       const sessionId = acceptedSession.id || acceptedSession._id;
 
       // Mark tutor as joined so student can now join
@@ -189,8 +235,17 @@ export default function InstantSessionRequestPopup({ tutorId, isOnline }: Instan
         detail: { session: acceptedSession }
       }));
 
-      // Open the meeting
-      window.open(acceptedSession.jitsiMeetingUrl, '_blank');
+      // Redirect the already-open tab
+      if (meetingWindow) {
+        try {
+          meetingWindow.location.replace(acceptedSession.jitsiMeetingUrl);
+        } catch (e) {
+          meetingWindow.location.href = acceptedSession.jitsiMeetingUrl;
+        }
+      } else {
+        window.location.href = acceptedSession.jitsiMeetingUrl;
+      }
+
       setShowAcceptedModal(false);
     }
   };

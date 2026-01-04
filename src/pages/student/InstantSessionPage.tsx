@@ -363,6 +363,28 @@ export default function InstantSessionPage() {
 
   const handleJoin = async () => {
     if (jitsiUrl && timeLeft && timeLeft > 0 && tutorJoined && requestId) {
+      // Open blank tab SYNCHRONOUSLY to avoid mobile popup blockers
+      const meetingWindow = window.open("about:blank", "_blank");
+
+      if (!meetingWindow) {
+        toast.error("Please allow popups and try again.");
+        return;
+      }
+
+      // Show loading message
+      try {
+        meetingWindow.document.write(`
+          <!doctype html><meta charset="utf-8">
+          <title>Joining meeting…</title>
+          <body style="font-family:system-ui;padding:24px;text-align:center">
+          <h1>Joining your meeting…</h1>
+          <p>Please wait while we connect you.</p>
+          </body>`);
+        meetingWindow.document.close();
+      } catch (e) {
+        // Ignore
+      }
+
       // Mark student as joined
       try {
         await instantSessionService.markStudentJoined(requestId);
@@ -370,7 +392,17 @@ export default function InstantSessionPage() {
         console.error("[Student] Error marking as joined:", error);
       }
 
-      window.open(jitsiUrl, "_blank");
+      // Redirect the already-open tab
+      if (meetingWindow) {
+        try {
+          meetingWindow.location.replace(jitsiUrl);
+        } catch (e) {
+          meetingWindow.location.href = jitsiUrl;
+        }
+      } else {
+        // Fallback
+        window.location.href = jitsiUrl;
+      }
     }
   };
 

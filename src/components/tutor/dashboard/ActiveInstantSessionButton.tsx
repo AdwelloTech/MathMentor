@@ -125,10 +125,32 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
   const handleJoinSession = async () => {
     if (!activeSession) return;
 
+    // Open blank tab SYNCHRONOUSLY to avoid mobile popup blockers
+    const meetingWindow = window.open("about:blank", "_blank");
+
+    if (!meetingWindow) {
+      toast.error("Please allow popups and try again, or tap the Join button again.");
+      return;
+    }
+
+    // Show loading message
+    try {
+      meetingWindow.document.write(`
+        <!doctype html><meta charset="utf-8">
+        <title>Joining meeting…</title>
+        <body style="font-family:system-ui;padding:24px;text-align:center">
+        <h1>Joining your meeting…</h1>
+        <p>Please wait while we connect you.</p>
+        </body>`);
+      meetingWindow.document.close();
+    } catch (e) {
+      // Ignore
+    }
+
     const sessionId = activeSession.id || activeSession._id;
 
     try {
-      // Show loading toast
+      // Show loading toast locally too
       const loadingToast = toast.loading("Preparing meeting room...");
 
       // Get fresh session data to ensure we have the latest meeting URL
@@ -158,7 +180,13 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
         // If we have a meeting URL, open it
         if (freshSessionData.jitsiMeetingUrl) {
           toast.dismiss(loadingToast);
-          window.open(freshSessionData.jitsiMeetingUrl, '_blank');
+
+          try {
+            meetingWindow.location.replace(freshSessionData.jitsiMeetingUrl);
+          } catch (e) {
+            meetingWindow.location.href = freshSessionData.jitsiMeetingUrl;
+          }
+
           toast.success("Opening meeting room...");
           return;
         }
@@ -168,7 +196,13 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
         if (finalSession?.jitsiMeetingUrl) {
           toast.dismiss(loadingToast);
           setActiveSession(finalSession);
-          window.open(finalSession.jitsiMeetingUrl, '_blank');
+
+          try {
+            meetingWindow.location.replace(finalSession.jitsiMeetingUrl);
+          } catch (e) {
+            meetingWindow.location.href = finalSession.jitsiMeetingUrl;
+          }
+
           toast.success("Opening meeting room...");
           return;
         }
@@ -177,10 +211,14 @@ const ActiveInstantSessionButton: React.FC<ActiveInstantSessionButtonProps> = ({
       // If we got here, we couldn't get a meeting URL
       toast.dismiss(loadingToast);
       toast.error("Meeting URL not available. Please try again in a few moments or complete the session.");
+      // Close the blank window since we failed
+      meetingWindow.close();
 
     } catch (error) {
       console.error("[ActiveInstantSession] Error joining session:", error);
       toast.error("Failed to join meeting. Please try again.");
+      // Close the blank window since we failed
+      if (meetingWindow) meetingWindow.close();
     }
   };
 

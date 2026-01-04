@@ -258,18 +258,22 @@ export const validateDocumentFile = (req: Request, res: Response, next: NextFunc
 
   const file = req.file;
 
-  // Check if it's a valid document type
+  // Check if it's a valid document type (also allow images for messaging attachments)
   const validDocumentTypes = [
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'text/plain'
+    'text/plain',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif'
   ];
 
   if (!validDocumentTypes.includes(file.mimetype)) {
     return res.status(400).json({
       success: false,
-      error: 'Invalid document type. Only PDF, Word documents, and text files are allowed.'
+      error: 'Invalid file type. Allowed: PDF, Word documents, text files, and images (JPEG, PNG, WebP, GIF).'
     });
   }
 

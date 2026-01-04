@@ -31,9 +31,13 @@ export const FILE_TYPE_CONFIGS: Record<string, FileTypeConfig> = {
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
+      'text/plain',
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif'
     ],
-    allowedExtensions: ['.pdf', '.doc', '.docx', '.txt'],
+    allowedExtensions: ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png', '.webp', '.gif'],
     folder: 'documents'
   },
   attachments: {

@@ -282,7 +282,7 @@ const ManageTutorsPage: React.FC = () => {
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null) return "N/A";
-    return `$${amount.toFixed(2)}`;
+    return `£${amount.toFixed(2)}`;
   };
 
   if (loading) {

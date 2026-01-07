@@ -97,7 +97,7 @@ const bookingSchema = new Schema<IBooking>(
       type: String,
       required: true,
       validate: {
-        validator: function(v: string) {
+        validator: function (v: string) {
           return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
         },
         message: 'Start time must be in HH:MM format'
@@ -107,7 +107,7 @@ const bookingSchema = new Schema<IBooking>(
       type: String,
       required: true,
       validate: {
-        validator: function(v: string) {
+        validator: function (v: string) {
           return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
         },
         message: 'End time must be in HH:MM format'
@@ -150,7 +150,7 @@ const bookingSchema = new Schema<IBooking>(
     },
     currency: {
       type: String,
-      default: 'USD',
+      default: 'GBP',
       enum: ['USD', 'EUR', 'GBP', 'CAD', 'AUD']
     },
     paymentStatus: {
@@ -224,13 +224,13 @@ bookingSchema.index({
 });
 
 // Virtual for formatted date and time
-bookingSchema.virtual('formattedDateTime').get(function() {
+bookingSchema.virtual('formattedDateTime').get(function () {
   const date = this.scheduledDate.toLocaleDateString();
   return `${date} ${this.startTime} - ${this.endTime}`;
 });
 
 // Virtual for checking if booking is in the past
-bookingSchema.virtual('isPast').get(function() {
+bookingSchema.virtual('isPast').get(function () {
   const now = new Date();
   const bookingDateTime = new Date(this.scheduledDate);
   const [hours, minutes] = this.endTime.split(':').map(Number);
@@ -239,7 +239,7 @@ bookingSchema.virtual('isPast').get(function() {
 });
 
 // Virtual for checking if booking is upcoming
-bookingSchema.virtual('isUpcoming').get(function() {
+bookingSchema.virtual('isUpcoming').get(function () {
   const now = new Date();
   const bookingDateTime = new Date(this.scheduledDate);
   const [hours, minutes] = this.startTime.split(':').map(Number);
@@ -248,7 +248,7 @@ bookingSchema.virtual('isUpcoming').get(function() {
 });
 
 // Pre-save middleware to set confirmedAt when status changes to confirmed
-bookingSchema.pre('save', function(next) {
+bookingSchema.pre('save', function (next) {
   if (this.isModified('status') && this.status === 'confirmed' && !this.confirmedAt) {
     this.confirmedAt = new Date();
     this.isConfirmed = true;
@@ -262,7 +262,7 @@ bookingSchema.pre('save', function(next) {
 });
 
 // Instance method to confirm booking
-bookingSchema.methods.confirm = async function(): Promise<boolean> {
+bookingSchema.methods.confirm = async function (): Promise<boolean> {
   if (this.status === 'pending') {
     this.status = 'confirmed';
     this.isConfirmed = true;
@@ -274,7 +274,7 @@ bookingSchema.methods.confirm = async function(): Promise<boolean> {
 };
 
 // Instance method to cancel booking
-bookingSchema.methods.cancel = async function(reason?: string): Promise<boolean> {
+bookingSchema.methods.cancel = async function (reason?: string): Promise<boolean> {
   if (this.status === 'pending' || this.status === 'confirmed') {
     this.status = 'cancelled';
     this.cancelledAt = new Date();
@@ -288,7 +288,7 @@ bookingSchema.methods.cancel = async function(reason?: string): Promise<boolean>
 };
 
 // Instance method to complete booking
-bookingSchema.methods.complete = async function(): Promise<boolean> {
+bookingSchema.methods.complete = async function (): Promise<boolean> {
   if (this.status === 'confirmed') {
     this.status = 'completed';
     await this.save();
@@ -298,7 +298,7 @@ bookingSchema.methods.complete = async function(): Promise<boolean> {
 };
 
 // Instance method to mark as no-show
-bookingSchema.methods.markNoShow = async function(): Promise<boolean> {
+bookingSchema.methods.markNoShow = async function (): Promise<boolean> {
   if (this.status === 'confirmed') {
     this.status = 'no_show';
     await this.save();
@@ -308,7 +308,7 @@ bookingSchema.methods.markNoShow = async function(): Promise<boolean> {
 };
 
 // Static method to get student's bookings
-bookingSchema.statics.getByStudent = function(
+bookingSchema.statics.getByStudent = function (
   studentId: mongoose.Types.ObjectId,
   status?: BookingStatus,
   limit: number = 20,
@@ -331,7 +331,7 @@ bookingSchema.statics.getByStudent = function(
 };
 
 // Static method to get teacher's bookings
-bookingSchema.statics.getByTeacher = function(
+bookingSchema.statics.getByTeacher = function (
   teacherId: mongoose.Types.ObjectId,
   status?: BookingStatus,
   limit: number = 20,
@@ -354,7 +354,7 @@ bookingSchema.statics.getByTeacher = function(
 };
 
 // Static method to check for scheduling conflicts
-bookingSchema.statics.checkConflict = async function(
+bookingSchema.statics.checkConflict = async function (
   teacherId: mongoose.Types.ObjectId,
   scheduledDate: Date,
   startTime: string,

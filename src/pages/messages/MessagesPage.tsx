@@ -443,7 +443,7 @@ const MessagesPage: React.FC = () => {
                                 </span>
                               </div>
                               <div className="text-sm text-muted-foreground">
-                                {session.price ? `Price: $${session.price}` : "No price set"}
+                                {session.price ? `Price: £${session.price}` : "No price set"}
                               </div>
                               {session.link && (
                                 <div>
@@ -579,8 +579,8 @@ function normalizeMessage(m: any): NormalizedMessage {
   const senderName =
     typeof senderObj === "object"
       ? senderObj.fullName ||
-        senderObj.full_name ||
-        [senderObj.firstName, senderObj.lastName].filter(Boolean).join(" ")
+      senderObj.full_name ||
+      [senderObj.firstName, senderObj.lastName].filter(Boolean).join(" ")
       : undefined;
   const senderAvatar = typeof senderObj === "object" ? senderObj.avatarUrl || senderObj.avatar_url : undefined;
 

@@ -77,9 +77,8 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
       setFormData({
         full_name: profile.full_name || "",
         email: profile.id
-          ? `${profile.first_name?.toLowerCase() || ""}${
-              profile.last_name?.toLowerCase() || ""
-            }@example.com`
+          ? `${profile.first_name?.toLowerCase() || ""}${profile.last_name?.toLowerCase() || ""
+          }@example.com`
           : "",
         bio: profile.bio || "",
         subjects: profile.subjects || [],
@@ -429,7 +428,7 @@ const TutorProfileEdit: React.FC<TutorProfileEditProps> = ({
                     htmlFor="hourly_rate"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Hourly Rate (USD)
+                    Hourly Rate (GBP)
                   </label>
                   <input
                     type="number"

@@ -614,7 +614,7 @@ const ClassSchedulingPage: React.FC = () => {
                         <CurrencyDollarIcon className={`h-3 w-3 ${isAllowed ? 'text-blue-400' : 'text-slate-500'}`} />
                       </div>
                       <span className="font-medium">
-                        ${classType.price_per_session || 0}/session
+                        £{classType.price_per_session || 0}/session
                       </span>
                     </div>
                   </div>
@@ -957,7 +957,7 @@ const ClassSchedulingPage: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-amber-200/90 mb-1">
-                  Price per Session ($)
+                  Price per Session (£)
                 </label>
                 <input
                   type="number"

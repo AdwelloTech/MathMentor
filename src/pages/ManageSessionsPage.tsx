@@ -9,7 +9,7 @@ import { ClassBooking } from "../types/classScheduling";
 import {
   CalendarDays,
   Clock,
-  DollarSign,
+  PoundSterling,
   Video,
   Eye,
   Calendar,
@@ -430,8 +430,8 @@ const ManageSessionsPage: React.FC = () => {
                               <span className="font-medium">{formatTime(session.start_time)} - {formatTime(session.end_time)}</span>
                             </div>
                             <div className="flex items-center gap-3 text-muted-foreground">
-                              <DollarSign className="w-5 h-5 text-yellow-500" />
-                              <span className="font-bold text-yellow-600">${booking.payment_amount}</span>
+                              <PoundSterling className="w-5 h-5 text-yellow-500" />
+                              <span className="font-bold text-yellow-600">£{booking.payment_amount}</span>
                             </div>
                           </div>
                         </div>
@@ -576,7 +576,7 @@ const ManageSessionsPage: React.FC = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-muted-foreground mb-1">Amount Paid</label>
-                          <p className="text-yellow-600 font-bold text-lg">${selectedBooking.payment_amount}</p>
+                          <p className="text-yellow-600 font-bold text-lg">£{selectedBooking.payment_amount}</p>
                         </div>
                       </div>
                     </CardContent>

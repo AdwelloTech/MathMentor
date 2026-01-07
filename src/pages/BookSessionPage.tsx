@@ -10,7 +10,7 @@ import {
   CalendarDays,
   Clock,
   Users,
-  DollarSign,
+  PoundSterling,
   Filter,
   Search,
   X,
@@ -443,7 +443,7 @@ const BookSessionPage: React.FC = () => {
                           variant="outline"
                           className="border-primary border-2 text-primary text-lg font-bold px-3 py-1"
                         >
-                          <DollarSign className="w-4 h-4 mr-1" />
+                          <PoundSterling className="w-4 h-4 mr-1" />
                           {session.price}
                         </Badge>
                       </div>
@@ -523,8 +523,8 @@ const BookSessionPage: React.FC = () => {
                       onClick={() => handleBookSession(sessionResult)}
                       disabled={isBooking || !sessionResult.is_bookable}
                       className={`w-full font-semibold ${sessionResult.is_bookable
-                          ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                          : "bg-muted text-muted-foreground cursor-not-allowed"
+                        ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                        : "bg-muted text-muted-foreground cursor-not-allowed"
                         }`}
                     >
                       {isBooking ? (

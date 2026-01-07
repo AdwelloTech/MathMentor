@@ -96,7 +96,7 @@ async function createTestData() {
         capacity: 5,
         enrolledCount: 0,
         price: 25.00,
-        currency: 'USD',
+        currency: 'GBP',
         isActive: true,
         isFull: false,
         prerequisites: ['Basic arithmetic']

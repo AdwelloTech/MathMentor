@@ -10,7 +10,7 @@ import {
   CalendarDays,
   Clock,
   Users,
-  DollarSign,
+  PoundSterling,
   Edit,
   Trash2,
   Eye,
@@ -693,10 +693,10 @@ const TutorManageClassesPage: React.FC = () => {
                       </div>
                       <div className="flex items-center text-sm text-slate-400">
                         <div className="bg-slate-600/50 w-6 h-6 rounded-full flex items-center justify-center mr-3">
-                          <DollarSign className="w-3 h-3 text-slate-400" />
+                          <PoundSterling className="w-3 h-3 text-slate-400" />
                         </div>
                         <span className="font-bold text-green-400">
-                          ${classItem.price_per_session}
+                          £{classItem.price_per_session}
                         </span>
                       </div>
                     </div>
@@ -857,7 +857,7 @@ const TutorManageClassesPage: React.FC = () => {
                         Price
                       </h3>
                       <p className="text-slate-200">
-                        ${selectedClass.price_per_session}
+                        £{selectedClass.price_per_session}
                       </p>
                     </div>
                     <div>
@@ -1024,7 +1024,7 @@ const TutorManageClassesPage: React.FC = () => {
                               </div>
                               <div>
                                 <span className="font-medium text-slate-300">Amount:</span>
-                                <p className="text-slate-200">${request.payment_amount}</p>
+                                <p className="text-slate-200">£{request.payment_amount}</p>
                               </div>
                               <div>
                                 <span className="font-medium text-slate-300">Status:</span>

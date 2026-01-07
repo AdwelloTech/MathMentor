@@ -249,9 +249,9 @@ const StudentDashboard: React.FC = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-GB", {
       style: "currency",
-      currency: "USD",
+      currency: "GBP",
     }).format(amount / 100);
   };
 
@@ -267,8 +267,8 @@ const StudentDashboard: React.FC = () => {
       data.packageInfo.package_type === "gold"
         ? 20
         : data.packageInfo.package_type === "silver"
-        ? 15
-        : 10;
+          ? 15
+          : 10;
     const used = data.stats?.bookings_this_month || 0;
     const percentage = Math.min((used / total) * 100, 100);
     const remaining = Math.max(total - used, 0);
@@ -457,8 +457,8 @@ const StudentDashboard: React.FC = () => {
                         <span className="text-card-foreground font-medium">
                           {data.packageInfo?.price_monthly
                             ? `${formatCurrency(
-                                data.packageInfo.price_monthly
-                              )}/month`
+                              data.packageInfo.price_monthly
+                            )}/month`
                             : "Free"}
                         </span>
                       </div>
@@ -633,14 +633,13 @@ const StudentDashboard: React.FC = () => {
                             onClick={() =>
                               (quiz as any).attempt_id
                                 ? navigate(
-                                    `/student/take-quiz/${
-                                      (quiz as any).attempt_id
-                                    }`
-                                  )
+                                  `/student/take-quiz/${(quiz as any).attempt_id
+                                  }`
+                                )
                                 : console.warn(
-                                    "No attempt available for quiz",
-                                    quiz.id
-                                  )
+                                  "No attempt available for quiz",
+                                  quiz.id
+                                )
                             }
                           >
                             <div className="flex-1 min-w-0">
@@ -656,8 +655,8 @@ const StudentDashboard: React.FC = () => {
                               {(quiz as any).attempt_status === "completed"
                                 ? "Completed"
                                 : (quiz as any).attempt_status === "in_progress"
-                                ? "In Progress"
-                                : "Available"}
+                                  ? "In Progress"
+                                  : "Available"}
                             </span>
                           </div>
                         ))
@@ -736,10 +735,10 @@ const StudentDashboard: React.FC = () => {
                       </div>
                       {data.upcomingSessions.length > 0 ? (
                         data.upcomingSessions.slice(0, 3).map((session) => (
-                        <div
+                          <div
                             key={session.id}
                             className="flex items-center space-x-3 p-3 bg-secondary hover:bg-secondary/80 rounded-lg shadow-sm transition-colors duration-200 cursor-pointer"
-                        >
+                          >
                             <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
                               {session.tutorProfileImage ? (
                                 <img
@@ -752,7 +751,7 @@ const StudentDashboard: React.FC = () => {
                                   {session.tutor.charAt(0).toUpperCase()}
                                 </span>
                               )}
-                          </div>
+                            </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-base font-semibold text-card-foreground truncate">
                                 {session.subject}
@@ -760,8 +759,8 @@ const StudentDashboard: React.FC = () => {
                               <p className="text-sm text-card-foreground/80 font-medium truncate">
                                 {session.tutor} • {session.time}
                               </p>
-                        </div>
-                      </div>
+                            </div>
+                          </div>
                         ))
                       ) : (
                         <p className="text-base text-card-foreground font-medium">No upcoming sessions</p>
@@ -783,7 +782,7 @@ const StudentDashboard: React.FC = () => {
                 {/* Animated background effects */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-                
+
                 <div className="relative p-8 md:p-10">
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     {/* Icon with pulse animation */}
@@ -900,12 +899,12 @@ const StudentDashboard: React.FC = () => {
                         icon: CogIcon,
                         action: () => navigate("/student/flashcards"),
                       },
-                  {
-                    title: "Explore Tutors",
-                    description: "Browse tutors with completed profiles",
-                    icon: UserGroupIcon,
-                    action: () => navigate("/student/explore-tutors"),
-                  },
+                      {
+                        title: "Explore Tutors",
+                        description: "Browse tutors with completed profiles",
+                        icon: UserGroupIcon,
+                        action: () => navigate("/student/explore-tutors"),
+                      },
                     ].map((action) => (
                       <motion.div
                         key={action.title}
@@ -940,7 +939,7 @@ const StudentDashboard: React.FC = () => {
           </div>
         </motion.div>
       </div>
-      
+
       <TutorialPrompt />
       <TutorialOverlay />
     </StudentPageWrapper>

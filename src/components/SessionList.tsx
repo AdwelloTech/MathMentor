@@ -90,7 +90,7 @@ const SessionList: React.FC<SessionListProps> = ({
                 {session.class_type?.name}
               </span>
               <span className="ml-auto text-primary font-semibold text-lg">
-                ${session.price_per_session}
+                £{session.price_per_session}
               </span>
             </div>
             <div className="px-0 pb-4 flex flex-col min-h-[120px] justify-start">
@@ -125,11 +125,10 @@ const SessionList: React.FC<SessionListProps> = ({
                 <button
                   onClick={() => onBookSession(session.id, session.price_per_session)}
                   disabled={isBooking || !sessionResult.is_bookable}
-                  className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
-                    sessionResult.is_bookable
+                  className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${sessionResult.is_bookable
                       ? 'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60'
                       : 'bg-muted text-muted-foreground cursor-not-allowed'
-                  }`}
+                    }`}
                 >
                   {isBooking ? (
                     <div className="flex items-center justify-center gap-2">

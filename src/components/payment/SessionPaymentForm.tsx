@@ -178,7 +178,7 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
             Complete Your Session Payment
           </h3>
           <p className="text-muted-foreground mt-1">
-            ${amount.toFixed(2)} - {sessionTitle}
+            £{amount.toFixed(2)} - {sessionTitle}
           </p>
         </div>
 
@@ -198,7 +198,7 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
               {formatTime(sessionTime)}
             </p>
             <p>
-              <span className="font-medium">Amount:</span> ${amount.toFixed(2)}
+              <span className="font-medium">Amount:</span> £{amount.toFixed(2)}
             </p>
           </div>
         </div>
@@ -284,7 +284,7 @@ const SessionPaymentFormContent: React.FC<SessionPaymentFormProps> = ({
                   Processing...
                 </>
               ) : (
-                `Pay $${amount.toFixed(2)}`
+                `Pay £${amount.toFixed(2)}`
               )}
             </button>
           </div>

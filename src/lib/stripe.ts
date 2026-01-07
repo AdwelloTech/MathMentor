@@ -17,9 +17,9 @@ export const PACKAGE_PRICES = {
 
 // Package pricing display
 export const PACKAGE_PRICING_DISPLAY = {
-  free: '$0/month',
-  silver: '$29.99/month',
-  gold: '$49.99/month',
+  free: '£0/month',
+  silver: '£29.99/month',
+  gold: '£49.99/month',
 } as const;
 
 // Export Stripe instance
@@ -40,19 +40,19 @@ export const createPaymentIntent = async (packageType: 'silver' | 'gold') => {
   // Backend would use: sk_test_51OYCbPFUqDTwzZQxRI5JMdxefgbU8sM7MKWmorDAI6HZRjZtzsHNcRDTkAZSL0kK49HkkPP1oWr4QCJrc7ffqKGW00sFLxKg2O
   // For demo purposes, we'll simulate the response
   const amount = PACKAGE_PRICES[packageType];
-  
+
   // This should be replaced with actual backend API call
   console.warn('DEMO MODE: In production, this should call your backend API to create payment intent with your secret key');
-  
+
   // Generate a properly formatted mock client secret that Stripe will accept
   const randomId = Math.random().toString(36).substr(2, 24);
   const randomSecret = Math.random().toString(36).substr(2, 24);
-  
+
   return {
     id: `pi_${randomId}`,
     client_secret: `pi_${randomId}_secret_${randomSecret}`,
     amount,
-    currency: 'usd',
+    currency: 'gbp',
     status: 'requires_payment_method'
   } as PaymentIntent;
 };

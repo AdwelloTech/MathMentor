@@ -799,7 +799,7 @@ const ManageTutorApplicationsPage: React.FC = () => {
                       <span>
                         <strong>Expected Hourly Rate:</strong>{" "}
                         {selectedApplication.expected_hourly_rate
-                          ? `$${selectedApplication.expected_hourly_rate}`
+                          ? `£${selectedApplication.expected_hourly_rate}`
                           : "Not specified"}
                       </span>
                     </div>

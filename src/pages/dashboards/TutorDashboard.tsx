@@ -705,7 +705,7 @@ const TutorDashboard: React.FC = () => {
                 },
                 {
                   name: "Earnings",
-                  value: `$${dashboardStats?.monthly_earnings || 0}`,
+                  value: `£${dashboardStats?.monthly_earnings || 0}`,
                   icon: CurrencyDollarIcon,
                   color: "from-green-700 to-green-800",
                   description: "Monthly earnings",
@@ -1186,7 +1186,7 @@ const TutorDashboard: React.FC = () => {
                           <p className="text-sm font-medium text-gray-900">
                             Earnings
                           </p>
-                          <p className="text-sm text-gray-500">$0.00</p>
+                          <p className="text-sm text-gray-500">£0.00</p>
                         </div>
                       </div>
                     </div>

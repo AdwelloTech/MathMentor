@@ -73,7 +73,7 @@ const classSchema = new Schema<IClass>(
         type: String,
         required: true,
         validate: {
-          validator: function(v: string) {
+          validator: function (v: string) {
             return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
           },
           message: 'Start time must be in HH:MM format'
@@ -83,7 +83,7 @@ const classSchema = new Schema<IClass>(
         type: String,
         required: true,
         validate: {
-          validator: function(v: string) {
+          validator: function (v: string) {
             return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
           },
           message: 'End time must be in HH:MM format'
@@ -120,7 +120,7 @@ const classSchema = new Schema<IClass>(
     },
     currency: {
       type: String,
-      default: 'USD',
+      default: 'GBP',
       enum: ['USD', 'EUR', 'GBP', 'CAD', 'AUD']
     },
     isActive: {
@@ -177,28 +177,28 @@ classSchema.index({ isActive: 1, capacity: 1, enrolledCount: 1 });
 classSchema.index({ createdAt: -1 });
 
 // Virtual for checking if class is available
-classSchema.virtual('isAvailable').get(function() {
+classSchema.virtual('isAvailable').get(function () {
   return this.isActive && !this.isFull && this.enrolledCount < this.capacity;
 });
 
 // Virtual for remaining spots
-classSchema.virtual('remainingSpots').get(function() {
+classSchema.virtual('remainingSpots').get(function () {
   return Math.max(0, this.capacity - this.enrolledCount);
 });
 
 // Pre-save middleware to update isFull status
-classSchema.pre('save', function(next) {
+classSchema.pre('save', function (next) {
   this.isFull = this.enrolledCount >= this.capacity;
   next();
 });
 
 // Instance method to check if student can enroll
-classSchema.methods.canEnroll = function(studentId: mongoose.Types.ObjectId): boolean {
+classSchema.methods.canEnroll = function (studentId: mongoose.Types.ObjectId): boolean {
   return this.isAvailable && !this.isFull;
 };
 
 // Instance method to enroll a student
-classSchema.methods.enrollStudent = async function(studentId: mongoose.Types.ObjectId): Promise<boolean> {
+classSchema.methods.enrollStudent = async function (studentId: mongoose.Types.ObjectId): Promise<boolean> {
   if (!this.canEnroll(studentId)) {
     return false;
   }
@@ -210,7 +210,7 @@ classSchema.methods.enrollStudent = async function(studentId: mongoose.Types.Obj
 };
 
 // Instance method to unenroll a student
-classSchema.methods.unenrollStudent = async function(studentId: mongoose.Types.ObjectId): Promise<boolean> {
+classSchema.methods.unenrollStudent = async function (studentId: mongoose.Types.ObjectId): Promise<boolean> {
   if (this.enrolledCount > 0) {
     this.enrolledCount -= 1;
     this.isFull = false; // Reset isFull in case we now have space
@@ -221,7 +221,7 @@ classSchema.methods.unenrollStudent = async function(studentId: mongoose.Types.O
 };
 
 // Static method to find available classes
-classSchema.statics.findAvailable = function(filters: {
+classSchema.statics.findAvailable = function (filters: {
   subjectId?: mongoose.Types.ObjectId;
   gradeLevelId?: mongoose.Types.ObjectId;
   teacherId?: mongoose.Types.ObjectId;
@@ -267,7 +267,7 @@ classSchema.statics.findAvailable = function(filters: {
 };
 
 // Static method to get teacher's classes
-classSchema.statics.getByTeacher = function(teacherId: mongoose.Types.ObjectId, activeOnly: boolean = true) {
+classSchema.statics.getByTeacher = function (teacherId: mongoose.Types.ObjectId, activeOnly: boolean = true) {
   const query: any = { teacherId };
 
   if (activeOnly) {

@@ -342,7 +342,7 @@ export const classSchedulingService = {
           endDate: classData.recurring_end_date,
           capacity: classData.max_students,
           price: classData.price_per_session,
-          currency: 'USD',
+          currency: 'GBP',
           meetingLink: meetingLink,
           jitsiRoomName: jitsiRoomName,
           jitsiPassword: jitsiPassword,

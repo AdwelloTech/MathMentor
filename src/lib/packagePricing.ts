@@ -54,9 +54,9 @@ export const packagePricingService = {
     return response;
   },
 
-  // Format price for display (convert cents to dollars)
+  // Format price for display (convert pence to pounds)
   formatPrice(priceInCents: number): string {
-    return `$${(priceInCents / 100).toFixed(2)}`;
+    return `£${(priceInCents / 100).toFixed(2)}`;
   },
 
   // Get package features as a formatted list

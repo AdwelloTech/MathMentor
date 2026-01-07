@@ -267,7 +267,7 @@ const BookConsultationPage: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-green-600">
-                          ${session.price_per_session}
+                          £{session.price_per_session}
                         </div>
                       </div>
                     </div>
@@ -332,11 +332,10 @@ const BookConsultationPage: React.FC = () => {
                     <button
                       onClick={() => handleBookSession(sessionResult)}
                       disabled={isBooking || !sessionResult.is_bookable}
-                      className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
-                        sessionResult.is_bookable
+                      className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${sessionResult.is_bookable
                           ? "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                           : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      }`}
+                        }`}
                     >
                       {isBooking ? (
                         <div className="flex items-center justify-center gap-2">

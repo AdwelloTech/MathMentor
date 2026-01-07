@@ -35,7 +35,7 @@ const TutorDashboardStats: React.FC<TutorDashboardStatsProps> = ({ stats }) => {
     },
     {
       name: "Earnings",
-      value: `$${stats?.monthly_earnings || 0}`,
+      value: `£${stats?.monthly_earnings || 0}`,
       icon: CurrencyDollarIcon,
       description: "Monthly earnings",
     },
